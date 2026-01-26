@@ -1,0 +1,68 @@
+{
+  "expo": {
+    "name": "Golf Pub",
+    "slug": "golf-pub-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "golfpub",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#10b981"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.golfpub.app",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Golf Pub이 골프 활동 사진을 저장하려면 사진 접근 권한이 필요합니다.",
+        "NSPhotoLibraryAddUsageDescription": "Golf Pub이 사진을 갤러리에 저장하려면 권한이 필요합니다.",
+        "NSLocationWhenInUseUsageDescription": "Golf Pub이 현재 위치의 날씨 정보를 제공하기 위해 위치 권한이 필요합니다.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Golf Pub이 현재 위치의 날씨 정보를 제공하기 위해 위치 권한이 필요합니다."
+      }
+    },
+    "android": {
+      "usesCleartextTraffic": true,
+      "adaptiveIcon": {
+        "backgroundColor": "#10b981",
+        "foregroundImage": "./assets/adaptive-icon.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.golfpub.app",
+      "permissions": [
+        "INTERNET",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#10b981"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Golf Pub이 현재 위치의 날씨 정보를 제공하기 위해 위치 권한이 필요합니다."
+        }
+      ],
+      "@react-native-firebase/app"
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}
