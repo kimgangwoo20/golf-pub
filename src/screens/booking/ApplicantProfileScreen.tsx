@@ -1,29 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert } from 'react-native';
 
-export default function ApplicantProfileScreen() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.text}>ApplicantProfileScreen Screen</Text>
-      <Text style={styles.subtitle}>구현 예정</Text>
-    </View>
-  );
+export default function ApplicantProfileScreen({ route, navigation }: any) {
+  const { applicant } = route.params || { applicant: { name: '김철수', level: '중급', rating: 4.5, avatar: 'https://i.pravatar.cc/150?img=12' } };
+
+  return (<ScrollView style={styles.container}><View style={styles.header}><Image source={{ uri: applicant.avatar }} style={styles.avatar} /><Text style={styles.name}>{applicant.name}</Text><Text style={styles.level}>⭐ {applicant.rating} • {applicant.level}</Text></View><View style={styles.section}><Text style={styles.sectionTitle}>골프 정보</Text><View style={styles.infoRow}><Text style={styles.label}>평균 스코어</Text><Text style={styles.value}>95타</Text></View><View style={styles.infoRow}><Text style={styles.label}>경력</Text><Text style={styles.value}>2년</Text></View><View style={styles.infoRow}><Text style={styles.label}>라운딩 횟수</Text><Text style={styles.value}>24회</Text></View></View><View style={styles.section}><Text style={styles.sectionTitle}>자기소개</Text><Text style={styles.bio}>골프를 시작한지 2년 되었습니다. 함께 즐겁게 라운딩하고 싶습니다!</Text></View><View style={styles.actions}><TouchableOpacity style={styles.rejectButton} onPress={() => Alert.alert('거절', '신청을 거절하시겠습니까?')}><Text style={styles.rejectText}>거절</Text></TouchableOpacity><TouchableOpacity style={styles.approveButton} onPress={() => Alert.alert('승인', '신청을 승인하시겠습니까?')}><Text style={styles.approveText}>승인</Text></TouchableOpacity></View></ScrollView>);
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  text: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-  },
-});
+const styles = StyleSheet.create({ container: { flex: 1, backgroundColor: '#f8f9fa' }, header: { backgroundColor: '#fff', padding: 20, alignItems: 'center', marginBottom: 12 }, avatar: { width: 80, height: 80, borderRadius: 40, marginBottom: 12 }, name: { fontSize: 20, fontWeight: 'bold', marginBottom: 4 }, level: { fontSize: 14, color: '#666' }, section: { backgroundColor: '#fff', padding: 20, marginBottom: 12 }, sectionTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 16 }, infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' }, label: { fontSize: 14, color: '#666' }, value: { fontSize: 14, fontWeight: '600' }, bio: { fontSize: 14, color: '#333', lineHeight: 20 }, actions: { flexDirection: 'row', padding: 16, gap: 8 }, rejectButton: { flex: 1, borderWidth: 1, borderColor: '#FF3B30', padding: 16, borderRadius: 8, alignItems: 'center' }, rejectText: { color: '#FF3B30', fontWeight: '600' }, approveButton: { flex: 1, backgroundColor: '#007AFF', padding: 16, borderRadius: 8, alignItems: 'center' }, approveText: { color: '#fff', fontWeight: '600' } });

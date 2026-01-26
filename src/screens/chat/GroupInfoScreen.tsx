@@ -1,29 +1,14 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Switch, Alert } from 'react-native';
 
-export default function GroupInfoScreen() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.text}>GroupInfoScreen Screen</Text>
-      <Text style={styles.subtitle}>구현 예정</Text>
-    </View>
-  );
+export default function GroupInfoScreen({ route, navigation }: any) {
+  const [notifications, setNotifications] = useState(true);
+  const [pin, setPin] = useState(false);
+  const members = [{ id: '1', name: '홍길동', avatar: 'https://i.pravatar.cc/150?img=1', role: 'admin', level: '중급' }, { id: '2', name: '김철수', avatar: 'https://i.pravatar.cc/150?img=12', role: 'member', level: '초급' }];
+
+  return (<ScrollView style={styles.container}><View style={styles.header}><Text style={styles.groupName}>골프 모임</Text><Text style={styles.memberCount}>멤버 {members.length}명</Text></View><View style={styles.section}><Text style={styles.sectionTitle}>멤버</Text>{members.map(m => (<View key={m.id} style={styles.memberItem}><Image source={{ uri: m.avatar }} style={styles.memberAvatar} /><View style={styles.memberInfo}><View style={styles.nameRow}><Text style={styles.memberName}>{m.name}</Text>{m.role === 'admin' && <View style={styles.adminBadge}><Text style={styles.adminText}>방장</Text></View>}</View><Text style={styles.memberLevel}>{m.level}</Text></View></View>))}</View><View style={styles.section}><Text style={styles.sectionTitle}>설정</Text><View style={styles.settingItem}><Text>알림</Text><Switch value={notifications} onValueChange={setNotifications} /></View><View style={styles.settingItem}><Text>고정</Text><Switch value={pin} onValueChange={setPin} /></View></View><View style={styles.section}><TouchableOpacity style={styles.dangerButton} onPress={() => Alert.alert('나가기', '그룹을 나가시겠습니까?')}><Text style={styles.dangerText}>나가기</Text></TouchableOpacity></View></ScrollView>);
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  text: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-  },
+  container: { flex: 1, backgroundColor: '#f8f9fa' }, header: { backgroundColor: '#fff', padding: 20, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#e0e0e0' }, groupName: { fontSize: 20, fontWeight: 'bold', marginBottom: 8 }, memberCount: { fontSize: 14, color: '#666' }, section: { backgroundColor: '#fff', marginTop: 12, padding: 20 }, sectionTitle: { fontSize: 14, fontWeight: '600', color: '#666', marginBottom: 16 }, memberItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 }, memberAvatar: { width: 50, height: 50, borderRadius: 25, marginRight: 12 }, memberInfo: { flex: 1 }, nameRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 }, memberName: { fontSize: 16, fontWeight: '600', marginRight: 8 }, adminBadge: { backgroundColor: '#FFD700', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }, adminText: { fontSize: 11, fontWeight: 'bold', color: '#fff' }, memberLevel: { fontSize: 14, color: '#666' }, settingItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12 }, dangerButton: { padding: 16, alignItems: 'center' }, dangerText: { color: '#FF3B30', fontSize: 16, fontWeight: '600' },
 });
