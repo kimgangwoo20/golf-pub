@@ -1,14 +1,14 @@
 // MembershipNavigator.tsx - 멤버십 스택
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import MembershipIntroScreen from '../screens/membership/MembershipIntroScreen';
-import MembershipPlanScreen from '../screens/membership/MembershipPlanScreen';
-import PlanComparisonScreen from '../screens/membership/PlanComparisonScreen';
-import MembershipPaymentScreen from '../screens/membership/MembershipPaymentScreen';
-import MembershipSuccessScreen from '../screens/membership/MembershipSuccessScreen';
-import MembershipBenefitsScreen from '../screens/membership/MembershipBenefitsScreen';
-import MembershipManageScreen from '../screens/membership/MembershipManageScreen';
-import UpgradePlanScreen from '../screens/membership/UpgradePlanScreen';
+import MembershipIntroScreen from '../../screens/membership/MembershipIntroScreen';
+import MembershipPlanScreen from '../../screens/membership/MembershipPlanScreen';
+import PlanComparisonScreen from '../../screens/membership/PlanComparisonScreen';
+import MembershipPaymentScreen from '../../screens/membership/MembershipPaymentScreen';
+import MembershipSuccessScreen from '../../screens/membership/MembershipSuccessScreen';
+import MembershipBenefitsScreen from '../../screens/membership/MembershipBenefitsScreen';
+import MembershipManageScreen from '../../screens/membership/MembershipManageScreen';
+import UpgradePlanScreen from '../../screens/membership/UpgradePlanScreen';
 
 const Stack = createNativeStackNavigator();
 
