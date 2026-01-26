@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch } from 'react-native';
 
-export default function SettingsScreen({ navigation }: any) {
+export const SettingsScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(false);
 

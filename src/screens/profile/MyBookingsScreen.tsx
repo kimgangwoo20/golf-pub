@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 
-export default function MyBookingsScreen({ navigation }: any) {
+export const MyBookingsScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const bookings = [
     { id: 1, title: '주말 라운딩', course: '레이크사이드CC', date: '2024-02-10', status: '확정' },
     { id: 2, title: '평일 조인', course: '스카이72', date: '2024-02-15', status: '대기' },
