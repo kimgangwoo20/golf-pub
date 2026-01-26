@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 
-export default function EditProfileScreen({ navigation }: any) {
+export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const [name, setName] = useState('홍길동');
   const [bio, setBio] = useState('골프 입문 6개월차입니다!');
   const [phone, setPhone] = useState('010-1234-5678');
 
   const handleSave = () => {
     Alert.alert('저장 완료', '프로필이 수정되었습니다');
-    navigation.goBack();
+    navigation?.goBack();
   };
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation?.goBack()}>
           <Text style={styles.backButton}>← 뒤로</Text>
         </TouchableOpacity>
         <Text style={styles.title}>프로필 수정</Text>
@@ -42,7 +42,7 @@ export default function EditProfileScreen({ navigation }: any) {
       </View>
     </ScrollView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },

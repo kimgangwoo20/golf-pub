@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 
-export default function ProfileScreen({ navigation }: any) {
+export const ProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const user = {
     name: '홍길동',
     email: 'hong@golf.com',
@@ -46,25 +46,25 @@ export default function ProfileScreen({ navigation }: any) {
       </View>
 
       <View style={styles.menuContainer}>
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('EditProfile')}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation?.navigate('EditProfile')}>
           <Text style={styles.menuIcon}>✏️</Text>
           <Text style={styles.menuText}>프로필 수정</Text>
           <Text style={styles.menuArrow}>›</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MyBookings')}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation?.navigate('MyBookings')}>
           <Text style={styles.menuIcon}>⛳</Text>
           <Text style={styles.menuText}>내 부킹 목록</Text>
           <Text style={styles.menuArrow}>›</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MembershipManage')}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation?.navigate('MembershipManage')}>
           <Text style={styles.menuIcon}>👑</Text>
           <Text style={styles.menuText}>멤버십 관리</Text>
           <Text style={styles.menuArrow}>›</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Settings')}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation?.navigate('Settings')}>
           <Text style={styles.menuIcon}>⚙️</Text>
           <Text style={styles.menuText}>설정</Text>
           <Text style={styles.menuArrow}>›</Text>
@@ -76,7 +76,7 @@ export default function ProfileScreen({ navigation }: any) {
       </TouchableOpacity>
     </ScrollView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
