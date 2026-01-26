@@ -7,7 +7,7 @@ interface BenefitItemProps {
   description: string;
 }
 
-export default function BenefitItem({ icon, title, description }: BenefitItemProps) {
+export const BenefitItem: React.FC<BenefitItemProps> = ({ icon, title, description }) => {
   return (
     <View style={styles.container}>
       <View style={styles.iconContainer}>

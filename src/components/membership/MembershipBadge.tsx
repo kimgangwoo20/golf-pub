@@ -7,7 +7,7 @@ interface MembershipBadgeProps {
   size?: 'small' | 'medium' | 'large';
 }
 
-export default function MembershipBadge({ type, size = 'medium' }: MembershipBadgeProps) {
+export const MembershipBadge: React.FC<MembershipBadgeProps> = ({ type, size = 'medium' }) => {
   const getBadgeConfig = () => {
     switch (type) {
       case MembershipType.VIP:

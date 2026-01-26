@@ -3,9 +3,9 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { useNavigation } from '@react-navigation/native';
 import { MEMBERSHIP_PLANS } from '../../constants/membershipPlans';
 import { MembershipType, BillingCycle } from '../../types/membership';
-import PlanCard from '../../components/membership/PlanCard';
+import { PlanCard } from '../../components/membership/PlanCard';
 
-export default function MembershipPlanScreen() {
+export const MembershipPlanScreen: React.FC = () => {
   const navigation = useNavigation();
   const [selectedPlan, setSelectedPlan] = useState<MembershipType>(MembershipType.PREMIUM);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>(BillingCycle.MONTHLY);

@@ -8,7 +8,7 @@ interface PlanCardProps {
   isSelected?: boolean;
 }
 
-export default function PlanCard({ plan, onSelect, isSelected = false }: PlanCardProps) {
+export const PlanCard: React.FC<PlanCardProps> = ({ plan, onSelect, isSelected = false }) => {
   return (
     <TouchableOpacity
       style={[

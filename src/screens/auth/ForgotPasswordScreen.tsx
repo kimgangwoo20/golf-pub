@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
 
-export default function ForgotPasswordScreen({ navigation }: any) {
+export const ForgotPasswordScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const [email, setEmail] = useState('');
 
   const handleSend = () => {

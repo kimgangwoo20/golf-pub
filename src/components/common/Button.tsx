@@ -20,7 +20,7 @@ interface ButtonProps {
   textStyle?: TextStyle;
 }
 
-export default function Button({
+export const Button: React.FC<ButtonProps> = ({
   title,
   onPress,
   variant = 'primary',
@@ -30,7 +30,7 @@ export default function Button({
   fullWidth = false,
   style,
   textStyle,
-}: ButtonProps) {
+}) => {
   return (
     <TouchableOpacity
       style={[

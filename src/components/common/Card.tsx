@@ -8,12 +8,12 @@ interface CardProps {
   variant?: 'default' | 'elevated' | 'outlined';
 }
 
-export default function Card({ 
+export const Card: React.FC<CardProps> = ({ 
   children, 
   style, 
   padding = 16,
   variant = 'default',
-}: CardProps) {
+}) => {
   return (
     <View 
       style={[

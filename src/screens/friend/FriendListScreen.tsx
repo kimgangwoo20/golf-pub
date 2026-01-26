@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-export default function FriendListScreen() {
+export const FriendListScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>FriendListScreen Screen</Text>

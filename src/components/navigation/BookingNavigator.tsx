@@ -13,7 +13,7 @@ import RequestStatusScreen from '../../screens/booking/RequestStatusScreen';
 
 const Stack = createNativeStackNavigator();
 
-export default function BookingNavigator() {
+export const BookingNavigator: React.FC = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: true, headerBackTitleVisible: false, headerTintColor: '#007AFF' }}>
       <Stack.Screen name="BookingList" component={BookingListScreen} options={{ title: '부킹 목록', headerShown: false }} />

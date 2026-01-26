@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
 
-export default function VerificationScreen({ navigation }: any) {
+export const VerificationScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const [code, setCode] = useState('');
 
   const handleVerify = () => {

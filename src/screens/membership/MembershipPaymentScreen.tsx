@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
-export default function MembershipPaymentScreen() {
+export const MembershipPaymentScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const [paymentMethod, setPaymentMethod] = useState('card');

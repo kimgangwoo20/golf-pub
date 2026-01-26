@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import BenefitItem from '../../components/membership/BenefitItem';
+import { BenefitItem } from '../../components/membership/BenefitItem';
 
-export default function MembershipBenefitsScreen() {
+export const MembershipBenefitsScreen: React.FC = () => {
   const benefits = [
     { icon: '⛳', title: '무제한 부킹 참가', description: '제한 없이 모든 골프 모임 참여' },
     { icon: '💬', title: '무제한 채팅', description: '골프 메이트와 자유로운 소통' },

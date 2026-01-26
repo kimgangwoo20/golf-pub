@@ -2,8 +2,8 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import AuthNavigator from './AuthNavigator';
-import MainTabNavigator from './MainTabNavigator';
+import { AuthNavigator } from './AuthNavigator';
+import { MainTabNavigator } from './MainTabNavigator';
 
 // TODO: 실제로는 useAuthStore에서 가져오기
 const useAuth = () => {
@@ -12,7 +12,7 @@ const useAuth = () => {
 
 const Stack = createNativeStackNavigator();
 
-export default function AppNavigator() {
+export const AppNavigator: React.FC = () => {
   const { isAuthenticated } = useAuth();
 
   return (

@@ -11,7 +11,7 @@ import GroupInfoScreen from '../../screens/chat/GroupInfoScreen';
 
 const Stack = createNativeStackNavigator();
 
-export default function ChatNavigator() {
+export const ChatNavigator: React.FC = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: true, headerBackTitleVisible: false, headerTintColor: '#007AFF' }}>
       <Stack.Screen name="ChatList" component={ChatListScreen} options={{ title: '채팅', headerShown: false }} />

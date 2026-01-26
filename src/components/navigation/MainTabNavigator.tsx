@@ -5,9 +5,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, StyleSheet } from 'react-native';
 import HomeScreen from '../../screens/home/HomeScreen';
 import ProfileScreen from '../../screens/profile/ProfileScreen';
-import MembershipNavigator from './MembershipNavigator';
-import BookingNavigator from './BookingNavigator';
-import ChatNavigator from './ChatNavigator';
+import { MembershipNavigator } from './MembershipNavigator';
+import { BookingNavigator } from './BookingNavigator';
+import { ChatNavigator } from './ChatNavigator';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -40,7 +40,7 @@ function ProfileStack() {
   );
 }
 
-export default function MainTabNavigator() {
+export const MainTabNavigator: React.FC = () => {
   return (
     <Tab.Navigator
       screenOptions={{

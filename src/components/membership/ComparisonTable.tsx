@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { MEMBERSHIP_COMPARISON } from '../../../constants/membershipPlans';
 
-export default function ComparisonTable() {
+export const ComparisonTable: React.FC = () => {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
       <View style={styles.table}>

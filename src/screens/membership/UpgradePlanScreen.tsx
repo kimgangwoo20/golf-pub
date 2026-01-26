@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import PlanCard from '../../components/membership/PlanCard';
+import { PlanCard } from '../../components/membership/PlanCard';
 import { MEMBERSHIP_PLANS } from '../../constants/membershipPlans';
 import { MembershipType } from '../../types/membership';
 
-export default function UpgradePlanScreen() {
+export const UpgradePlanScreen: React.FC = () => {
   const navigation = useNavigation();
   const currentType = MembershipType.FREE;
   
