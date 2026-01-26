@@ -1,12 +1,146 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
+// PopularBookingsScreen.tsx - 인기 부킹 목록
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+} from 'react-native';
 
-export default function PopularBookingsScreen({ navigation }: any) {
-  const bookings = [{ id: '1', title: '주말 라운딩', course: '레이크사이드CC', date: '2024-02-10', members: 3, maxMembers: 4, image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400' }, { id: '2', title: '평일 조인', course: '스카이72', date: '2024-02-15', members: 2, maxMembers: 4, image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400' }];
-
-  const renderBooking = ({ item }: any) => (<TouchableOpacity style={styles.bookingCard} onPress={() => navigation.navigate('BookingDetail', { bookingId: item.id })}><Image source={{ uri: item.image }} style={styles.image} /><View style={styles.info}><Text style={styles.title}>{item.title}</Text><Text style={styles.course}>🏌️ {item.course}</Text><Text style={styles.date}>📅 {item.date}</Text><View style={styles.members}><Text style={styles.membersText}>👥 {item.members}/{item.maxMembers}명</Text></View></View></TouchableOpacity>);
-
-  return (<View style={styles.container}><View style={styles.header}><Text style={styles.headerTitle}>🔥 인기 부킹</Text></View><FlatList data={bookings} renderItem={renderBooking} keyExtractor={item => item.id} contentContainerStyle={styles.list} /></View>);
+interface Booking {
+  id: string;
+  course: string;
+  date: string;
+  time: string;
+  organizer: string;
+  participants: number;
+  maxParticipants: number;
+  views: number;
 }
 
-const styles = StyleSheet.create({ container: { flex: 1, backgroundColor: '#f8f9fa' }, header: { backgroundColor: '#fff', padding: 20, borderBottomWidth: 1, borderBottomColor: '#e0e0e0' }, headerTitle: { fontSize: 24, fontWeight: 'bold' }, list: { padding: 16 }, bookingCard: { backgroundColor: '#fff', borderRadius: 12, marginBottom: 12, overflow: 'hidden' }, image: { width: '100%', height: 180 }, info: { padding: 16 }, title: { fontSize: 18, fontWeight: 'bold', marginBottom: 8 }, course: { fontSize: 14, color: '#666', marginBottom: 4 }, date: { fontSize: 14, color: '#666', marginBottom: 8 }, members: {}, membersText: { fontSize: 14, color: '#007AFF', fontWeight: '600' } });
+const MOCK_BOOKINGS: Booking[] = [
+  {
+    id: '1',
+    course: '스카이72 골프클럽',
+    date: '2024-02-01',
+    time: '08:00',
+    organizer: '김골프',
+    participants: 3,
+    maxParticipants: 4,
+    views: 156,
+  },
+  {
+    id: '2',
+    course: '남서울 컨트리클럽',
+    date: '2024-02-03',
+    time: '10:00',
+    organizer: '이영희',
+    participants: 2,
+    maxParticipants: 4,
+    views: 98,
+  },
+];
+
+export const PopularBookingsScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
+  const [bookings] = useState<Booking[]>(MOCK_BOOKINGS);
+
+  const renderBooking = ({ item }: { item: Booking }) => (
+    <TouchableOpacity
+      style={styles.bookingCard}
+      onPress={() => navigation?.navigate('BookingDetail', { bookingId: item.id })}
+    >
+      <View style={styles.badge}>
+        <Text style={styles.badgeText}>🔥 인기</Text>
+      </View>
+      <Text style={styles.course}>{item.course}</Text>
+      <View style={styles.info}>
+        <Text style={styles.infoText}>📅 {item.date}</Text>
+        <Text style={styles.infoText}>⏰ {item.time}</Text>
+      </View>
+      <View style={styles.footer}>
+        <Text style={styles.organizer}>주최: {item.organizer}</Text>
+        <Text style={styles.participants}>
+          {item.participants}/{item.maxParticipants}명
+        </Text>
+      </View>
+      <Text style={styles.views}>👁️ {item.views}</Text>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.container}>
+      <FlatList
+        data={bookings}
+        renderItem={renderBooking}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.list}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+  },
+  list: {
+    padding: 16,
+  },
+  bookingCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  badge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#FF6B00',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  course: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+    marginBottom: 8,
+  },
+  info: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 12,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  organizer: {
+    fontSize: 14,
+    color: '#666',
+  },
+  participants: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  views: {
+    fontSize: 12,
+    color: '#999',
+  },
+});
