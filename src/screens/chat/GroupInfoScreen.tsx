@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Switch, Alert } from 'react-native';
 
-export default function GroupInfoScreen({ route, navigation }: any) {
+export const GroupInfoScreen: React.FC<{ route?: any; navigation?: any }> = ({ route, navigation }: any) {
   const [notifications, setNotifications] = useState(true);
   const [pin, setPin] = useState(false);
   const members = [{ id: '1', name: '홍길동', avatar: 'https://i.pravatar.cc/150?img=1', role: 'admin', level: '중급' }, { id: '2', name: '김철수', avatar: 'https://i.pravatar.cc/150?img=12', role: 'member', level: '초급' }];

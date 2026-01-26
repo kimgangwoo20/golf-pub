@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function CreateGroupScreen({ navigation }: any) {
+export const CreateGroupScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const [groupName, setGroupName] = useState('');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<string[]>([]);

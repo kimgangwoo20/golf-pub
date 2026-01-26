@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Image } from 'react-native';
 
-export default function GroupChatRoomScreen({ route, navigation }: any) {
+export const GroupChatRoomScreen: React.FC<{ route?: any; navigation?: any }> = ({ route, navigation }: any) {
   const { group } = route.params || { group: { name: '골프 모임', members: 4 } };
   const [message, setMessage] = useState('');
   const [messages] = useState([
