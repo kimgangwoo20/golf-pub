@@ -61,7 +61,19 @@
           "locationAlwaysAndWhenInUsePermission": "Golf Pub이 현재 위치의 날씨 정보를 제공하기 위해 위치 권한이 필요합니다."
         }
       ],
-      "@react-native-firebase/app"
+      "@react-native-firebase/app",
+      [
+        "@react-native-seoul/kakao-login",
+        {
+          "kakaoAppKey": "3510fac6140cacff31cffbb0927f378",
+          "android": {
+            "kakaoAppKey": "3510fac6140cacff31cffbb0927f378"
+          },
+          "ios": {
+            "kakaoAppKey": "3510fac6140cacff31cffbb0927f378"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false
