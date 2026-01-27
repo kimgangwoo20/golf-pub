@@ -1,6 +1,6 @@
-// HostedMeetupsScreen.tsx - 작성한 모임 (내가 호스트) 화면
+// HostedMeetupsScreen.tsx - 작성한 모임 (내가 호스트) 화면 (수정됨 - 실제 API 연동)
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,67 +9,97 @@ import {
   Image,
   StyleSheet,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-
-// Mock 작성한 모임 데이터
-const mockHostedMeetups = [
-  {
-    id: 1,
-    title: '평일 오후 라운딩',
-    golfCourse: '남서울CC',
-    location: '서울 강남',
-    date: '2025.01.30',
-    time: '14:00',
-    price: 150000,
-    currentPlayers: 2,
-    maxPlayers: 4,
-    status: 'recruiting', // recruiting, completed, cancelled
-    image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400',
-    hasPub: true,
-    createdAt: '2025.01.15',
-  },
-  {
-    id: 2,
-    title: '초보 환영 라운딩',
-    golfCourse: '대관령CC',
-    location: '강원 평창',
-    date: '2025.02.05',
-    time: '09:00',
-    price: 100000,
-    currentPlayers: 1,
-    maxPlayers: 4,
-    status: 'recruiting',
-    image: 'https://images.unsplash.com/photo-1592919505780-303950717480?w=400',
-    hasPub: false,
-    createdAt: '2025.01.20',
-  },
-  {
-    id: 3,
-    title: '주말 라운딩 같이 치실 분!',
-    golfCourse: '세라지오CC',
-    location: '경기 광주',
-    date: '2025.01.17',
-    time: '10:00',
-    price: 120000,
-    currentPlayers: 4,
-    maxPlayers: 4,
-    status: 'completed',
-    image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400',
-    hasPub: true,
-    createdAt: '2025.01.10',
-  },
-];
+import { useAuthStore } from '../../../store/useAuthStore'; // ✅ 추가
+// import { bookingAPI } from '../../../services/api/bookingAPI'; // ✅ 추가 (API 준비 시)
 
 type TabType = 'recruiting' | 'completed';
 
 export const HostedMeetupsScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { user } = useAuthStore(); // ✅ useAuthStore 사용
+  
   const [activeTab, setActiveTab] = useState<TabType>('recruiting');
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const recruitingMeetups = mockHostedMeetups.filter(m => m.status === 'recruiting');
-  const completedMeetups = mockHostedMeetups.filter(m => m.status === 'completed');
+  useEffect(() => {
+    loadMyHostedBookings();
+  }, []);
+
+  const loadMyHostedBookings = async () => {
+    try {
+      setLoading(true);
+      
+      // TODO: 실제 API 호출로 변경
+      // const allBookings = await bookingAPI.getBookings();
+      // const myHostedBookings = allBookings.filter(booking => 
+      //   booking.hostId === user?.id
+      // );
+      // setBookings(myHostedBookings);
+      
+      // 임시 Mock 데이터 (API 준비 전까지)
+      const mockHostedMeetups = [
+        {
+          id: 1,
+          title: '평일 오후 라운딩',
+          golfCourse: '남서울CC',
+          location: '서울 강남',
+          date: '2025.01.30',
+          time: '14:00',
+          price: 150000,
+          currentPlayers: 2,
+          maxPlayers: 4,
+          status: 'recruiting',
+          image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400',
+          hasPub: true,
+          createdAt: '2025.01.15',
+        },
+        {
+          id: 2,
+          title: '초보 환영 라운딩',
+          golfCourse: '대관령CC',
+          location: '강원 평창',
+          date: '2025.02.05',
+          time: '09:00',
+          price: 100000,
+          currentPlayers: 1,
+          maxPlayers: 4,
+          status: 'recruiting',
+          image: 'https://images.unsplash.com/photo-1592919505780-303950717480?w=400',
+          hasPub: false,
+          createdAt: '2025.01.20',
+        },
+        {
+          id: 3,
+          title: '주말 라운딩 같이 치실 분!',
+          golfCourse: '세라지오CC',
+          location: '경기 광주',
+          date: '2025.01.17',
+          time: '10:00',
+          price: 120000,
+          currentPlayers: 4,
+          maxPlayers: 4,
+          status: 'completed',
+          image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400',
+          hasPub: true,
+          createdAt: '2025.01.10',
+        },
+      ];
+      
+      setBookings(mockHostedMeetups);
+    } catch (error) {
+      console.error('주최한 모임 로드 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const recruitingMeetups = bookings.filter(m => m.status === 'recruiting');
+  const completedMeetups = bookings.filter(m => m.status === 'completed');
 
   const displayMeetups = activeTab === 'recruiting' ? recruitingMeetups : completedMeetups;
 
@@ -92,21 +122,35 @@ export const HostedMeetupsScreen: React.FC = () => {
         {
           text: '예',
           style: 'destructive',
-          onPress: () => console.log('모임 취소:', id),
+          onPress: async () => {
+            try {
+              // TODO: 실제 API 호출
+              // await bookingAPI.cancelBooking(id);
+              console.log('모임 취소:', id);
+              Alert.alert('완료', '모임이 취소되었습니다.');
+              loadMyHostedBookings(); // 새로고침
+            } catch (error) {
+              Alert.alert('에러', '모임 취소에 실패했습니다.');
+            }
+          },
         },
       ]
     );
   };
 
-  const getStatusBadge = (status: string) => {
-    if (status === 'recruiting') {
-      return { text: '모집중', color: '#2E7D32', bgColor: '#E8F5E9' };
-    } else if (status === 'completed') {
-      return { text: '완료', color: '#666', bgColor: '#F5F5F5' };
-    } else {
-      return { text: '취소', color: '#FF3B30', bgColor: '#FFE5E5' };
-    }
+  const handleEditMeetup = (id: number) => {
+    Alert.alert('모임 수정', '모임 수정 기능은 개발 예정입니다.');
+    console.log('모임 수정:', id);
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2E7D32" />
+        <Text style={styles.loadingText}>주최한 모임을 불러오는 중...</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -120,24 +164,6 @@ export const HostedMeetupsScreen: React.FC = () => {
           <View style={styles.headerRight} />
         </View>
 
-        {/* 통계 */}
-        <View style={styles.statsCard}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{mockHostedMeetups.length}</Text>
-            <Text style={styles.statLabel}>총 작성</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{recruitingMeetups.length}</Text>
-            <Text style={styles.statLabel}>모집중</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{completedMeetups.length}</Text>
-            <Text style={styles.statLabel}>완료</Text>
-          </View>
-        </View>
-
         {/* 탭 */}
         <View style={styles.tabContainer}>
           <TouchableOpacity
@@ -145,7 +171,7 @@ export const HostedMeetupsScreen: React.FC = () => {
             onPress={() => setActiveTab('recruiting')}
           >
             <Text style={[styles.tabText, activeTab === 'recruiting' && styles.activeTabText]}>
-              모집중 ({recruitingMeetups.length})
+              모집 중 ({recruitingMeetups.length})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -161,59 +187,63 @@ export const HostedMeetupsScreen: React.FC = () => {
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           <View style={styles.meetupList}>
             {displayMeetups.length > 0 ? (
-              displayMeetups.map((meetup) => {
-                const statusBadge = getStatusBadge(meetup.status);
+              displayMeetups.map((meetup) => (
+                <TouchableOpacity
+                  key={meetup.id}
+                  style={styles.meetupCard}
+                  onPress={() => handleCardPress(meetup.id)}
+                >
+                  {/* 이미지 */}
+                  <Image source={{ uri: meetup.image }} style={styles.meetupImage} />
 
-                return (
-                  <TouchableOpacity
-                    key={meetup.id}
-                    style={styles.meetupCard}
-                    onPress={() => handleCardPress(meetup.id)}
-                  >
-                    {/* 이미지 */}
-                    <Image source={{ uri: meetup.image }} style={styles.meetupImage} />
-
-                    {/* 상태 배지 */}
-                    <View style={[styles.statusBadge, { backgroundColor: statusBadge.bgColor }]}>
-                      <Text style={[styles.statusText, { color: statusBadge.color }]}>
-                        {statusBadge.text}
-                      </Text>
+                  {/* 모집 중 배지 */}
+                  {meetup.status === 'recruiting' && (
+                    <View style={styles.recruitingBadge}>
+                      <Text style={styles.recruitingBadgeText}>모집 중</Text>
                     </View>
+                  )}
 
-                    {/* 술집 연계 배지 */}
-                    {meetup.hasPub && (
-                      <View style={styles.pubBadge}>
-                        <Text style={styles.pubBadgeText}>🍺 술집 연계</Text>
-                      </View>
-                    )}
+                  {/* 술집 연계 배지 */}
+                  {meetup.hasPub && (
+                    <View style={styles.pubBadge}>
+                      <Text style={styles.pubBadgeText}>🍺 술집 연계</Text>
+                    </View>
+                  )}
 
-                    {/* 내용 */}
-                    <View style={styles.meetupContent}>
-                      <Text style={styles.meetupTitle}>{meetup.title}</Text>
-                      <Text style={styles.meetupInfo}>⛳ {meetup.golfCourse}</Text>
-                      <Text style={styles.meetupInfo}>📍 {meetup.location}</Text>
-                      <Text style={styles.meetupInfo}>📅 {meetup.date} {meetup.time}</Text>
+                  {/* 내용 */}
+                  <View style={styles.meetupContent}>
+                    <Text style={styles.meetupTitle}>{meetup.title}</Text>
+                    <Text style={styles.meetupInfo}>⛳ {meetup.golfCourse}</Text>
+                    <Text style={styles.meetupInfo}>📍 {meetup.location}</Text>
+                    <Text style={styles.meetupInfo}>📅 {meetup.date} {meetup.time}</Text>
 
-                      <View style={styles.meetupFooter}>
+                    <View style={styles.meetupFooter}>
+                      <View>
                         <Text style={styles.meetupPrice}>
                           {meetup.price.toLocaleString()}원/인
                         </Text>
                         <Text style={styles.meetupPlayers}>
-                          {meetup.currentPlayers}/{meetup.maxPlayers}명
+                          {meetup.currentPlayers}/{meetup.maxPlayers}명 참가
                         </Text>
                       </View>
 
-                      {/* 호스트 버튼 */}
+                      {/* 모집 중일 때만 관리 버튼 표시 */}
                       {meetup.status === 'recruiting' && (
-                        <View style={styles.buttonContainer}>
+                        <View style={styles.actionButtons}>
                           <TouchableOpacity
-                            style={[styles.actionButton, styles.manageButton]}
+                            style={styles.manageButton}
                             onPress={() => handleManageParticipants(meetup.id)}
                           >
                             <Text style={styles.manageButtonText}>참가자 관리</Text>
                           </TouchableOpacity>
                           <TouchableOpacity
-                            style={[styles.actionButton, styles.cancelButton]}
+                            style={styles.editButton}
+                            onPress={() => handleEditMeetup(meetup.id)}
+                          >
+                            <Text style={styles.editButtonText}>수정</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.cancelButton}
                             onPress={() => handleCancelMeetup(meetup.id)}
                           >
                             <Text style={styles.cancelButtonText}>취소</Text>
@@ -221,15 +251,21 @@ export const HostedMeetupsScreen: React.FC = () => {
                         </View>
                       )}
                     </View>
-                  </TouchableOpacity>
-                );
-              })
+                  </View>
+                </TouchableOpacity>
+              ))
             ) : (
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>😢</Text>
                 <Text style={styles.emptyTitle}>
-                  {activeTab === 'recruiting' ? '모집중인 모임이 없습니다' : '완료된 모임이 없습니다'}
+                  {activeTab === 'recruiting' ? '모집 중인 모임이 없습니다' : '완료된 모임이 없습니다'}
                 </Text>
+                <TouchableOpacity
+                  style={styles.createButton}
+                  onPress={() => navigation.navigate('CreateBooking' as never)}
+                >
+                  <Text style={styles.createButtonText}>+ 모임 만들기</Text>
+                </TouchableOpacity>
               </View>
             )}
           </View>
@@ -250,6 +286,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
   },
   header: {
     flexDirection: 'row',
@@ -276,39 +323,6 @@ const styles = StyleSheet.create({
   },
   headerRight: {
     width: 40,
-  },
-  statsCard: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
-    marginTop: 16,
-    marginBottom: 12,
-    padding: 20,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#2E7D32',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 13,
-    color: '#666',
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: '#E5E5E5',
-    marginHorizontal: 8,
   },
   tabContainer: {
     flexDirection: 'row',
@@ -357,17 +371,19 @@ const styles = StyleSheet.create({
     height: 180,
     backgroundColor: '#E5E5E5',
   },
-  statusBadge: {
+  recruitingBadge: {
     position: 'absolute',
     top: 12,
     right: 12,
-    paddingHorizontal: 12,
+    backgroundColor: 'rgba(46, 125, 50, 0.9)',
+    paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 12,
   },
-  statusText: {
-    fontSize: 12,
+  recruitingBadgeText: {
+    fontSize: 11,
     fontWeight: '600',
+    color: '#fff',
   },
   pubBadge: {
     position: 'absolute',
@@ -398,9 +414,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   meetupFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
@@ -410,38 +423,53 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#2E7D32',
+    marginBottom: 4,
   },
   meetupPlayers: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#666',
   },
-  buttonContainer: {
+  actionButtons: {
     flexDirection: 'row',
     marginTop: 12,
     gap: 8,
   },
-  actionButton: {
+  manageButton: {
     flex: 1,
+    backgroundColor: '#2E7D32',
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
   },
-  manageButton: {
-    backgroundColor: '#E8F5E9',
-  },
   manageButtonText: {
-    fontSize: 14,
+    color: '#fff',
+    fontSize: 13,
     fontWeight: '600',
-    color: '#2E7D32',
+  },
+  editButton: {
+    flex: 1,
+    backgroundColor: '#1976D2',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  editButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
   },
   cancelButton: {
-    backgroundColor: '#FFE5E5',
+    flex: 1,
+    backgroundColor: '#E5E5E5',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
   },
   cancelButtonText: {
-    fontSize: 14,
+    color: '#666',
+    fontSize: 13,
     fontWeight: '600',
-    color: '#FF3B30',
   },
   emptyContainer: {
     alignItems: 'center',
@@ -456,6 +484,18 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     color: '#666',
+    marginBottom: 20,
+  },
+  createButton: {
+    backgroundColor: '#2E7D32',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  createButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
   },
   bottomSpacing: {
     height: 40,

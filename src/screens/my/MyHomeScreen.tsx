@@ -14,22 +14,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { useAuthStore } from '../../store/useAuthStore';
 
 const { width } = Dimensions.get('window');
-
-// Mock 데이터
-const mockUserData = {
-  name: '김골프',
-  profileImage: 'https://i.pravatar.cc/150?img=12',
-  backgroundImage: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=800',
-  handicap: '18',
-  todayVisits: 15,
-  totalVisits: 1234,
-  roundCount: 42,
-  avgScore: 95,
-  friends: 23,
-  mood: '오늘도 좋은 날씨! 라운딩 가고 싶다 ⛳',
-};
 
 // Mock 컨텐츠 데이터
 const mockContents = [
@@ -142,6 +129,25 @@ const mockGuestbook = [
 
 export const MyHomeScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { user } = useAuthStore();
+
+  // ✅ 실제 사용자 데이터로 변경
+  const userData = {
+    name: user?.name || '골퍼',
+    email: user?.email || '',
+    profileImage: user?.avatar || 'https://i.pravatar.cc/150?img=12',
+    backgroundImage: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=800',
+    phone: user?.phone || '',
+    points: user?.points || 0,
+    membership: user?.membership || 'FREE',
+    handicap: '18',
+    todayVisits: 15,
+    totalVisits: 1234,
+    roundCount: 24,
+    avgScore: 4.8,
+    friends: 23,
+    mood: '오늘도 좋은 날씨! 라운딩 가고 싶다 ⛳',
+  };
 
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedTab, setSelectedTab] = useState('all'); // all, diary, photo, guestbook
@@ -219,7 +225,7 @@ export const MyHomeScreen: React.FC = () => {
           {/* 프로필 배경 (축소) */}
           <View style={styles.profileHeader}>
             <Image
-              source={{ uri: mockUserData.backgroundImage }}
+              source={{ uri: userData.backgroundImage }}
               style={styles.backgroundImage}
               blurRadius={2}
             />
@@ -228,26 +234,26 @@ export const MyHomeScreen: React.FC = () => {
             <View style={styles.profileContent}>
               <TouchableOpacity onPress={handleEditProfile}>
                 <Image
-                  source={{ uri: mockUserData.profileImage }}
+                  source={{ uri: userData.profileImage }}
                   style={styles.profileImage}
                 />
               </TouchableOpacity>
 
               <View style={styles.profileInfo}>
-                <Text style={styles.profileName}>{mockUserData.name}</Text>
-                <Text style={styles.profileHandicap}>핸디캡: {mockUserData.handicap}</Text>
+                <Text style={styles.profileName}>{userData.name}</Text>
+                <Text style={styles.profileHandicap}>핸디캡: {userData.handicap}</Text>
               </View>
 
               {/* 방문자 카운터 */}
               <View style={styles.visitorCounter}>
                 <View style={styles.counterItem}>
                   <Text style={styles.counterLabel}>Today</Text>
-                  <Text style={styles.counterValue}>{mockUserData.todayVisits}</Text>
+                  <Text style={styles.counterValue}>{userData.todayVisits}</Text>
                 </View>
                 <View style={styles.counterDivider} />
                 <View style={styles.counterItem}>
                   <Text style={styles.counterLabel}>Total</Text>
-                  <Text style={styles.counterValue}>{mockUserData.totalVisits}</Text>
+                  <Text style={styles.counterValue}>{userData.totalVisits}</Text>
                 </View>
               </View>
             </View>
@@ -258,13 +264,13 @@ export const MyHomeScreen: React.FC = () => {
             <View style={styles.statsCard}>
               <View style={styles.statItem}>
                 <Text style={styles.statIcon}>⛳</Text>
-                <Text style={styles.statValue}>{mockUserData.roundCount}</Text>
+                <Text style={styles.statValue}>{userData.roundCount}</Text>
                 <Text style={styles.statLabel}>라운딩</Text>
               </View>
               <View style={styles.statDivider} />
               <View style={styles.statItem}>
                 <Text style={styles.statIcon}>🏌️</Text>
-                <Text style={styles.statValue}>{mockUserData.avgScore}</Text>
+                <Text style={styles.statValue}>{userData.avgScore}</Text>
                 <Text style={styles.statLabel}>평균타수</Text>
               </View>
               <View style={styles.statDivider} />
@@ -274,7 +280,7 @@ export const MyHomeScreen: React.FC = () => {
                 activeOpacity={0.7}
               >
                 <Text style={styles.statIcon}>👥</Text>
-                <Text style={styles.statValue}>{mockUserData.friends}</Text>
+                <Text style={styles.statValue}>{userData.friends}</Text>
                 <Text style={styles.statLabel}>골프친구</Text>
               </TouchableOpacity>
             </View>
