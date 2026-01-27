@@ -1,10 +1,10 @@
-// App.tsx - Expo 앱 진입점 (친구 탭 통합 버전)
-import React from 'react';
+// App.tsx - Expo 앱 진입점 (로그인 플로우 추가)
+import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
-import { View, Text, Platform } from 'react-native';
+import { View, Text, Platform, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeScreen } from './src/screens/home/HomeScreen';
 import { BookingListScreen } from './src/screens/booking/BookingListScreen';
@@ -37,6 +37,10 @@ import { PostDetailScreen } from './src/screens/feed/PostDetailScreen';
 import { GolfCourseSearchScreen } from './src/screens/golfcourse/GolfCourseSearchScreen';
 import { GolfCourseDetailScreen } from './src/screens/golfcourse/GolfCourseDetailScreen';
 import { GolfCourseReviewScreen } from './src/screens/golfcourse/GolfCourseReviewScreen';
+
+// 🔐 인증 관련 import
+import { AuthNavigator } from './src/components/navigation/AuthNavigator';
+import { useAuthStore } from './src/store/useAuthStore';
 
 const Tab = createBottomTabNavigator();
 const BookingStack = createNativeStackNavigator();
@@ -138,113 +142,149 @@ const GolfCourseStackNavigator = () => (
 function AppContent() {
   const insets = useSafeAreaInsets();
 
+  // 🔐 인증 상태 관리
+  const { isAuthenticated, loading, loadUser } = useAuthStore();
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  // 앱 시작 시 저장된 로그인 정보 확인
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        await loadUser(); // AsyncStorage에서 저장된 유저 정보 로드
+      } catch (error) {
+        console.error('인증 초기화 실패:', error);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    initAuth();
+  }, []);
+
+  // 로딩 중 스플래시 화면
+  if (isInitializing || loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#10b981' }}>
+        <Text style={{ fontSize: 60, marginBottom: 20 }}>⛳</Text>
+        <Text style={{ fontSize: 24, fontWeight: 'bold', color: 'white', marginBottom: 10 }}>Golf Pub</Text>
+        <ActivityIndicator size="large" color="white" />
+      </View>
+    );
+  }
+
   return (
     <NavigationContainer>
-      <Tab.Navigator
-        screenOptions={{
-          headerShown: false,
-          tabBarActiveTintColor: '#10b981',
-          tabBarInactiveTintColor: '#94a3b8',
-          tabBarStyle: {
-            backgroundColor: 'white',
-            borderTopWidth: 1,
-            borderTopColor: '#e2e8f0',
-            height: 60 + insets.bottom,
-            paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
-            paddingTop: 8,
-          },
-          tabBarLabelStyle: {
-            fontSize: 11,
-            fontWeight: '600',
-          },
-        }}
-      >
-        {/* 홈 */}
-        <Tab.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{
-            tabBarLabel: '홈',
-            tabBarIcon: ({ color, focused }) => (
-              <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-                🏠
-              </Text>
-            ),
+      {isAuthenticated ? (
+        // 로그인 됨 → 메인 화면 (Tab Navigator)
+        <Tab.Navigator
+          screenOptions={{
+            headerShown: false,
+            tabBarActiveTintColor: '#10b981',
+            tabBarInactiveTintColor: '#94a3b8',
+            tabBarStyle: {
+              backgroundColor: 'white',
+              borderTopWidth: 1,
+              borderTopColor: '#e2e8f0',
+              height: 60 + insets.bottom,
+              paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
+              paddingTop: 8,
+            },
+            tabBarLabelStyle: {
+              fontSize: 11,
+              fontWeight: '600',
+            },
           }}
-        />
+        >
+          {/* 홈 */}
+          <Tab.Screen
+            name="Home"
+            component={HomeScreen}
+            options={{
+              tabBarLabel: '홈',
+              tabBarIcon: ({ color, focused }) => (
+                <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
+                  🏠
+                </Text>
+              ),
+            }}
+          />
 
-        {/* 부킹 */}
-        <Tab.Screen
-          name="Bookings"
-          component={BookingStackNavigator}
-          options={{
-            tabBarLabel: '부킹',
-            tabBarIcon: ({ color, focused }) => (
-              <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-                ⛳
-              </Text>
-            ),
-          }}
-        />
+          {/* 부킹 */}
+          <Tab.Screen
+            name="Bookings"
+            component={BookingStackNavigator}
+            options={{
+              tabBarLabel: '부킹',
+              tabBarIcon: ({ color, focused }) => (
+                <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
+                  ⛳
+                </Text>
+              ),
+            }}
+          />
 
-        {/* 중고거래 */}
-        <Tab.Screen
-          name="Marketplace"
-          component={MarketplaceStackNavigator}
-          options={{
-            tabBarLabel: '중고거래',
-            tabBarIcon: ({ color, focused }) => (
-              <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-                🛒
-              </Text>
-            ),
-          }}
-        />
+          {/* 중고거래 */}
+          <Tab.Screen
+            name="Marketplace"
+            component={MarketplaceStackNavigator}
+            options={{
+              tabBarLabel: '중고거래',
+              tabBarIcon: ({ color, focused }) => (
+                <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
+                  🛒
+                </Text>
+              ),
+            }}
+          />
 
-        {/* Feed */}
-        <Tab.Screen
-          name="Feed"
-          component={FeedStackNavigator}
-          options={{
-            tabBarLabel: 'Feed',
-            tabBarIcon: ({ color, focused }) => (
-              <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-                📱
-              </Text>
-            ),
-          }}
-        />
+          {/* Feed */}
+          <Tab.Screen
+            name="Feed"
+            component={FeedStackNavigator}
+            options={{
+              tabBarLabel: 'Feed',
+              tabBarIcon: ({ color, focused }) => (
+                <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
+                  📱
+                </Text>
+              ),
+            }}
+          />
 
-        {/* 골프장 */}
-        <Tab.Screen
-          name="GolfCourse"
-          component={GolfCourseStackNavigator}
-          options={{
-            tabBarLabel: '골프장',
-            tabBarIcon: ({ color, focused }) => (
-              <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-                🏌️
-              </Text>
-            ),
-          }}
-        />
+          {/* 골프장 */}
+          <Tab.Screen
+            name="GolfCourse"
+            component={GolfCourseStackNavigator}
+            options={{
+              tabBarLabel: '골프장',
+              tabBarIcon: ({ color, focused }) => (
+                <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
+                  🏌️
+                </Text>
+              ),
+            }}
+          />
 
-        {/* 친구 탭 제거! - My 홈피에서 접근 */}
+          {/* 친구 탭 제거! - My 홈피에서 접근 */}
 
-        {/* My 홈피 (친구 포함) */}
-        <Tab.Screen
-          name="MyHome"
-          component={MyHomeStackNavigator}
-          options={{
-            tabBarLabel: 'My홈피',
-            tabBarIcon: ({ color, focused }) => (
-              <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-                🏡
-              </Text>
-            ),
-          }}
-        />
-      </Tab.Navigator>
+          {/* My 홈피 (친구 포함) */}
+          <Tab.Screen
+            name="MyHome"
+            component={MyHomeStackNavigator}
+            options={{
+              tabBarLabel: 'My홈피',
+              tabBarIcon: ({ color, focused }) => (
+                <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
+                  🏡
+                </Text>
+              ),
+            }}
+          />
+        </Tab.Navigator>
+      ) : (
+        // 로그인 안 됨 → 로그인 화면
+        <AuthNavigator />
+      )}
     </NavigationContainer>
   );
 }
