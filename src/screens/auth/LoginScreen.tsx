@@ -1,16 +1,28 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from 'react-native';
+import { useAuthStore } from '../../store/useAuthStore';
 
 export const LoginScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
+  // 🔐 Auth Store 연결
+  const { login, loading, error } = useAuthStore();
+
+  const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('알림', '이메일과 비밀번호를 입력하세요');
       return;
     }
-    Alert.alert('로그인 성공', '환영합니다!');
+
+    try {
+      // useAuthStore의 login 호출
+      await login(email, password);
+      // 로그인 성공 시 자동으로 App.tsx에서 메인 화면으로 전환됨
+    } catch (err: any) {
+      // 에러 발생 시 Alert
+      Alert.alert('로그인 실패', err.message || '로그인에 실패했습니다.');
+    }
   };
 
   return (
@@ -24,20 +36,47 @@ export const LoginScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
       <View style={styles.form}>
         <View style={styles.inputContainer}>
           <Text style={styles.label}>이메일</Text>
-          <TextInput style={styles.input} placeholder="이메일을 입력하세요" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+          <TextInput
+            style={styles.input}
+            placeholder="이메일을 입력하세요"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            editable={!loading}
+          />
         </View>
 
         <View style={styles.inputContainer}>
           <Text style={styles.label}>비밀번호</Text>
-          <TextInput style={styles.input} placeholder="비밀번호를 입력하세요" value={password} onChangeText={setPassword} secureTextEntry />
+          <TextInput
+            style={styles.input}
+            placeholder="비밀번호를 입력하세요"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            editable={!loading}
+          />
         </View>
+
+        {error && (
+          <Text style={styles.errorText}>{error}</Text>
+        )}
 
         <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
           <Text style={styles.forgotPassword}>비밀번호를 잊으셨나요?</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>로그인</Text>
+        <TouchableOpacity
+          style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.loginButtonText}>로그인</Text>
+          )}
         </TouchableOpacity>
 
         <View style={styles.divider}>
@@ -46,18 +85,18 @@ export const LoginScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
           <View style={styles.dividerLine} />
         </View>
 
-        <TouchableOpacity style={styles.socialButton}>
+        <TouchableOpacity style={styles.socialButton} disabled={loading}>
           <Text style={styles.socialButtonText}>🍎 Apple로 계속하기</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.socialButton}>
+        <TouchableOpacity style={styles.socialButton} disabled={loading}>
           <Text style={styles.socialButtonText}>📱 카카오로 계속하기</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.footer}>
         <Text style={styles.footerText}>계정이 없으신가요? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+        <TouchableOpacity onPress={() => navigation.navigate('Register')} disabled={loading}>
           <Text style={styles.signupText}>회원가입</Text>
         </TouchableOpacity>
       </View>
@@ -75,8 +114,10 @@ const styles = StyleSheet.create({
   inputContainer: { marginBottom: 20 },
   label: { fontSize: 14, fontWeight: '600', color: '#1a1a1a', marginBottom: 8 },
   input: { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 12, padding: 16, fontSize: 16 },
+  errorText: { color: '#ef4444', fontSize: 14, marginBottom: 12, textAlign: 'center' },
   forgotPassword: { color: '#007AFF', fontSize: 14, textAlign: 'right', marginBottom: 24 },
   loginButton: { backgroundColor: '#007AFF', padding: 16, borderRadius: 12, alignItems: 'center', marginBottom: 24 },
+  loginButtonDisabled: { backgroundColor: '#94a3b8', opacity: 0.7 },
   loginButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   divider: { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
   dividerLine: { flex: 1, height: 1, backgroundColor: '#e0e0e0' },
