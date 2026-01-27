@@ -16,6 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.golfpub.app",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Golf Pub이 골프 활동 사진을 저장하려면 사진 접근 권한이 필요합니다.",
         "NSPhotoLibraryAddUsageDescription": "Golf Pub이 사진을 갤러리에 저장하려면 권한이 필요합니다.",
@@ -31,6 +32,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.golfpub.app",
+      "googleServicesFile": "./google-services.json",
       "permissions": [
         "INTERNET",
         "CAMERA",
