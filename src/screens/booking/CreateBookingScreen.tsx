@@ -222,6 +222,9 @@ export const CreateBookingScreen: React.FC = () => {
               value={price}
               onChangeText={setPrice}
               keyboardType="number-pad"
+              autoComplete="off"
+              textContentType="none"
+              importantForAutofill="no"
             />
             <Text style={styles.priceUnit}>원</Text>
           </View>

@@ -1,6 +1,6 @@
-// JoinedMeetupsScreen.tsx - 참가한 모임 화면
+// JoinedMeetupsScreen.tsx - 참가한 모임 화면 (수정됨 - 실제 API 연동)
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,82 +8,112 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-
-// Mock 참가한 모임 데이터
-const mockJoinedMeetups = [
-  {
-    id: 1,
-    title: '평일 오후 라운딩',
-    golfCourse: '남서울CC',
-    location: '서울 강남',
-    date: '2025.01.30',
-    time: '14:00',
-    price: 150000,
-    currentPlayers: 3,
-    maxPlayers: 4,
-    status: 'upcoming', // upcoming, completed, cancelled
-    hostName: '이호스트',
-    image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400',
-    hasPub: true,
-  },
-  {
-    id: 2,
-    title: '초보 환영 라운딩',
-    golfCourse: '대관령CC',
-    location: '강원 평창',
-    date: '2025.02.05',
-    time: '09:00',
-    price: 100000,
-    currentPlayers: 2,
-    maxPlayers: 4,
-    status: 'upcoming',
-    hostName: '박골프',
-    image: 'https://images.unsplash.com/photo-1592919505780-303950717480?w=400',
-    hasPub: false,
-  },
-  {
-    id: 3,
-    title: '주말 라운딩 같이 치실 분!',
-    golfCourse: '세라지오CC',
-    location: '경기 광주',
-    date: '2025.01.17',
-    time: '10:00',
-    price: 120000,
-    currentPlayers: 4,
-    maxPlayers: 4,
-    status: 'completed',
-    hostName: '김라운딩',
-    image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400',
-    hasPub: true,
-  },
-  {
-    id: 4,
-    title: '강원도 겨울 라운딩',
-    golfCourse: '하이원CC',
-    location: '강원 정선',
-    date: '2025.01.10',
-    time: '11:00',
-    price: 90000,
-    currentPlayers: 4,
-    maxPlayers: 4,
-    status: 'completed',
-    hostName: '최겨울',
-    image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400',
-    hasPub: false,
-  },
-];
+import { useAuthStore } from '../../../store/useAuthStore'; // ✅ 추가
+// import { bookingAPI } from '../../../services/api/bookingAPI'; // ✅ 추가 (API 준비 시)
 
 type TabType = 'upcoming' | 'completed';
 
 export const JoinedMeetupsScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { user } = useAuthStore(); // ✅ useAuthStore 사용
+  
   const [activeTab, setActiveTab] = useState<TabType>('upcoming');
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const upcomingMeetups = mockJoinedMeetups.filter(m => m.status === 'upcoming');
-  const completedMeetups = mockJoinedMeetups.filter(m => m.status === 'completed');
+  useEffect(() => {
+    loadMyBookings();
+  }, []);
+
+  const loadMyBookings = async () => {
+    try {
+      setLoading(true);
+      
+      // TODO: 실제 API 호출로 변경
+      // const allBookings = await bookingAPI.getBookings();
+      // const myBookings = allBookings.filter(booking => 
+      //   booking.participants?.some(p => p.userId === user?.id)
+      // );
+      // setBookings(myBookings);
+      
+      // 임시 Mock 데이터 (API 준비 전까지)
+      const mockJoinedMeetups = [
+        {
+          id: 1,
+          title: '평일 오후 라운딩',
+          golfCourse: '남서울CC',
+          location: '서울 강남',
+          date: '2025.01.30',
+          time: '14:00',
+          price: 150000,
+          currentPlayers: 3,
+          maxPlayers: 4,
+          status: 'upcoming',
+          hostName: '이호스트',
+          image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400',
+          hasPub: true,
+        },
+        {
+          id: 2,
+          title: '초보 환영 라운딩',
+          golfCourse: '대관령CC',
+          location: '강원 평창',
+          date: '2025.02.05',
+          time: '09:00',
+          price: 100000,
+          currentPlayers: 2,
+          maxPlayers: 4,
+          status: 'upcoming',
+          hostName: '박골프',
+          image: 'https://images.unsplash.com/photo-1592919505780-303950717480?w=400',
+          hasPub: false,
+        },
+        {
+          id: 3,
+          title: '주말 라운딩 같이 치실 분!',
+          golfCourse: '세라지오CC',
+          location: '경기 광주',
+          date: '2025.01.17',
+          time: '10:00',
+          price: 120000,
+          currentPlayers: 4,
+          maxPlayers: 4,
+          status: 'completed',
+          hostName: '김라운딩',
+          image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400',
+          hasPub: true,
+        },
+        {
+          id: 4,
+          title: '강원도 겨울 라운딩',
+          golfCourse: '하이원CC',
+          location: '강원 정선',
+          date: '2025.01.10',
+          time: '11:00',
+          price: 90000,
+          currentPlayers: 4,
+          maxPlayers: 4,
+          status: 'completed',
+          hostName: '최겨울',
+          image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400',
+          hasPub: false,
+        },
+      ];
+      
+      setBookings(mockJoinedMeetups);
+    } catch (error) {
+      console.error('내 모임 로드 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const upcomingMeetups = bookings.filter(m => m.status === 'upcoming');
+  const completedMeetups = bookings.filter(m => m.status === 'completed');
 
   const displayMeetups = activeTab === 'upcoming' ? upcomingMeetups : completedMeetups;
 
@@ -91,6 +121,15 @@ export const JoinedMeetupsScreen: React.FC = () => {
     console.log('모임 상세:', id);
     // TODO: BookingDetail 화면으로 이동
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2E7D32" />
+        <Text style={styles.loadingText}>내 모임을 불러오는 중...</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -188,6 +227,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
   },
   header: {
     flexDirection: 'row',

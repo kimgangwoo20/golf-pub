@@ -5,7 +5,7 @@ import {
   View, Text, TouchableOpacity, StyleSheet, RefreshControl, FlatList, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Booking, BookingFilter as FilterType, BookingSortType } from '../../types/booking-types';
 import { BookingListItem } from '../../components/booking/BookingListItem';
 import { BookingFilter } from '../../components/booking/BookingFilter';
@@ -20,7 +20,13 @@ export const BookingListScreen: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<FilterType>({});
   const [sortType, setSortType] = useState<BookingSortType>('latest');
 
-  useEffect(() => { loadBookings(); }, []);
+  // ✅ useFocusEffect로 변경 - 화면 포커스 시 자동 새로고침
+  useFocusEffect(
+    React.useCallback(() => {
+      loadBookings();
+    }, [])
+  );
+  
   useEffect(() => { applyFiltersAndSort(); }, [bookings, activeFilter, sortType]);
 
   const loadBookings = async () => {
