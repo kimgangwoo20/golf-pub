@@ -1,7 +1,7 @@
 // 💬 kakaoMessage.ts
 // 카카오톡 메시지 서비스 - 공유 및 초대
 
-import { shareMessage, shareFeed, sendFeed, sendLink, LinkObject, FeedObject, ContentObject, ButtonObject } from '@react-native-seoul/kakao-share';
+import { shareMessage, shareFeed, sendFeed, sendLink, LinkObject, FeedObject, ContentObject, ButtonObject } from '@react-native-seoul/kakao-login';
 
 /**
  * 카카오톡 메시지 서비스
@@ -396,14 +396,16 @@ export const KakaoMessageService = new KakaoMessageServiceClass();
 /**
  * 설치 필요 패키지:
  * 
- * npm install @react-native-seoul/kakao-share
+ * npm install @react-native-seoul/kakao-login
+ * 
+ * 참고: @react-native-seoul/kakao-login에 로그인 + 공유 기능 모두 포함
  * 
  * app.json 설정:
  * {
  *   "expo": {
  *     "plugins": [
  *       [
- *         "@react-native-seoul/kakao-share",
+ *         "@react-native-seoul/kakao-login",
  *         {
  *           "kakaoAppKey": "YOUR_KAKAO_APP_KEY",
  *           "android": {
