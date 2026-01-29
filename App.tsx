@@ -39,7 +39,7 @@ import { GolfCourseDetailScreen } from './src/screens/golfcourse/GolfCourseDetai
 import { GolfCourseReviewScreen } from './src/screens/golfcourse/GolfCourseReviewScreen';
 
 // 🔐 인증 관련 import
-import { AuthNavigator } from './src/components/navigation/AuthNavigator';
+import { AuthNavigator } from './src/navigation/AuthNavigator';
 import { useAuthStore } from './src/store/useAuthStore';
 
 const Tab = createBottomTabNavigator();
@@ -143,14 +143,14 @@ function AppContent() {
   const insets = useSafeAreaInsets();
 
   // 🔐 인증 상태 관리
-  const { isAuthenticated, loading, loadUser } = useAuthStore();
+  const { isAuthenticated, isLoading, loadUserFromStorage } = useAuthStore();
   const [isInitializing, setIsInitializing] = useState(true);
 
   // 앱 시작 시 저장된 로그인 정보 확인
   useEffect(() => {
     const initAuth = async () => {
       try {
-        await loadUser(); // AsyncStorage에서 저장된 유저 정보 로드
+        await loadUserFromStorage(); // AsyncStorage에서 저장된 유저 정보 로드
       } catch (error) {
         console.error('인증 초기화 실패:', error);
       } finally {
@@ -162,7 +162,7 @@ function AppContent() {
   }, []);
 
   // 로딩 중 스플래시 화면
-  if (isInitializing || loading) {
+  if (isInitializing || isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#10b981' }}>
         <Text style={{ fontSize: 60, marginBottom: 20 }}>⛳</Text>
