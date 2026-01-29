@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { searchFriends, sendFriendRequest } from '@/services/firebase/firebaseFriends';
 
 // Mock 추천 친구 데이터
 const mockSuggestions = [
@@ -71,17 +72,37 @@ export const AddFriendScreen: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (searchText.trim().length < 2) {
       Alert.alert('알림', '2자 이상 입력해주세요.');
       return;
     }
 
-    // Mock 검색
-    setSearchResults(mockSearchResults);
+    try {
+      // TODO: 실제 로그인한 사용자 ID로 변경 필요
+      const currentUserId = 'TEMP_USER_ID';
+
+      const results = await searchFriends(searchText, currentUserId);
+
+      if (results.length === 0) {
+        Alert.alert('검색 결과 없음', '검색 결과가 없습니다. 다른 검색어를 입력해주세요.');
+        setSearchResults([]);
+      } else {
+        setSearchResults(results);
+      }
+    } catch (error) {
+      console.error('친구 검색 실패:', error);
+      // Firebase 연결 실패 시 Mock 데이터 사용
+      Alert.alert(
+        '알림',
+        'Firebase 연결이 필요합니다.\n임시로 Mock 데이터를 표시합니다.',
+        [{ text: '확인' }]
+      );
+      setSearchResults(mockSearchResults);
+    }
   };
 
-  const handleAddFriend = (userId: number, userName: string) => {
+  const handleAddFriend = async (userId: number, userName: string) => {
     Alert.alert(
       '친구 추가',
       `${userName}님에게 친구 요청을 보내시겠습니까?`,
@@ -89,9 +110,27 @@ export const AddFriendScreen: React.FC = () => {
         { text: '취소', style: 'cancel' },
         {
           text: '요청',
-          onPress: () => {
-            console.log('친구 요청:', userId);
-            Alert.alert('완료', '친구 요청을 보냈습니다.');
+          onPress: async () => {
+            try {
+              // TODO: 실제 로그인한 사용자 ID로 변경 필요
+              const currentUserId = 'TEMP_USER_ID';
+
+              const result = await sendFriendRequest(currentUserId, userId.toString());
+
+              if (result.success) {
+                Alert.alert('완료', result.message);
+              } else {
+                Alert.alert('알림', result.message);
+              }
+            } catch (error) {
+              console.error('친구 요청 실패:', error);
+              // Firebase 연결 실패 시 Mock 동작
+              Alert.alert(
+                '알림',
+                'Firebase 연결이 필요합니다.\n친구 요청을 보냈습니다. (Mock)',
+                [{ text: '확인' }]
+              );
+            }
           },
         },
       ]
