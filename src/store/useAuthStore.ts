@@ -1,290 +1,191 @@
-// useAuthStore.ts - 인증 상태 관리 (Firebase Auth 연동)
+// 🔐 인증 상태 관리 Store
+// Zustand로 사용자 로그인 상태 관리
+
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import auth from '@react-native-firebase/auth';
-import { authAPI } from '../services/api/authAPI';
-import { profileAPI } from '../services/api/profileAPI';
+import firestore from '@react-native-firebase/firestore';
 
-interface User {
-  id: string; // Firebase UID
-  email: string;
-  name: string;
+export interface User {
+  id: string;
+  kakaoId: string;
+  email?: string;
+  nickname: string;
   avatar?: string;
   phone?: string;
-  membership: 'FREE' | 'PRO' | 'PREMIUM';
-  points: number;
-  level: string;
+  createdAt: number;
+  handicap?: number;
+  location?: string;
 }
 
 interface AuthState {
   user: User | null;
-  token: string | null;
+  isLoading: boolean;
   isAuthenticated: boolean;
-  loading: boolean;
-  error: string | null;
-
+  
   // Actions
-  login: (email: string, password: string) => Promise<void>;
-  register: (data: { email: string; password: string; name: string; phone: string }) => Promise<void>;
+  setUser: (user: User | null) => void;
+  setLoading: (loading: boolean) => void;
+  login: (kakaoId: string, profile: any) => Promise<void>;
   logout: () => Promise<void>;
-  loadUser: () => Promise<void>;
-  updateUser: (data: Partial<User>) => Promise<void>;
-  clearError: () => void;
+  updateProfile: (updates: Partial<User>) => Promise<void>;
+  loadUserFromStorage: () => Promise<void>;
 }
 
-const STORAGE_KEY = '@golf_pub_auth';
+const STORAGE_KEY = '@golf_pub_user';
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
-  token: null,
+  isLoading: true,
   isAuthenticated: false,
-  loading: false,
-  error: null,
 
-  // 로그인
-  login: async (email: string, password: string) => {
-    set({ loading: true, error: null });
+  setUser: (user) => set({ user, isAuthenticated: !!user }),
+  
+  setLoading: (isLoading) => set({ isLoading }),
+
+  /**
+   * 로그인 (Kakao ID로 사용자 생성/조회)
+   */
+  login: async (kakaoId: string, profile: any) => {
     try {
-      // 1. Firebase Auth로 로그인
-      const { user: firebaseUser, token } = await authAPI.login(email, password);
+      set({ isLoading: true });
+      console.log('📝 사용자 로그인 처리 시작:', kakaoId);
 
-      // 2. Firestore에서 프로필 정보 가져오기
-      const profile = await profileAPI.getMyProfile();
+      // 1. Firebase에서 사용자 조회
+      const userDoc = await firestore()
+        .collection('users')
+        .doc(kakaoId)
+        .get();
 
-      // 3. User 객체 생성
-      const user: User = {
-        id: firebaseUser.uid,
-        email: firebaseUser.email || email,
-        name: profile?.name || firebaseUser.displayName || '사용자',
-        avatar: profile?.profileImage || firebaseUser.photoURL || '',
-        phone: profile?.phone || '',
-        membership: 'FREE', // TODO: Firestore에서 가져오기
-        points: profile?.points || 0,
-        level: '초보', // TODO: 핸디캡으로 계산
-      };
+      let userData: User;
 
-      // 4. AsyncStorage에 저장
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ user, token }));
+      if (userDoc.exists) {
+        // 기존 사용자
+        console.log('✅ 기존 사용자 로그인');
+        userData = userDoc.data() as User;
+      } else {
+        // 신규 사용자 생성
+        console.log('🆕 신규 사용자 생성');
+        userData = {
+          id: kakaoId,
+          kakaoId: kakaoId,
+          email: profile.email,
+          nickname: profile.nickname || '골프 애호가',
+          avatar: profile.profileImageUrl,
+          createdAt: Date.now(),
+        };
 
-      // 5. 상태 업데이트
-      set({
-        user,
-        token,
+        await firestore()
+          .collection('users')
+          .doc(kakaoId)
+          .set(userData);
+
+        console.log('✅ 신규 사용자 생성 완료');
+      }
+
+      // 2. AsyncStorage에 저장
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+
+      // 3. 상태 업데이트
+      set({ 
+        user: userData, 
         isAuthenticated: true,
-        loading: false
+        isLoading: false,
       });
 
-      console.log('✅ 로그인 성공:', user.email);
-    } catch (error: any) {
-      console.error('❌ 로그인 실패:', error);
-      set({
-        error: error.message || '로그인에 실패했습니다.',
-        loading: false,
-        isAuthenticated: false,
-        user: null,
-        token: null,
-      });
-      throw error; // 에러를 다시 던져서 UI에서 처리 가능하게
-    }
-  },
-
-  // 회원가입
-  register: async (data) => {
-    set({ loading: true, error: null });
-    try {
-      // 1. Firebase Auth로 회원가입
-      const { user: firebaseUser, token } = await authAPI.register(
-        data.email,
-        data.password,
-        data.name
-      );
-
-      // 2. Firestore 프로필 업데이트 (전화번호 추가)
-      await profileAPI.updateProfile({
-        phone: data.phone,
-      });
-
-      // 3. 프로필 정보 다시 가져오기
-      const profile = await profileAPI.getMyProfile();
-
-      // 4. User 객체 생성
-      const user: User = {
-        id: firebaseUser.uid,
-        email: firebaseUser.email || data.email,
-        name: profile?.name || data.name,
-        avatar: profile?.profileImage || '',
-        phone: profile?.phone || data.phone,
-        membership: 'FREE',
-        points: 0,
-        level: '초보',
-      };
-
-      // 5. AsyncStorage에 저장
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ user, token }));
-
-      // 6. 상태 업데이트
-      set({
-        user,
-        token,
-        isAuthenticated: true,
-        loading: false
-      });
-
-      console.log('✅ 회원가입 성공:', user.email);
-    } catch (error: any) {
-      console.error('❌ 회원가입 실패:', error);
-      set({
-        error: error.message || '회원가입에 실패했습니다.',
-        loading: false,
-        isAuthenticated: false,
-        user: null,
-        token: null,
-      });
+      console.log('✅ 로그인 완료:', userData.nickname);
+    } catch (error) {
+      console.error('❌ 로그인 처리 실패:', error);
+      set({ isLoading: false });
       throw error;
     }
   },
 
-  // 로그아웃
+  /**
+   * 로그아웃
+   */
   logout: async () => {
-    set({ loading: true });
     try {
-      // 1. Firebase Auth 로그아웃
-      await authAPI.logout();
+      set({ isLoading: true });
+      console.log('🔓 로그아웃 시작...');
 
-      // 2. AsyncStorage 삭제
+      // 1. AsyncStorage 삭제
       await AsyncStorage.removeItem(STORAGE_KEY);
 
-      // 3. 상태 초기화
-      set({
-        user: null,
-        token: null,
+      // 2. 상태 초기화
+      set({ 
+        user: null, 
         isAuthenticated: false,
-        error: null,
-        loading: false,
+        isLoading: false,
       });
 
-      console.log('✅ 로그아웃 성공');
-    } catch (error: any) {
+      console.log('✅ 로그아웃 완료');
+    } catch (error) {
       console.error('❌ 로그아웃 실패:', error);
-      set({
-        error: error.message || '로그아웃에 실패했습니다.',
-        loading: false,
-      });
-    }
-  },
-
-  // 저장된 유저 정보 불러오기 (앱 시작 시)
-  loadUser: async () => {
-    set({ loading: true });
-    try {
-      // 1. Firebase Auth 상태 확인
-      const firebaseUser = authAPI.getCurrentUser();
-
-      if (firebaseUser) {
-        // 2. AsyncStorage에서 저장된 정보 확인
-        const stored = await AsyncStorage.getItem(STORAGE_KEY);
-
-        if (stored) {
-          const { user, token } = JSON.parse(stored);
-
-          // 3. 토큰 유효성 확인 (선택사항)
-          try {
-            await authAPI.getIdToken(true); // 토큰 갱신
-
-            // 4. 최신 프로필 정보 가져오기
-            const profile = await profileAPI.getMyProfile();
-
-            // 5. User 객체 업데이트
-            const updatedUser: User = {
-              ...user,
-              name: profile?.name || user.name,
-              avatar: profile?.profileImage || user.avatar,
-              phone: profile?.phone || user.phone,
-              points: profile?.points || user.points,
-            };
-
-            // 6. 상태 업데이트
-            set({
-              user: updatedUser,
-              token,
-              isAuthenticated: true,
-              loading: false
-            });
-
-            console.log('✅ 자동 로그인 성공:', updatedUser.email);
-          } catch (error) {
-            // 토큰 만료 or 네트워크 에러
-            console.log('ℹ️ 토큰 만료, 로그아웃 처리');
-            await get().logout();
-          }
-        } else {
-          // AsyncStorage에 없으면 로그아웃
-          await authAPI.logout();
-          set({ loading: false, isAuthenticated: false });
-        }
-      } else {
-        // Firebase User 없으면 로그아웃 상태
-        set({ loading: false, isAuthenticated: false });
-        console.log('ℹ️ 로그인 안 됨');
-      }
-    } catch (error: any) {
-      console.error('❌ 유저 정보 불러오기 실패:', error);
-      set({
-        error: error.message,
-        loading: false,
-        isAuthenticated: false,
-      });
-    }
-  },
-
-  // 유저 정보 업데이트
-  updateUser: async (data) => {
-    const { user, token } = get();
-    if (!user) {
-      throw new Error('로그인이 필요합니다.');
-    }
-
-    set({ loading: true, error: null });
-    try {
-      // 1. Firestore 프로필 업데이트
-      await profileAPI.updateProfile({
-        name: data.name,
-        phone: data.phone,
-        // 기타 필드들
-      });
-
-      // 2. 로컬 상태 업데이트
-      const updatedUser = { ...user, ...data };
-
-      // 3. AsyncStorage 업데이트
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ user: updatedUser, token }));
-
-      // 4. 상태 업데이트
-      set({ user: updatedUser, loading: false });
-
-      console.log('✅ 프로필 업데이트 성공');
-    } catch (error: any) {
-      console.error('❌ 프로필 업데이트 실패:', error);
-      set({
-        error: error.message || '프로필 업데이트에 실패했습니다.',
-        loading: false,
-      });
+      set({ isLoading: false });
       throw error;
     }
   },
 
-  // 에러 초기화
-  clearError: () => set({ error: null }),
-}));
+  /**
+   * 프로필 업데이트
+   */
+  updateProfile: async (updates: Partial<User>) => {
+    try {
+      const { user } = get();
+      if (!user) {
+        throw new Error('로그인이 필요합니다.');
+      }
 
-// Firebase Auth 상태 변경 리스너
-auth().onAuthStateChanged((firebaseUser) => {
-  if (!firebaseUser) {
-    // 로그아웃 상태
-    const { isAuthenticated } = useAuthStore.getState();
-    if (isAuthenticated) {
-      console.log('ℹ️ Firebase Auth 로그아웃 감지');
-      useAuthStore.getState().logout();
+      console.log('📝 프로필 업데이트 시작:', updates);
+
+      // 1. Firebase 업데이트
+      await firestore()
+        .collection('users')
+        .doc(user.id)
+        .update(updates);
+
+      // 2. 로컬 상태 업데이트
+      const updatedUser = { ...user, ...updates };
+      
+      // 3. AsyncStorage 업데이트
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUser));
+
+      // 4. 상태 업데이트
+      set({ user: updatedUser });
+
+      console.log('✅ 프로필 업데이트 완료');
+    } catch (error) {
+      console.error('❌ 프로필 업데이트 실패:', error);
+      throw error;
     }
-  }
-});
+  },
+
+  /**
+   * 저장된 사용자 정보 불러오기 (자동 로그인)
+   */
+  loadUserFromStorage: async () => {
+    try {
+      set({ isLoading: true });
+      console.log('💾 저장된 사용자 정보 불러오기...');
+
+      const userJson = await AsyncStorage.getItem(STORAGE_KEY);
+
+      if (userJson) {
+        const user = JSON.parse(userJson) as User;
+        console.log('✅ 자동 로그인 성공:', user.nickname);
+        
+        set({ 
+          user, 
+          isAuthenticated: true,
+          isLoading: false,
+        });
+      } else {
+        console.log('ℹ️ 저장된 사용자 정보 없음');
+        set({ isLoading: false });
+      }
+    } catch (error) {
+      console.error('❌ 사용자 정보 불러오기 실패:', error);
+      set({ isLoading: false });
+    }
+  },
+}));

@@ -1,130 +1,223 @@
+// 🔐 LoginScreen - Kakao 로그인 화면
+// 앱 첫 진입 시 표시되는 로그인 화면
+
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from 'react-native';
-import { useAuthStore } from '../../store/useAuthStore';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { kakaoLogin } from '@/services/kakao/kakaoLogin';
+import { useAuthStore } from '@/store/useAuthStore';
 
-export const LoginScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+const { width, height } = Dimensions.get('window');
 
-  // 🔐 Auth Store 연결
-  const { login, loading, error } = useAuthStore();
+export const LoginScreen: React.FC = () => {
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuthStore();
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('알림', '이메일과 비밀번호를 입력하세요');
-      return;
-    }
-
+  const handleKakaoLogin = async () => {
     try {
-      // useAuthStore의 login 호출
-      await login(email, password);
-      // 로그인 성공 시 자동으로 App.tsx에서 메인 화면으로 전환됨
-    } catch (err: any) {
-      // 에러 발생 시 Alert
-      Alert.alert('로그인 실패', err.message || '로그인에 실패했습니다.');
+      setLoading(true);
+      console.log('🔐 Kakao 로그인 시작...');
+
+      // 1. Kakao 로그인
+      const result = await kakaoLogin();
+
+      if (!result.success) {
+        Alert.alert('로그인 실패', result.error || '로그인에 실패했습니다.');
+        setLoading(false);
+        return;
+      }
+
+      if (!result.profile) {
+        Alert.alert('로그인 실패', '프로필 정보를 가져올 수 없습니다.');
+        setLoading(false);
+        return;
+      }
+
+      console.log('✅ Kakao 로그인 성공:', result.profile);
+
+      // 2. 사용자 정보 저장 (Firebase + AsyncStorage)
+      await login(result.profile.id, result.profile);
+
+      console.log('✅ 전체 로그인 프로세스 완료');
+      
+      // 자동으로 MainTabNavigator로 이동됨 (AuthNavigator에서 처리)
+    } catch (error: any) {
+      console.error('❌ 로그인 오류:', error);
+      Alert.alert(
+        '로그인 오류',
+        error.message || '로그인 중 오류가 발생했습니다. 다시 시도해주세요.',
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <View style={styles.header}>
-        <Text style={styles.logo}>⛳</Text>
-        <Text style={styles.title}>골프 Pub</Text>
-        <Text style={styles.subtitle}>골프 메이트와 함께하는 즐거운 라운딩</Text>
-      </View>
-
-      <View style={styles.form}>
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>이메일</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="이메일을 입력하세요"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            editable={!loading}
-          />
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <LinearGradient
+        colors={['#2E7D32', '#1B5E20']}
+        style={styles.gradient}
+      >
+        {/* 로고 영역 */}
+        <View style={styles.logoContainer}>
+          <View style={styles.logoCircle}>
+            <Text style={styles.logoIcon}>⛳</Text>
+          </View>
+          <Text style={styles.logoText}>골프 Pub</Text>
+          <Text style={styles.logoSubtext}>골프를 사랑하는 사람들의 모임</Text>
         </View>
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>비밀번호</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="비밀번호를 입력하세요"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            editable={!loading}
-          />
+        {/* 설명 영역 */}
+        <View style={styles.featureContainer}>
+          <FeatureItem icon="⛳" text="골프장 예약 및 모임" />
+          <FeatureItem icon="👥" text="새로운 골프 친구 만나기" />
+          <FeatureItem icon="💬" text="실시간 채팅 및 소통" />
+          <FeatureItem icon="🛒" text="중고 골프 용품 거래" />
         </View>
 
-        {error && (
-          <Text style={styles.errorText}>{error}</Text>
-        )}
+        {/* 로그인 버튼 영역 */}
+        <View style={styles.loginContainer}>
+          <TouchableOpacity
+            style={styles.kakaoButton}
+            onPress={handleKakaoLogin}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#000000" />
+            ) : (
+              <>
+                <View style={styles.kakaoLogoPlaceholder}>
+                  <Text style={styles.kakaoLogoText}>K</Text>
+                </View>
+                <Text style={styles.kakaoButtonText}>카카오로 시작하기</Text>
+              </>
+            )}
+          </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-          <Text style={styles.forgotPassword}>비밀번호를 잊으셨나요?</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.loginButtonText}>로그인</Text>
-          )}
-        </TouchableOpacity>
-
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>또는</Text>
-          <View style={styles.dividerLine} />
+          <Text style={styles.termsText}>
+            로그인 시 <Text style={styles.termsLink}>이용약관</Text> 및{'\n'}
+            <Text style={styles.termsLink}>개인정보처리방침</Text>에 동의합니다.
+          </Text>
         </View>
-
-        <TouchableOpacity style={styles.socialButton} disabled={loading}>
-          <Text style={styles.socialButtonText}>🍎 Apple로 계속하기</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.socialButton} disabled={loading}>
-          <Text style={styles.socialButtonText}>📱 카카오로 계속하기</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>계정이 없으신가요? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Register')} disabled={loading}>
-          <Text style={styles.signupText}>회원가입</Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+      </LinearGradient>
+    </SafeAreaView>
   );
-}
+};
+
+// 기능 소개 아이템
+const FeatureItem: React.FC<{ icon: string; text: string }> = ({ icon, text }) => (
+  <View style={styles.featureItem}>
+    <Text style={styles.featureIcon}>{icon}</Text>
+    <Text style={styles.featureText}>{text}</Text>
+  </View>
+);
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  header: { alignItems: 'center', paddingTop: 60, paddingBottom: 40 },
-  logo: { fontSize: 60, marginBottom: 16 },
-  title: { fontSize: 32, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 8 },
-  subtitle: { fontSize: 14, color: '#666' },
-  form: { paddingHorizontal: 24 },
-  inputContainer: { marginBottom: 20 },
-  label: { fontSize: 14, fontWeight: '600', color: '#1a1a1a', marginBottom: 8 },
-  input: { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 12, padding: 16, fontSize: 16 },
-  errorText: { color: '#ef4444', fontSize: 14, marginBottom: 12, textAlign: 'center' },
-  forgotPassword: { color: '#007AFF', fontSize: 14, textAlign: 'right', marginBottom: 24 },
-  loginButton: { backgroundColor: '#007AFF', padding: 16, borderRadius: 12, alignItems: 'center', marginBottom: 24 },
-  loginButtonDisabled: { backgroundColor: '#94a3b8', opacity: 0.7 },
-  loginButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  divider: { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: '#e0e0e0' },
-  dividerText: { marginHorizontal: 16, color: '#666', fontSize: 14 },
-  socialButton: { borderWidth: 1, borderColor: '#e0e0e0', padding: 16, borderRadius: 12, alignItems: 'center', marginBottom: 12 },
-  socialButtonText: { fontSize: 16, fontWeight: '600' },
-  footer: { flexDirection: 'row', justifyContent: 'center', paddingTop: 24 },
-  footerText: { color: '#666', fontSize: 14 },
-  signupText: { color: '#007AFF', fontSize: 14, fontWeight: '600' },
+  container: {
+    flex: 1,
+  },
+  gradient: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingVertical: 40,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginTop: height * 0.1,
+  },
+  logoCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  logoIcon: {
+    fontSize: 64,
+  },
+  logoText: {
+    fontSize: 40,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  logoSubtext: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+  },
+  featureContainer: {
+    gap: 16,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  featureIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  featureText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  loginContainer: {
+    gap: 16,
+  },
+  kakaoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEE500',
+    paddingVertical: 16,
+    borderRadius: 12,
+    gap: 8,
+  },
+  kakaoLogoPlaceholder: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#3C1E1E',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  kakaoLogoText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FEE500',
+  },
+  kakaoButtonText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  termsText: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  termsLink: {
+    textDecorationLine: 'underline',
+    color: '#FFFFFF',
+  },
 });
