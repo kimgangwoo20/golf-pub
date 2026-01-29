@@ -7,12 +7,7 @@
     "icon": "./assets/icon.png",
     "scheme": "golfpub",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#10b981"
-    },
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.golfpub.app",
@@ -47,12 +42,11 @@
     },
     "plugins": [
       [
-        "expo-splash-screen",
+        "expo-build-properties",
         {
-          "image": "./assets/splash.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#10b981"
+          "android": {
+            "kotlinVersion": "2.0.21"
+          }
         }
       ],
       [
