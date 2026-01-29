@@ -10,9 +10,10 @@ import { Booking } from '@/types';
 interface BookingCardProps {
   booking: Booking;
   onPress: () => void;
+  onJoinPress?: () => void; // 참가하기 버튼 클릭 핸들러
 }
 
-export const BookingCard: React.FC<BookingCardProps> = ({ booking, onPress }) => {
+export const BookingCard: React.FC<BookingCardProps> = ({ booking, onPress, onJoinPress }) => {
   const getLevelBadge = (level: string) => {
     switch (level) {
       case 'beginner':
@@ -122,12 +123,24 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onPress }) =>
               <Text style={styles.fullBadgeText}>모집완료</Text>
             </View>
           ) : (
-            <LinearGradient
-              colors={[colors.primary, colors.primaryDark]}
-              style={styles.joinBtn}
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation(); // 카드 클릭 이벤트 방지
+                if (onJoinPress) {
+                  onJoinPress();
+                } else {
+                  onPress(); // fallback
+                }
+              }}
+              activeOpacity={0.8}
             >
-              <Text style={styles.joinBtnText}>참가하기</Text>
-            </LinearGradient>
+              <LinearGradient
+                colors={[colors.primary, colors.primaryDark]}
+                style={styles.joinBtn}
+              >
+                <Text style={styles.joinBtnText}>참가하기</Text>
+              </LinearGradient>
+            </TouchableOpacity>
           )}
         </View>
       </View>

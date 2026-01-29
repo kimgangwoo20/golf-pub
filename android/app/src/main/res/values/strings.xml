@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">Golf Pub</string>
+  <string name="app_name">Golf Pub</string>
+  <string name="kakao_app_key">3510fac6140cacff31cffbb0927f378</string>
 </resources>
