@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,10 +20,16 @@ import { BookingCard } from '@/components/booking/BookingCard';
 import { WeatherWidget } from '@/components/weather/WeatherWidget';
 import { useBookingStore } from '@/store/useBookingStore';
 import { Booking } from '@/types';
+import { markAttendance, checkTodayAttendance } from '@/services/firebase/firebaseAttendance';
+import { joinBooking } from '@/services/firebase/firebaseBooking';
 
 type FilterType = 'all' | 'today' | 'week' | 'beginner';
 
-export const HomeScreen: React.FC = () => {
+interface HomeScreenProps {
+  navigation?: any; // TODO: 타입 정의 개선
+}
+
+export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [refreshing, setRefreshing] = useState(false);
@@ -33,7 +40,19 @@ export const HomeScreen: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    checkAttendance();
   }, []);
+
+  const checkAttendance = async () => {
+    // TODO: 실제 로그인한 사용자 ID로 변경 필요
+    const currentUserId = 'TEMP_USER_ID';
+    try {
+      const checked = await checkTodayAttendance(currentUserId);
+      setAttendanceChecked(checked);
+    } catch (error) {
+      console.error('출석 확인 실패:', error);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -88,18 +107,78 @@ export const HomeScreen: React.FC = () => {
   };
 
   const handleBookingPress = (booking: Booking) => {
-    // 상세 모달 열기 (navigation.navigate('BookingDetail', { booking }))
-    console.log('부킹 클릭:', booking.id);
+    // 상세 화면으로 이동
+    if (navigation) {
+      navigation.navigate('BookingDetail', { booking });
+    } else {
+      console.log('부킹 클릭:', booking.id);
+      Alert.alert('알림', '부킹 상세 화면으로 이동합니다.');
+    }
   };
 
-  const handleAttendanceCheck = () => {
+  const handleJoinPress = async (booking: Booking) => {
+    // 참가하기 버튼 클릭 시
+    Alert.alert(
+      '부킹 참가',
+      `${booking.title}에 참가하시겠습니까?\n\n가격: ${booking.price.discount.toLocaleString()}원/인`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '참가하기',
+          onPress: async () => {
+            // TODO: 실제 로그인한 사용자 ID로 변경 필요
+            const currentUserId = 'TEMP_USER_ID';
+
+            try {
+              const result = await joinBooking(booking.id, currentUserId);
+
+              if (result.success) {
+                Alert.alert('참가 완료!', result.message, [
+                  {
+                    text: '확인',
+                    onPress: () => {
+                      // 부킹 목록 새로고침
+                      loadData();
+                    }
+                  }
+                ]);
+              } else {
+                Alert.alert('알림', result.message);
+              }
+            } catch (error) {
+              console.error('부킹 참가 실패:', error);
+              Alert.alert('오류', '참가 신청에 실패했습니다. 다시 시도해주세요.');
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleAttendanceCheck = async () => {
     if (attendanceChecked) {
-      console.log('이미 출석체크 완료!');
+      Alert.alert('알림', '이미 오늘 출석체크를 완료했습니다!');
       return;
     }
-    setAttendanceChecked(true);
-    console.log('출석체크 완료! 100 포인트 적립');
-    // 실제 포인트 적립 API 호출
+
+    // TODO: 실제 로그인한 사용자 ID로 변경 필요
+    const currentUserId = 'TEMP_USER_ID';
+
+    try {
+      const result = await markAttendance(currentUserId);
+
+      if (result.success) {
+        setAttendanceChecked(true);
+        Alert.alert('출석 완료! 🎉', result.message, [
+          { text: '확인', style: 'default' }
+        ]);
+      } else {
+        Alert.alert('알림', result.message);
+      }
+    } catch (error) {
+      console.error('출석 체크 실패:', error);
+      Alert.alert('오류', '출석 체크에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
   if (loading) {
@@ -169,14 +248,19 @@ export const HomeScreen: React.FC = () => {
         }
       >
 
-                      {/* 멤버십 배너 - 여기가 새로 추가되는 부분! */}
+                      {/* 멤버십 배너 */}
                       <TouchableOpacity
                         style={styles.membershipBanner}
                         onPress={() => {
-                          // TODO: 네비게이션 추가 후 아래 코드로 변경
-                          // navigation.navigate('MembershipIntro');
-                          console.log('멤버십 화면으로 이동');
-                          alert('멤버십 화면은 네비게이션 설정 후 사용 가능합니다!');
+                          if (navigation) {
+                            navigation.navigate('MembershipIntro');
+                          } else {
+                            Alert.alert(
+                              '멤버십 혜택',
+                              '멤버십 화면은 네비게이션 설정 후 사용 가능합니다!\n\n현재 개발 중인 기능입니다.',
+                              [{ text: '확인' }]
+                            );
+                          }
                         }}
                         activeOpacity={0.8}
                       >
@@ -288,6 +372,7 @@ export const HomeScreen: React.FC = () => {
                 key={booking.id}
                 booking={booking}
                 onPress={() => handleBookingPress(booking)}
+                onJoinPress={() => handleJoinPress(booking)}
               />
             ))
           )}
