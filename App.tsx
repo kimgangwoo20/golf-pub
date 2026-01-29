@@ -146,7 +146,7 @@ function AppContent() {
   const { isAuthenticated, isLoading, loadUserFromStorage } = useAuthStore();
   const [isInitializing, setIsInitializing] = useState(true);
 
-  // 앱 시작 시 저장된 로그인 정보 확인
+  // 앱 시작 시 저장된 로그인 정보 확인 (1번만!)
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -159,7 +159,8 @@ function AppContent() {
     };
 
     initAuth();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // ← 빈 배열: 앱 시작 시 1번만 실행!
 
   // 로딩 중 스플래시 화면
   if (isInitializing || isLoading) {

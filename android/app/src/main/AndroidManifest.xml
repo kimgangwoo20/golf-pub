@@ -28,20 +28,7 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="golfpub"/>
-      </intent-filter>
-    </activity>
-    <activity
-        android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity"
-        android:exported="true"
-        android:launchMode="singleTask">
-      <intent-filter>
-        <action android:name="android.intent.action.VIEW" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <category android:name="android.intent.category.BROWSABLE" />
-
-        <data
-            android:host="oauth"
-            android:scheme="kakao${kakaoAppKey}" />
+        <data android:scheme="exp+golf-pub-app"/>
       </intent-filter>
     </activity>
     <activity android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity" android:exported="true">
@@ -49,7 +36,7 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:host="oauth" android:scheme="kakao3510fac6140cacff31cffbb0927f378"/>
+        <data android:host="oauth" android:scheme="kakao3510fac6140caccff31cffbb0927f378"/>
       </intent-filter>
     </activity>
   </application>

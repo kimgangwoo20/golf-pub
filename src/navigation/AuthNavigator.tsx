@@ -2,9 +2,8 @@
 // 로그인 전: LoginScreen
 // 로그인 후: MainTabNavigator
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { LoginScreen } from '@/screens/auth/LoginScreen';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -15,12 +14,9 @@ import { useAuthStore } from '@/store/useAuthStore';
 const Stack = createNativeStackNavigator();
 
 export const AuthNavigator: React.FC = () => {
-  const { user, isLoading, isAuthenticated, loadUserFromStorage } = useAuthStore();
+  const { user, isLoading, isAuthenticated } = useAuthStore();
 
-  useEffect(() => {
-    // 앱 시작 시 저장된 사용자 정보 불러오기 (자동 로그인)
-    loadUserFromStorage();
-  }, []);
+  // ✅ useEffect 제거! App.tsx에서 이미 loadUserFromStorage() 호출함
 
   // 로딩 중 화면
   if (isLoading) {
@@ -32,29 +28,21 @@ export const AuthNavigator: React.FC = () => {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {isAuthenticated && user ? (
-          // 로그인 상태 - 메인 화면
-          <>
-            {/* 
-              TODO: MainTabNavigator 연결
-              <Stack.Screen name="Main" component={MainTabNavigator} />
-            */}
-            <Stack.Screen 
-              name="Main" 
-              component={PlaceholderMainScreen} 
-            />
-          </>
-        ) : (
-          // 로그아웃 상태 - 로그인 화면
-          <Stack.Screen 
-            name="Login" 
-            component={LoginScreen} 
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {isAuthenticated && user ? (
+        <>
+          <Stack.Screen
+            name="Main"
+            component={PlaceholderMainScreen}
           />
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+        </>
+      ) : (
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+        />
+      )}
+    </Stack.Navigator>
   );
 };
 
@@ -74,7 +62,7 @@ const PlaceholderMainScreen: React.FC = () => {
           MainTabNavigator를 연결하면{'\n'}
           실제 앱 화면이 표시됩니다.
         </Text>
-        
+
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={async () => {
