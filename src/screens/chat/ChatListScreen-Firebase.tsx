@@ -1,5 +1,5 @@
-// ChatListScreen.tsx - 채팅 목록 (카카오톡 스타일)
-import React, { useState } from 'react';
+// ChatListScreen.tsx - 채팅 목록 (Firebase 실시간 연동)
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,85 +9,76 @@ import {
   Image,
   TextInput,
 } from 'react-native';
-
-interface Chat {
-  id: string;
-  name: string;
-  avatar: string;
-  lastMessage: string;
-  timestamp: string;
-  unread: number;
-  isGroup: boolean;
-}
-
-const MOCK_CHATS: Chat[] = [
-  {
-    id: '1',
-    name: '김골프',
-    avatar: 'https://i.pravatar.cc/150?img=12',
-    lastMessage: '내일 라운딩 가시나요?',
-    timestamp: '오전 10:23',
-    unread: 2,
-    isGroup: false,
-  },
-  {
-    id: '2',
-    name: '주말 골프 모임',
-    avatar: 'https://i.pravatar.cc/150?img=25',
-    lastMessage: '이영희: 저도 참가할게요!',
-    timestamp: '어제',
-    unread: 5,
-    isGroup: true,
-  },
-  {
-    id: '3',
-    name: '박민수',
-    avatar: 'https://i.pravatar.cc/150?img=33',
-    lastMessage: '드라이버 중고로 팔아요',
-    timestamp: '2일 전',
-    unread: 0,
-    isGroup: false,
-  },
-];
+import { useChatStore } from '../../store/useChatStore';
+import { useAuthStore } from '../../store/useAuthStore';
 
 export const ChatListScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
-  const [chats] = useState<Chat[]>(MOCK_CHATS);
+  const { user } = useAuthStore();
+  const { chatRooms, loadChatRooms } = useChatStore();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredChats = chats.filter(chat =>
-    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // 채팅방 목록 로드
+  useEffect(() => {
+    if (user?.uid) {
+      loadChatRooms(user.uid);
+    }
+  }, [user]);
+
+  const filteredChats = chatRooms.filter(chat =>
+    chat.participants.some(p => 
+      p.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
   );
 
-  const renderChatItem = ({ item }: { item: Chat }) => (
-    <TouchableOpacity
-      style={styles.chatItem}
-      onPress={() => {
-        if (item.isGroup) {
-          navigation?.navigate('GroupChatRoom', { chatId: item.id, chatName: item.name });
-        } else {
-          navigation?.navigate('ChatRoom', { chatId: item.id, chatName: item.name });
-        }
-      }}
-    >
-      <Image source={{ uri: item.avatar }} style={styles.avatar} />
-      <View style={styles.chatInfo}>
-        <View style={styles.chatHeader}>
-          <Text style={styles.chatName}>{item.name}</Text>
-          <Text style={styles.timestamp}>{item.timestamp}</Text>
+  const renderChatItem = ({ item }: { item: any }) => {
+    // 현재 사용자가 아닌 참여자 찾기 (1:1 채팅의 경우)
+    const otherParticipant = item.participants.find((p: any) => p.uid !== user?.uid);
+    const chatName = item.type === 'direct' 
+      ? otherParticipant?.name || '알 수 없음'
+      : `그룹 채팅 (${item.participants.length})`;
+
+    const unreadCount = item.unreadCount?.[user?.uid || ''] || 0;
+
+    return (
+      <TouchableOpacity
+        style={styles.chatItem}
+        onPress={() => {
+          navigation?.navigate('ChatScreen', {
+            roomId: item.id,
+            chatName: chatName,
+          });
+        }}
+      >
+        <Image 
+          source={{ uri: otherParticipant?.avatar || 'https://i.pravatar.cc/150' }} 
+          style={styles.avatar} 
+        />
+        <View style={styles.chatInfo}>
+          <View style={styles.chatHeader}>
+            <Text style={styles.chatName}>{chatName}</Text>
+            <Text style={styles.timestamp}>
+              {item.lastMessage?.createdAt 
+                ? new Date(item.lastMessage.createdAt).toLocaleString('ko-KR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                : ''}
+            </Text>
+          </View>
+          <View style={styles.chatFooter}>
+            <Text style={styles.lastMessage} numberOfLines={1}>
+              {item.lastMessage?.message || '메시지가 없습니다'}
+            </Text>
+            {unreadCount > 0 && (
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadText}>{unreadCount}</Text>
+              </View>
+            )}
+          </View>
         </View>
-        <View style={styles.chatFooter}>
-          <Text style={styles.lastMessage} numberOfLines={1}>
-            {item.lastMessage}
-          </Text>
-          {item.unread > 0 && (
-            <View style={styles.unreadBadge}>
-              <Text style={styles.unreadText}>{item.unread}</Text>
-            </View>
-          )}
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -100,12 +91,6 @@ export const ChatListScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
             onPress={() => navigation?.navigate('CreateChat')}
           >
             <Text style={styles.headerButtonText}>💬</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={() => navigation?.navigate('CreateGroup')}
-          >
-            <Text style={styles.headerButtonText}>👥</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerButton}

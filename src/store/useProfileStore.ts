@@ -1,285 +1,227 @@
-// useProfileStore.ts - 프로필 상태 관리
 import { create } from 'zustand';
+import { firebaseFirestore, firebaseStorage } from '../config/firebase';
 
-interface Stats {
-  totalGames: number;
-  averageScore: number;
-  bestScore: number;
+export interface UserProfile {
+  uid: string;
+  email: string | null;
+  displayName: string;
+  photoURL: string | null;
   handicap: number;
-  experienceYears: number;
-}
-
-interface Activity {
-  id: number;
-  type: 'booking' | 'post' | 'review' | 'friend';
-  title: string;
-  description: string;
-  date: string;
-  metadata?: any;
-}
-
-interface Review {
-  id: number;
-  rating: number;
-  comment: string;
-  reviewer: {
-    id: number;
-    name: string;
-    avatar: string;
-  };
-  createdAt: string;
-}
-
-interface Profile {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  avatar: string;
+  level: 'beginner' | 'intermediate' | 'advanced';
   bio: string;
   location: string;
-  level: 'beginner' | 'intermediate' | 'advanced';
-  membership: 'FREE' | 'PRO' | 'PREMIUM';
-  points: number;
-  stats: Stats;
-  activities: Activity[];
-  reviews: Review[];
-  settings: {
-    notifications: boolean;
-    locationSharing: boolean;
-    profilePublic: boolean;
+  favoriteC ourses: string[];
+  totalRounds: number;
+  rating: number;
+  reviews: number;
+  pointBalance: number;
+  role: 'GENERAL' | 'COACH' | 'ADMIN';
+  stats: {
+    averageScore: number;
+    bestScore: number;
+    gamesPlayed: number;
+    attendance: number;
   };
 }
 
 interface ProfileState {
-  profile: Profile | null;
+  profile: UserProfile | null;
   loading: boolean;
   error: string | null;
 
   // Actions
-  loadProfile: () => Promise<void>;
-  updateProfile: (data: Partial<Profile>) => Promise<void>;
-  updateAvatar: (uri: string) => Promise<void>;
-  updateSettings: (settings: Partial<Profile['settings']>) => Promise<void>;
-  loadActivities: () => Promise<void>;
-  loadReviews: () => Promise<void>;
-  addPoints: (amount: number, reason: string) => Promise<void>;
-  usePoints: (amount: number, reason: string) => Promise<void>;
-  clearError: () => void;
+  loadProfile: (uid: string) => Promise<void>;
+  updateProfile: (uid: string, data: Partial<UserProfile>) => Promise<void>;
+  uploadProfileImage: (uid: string, imageUri: string) => Promise<string>;
+  addPoints: (uid: string, points: number, reason: string) => Promise<void>;
+  subtractPoints: (uid: string, points: number, reason: string) => Promise<void>;
 }
-
-// Mock 데이터
-const MOCK_PROFILE: Profile = {
-  id: 1,
-  name: '홍길동',
-  email: 'hong@golf.com',
-  phone: '010-1234-5678',
-  avatar: 'https://i.pravatar.cc/150?img=1',
-  bio: '주말 골퍼입니다. 같이 라운딩하실 분 환영해요!',
-  location: '서울 강남구',
-  level: 'intermediate',
-  membership: 'PRO',
-  points: 15000,
-  stats: {
-    totalGames: 48,
-    averageScore: 95,
-    bestScore: 88,
-    handicap: 18,
-    experienceYears: 2,
-  },
-  activities: [
-    {
-      id: 1,
-      type: 'booking',
-      title: '세라지오CC 라운딩',
-      description: '부킹에 참가했습니다',
-      date: '2026-01-24T10:00:00Z',
-    },
-    {
-      id: 2,
-      type: 'review',
-      title: '리뷰 작성',
-      description: '김골프님에게 리뷰를 남겼습니다',
-      date: '2026-01-23T15:30:00Z',
-    },
-  ],
-  reviews: [
-    {
-      id: 1,
-      rating: 5,
-      comment: '매너 좋으시고 실력도 좋으세요!',
-      reviewer: {
-        id: 2,
-        name: '김골프',
-        avatar: 'https://i.pravatar.cc/150?img=12',
-      },
-      createdAt: '2026-01-23T10:00:00Z',
-    },
-  ],
-  settings: {
-    notifications: true,
-    locationSharing: true,
-    profilePublic: true,
-  },
-};
 
 export const useProfileStore = create<ProfileState>((set, get) => ({
   profile: null,
   loading: false,
   error: null,
 
-  // 프로필 불러오기
-  loadProfile: async () => {
-    set({ loading: true, error: null });
+  /**
+   * 프로필 로드
+   */
+  loadProfile: async (uid) => {
     try {
-      // TODO: 실제 API 호출
-      // const response = await profileAPI.getProfile();
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
-      set({ profile: MOCK_PROFILE, loading: false });
-    } catch (error: any) {
-      set({ error: error.message || '프로필 불러오기 실패', loading: false });
-    }
-  },
+      set({ loading: true, error: null });
 
-  // 프로필 업데이트
-  updateProfile: async (data: Partial<Profile>) => {
-    set({ loading: true, error: null });
-    try {
-      // TODO: 실제 API 호출
-      // const response = await profileAPI.updateProfile(data);
-      
-      const profile = get().profile;
-      if (!profile) throw new Error('프로필이 없습니다');
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
-      set({ 
-        profile: { ...profile, ...data },
-        loading: false 
-      });
-    } catch (error: any) {
-      set({ error: error.message || '프로필 업데이트 실패', loading: false });
-    }
-  },
+      const doc = await firebaseFirestore.collection('users').doc(uid).get();
 
-  // 프로필 사진 업데이트
-  updateAvatar: async (uri: string) => {
-    set({ loading: true, error: null });
-    try {
-      // TODO: 실제 API 호출 (이미지 업로드)
-      // const imageUrl = await profileAPI.uploadAvatar(uri);
-      
-      const profile = get().profile;
-      if (!profile) throw new Error('프로필이 없습니다');
-      
-      await new Promise(resolve => setTimeout(resolve, 800));
-      set({ 
-        profile: { ...profile, avatar: uri },
-        loading: false 
-      });
-    } catch (error: any) {
-      set({ error: error.message || '프로필 사진 업데이트 실패', loading: false });
-    }
-  },
-
-  // 설정 업데이트
-  updateSettings: async (settings: Partial<Profile['settings']>) => {
-    try {
-      // TODO: 실제 API 호출
-      const profile = get().profile;
-      if (!profile) throw new Error('프로필이 없습니다');
-      
-      set({ 
-        profile: { 
-          ...profile, 
-          settings: { ...profile.settings, ...settings }
-        }
-      });
-    } catch (error: any) {
-      set({ error: error.message || '설정 업데이트 실패' });
-    }
-  },
-
-  // 활동 내역 불러오기
-  loadActivities: async () => {
-    set({ loading: true, error: null });
-    try {
-      // TODO: 실제 API 호출
-      // const response = await profileAPI.getActivities();
-      
-      const profile = get().profile;
-      if (!profile) throw new Error('프로필이 없습니다');
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
-      // Mock: 이미 profile에 activities 있음
-      set({ loading: false });
-    } catch (error: any) {
-      set({ error: error.message || '활동 내역 불러오기 실패', loading: false });
-    }
-  },
-
-  // 리뷰 불러오기
-  loadReviews: async () => {
-    set({ loading: true, error: null });
-    try {
-      // TODO: 실제 API 호출
-      // const response = await profileAPI.getReviews();
-      
-      const profile = get().profile;
-      if (!profile) throw new Error('프로필이 없습니다');
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
-      // Mock: 이미 profile에 reviews 있음
-      set({ loading: false });
-    } catch (error: any) {
-      set({ error: error.message || '리뷰 불러오기 실패', loading: false });
-    }
-  },
-
-  // 포인트 추가 (출석, 리뷰 작성 등)
-  addPoints: async (amount: number, reason: string) => {
-    try {
-      // TODO: 실제 API 호출
-      const profile = get().profile;
-      if (!profile) throw new Error('프로필이 없습니다');
-      
-      set({ 
-        profile: { 
-          ...profile, 
-          points: profile.points + amount 
-        }
-      });
-      
-      console.log(`포인트 ${amount}점 적립: ${reason}`);
-    } catch (error: any) {
-      set({ error: error.message || '포인트 적립 실패' });
-    }
-  },
-
-  // 포인트 사용 (쿠폰, 혜택 등)
-  usePoints: async (amount: number, reason: string) => {
-    try {
-      // TODO: 실제 API 호출
-      const profile = get().profile;
-      if (!profile) throw new Error('프로필이 없습니다');
-      
-      if (profile.points < amount) {
-        throw new Error('포인트가 부족합니다');
+      if (!doc.exists) {
+        set({ error: '프로필을 찾을 수 없습니다', loading: false });
+        return;
       }
-      
-      set({ 
-        profile: { 
-          ...profile, 
-          points: profile.points - amount 
-        }
-      });
-      
-      console.log(`포인트 ${amount}점 사용: ${reason}`);
+
+      set({ profile: doc.data() as UserProfile, loading: false });
     } catch (error: any) {
-      set({ error: error.message || '포인트 사용 실패' });
+      console.error('프로필 로드 실패:', error);
+      set({
+        error: error.message || '프로필을 불러올 수 없습니다',
+        loading: false,
+      });
     }
   },
 
-  // 에러 초기화
-  clearError: () => set({ error: null }),
+  /**
+   * 프로필 업데이트
+   */
+  updateProfile: async (uid, data) => {
+    try {
+      set({ loading: true, error: null });
+
+      await firebaseFirestore.collection('users').doc(uid).update({
+        ...data,
+        updatedAt: new Date(),
+      });
+
+      const { profile } = get();
+      if (profile) {
+        set({ profile: { ...profile, ...data }, loading: false });
+      }
+    } catch (error: any) {
+      console.error('프로필 업데이트 실패:', error);
+      set({
+        error: error.message || '프로필을 업데이트할 수 없습니다',
+        loading: false,
+      });
+      throw error;
+    }
+  },
+
+  /**
+   * 프로필 이미지 업로드
+   */
+  uploadProfileImage: async (uid, imageUri) => {
+    try {
+      set({ loading: true, error: null });
+
+      // Storage에 업로드
+      const filename = `profiles/${uid}/${Date.now()}.jpg`;
+      const reference = firebaseStorage.ref(filename);
+      await reference.putFile(imageUri);
+
+      // 다운로드 URL 가져오기
+      const url = await reference.getDownloadURL();
+
+      // Firestore 업데이트
+      await firebaseFirestore.collection('users').doc(uid).update({
+        photoURL: url,
+        updatedAt: new Date(),
+      });
+
+      // 로컬 상태 업데이트
+      const { profile } = get();
+      if (profile) {
+        set({ profile: { ...profile, photoURL: url }, loading: false });
+      }
+
+      return url;
+    } catch (error: any) {
+      console.error('프로필 이미지 업로드 실패:', error);
+      set({
+        error: error.message || '이미지를 업로드할 수 없습니다',
+        loading: false,
+      });
+      throw error;
+    }
+  },
+
+  /**
+   * 포인트 추가
+   */
+  addPoints: async (uid, points, reason) => {
+    try {
+      const userRef = firebaseFirestore.collection('users').doc(uid);
+
+      await firebaseFirestore.runTransaction(async transaction => {
+        const userDoc = await transaction.get(userRef);
+
+        if (!userDoc.exists) {
+          throw new Error('사용자를 찾을 수 없습니다');
+        }
+
+        const currentPoints = userDoc.data()?.pointBalance || 0;
+        const newPoints = currentPoints + points;
+
+        transaction.update(userRef, {
+          pointBalance: newPoints,
+          updatedAt: new Date(),
+        });
+
+        // 포인트 내역 저장
+        transaction.set(firebaseFirestore.collection('pointHistory').doc(), {
+          userId: uid,
+          type: 'add',
+          amount: points,
+          reason,
+          balanceBefore: currentPoints,
+          balanceAfter: newPoints,
+          createdAt: new Date(),
+        });
+      });
+
+      // 로컬 상태 업데이트
+      const { profile } = get();
+      if (profile) {
+        set({ profile: { ...profile, pointBalance: profile.pointBalance + points } });
+      }
+    } catch (error: any) {
+      console.error('포인트 추가 실패:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * 포인트 차감
+   */
+  subtractPoints: async (uid, points, reason) => {
+    try {
+      const userRef = firebaseFirestore.collection('users').doc(uid);
+
+      await firebaseFirestore.runTransaction(async transaction => {
+        const userDoc = await transaction.get(userRef);
+
+        if (!userDoc.exists) {
+          throw new Error('사용자를 찾을 수 없습니다');
+        }
+
+        const currentPoints = userDoc.data()?.pointBalance || 0;
+
+        if (currentPoints < points) {
+          throw new Error('포인트가 부족합니다');
+        }
+
+        const newPoints = currentPoints - points;
+
+        transaction.update(userRef, {
+          pointBalance: newPoints,
+          updatedAt: new Date(),
+        });
+
+        // 포인트 내역 저장
+        transaction.set(firebaseFirestore.collection('pointHistory').doc(), {
+          userId: uid,
+          type: 'subtract',
+          amount: points,
+          reason,
+          balanceBefore: currentPoints,
+          balanceAfter: newPoints,
+          createdAt: new Date(),
+        });
+      });
+
+      // 로컬 상태 업데이트
+      const { profile } = get();
+      if (profile) {
+        set({ profile: { ...profile, pointBalance: profile.pointBalance - points } });
+      }
+    } catch (error: any) {
+      console.error('포인트 차감 실패:', error);
+      throw error;
+    }
+  },
 }));
