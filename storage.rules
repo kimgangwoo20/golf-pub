@@ -1,0 +1,86 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isValidImage() {
+      return request.resource.size < 5 * 1024 * 1024 && // 5MB
+             request.resource.contentType.matches('image/.*');
+    }
+    
+    function isValidVideo() {
+      return request.resource.size < 50 * 1024 * 1024 && // 50MB
+             request.resource.contentType.matches('video/.*');
+    }
+    
+    // Profile images
+    match /profiles/{userId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+                      isOwner(userId) && 
+                      isValidImage();
+    }
+    
+    // Product images
+    match /products/{productId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+                      isValidImage();
+      allow delete: if isAuthenticated(); // Owner check in Firestore rules
+    }
+    
+    // Post images/videos
+    match /posts/{postId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+                      (isValidImage() || isValidVideo());
+      allow delete: if isAuthenticated(); // Owner check in Firestore rules
+    }
+    
+    // Booking images
+    match /bookings/{bookingId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+                      isValidImage();
+      allow delete: if isAuthenticated(); // Owner check in Firestore rules
+    }
+    
+    // Chat attachments
+    match /chats/{chatId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+                      (isValidImage() || 
+                       (request.resource.size < 10 * 1024 * 1024 && // 10MB
+                        request.resource.contentType.matches('application/pdf')));
+    }
+    
+    // Review images
+    match /reviews/{reviewId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+                      isValidImage();
+    }
+    
+    // Golf course images (admin only)
+    match /golfCourses/{courseId}/{fileName} {
+      allow read: if true; // Public read
+      allow write: if false; // Only admin
+    }
+    
+    // Temporary uploads (auto-delete after 24h)
+    match /temp/{userId}/{fileName} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow write: if isAuthenticated() && 
+                      isOwner(userId) && 
+                      request.resource.size < 10 * 1024 * 1024; // 10MB
+    }
+  }
+}
