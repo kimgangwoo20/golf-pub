@@ -41,6 +41,12 @@ import { GolfCourseSearchScreen } from './src/screens/golfcourse/GolfCourseSearc
 import { GolfCourseDetailScreen } from './src/screens/golfcourse/GolfCourseDetailScreen';
 import { GolfCourseReviewScreen } from './src/screens/golfcourse/GolfCourseReviewScreen';
 
+// 💬 채팅 관련 import
+import { ChatListScreen } from './src/screens/chat/ChatListScreen';
+import { ChatScreen } from './src/screens/chat/ChatScreen';
+import { CreateChatScreen } from './src/screens/chat/CreateChatScreen';
+import { ChatSettingsScreen } from './src/screens/chat/ChatSettingsScreen';
+
 // 🔐 인증 관련 import
 import { AuthNavigator } from './src/navigation/AuthNavigator';
 import { useAuthStore } from './src/store/useAuthStore';
@@ -51,6 +57,7 @@ const MyHomeStack = createNativeStackNavigator();
 const MarketplaceStack = createNativeStackNavigator();
 const FeedStack = createNativeStackNavigator();
 const GolfCourseStack = createNativeStackNavigator();
+const ChatStack = createNativeStackNavigator(); // 💬 채팅 스택 추가
 
 // 부킹 스택 네비게이터 (목록 → 상세 → 작성 → 결제)
 const BookingStackNavigator = () => (
@@ -142,6 +149,20 @@ const GolfCourseStackNavigator = () => (
   </GolfCourseStack.Navigator>
 );
 
+// 💬 채팅 스택 네비게이터 (목록 → 채팅방 → 새 채팅 → 설정)
+const ChatStackNavigator = () => (
+  <ChatStack.Navigator
+    screenOptions={{
+      headerShown: false,
+    }}
+  >
+    <ChatStack.Screen name="ChatList" component={ChatListScreen} />
+    <ChatStack.Screen name="ChatScreen" component={ChatScreen} />
+    <ChatStack.Screen name="CreateChat" component={CreateChatScreen} />
+    <ChatStack.Screen name="ChatSettings" component={ChatSettingsScreen} />
+  </ChatStack.Navigator>
+);
+
 function AppContent() {
   const insets = useSafeAreaInsets();
 
@@ -226,6 +247,20 @@ function AppContent() {
             }}
           />
 
+          {/* 💬 채팅 (새로운 탭!) */}
+          <Tab.Screen
+            name="Chat"
+            component={ChatStackNavigator}
+            options={{
+              tabBarLabel: '채팅',
+              tabBarIcon: ({ color, focused }) => (
+                <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
+                  💬
+                </Text>
+              ),
+            }}
+          />
+
           {/* 중고거래 */}
           <Tab.Screen
             name="Marketplace"
@@ -262,13 +297,11 @@ function AppContent() {
               tabBarLabel: '골프장',
               tabBarIcon: ({ color, focused }) => (
                 <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-                  🏌️
+                  🌏️
                 </Text>
               ),
             }}
           />
-
-          {/* 친구 탭 제거! - My 홈피에서 접근 */}
 
           {/* My 홈피 (친구 포함) */}
           <Tab.Screen

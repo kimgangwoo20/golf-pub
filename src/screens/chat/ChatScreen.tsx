@@ -1,3 +1,4 @@
+// ChatScreen.tsx - 1:1 채팅방 (Firebase 실시간 연동)
 import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
@@ -14,11 +15,18 @@ import { useChatStore, ChatMessage } from '../store/useChatStore';
 import { useAuthStore } from '../store/useAuthStore';
 
 interface ChatScreenProps {
-  roomId: string;
-  roomType: 'booking' | 'marketplace' | 'direct';
+  route: {
+    params: {
+      roomId: string;
+      chatName?: string;
+      roomType?: 'booking' | 'marketplace' | 'direct';
+    };
+  };
+  navigation: any;
 }
 
-export const ChatScreen: React.FC<ChatScreenProps> = ({ roomId, roomType }) => {
+export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
+  const { roomId, chatName, roomType = 'direct' } = route.params;
   const { user } = useAuthStore();
   const {
     currentRoomMessages,
@@ -30,8 +38,14 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ roomId, roomType }) => {
   } = useChatStore();
 
   const [message, setMessage] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+
+  // 헤더 타이틀 설정
+  useEffect(() => {
+    if (chatName) {
+      navigation.setOptions({ title: chatName });
+    }
+  }, [navigation, chatName]);
 
   // 실시간 메시지 리스너
   useEffect(() => {
@@ -39,7 +53,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ roomId, roomType }) => {
 
     const unsubscribe = listenToMessages(roomId, (messages) => {
       // 메시지 수신 시 자동 스크롤
-      flatListRef.current?.scrollToEnd({ animated: true });
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
     });
 
     // 읽음 처리
@@ -63,6 +79,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ roomId, roomType }) => {
         user.photoURL || undefined
       );
       setMessage('');
+
+      // 전송 후 스크롤
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
     } catch (error) {
       console.error('메시지 전송 실패:', error);
     }
