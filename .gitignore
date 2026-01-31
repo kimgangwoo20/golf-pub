@@ -1,90 +1,166 @@
-# dependencies
-node_modules/
-.pnp
-.pnp.js
+# ========================================
+# 골프 Pub 앱 - Git 무시 목록
+# ========================================
 
-# testing
-coverage/
+# ========================================
+# 1. Firebase 보안 설정 (절대 업로드 금지!)
+# ========================================
+google-services.json
+GoogleService-Info.plist
+firebase-config.json
+.firebase/
+firebaseConfig.ts
+firebaseConfig.js
+src/config/firebase.ts
+src/config/firebase.js
 
-# production
-build/
+# ========================================
+# 2. API 키 및 환경 변수 (절대 업로드 금지!)
+# ========================================
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+*.env
+.env.*
+
+# ========================================
+# 3. Expo 관련
+# ========================================
+.expo/
+.expo-shared/
 dist/
-*.jsbundle
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
 
-# misc
-.DS_Store
-*.pem
-
-# debug
+# ========================================
+# 4. Node.js
+# ========================================
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
 
-# local env files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Expo
-.expo/
-.expo-shared/
-
-# Android
-*.apk
-*.aab
-*.keystore
-!debug.keystore
-android/app/build/
-android/.gradle/
-android/captures/
-android/local.properties
-
-# iOS
-ios/Pods/
-ios/**/*.xcworkspace
-!ios/**/*.xcworkspace/contents.xcworkspacedata
-ios/**/*.xcuserdata
-ios/*.ipa
-*.mobileprovision
-
-# Firebase
-google-services.json
-GoogleService-Info.plist
-
-# Temporary files
-*.tmp
-*.temp
-*.log
-.cache/
+# ========================================
+# 5. 운영체제 파일
+# ========================================
 
 # macOS
 .DS_Store
 .AppleDouble
 .LSOverride
-
-# Thumbnails
 ._*
 
-# Files that might appear in the root of a volume
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# Directories potentially created on remote AFP share
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
+# Linux
+*~
+.directory
+
+# ========================================
+# 6. IDE 설정
+# ========================================
+
+# VSCode
+.vscode/
+!.vscode/extensions.json
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Android Studio
+.gradle/
+local.properties
+*.hprof
+
+# ========================================
+# 7. 빌드 결과물
+# ========================================
+android/app/build/
+android/build/
+android/.gradle/
+android/captures/
+ios/Pods/
+ios/build/
+ios/*.xcworkspace
+*.ipa
+*.apk
+*.aab
+
+# ========================================
+# 8. 테스트 커버리지
+# ========================================
+coverage/
+.nyc_output/
+*.lcov
+
+# ========================================
+# 9. 로그 파일
+# ========================================
+*.log
+logs/
+*.log.*
+
+# ========================================
+# 10. 임시 파일
+# ========================================
+*.tmp
+*.temp
+*.cache
+.temp/
+tmp/
+
+# ========================================
+# 11. 사용자 데이터 (개발 중)
+# ========================================
+uploads/
+user-data/
+*.db
+*.sqlite
+*.sqlite3
+
+# ========================================
+# 12. TypeScript
+# ========================================
+*.tsbuildinfo
+
+# ========================================
+# 13. 백업 파일
+# ========================================
+*.backup
+*.bak
+*.old
+*.orig
+
+# ========================================
+# 14. Metro Bundler
+# ========================================
+.metro-health-check*
+
+# ========================================
+# 15. 기타
+# ========================================
+.watchmanconfig
+buck-out/
+.buckconfig.local
+*.jsbundle
+
+# ========================================
+# 예외: 반드시 포함해야 할 파일들
+# ========================================
+!android/app/google-services.json.example
+!ios/GoogleService-Info.plist.example
+!.env.example

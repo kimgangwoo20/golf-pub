@@ -1,86 +1,168 @@
 rules_version = '2';
+
 service firebase.storage {
   match /b/{bucket}/o {
     
-    // Helper function
-    function isAuthenticated() {
+    // ========================================
+    // 헬퍼 함수
+    // ========================================
+    
+    // 로그인 확인
+    function isSignedIn() {
       return request.auth != null;
     }
     
-    function isOwner(userId) {
-      return request.auth.uid == userId;
+    // 파일 크기 체크 (최대 10MB)
+    function isValidSize() {
+      return request.resource.size < 10 * 1024 * 1024;
     }
     
-    function isValidImage() {
-      return request.resource.size < 5 * 1024 * 1024 && // 5MB
-             request.resource.contentType.matches('image/.*');
+    // 이미지 파일 확인
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
     }
     
-    function isValidVideo() {
-      return request.resource.size < 50 * 1024 * 1024 && // 50MB
-             request.resource.contentType.matches('video/.*');
-    }
-    
-    // Profile images
+    // ========================================
+    // 1. 프로필 사진 (profiles/)
+    // ========================================
     match /profiles/{userId}/{fileName} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && 
-                      isOwner(userId) && 
-                      isValidImage();
+      // 읽기: 로그인한 모든 사용자
+      allow read: if isSignedIn();
+      
+      // 업로드: 본인만, 이미지만, 10MB 이하
+      allow create: if isSignedIn() && 
+                       request.auth.uid == userId &&
+                       isImage() &&
+                       isValidSize();
+      
+      // 수정: 본인만
+      allow update: if isSignedIn() && 
+                       request.auth.uid == userId &&
+                       isImage() &&
+                       isValidSize();
+      
+      // 삭제: 본인만
+      allow delete: if isSignedIn() && 
+                       request.auth.uid == userId;
     }
     
-    // Product images
-    match /products/{productId}/{fileName} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && 
-                      isValidImage();
-      allow delete: if isAuthenticated(); // Owner check in Firestore rules
+    // ========================================
+    // 2. 게시글 이미지 (posts/)
+    // ========================================
+    match /posts/{userId}/{postId}/{fileName} {
+      // 읽기: 로그인한 모든 사용자
+      allow read: if isSignedIn();
+      
+      // 업로드: 본인만, 이미지만, 10MB 이하
+      allow create: if isSignedIn() && 
+                       request.auth.uid == userId &&
+                       isImage() &&
+                       isValidSize();
+      
+      // 수정: 본인만
+      allow update: if isSignedIn() && 
+                       request.auth.uid == userId &&
+                       isImage() &&
+                       isValidSize();
+      
+      // 삭제: 본인만
+      allow delete: if isSignedIn() && 
+                       request.auth.uid == userId;
     }
     
-    // Post images/videos
-    match /posts/{postId}/{fileName} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && 
-                      (isValidImage() || isValidVideo());
-      allow delete: if isAuthenticated(); // Owner check in Firestore rules
+    // ========================================
+    // 3. 중고거래 상품 이미지 (marketplace/)
+    // ========================================
+    match /marketplace/{userId}/{itemId}/{fileName} {
+      // 읽기: 로그인한 모든 사용자
+      allow read: if isSignedIn();
+      
+      // 업로드: 본인만, 이미지만, 10MB 이하
+      allow create: if isSignedIn() && 
+                       request.auth.uid == userId &&
+                       isImage() &&
+                       isValidSize();
+      
+      // 수정: 본인만
+      allow update: if isSignedIn() && 
+                       request.auth.uid == userId &&
+                       isImage() &&
+                       isValidSize();
+      
+      // 삭제: 본인만
+      allow delete: if isSignedIn() && 
+                       request.auth.uid == userId;
     }
     
-    // Booking images
-    match /bookings/{bookingId}/{fileName} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && 
-                      isValidImage();
-      allow delete: if isAuthenticated(); // Owner check in Firestore rules
+    // ========================================
+    // 4. 리뷰 사진 (reviews/)
+    // ========================================
+    match /reviews/{userId}/{reviewId}/{fileName} {
+      // 읽기: 로그인한 모든 사용자
+      allow read: if isSignedIn();
+      
+      // 업로드: 본인만, 이미지만, 10MB 이하
+      allow create: if isSignedIn() && 
+                       request.auth.uid == userId &&
+                       isImage() &&
+                       isValidSize();
+      
+      // 수정: 본인만
+      allow update: if isSignedIn() && 
+                       request.auth.uid == userId &&
+                       isImage() &&
+                       isValidSize();
+      
+      // 삭제: 본인만
+      allow delete: if isSignedIn() && 
+                       request.auth.uid == userId;
     }
     
-    // Chat attachments
-    match /chats/{chatId}/{fileName} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && 
-                      (isValidImage() || 
-                       (request.resource.size < 10 * 1024 * 1024 && // 10MB
-                        request.resource.contentType.matches('application/pdf')));
+    // ========================================
+    // 5. 인증 서류 (verifications/)
+    // ========================================
+    match /verifications/{userId}/{fileName} {
+      // 읽기: 관리자만
+      allow read: if false; // 서버에서만 접근
+      
+      // 업로드: 본인만, 10MB 이하
+      allow create: if isSignedIn() && 
+                       request.auth.uid == userId &&
+                       isValidSize();
+      
+      // 수정/삭제: 불가 (보안)
+      allow update: if false;
+      allow delete: if false;
     }
     
-    // Review images
-    match /reviews/{reviewId}/{fileName} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && 
-                      isValidImage();
-    }
-    
-    // Golf course images (admin only)
-    match /golfCourses/{courseId}/{fileName} {
-      allow read: if true; // Public read
-      allow write: if false; // Only admin
-    }
-    
-    // Temporary uploads (auto-delete after 24h)
+    // ========================================
+    // 6. 임시 파일 (temp/)
+    // ========================================
     match /temp/{userId}/{fileName} {
-      allow read: if isAuthenticated() && isOwner(userId);
-      allow write: if isAuthenticated() && 
-                      isOwner(userId) && 
-                      request.resource.size < 10 * 1024 * 1024; // 10MB
+      // 읽기: 본인만
+      allow read: if isSignedIn() && 
+                     request.auth.uid == userId;
+      
+      // 업로드: 본인만, 10MB 이하
+      allow create: if isSignedIn() && 
+                       request.auth.uid == userId &&
+                       isValidSize();
+      
+      // 수정: 본인만
+      allow update: if isSignedIn() && 
+                       request.auth.uid == userId &&
+                       isValidSize();
+      
+      // 삭제: 본인만
+      allow delete: if isSignedIn() && 
+                       request.auth.uid == userId;
+    }
+    
+    // ========================================
+    // 기타: 모든 다른 경로 차단
+    // ========================================
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }

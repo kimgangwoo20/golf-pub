@@ -1,4 +1,4 @@
-// App.tsx - Expo 앱 진입점 (로그인 플로우 추가)
+// App.tsx - Expo 앱 진입점 (Firebase + Auth 통합)
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -6,6 +6,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { View, Text, Platform, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// 🔥 Firebase 초기화
+import './src/config/firebase';
 import { HomeScreen } from './src/screens/home/HomeScreen';
 import { BookingListScreen } from './src/screens/booking/BookingListScreen';
 import { BookingDetailScreen } from './src/screens/booking/BookingDetailScreen';
@@ -142,25 +145,24 @@ const GolfCourseStackNavigator = () => (
 function AppContent() {
   const insets = useSafeAreaInsets();
 
-  // 🔐 인증 상태 관리
-  const { isAuthenticated, isLoading, loadUserFromStorage } = useAuthStore();
+  // 🔐 인증 상태 관리 (Firebase)
+  const { isAuthenticated, isLoading, initAuth } = useAuthStore();
   const [isInitializing, setIsInitializing] = useState(true);
 
-  // 앱 시작 시 저장된 로그인 정보 확인 (1번만!)
+  // 🔥 Firebase Auth 초기화 (1번만!)
   useEffect(() => {
-    const initAuth = async () => {
+    const initFirebaseAuth = async () => {
       try {
-        await loadUserFromStorage(); // AsyncStorage에서 저장된 유저 정보 로드
+        initAuth(); // Firebase Auth 리스너 시작
+        setIsInitializing(false);
       } catch (error) {
-        console.error('인증 초기화 실패:', error);
-      } finally {
+        console.error('Firebase Auth 초기화 실패:', error);
         setIsInitializing(false);
       }
     };
 
-    initAuth();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // ← 빈 배열: 앱 시작 시 1번만 실행!
+    initFirebaseAuth();
+  }, []);
 
   // 로딩 중 스플래시 화면
   if (isInitializing || isLoading) {
