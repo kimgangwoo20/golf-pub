@@ -4,47 +4,52 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
-import { View, Text, Platform, ActivityIndicator } from 'react-native';
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, ActivityIndicator } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // 🔥 Firebase 초기화
 import './src/config/firebase';
+
+// 홈 화면
 import { HomeScreen } from './src/screens/home/HomeScreen';
+
+// 부킹 화면들
 import { BookingListScreen } from './src/screens/booking/BookingListScreen';
 import { BookingDetailScreen } from './src/screens/booking/BookingDetailScreen';
 import { CreateBookingScreen } from './src/screens/booking/CreateBookingScreen';
 import { PaymentScreen } from './src/screens/booking/PaymentScreen';
+
+// My 홈피 화면
 import { MyHomeScreen } from './src/screens/my/MyHomeScreen';
+
+// 프로필 화면들
 import { ProfileScreen } from './src/screens/profile/ProfileScreen';
 import { EditProfileScreen } from './src/screens/profile/EditProfileScreen';
-import { PointHistoryScreen } from './src/screens/my/payment/PointHistoryScreen';
-import { CouponScreen } from './src/screens/my/payment/CouponScreen';
-import { MyReviewsScreen } from './src/screens/my/activity/MyReviewsScreen';
-import { MyPostsScreen } from './src/screens/my/activity/MyPostsScreen';
-import { JoinedMeetupsScreen } from './src/screens/my/activity/JoinedMeetupsScreen';
-import { HostedMeetupsScreen } from './src/screens/my/activity/HostedMeetupsScreen';
-import { NotificationSettingsScreen } from './src/screens/my/settings/NotificationSettingsScreen';
-import { SupportScreen } from './src/screens/my/settings/SupportScreen';
-import { SettingsScreen } from './src/screens/my/settings/SettingsScreen';
+import { SettingsScreen } from './src/screens/profile/SettingsScreen';
+
+// 중고거래 화면들
 import { MarketplaceScreen } from './src/screens/marketplace/MarketplaceScreen';
 import { ProductDetailScreen } from './src/screens/marketplace/ProductDetailScreen';
 import { CreateProductScreen } from './src/screens/marketplace/CreateProductScreen';
 import { MyProductsScreen } from './src/screens/marketplace/MyProductsScreen';
+
+// 친구 화면들
 import { FriendsScreen } from './src/screens/friends/FriendsScreen';
 import { FriendProfileScreen } from './src/screens/friends/FriendProfileScreen';
 import { AddFriendScreen } from './src/screens/friends/AddFriendScreen';
 import { FriendRequestsScreen } from './src/screens/friends/FriendRequestsScreen';
-import { FeedScreen } from './src/screens/feed/FeedScreen';
-import { CreatePostScreen } from './src/screens/feed/CreatePostScreen';
+
+// Feed 화면
 import { PostDetailScreen } from './src/screens/feed/PostDetailScreen';
+
+// 골프장 화면들
 import { GolfCourseSearchScreen } from './src/screens/golfcourse/GolfCourseSearchScreen';
-import { GolfCourseDetailScreen } from './src/screens/golfcourse/GolfCourseDetailScreen';
 import { GolfCourseReviewScreen } from './src/screens/golfcourse/GolfCourseReviewScreen';
 
-// 💬 채팅 관련 import
-import { ChatListScreen } from './src/screens/chat/ChatListScreen';
+// 채팅 화면들 (Firebase)
+import ChatListScreen from './src/screens/chat/ChatListScreen-Firebase';
 import { ChatScreen } from './src/screens/chat/ChatScreen';
-import { CreateChatScreen } from './src/screens/chat/CreateChatScreen';
+import CreateChatScreen from './src/screens/chat/CreateChatScreen-Firebase';
 import { ChatSettingsScreen } from './src/screens/chat/ChatSettingsScreen';
 
 // 🔐 인증 관련 import
@@ -55,17 +60,21 @@ const Tab = createBottomTabNavigator();
 const BookingStack = createNativeStackNavigator();
 const MyHomeStack = createNativeStackNavigator();
 const MarketplaceStack = createNativeStackNavigator();
-const FeedStack = createNativeStackNavigator();
 const GolfCourseStack = createNativeStackNavigator();
-const ChatStack = createNativeStackNavigator(); // 💬 채팅 스택 추가
+const ChatStack = createNativeStackNavigator();
 
-// 부킹 스택 네비게이터 (목록 → 상세 → 작성 → 결제)
+// 임시 Feed 화면 (FeedScreen이 없으므로)
+const TempFeedScreen = () => (
+  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8fafc' }}>
+    <Text style={{ fontSize: 32, marginBottom: 10 }}>📱</Text>
+    <Text style={{ fontSize: 18, fontWeight: '600', color: '#0f172a' }}>Feed 화면</Text>
+    <Text style={{ fontSize: 14, color: '#94a3b8', marginTop: 5 }}>개발 예정</Text>
+  </View>
+);
+
+// 부킹 스택 네비게이터
 const BookingStackNavigator = () => (
-  <BookingStack.Navigator
-    screenOptions={{
-      headerShown: false,
-    }}
-  >
+  <BookingStack.Navigator screenOptions={{ headerShown: false }}>
     <BookingStack.Screen name="BookingList" component={BookingListScreen} />
     <BookingStack.Screen name="BookingDetail" component={BookingDetailScreen} />
     <BookingStack.Screen name="CreateBooking" component={CreateBookingScreen} />
@@ -73,49 +82,26 @@ const BookingStackNavigator = () => (
   </BookingStack.Navigator>
 );
 
-// My 홈피 스택 네비게이터 (홈피 메인 → 상세 화면들 + 친구 화면들)
+// My 홈피 스택 네비게이터
 const MyHomeStackNavigator = () => (
-  <MyHomeStack.Navigator
-    screenOptions={{
-      headerShown: false,
-    }}
-  >
+  <MyHomeStack.Navigator screenOptions={{ headerShown: false }}>
     <MyHomeStack.Screen name="MyHomeMain" component={MyHomeScreen} />
-
-    {/* 친구 관련 화면들 (My 홈피에서 접근) */}
+    {/* 친구 관련 */}
     <MyHomeStack.Screen name="Friends" component={FriendsScreen} />
     <MyHomeStack.Screen name="FriendProfile" component={FriendProfileScreen} />
     <MyHomeStack.Screen name="AddFriend" component={AddFriendScreen} />
     <MyHomeStack.Screen name="FriendRequests" component={FriendRequestsScreen} />
-
     {/* 프로필 관련 */}
     <MyHomeStack.Screen name="Profile" component={ProfileScreen} />
     <MyHomeStack.Screen name="EditProfile" component={EditProfileScreen} />
-
-    {/* 포인트/쿠폰 */}
-    <MyHomeStack.Screen name="PointHistory" component={PointHistoryScreen} />
-    <MyHomeStack.Screen name="Coupons" component={CouponScreen} />
-
-    {/* 내 활동 */}
-    <MyHomeStack.Screen name="MyReviews" component={MyReviewsScreen} />
-    <MyHomeStack.Screen name="MyPosts" component={MyPostsScreen} />
-    <MyHomeStack.Screen name="JoinedMeetups" component={JoinedMeetupsScreen} />
-    <MyHomeStack.Screen name="HostedMeetups" component={HostedMeetupsScreen} />
-
     {/* 설정 */}
-    <MyHomeStack.Screen name="Notifications" component={NotificationSettingsScreen} />
-    <MyHomeStack.Screen name="Support" component={SupportScreen} />
     <MyHomeStack.Screen name="Settings" component={SettingsScreen} />
   </MyHomeStack.Navigator>
 );
 
-// 중고거래 스택 네비게이터 (목록 → 상세/등록/내판매)
+// 중고거래 스택 네비게이터
 const MarketplaceStackNavigator = () => (
-  <MarketplaceStack.Navigator
-    screenOptions={{
-      headerShown: false,
-    }}
-  >
+  <MarketplaceStack.Navigator screenOptions={{ headerShown: false }}>
     <MarketplaceStack.Screen name="MarketplaceMain" component={MarketplaceScreen} />
     <MarketplaceStack.Screen name="ProductDetail" component={ProductDetailScreen} />
     <MarketplaceStack.Screen name="CreateProduct" component={CreateProductScreen} />
@@ -123,39 +109,17 @@ const MarketplaceStackNavigator = () => (
   </MarketplaceStack.Navigator>
 );
 
-// Feed 스택 네비게이터 (목록 → 작성/상세)
-const FeedStackNavigator = () => (
-  <FeedStack.Navigator
-    screenOptions={{
-      headerShown: false,
-    }}
-  >
-    <FeedStack.Screen name="FeedMain" component={FeedScreen} />
-    <FeedStack.Screen name="CreatePost" component={CreatePostScreen} />
-    <FeedStack.Screen name="PostDetail" component={PostDetailScreen} />
-  </FeedStack.Navigator>
-);
-
-// 골프장 스택 네비게이터 (검색 → 상세 → 리뷰)
+// 골프장 스택 네비게이터
 const GolfCourseStackNavigator = () => (
-  <GolfCourseStack.Navigator
-    screenOptions={{
-      headerShown: false,
-    }}
-  >
+  <GolfCourseStack.Navigator screenOptions={{ headerShown: false }}>
     <GolfCourseStack.Screen name="GolfCourseSearch" component={GolfCourseSearchScreen} />
-    <GolfCourseStack.Screen name="GolfCourseDetail" component={GolfCourseDetailScreen} />
     <GolfCourseStack.Screen name="GolfCourseReview" component={GolfCourseReviewScreen} />
   </GolfCourseStack.Navigator>
 );
 
-// 💬 채팅 스택 네비게이터 (목록 → 채팅방 → 새 채팅 → 설정)
+// 💬 채팅 스택 네비게이터
 const ChatStackNavigator = () => (
-  <ChatStack.Navigator
-    screenOptions={{
-      headerShown: false,
-    }}
-  >
+  <ChatStack.Navigator screenOptions={{ headerShown: false }}>
     <ChatStack.Screen name="ChatList" component={ChatListScreen} />
     <ChatStack.Screen name="ChatScreen" component={ChatScreen} />
     <ChatStack.Screen name="CreateChat" component={CreateChatScreen} />
@@ -164,171 +128,135 @@ const ChatStackNavigator = () => (
 );
 
 function AppContent() {
-  const insets = useSafeAreaInsets();
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: '#10b981',
+        tabBarInactiveTintColor: '#94a3b8',
+        tabBarStyle: {
+          backgroundColor: 'white',
+          borderTopWidth: 1,
+          borderTopColor: '#e2e8f0',
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+        },
+      }}
+    >
+      <Tab.Screen 
+        name="Home" 
+        component={HomeScreen}
+        options={{
+          tabBarLabel: '홈',
+          tabBarIcon: ({ focused }) => (
+            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
+              🏠
+            </Text>
+          ),
+        }}
+      />
+      <Tab.Screen 
+        name="Booking" 
+        component={BookingStackNavigator}
+        options={{
+          tabBarLabel: '부킹',
+          tabBarIcon: ({ focused }) => (
+            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
+              ⛳
+            </Text>
+          ),
+        }}
+      />
+      <Tab.Screen 
+        name="Chat" 
+        component={ChatStackNavigator}
+        options={{
+          tabBarLabel: '채팅',
+          tabBarIcon: ({ focused }) => (
+            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
+              💬
+            </Text>
+          ),
+        }}
+      />
+      <Tab.Screen 
+        name="Marketplace" 
+        component={MarketplaceStackNavigator}
+        options={{
+          tabBarLabel: '중고거래',
+          tabBarIcon: ({ focused }) => (
+            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
+              🛒
+            </Text>
+          ),
+        }}
+      />
+      <Tab.Screen 
+        name="Feed" 
+        component={TempFeedScreen}
+        options={{
+          tabBarLabel: 'Feed',
+          tabBarIcon: ({ focused }) => (
+            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
+              📱
+            </Text>
+          ),
+        }}
+      />
+      <Tab.Screen 
+        name="GolfCourse" 
+        component={GolfCourseStackNavigator}
+        options={{
+          tabBarLabel: '골프장',
+          tabBarIcon: ({ focused }) => (
+            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
+              🏌️
+            </Text>
+          ),
+        }}
+      />
+      <Tab.Screen 
+        name="MyHome" 
+        component={MyHomeStackNavigator}
+        options={{
+          tabBarLabel: 'My홈피',
+          tabBarIcon: ({ focused }) => (
+            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
+              🏡
+            </Text>
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
 
-  // 🔐 인증 상태 관리 (Firebase)
-  const { isAuthenticated, isLoading, initAuth } = useAuthStore();
-  const [isInitializing, setIsInitializing] = useState(true);
+export default function App() {
+  const { user, loading, initAuth } = useAuthStore();
 
-  // 🔥 Firebase Auth 초기화 (1번만!)
   useEffect(() => {
-    const initFirebaseAuth = async () => {
-      try {
-        initAuth(); // Firebase Auth 리스너 시작
-        setIsInitializing(false);
-      } catch (error) {
-        console.error('Firebase Auth 초기화 실패:', error);
-        setIsInitializing(false);
-      }
-    };
-
-    initFirebaseAuth();
+    initAuth();
   }, []);
 
-  // 로딩 중 스플래시 화면
-  if (isInitializing || isLoading) {
+  if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#10b981' }}>
-        <Text style={{ fontSize: 60, marginBottom: 20 }}>⛳</Text>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', color: 'white', marginBottom: 10 }}>Golf Pub</Text>
-        <ActivityIndicator size="large" color="white" />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8fafc' }}>
+        <ActivityIndicator size="large" color="#10b981" />
+        <Text style={{ marginTop: 16, fontSize: 16, color: '#64748b' }}>로딩 중...</Text>
       </View>
     );
   }
 
   return (
-    <NavigationContainer>
-      {isAuthenticated ? (
-        // 로그인 됨 → 메인 화면 (Tab Navigator)
-        <Tab.Navigator
-          screenOptions={{
-            headerShown: false,
-            tabBarActiveTintColor: '#10b981',
-            tabBarInactiveTintColor: '#94a3b8',
-            tabBarStyle: {
-              backgroundColor: 'white',
-              borderTopWidth: 1,
-              borderTopColor: '#e2e8f0',
-              height: 60 + insets.bottom,
-              paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
-              paddingTop: 8,
-            },
-            tabBarLabelStyle: {
-              fontSize: 11,
-              fontWeight: '600',
-            },
-          }}
-        >
-          {/* 홈 */}
-          <Tab.Screen
-            name="Home"
-            component={HomeScreen}
-            options={{
-              tabBarLabel: '홈',
-              tabBarIcon: ({ color, focused }) => (
-                <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-                  🏠
-                </Text>
-              ),
-            }}
-          />
-
-          {/* 부킹 */}
-          <Tab.Screen
-            name="Bookings"
-            component={BookingStackNavigator}
-            options={{
-              tabBarLabel: '부킹',
-              tabBarIcon: ({ color, focused }) => (
-                <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-                  ⛳
-                </Text>
-              ),
-            }}
-          />
-
-          {/* 💬 채팅 (새로운 탭!) */}
-          <Tab.Screen
-            name="Chat"
-            component={ChatStackNavigator}
-            options={{
-              tabBarLabel: '채팅',
-              tabBarIcon: ({ color, focused }) => (
-                <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-                  💬
-                </Text>
-              ),
-            }}
-          />
-
-          {/* 중고거래 */}
-          <Tab.Screen
-            name="Marketplace"
-            component={MarketplaceStackNavigator}
-            options={{
-              tabBarLabel: '중고거래',
-              tabBarIcon: ({ color, focused }) => (
-                <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-                  🛒
-                </Text>
-              ),
-            }}
-          />
-
-          {/* Feed */}
-          <Tab.Screen
-            name="Feed"
-            component={FeedStackNavigator}
-            options={{
-              tabBarLabel: 'Feed',
-              tabBarIcon: ({ color, focused }) => (
-                <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-                  📱
-                </Text>
-              ),
-            }}
-          />
-
-          {/* 골프장 */}
-          <Tab.Screen
-            name="GolfCourse"
-            component={GolfCourseStackNavigator}
-            options={{
-              tabBarLabel: '골프장',
-              tabBarIcon: ({ color, focused }) => (
-                <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-                  🌏️
-                </Text>
-              ),
-            }}
-          />
-
-          {/* My 홈피 (친구 포함) */}
-          <Tab.Screen
-            name="MyHome"
-            component={MyHomeStackNavigator}
-            options={{
-              tabBarLabel: 'My홈피',
-              tabBarIcon: ({ color, focused }) => (
-                <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-                  🏡
-                </Text>
-              ),
-            }}
-          />
-        </Tab.Navigator>
-      ) : (
-        // 로그인 안 됨 → 로그인 화면
-        <AuthNavigator />
-      )}
-    </NavigationContainer>
-  );
-}
-
-export default function App() {
-  return (
     <SafeAreaProvider>
-      <AppContent />
+      <NavigationContainer>
+        {user ? <AppContent /> : <AuthNavigator />}
+      </NavigationContainer>
       <StatusBar style="dark" />
     </SafeAreaProvider>
   );
