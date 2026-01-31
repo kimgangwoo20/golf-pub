@@ -11,8 +11,8 @@ import {
   Platform,
   Image,
 } from 'react-native';
-import { useChatStore, ChatMessage } from '../store/useChatStore';
-import { useAuthStore } from '../store/useAuthStore';
+import { useChatStore, ChatMessage } from '../../store/useChatStore';
+import { useAuthStore } from '../../store/useAuthStore';
 
 interface ChatScreenProps {
   route: {
