@@ -10,6 +10,7 @@ interface AuthState {
   isAuthenticated: boolean;
 
   // Actions
+  login: (kakaoId: string, profile: any) => Promise<void>;
   signInWithCustomToken: (token: string) => Promise<void>;
   signInWithEmailAndPassword: (email: string, password: string) => Promise<void>;
   createUserWithEmailAndPassword: (email: string, password: string, displayName: string) => Promise<void>;
@@ -25,6 +26,42 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   loading: false,
   error: null,
   isAuthenticated: false,
+
+  /**
+   * 카카오 로그인 (간편 로그인)
+   */
+  login: async (kakaoId: string, profile: any) => {
+    try {
+      set({ loading: true, error: null });
+
+      // 카카오 프로필 정보를 UserProfile 형태로 변환
+      const userProfile: UserProfile = {
+        uid: kakaoId,
+        email: profile.email || '',
+        nickname: profile.nickname || '골프러',
+        profileImage: profile.profileImageUrl || profile.thumbnailImageUrl || '',
+        createdAt: new Date(),
+        lastLoginAt: new Date(),
+        provider: 'kakao',
+      };
+
+      set({
+        user: { uid: kakaoId } as any,
+        userProfile,
+        isAuthenticated: true,
+        loading: false,
+      });
+
+      console.log('✅ 카카오 로그인 상태 저장 완료');
+    } catch (error: any) {
+      console.error('로그인 실패:', error);
+      set({
+        error: error.message || '로그인에 실패했습니다',
+        loading: false,
+      });
+      throw error;
+    }
+  },
 
   /**
    * Custom Token으로 로그인
@@ -182,6 +219,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
    * Auth 초기화 (앱 시작 시 호출)
    */
   initAuth: () => {
+    set({ loading: true });
     authService.onAuthStateChanged(async (user) => {
       if (user) {
         const profile = await authService.getUserProfile(user.uid);
@@ -189,12 +227,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           user,
           userProfile: profile,
           isAuthenticated: true,
+          loading: false,
         });
       } else {
         set({
           user: null,
           userProfile: null,
           isAuthenticated: false,
+          loading: false,
         });
       }
     });
