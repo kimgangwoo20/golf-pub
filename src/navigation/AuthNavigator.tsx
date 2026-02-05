@@ -48,7 +48,7 @@ export const AuthNavigator: React.FC = () => {
 
 // 임시 메인 화면 (MainTabNavigator 연결 전)
 const PlaceholderMainScreen: React.FC = () => {
-  const { user, signOut } = useAuthStore();
+  const { userProfile, signOut } = useAuthStore();
 
   return (
     <View style={styles.placeholderContainer}>
@@ -56,7 +56,7 @@ const PlaceholderMainScreen: React.FC = () => {
         <Text style={styles.successIcon}>✅</Text>
         <Text style={styles.successTitle}>로그인 성공!</Text>
         <Text style={styles.successText}>
-          환영합니다, {user?.nickname}님!
+          환영합니다, {userProfile?.nickname || userProfile?.displayName || '골퍼'}님!
         </Text>
         <Text style={styles.infoText}>
           MainTabNavigator를 연결하면{'\n'}
