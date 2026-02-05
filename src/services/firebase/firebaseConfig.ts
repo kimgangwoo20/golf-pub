@@ -1,43 +1,17 @@
 // 🔥 firebaseConfig.ts
 // Firebase 초기화 및 설정
+// @react-native-firebase는 google-services.json을 통해 자동 초기화됩니다
 
-import { initializeApp, FirebaseApp } from '@react-native-firebase/app';
+import firebase from '@react-native-firebase/app';
 import firestore from '@react-native-firebase/firestore';
 import database from '@react-native-firebase/database';
 import storage from '@react-native-firebase/storage';
 import messaging from '@react-native-firebase/messaging';
 import auth from '@react-native-firebase/auth';
 
-/**
- * Firebase 설정
- *
- * 환경 변수 설정 방법:
- * 1. 루트에 .env 파일 생성
- * 2. Firebase Console에서 설정 가져오기
- * 3. 아래 변수들 설정
- */
-
-// Firebase 프로젝트 설정
-const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || 'YOUR_API_KEY',
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || 'golf-pub.firebaseapp.com',
-  databaseURL: process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL || 'https://golf-pub-default-rtdb.asia-southeast1.firebasedatabase.app',
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'golf-pub',
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || 'golf-pub.appspot.com',
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '123456789',
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || '1:123456789:android:abc123',
-};
-
-// Firebase 앱 초기화
-let firebaseApp: FirebaseApp;
-
-try {
-  firebaseApp = initializeApp(firebaseConfig);
-  console.log('✅ Firebase 초기화 성공');
-} catch (error: any) {
-  console.error('❌ Firebase 초기화 실패:', error);
-  throw error;
-}
+// Firebase 앱 참조 (자동 초기화됨)
+const firebaseApp = firebase.app();
+console.log('✅ Firebase 연결됨:', firebaseApp.name);
 
 // Firestore 설정 (서울 리전)
 const firestoreInstance = firestore();
