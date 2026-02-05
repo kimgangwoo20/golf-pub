@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { firebaseFirestore, firebaseStorage } from '../config/firebase';
+import { firestore as firebaseFirestore, storage as firebaseStorage } from '../services/firebase/firebaseConfig';
 
 export interface UserProfile {
   uid: string;
@@ -10,7 +10,7 @@ export interface UserProfile {
   level: 'beginner' | 'intermediate' | 'advanced';
   bio: string;
   location: string;
-  favoriteC ourses: string[];
+  favoriteCourses: string[];
   totalRounds: number;
   rating: number;
   reviews: number;
