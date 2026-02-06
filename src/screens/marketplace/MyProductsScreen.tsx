@@ -18,7 +18,7 @@ import { Product } from '../../types/marketplace-types';
 // Mock 내 상품 데이터
 const mockMyProducts: Product[] = [
   {
-    id: 1,
+    id: '1',
     title: '타이틀리스트 TS3 드라이버',
     description: '거의 안 쓴 드라이버입니다.',
     price: 350000,
@@ -37,7 +37,7 @@ const mockMyProducts: Product[] = [
     updatedAt: '2025.01.20',
   },
   {
-    id: 2,
+    id: '2',
     title: '오디세이 퍼터',
     description: '새제품 급입니다.',
     price: 180000,
@@ -56,7 +56,7 @@ const mockMyProducts: Product[] = [
     updatedAt: '2025.01.23',
   },
   {
-    id: 3,
+    id: '3',
     title: '골프 거리측정기',
     description: '부시넬 브랜드 정품입니다.',
     price: 250000,
@@ -99,17 +99,17 @@ export const MyProductsScreen: React.FC = () => {
 
   const displayProducts = activeTab === 'selling' ? sellingProducts : soldProducts;
 
-  const handleProductPress = (productId: number) => {
+  const handleProductPress = (productId: string) => {
     console.log('상품 클릭:', productId);
     // navigation.navigate('ProductDetail', { productId });
   };
 
-  const handleEdit = (productId: number) => {
+  const handleEdit = (productId: string) => {
     // TODO: 상품 수정 화면으로 이동
     navigation.navigate('CreateProduct' as never, { productId, editMode: true } as never);
   };
 
-  const handleDelete = (productId: number) => {
+  const handleDelete = (productId: string) => {
     Alert.alert(
       '상품 삭제',
       '정말 삭제하시겠습니까?\n삭제된 상품은 복구할 수 없습니다.',
@@ -127,7 +127,7 @@ export const MyProductsScreen: React.FC = () => {
     );
   };
 
-  const handleChangeStatus = (productId: number) => {
+  const handleChangeStatus = (productId: string) => {
     Alert.alert(
       '상태 변경',
       '상품 상태를 선택하세요',

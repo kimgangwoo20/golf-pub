@@ -262,7 +262,7 @@ export const HomeScreen: React.FC = () => {
                       <TouchableOpacity
                         style={styles.membershipBanner}
                         onPress={() => {
-                          navigation.navigate('Membership');
+                          navigation.navigate('MembershipIntro');
                         }}
                         activeOpacity={0.8}
                       >

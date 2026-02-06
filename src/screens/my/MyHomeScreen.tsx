@@ -239,8 +239,8 @@ export const MyHomeScreen: React.FC = () => {
   const [contentMenuVisible, setContentMenuVisible] = useState(false);
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
 
-  // 현재 사용자 ID (실제로는 Firebase Auth에서 가져옴)
-  const currentUserId = 'current-user';
+  // 현재 사용자 ID
+  const currentUserId = user?.uid || '';
 
   // 방명록 초기 로드
   useEffect(() => {

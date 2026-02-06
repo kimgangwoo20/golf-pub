@@ -23,15 +23,11 @@ export interface KakaoLoginResult {
  */
 export const kakaoLogin = async (): Promise<KakaoLoginResult> => {
   try {
-    console.log('🔐 Kakao 로그인 시작...');
-
     // 1. Kakao 로그인
     const loginResult = await login();
-    console.log('✅ Kakao 로그인 성공:', loginResult);
 
     // 2. 프로필 가져오기
     const profile = await getProfile();
-    console.log('✅ Kakao 프로필 조회 성공:', profile);
 
     // 3. 결과 반환
     return {
@@ -77,9 +73,7 @@ export const kakaoLogin = async (): Promise<KakaoLoginResult> => {
  */
 export const kakaoLogout = async (): Promise<{ success: boolean; error?: string }> => {
   try {
-    console.log('🔓 Kakao 로그아웃 시작...');
     await logout();
-    console.log('✅ Kakao 로그아웃 성공');
     
     return { success: true };
   } catch (error: any) {
@@ -100,9 +94,7 @@ export const getKakaoProfile = async (): Promise<{
   error?: string;
 }> => {
   try {
-    console.log('👤 Kakao 프로필 조회 시작...');
     const profile = await getProfile();
-    console.log('✅ Kakao 프로필 조회 성공:', profile);
 
     return {
       success: true,

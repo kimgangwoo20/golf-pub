@@ -60,12 +60,8 @@ class FirebaseAuthService {
     kakaoUserInfo: KakaoUserInfo
   ): Promise<FirebaseAuthTypes.UserCredential> {
     try {
-      console.log('🔐 카카오 Custom Token 로그인 시작...');
-
       // Custom Token으로 Firebase 인증
       const userCredential = await auth.signInWithCustomToken(customToken);
-
-      console.log('✅ Firebase 인증 성공:', userCredential.user.uid);
 
       // Firestore에 사용자 프로필 저장/업데이트
       await this.updateUserProfile(userCredential.user.uid, kakaoUserInfo);
@@ -75,7 +71,7 @@ class FirebaseAuthService {
 
       return userCredential;
     } catch (error) {
-      console.error('❌ 카카오 로그인 실패:', error);
+      console.error('카카오 로그인 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -92,18 +88,16 @@ class FirebaseAuthService {
     password: string
   ): Promise<FirebaseAuthTypes.UserCredential> {
     try {
-      console.log('📧 이메일 로그인 시작...', email);
+      // 이메일 로그인 시작
 
       const userCredential = await auth.signInWithEmailAndPassword(email, password);
-
-      console.log('✅ 이메일 로그인 성공:', userCredential.user.uid);
 
       // 마지막 로그인 시간 업데이트
       await this.updateLastLogin(userCredential.user.uid);
 
       return userCredential;
     } catch (error) {
-      console.error('❌ 이메일 로그인 실패:', error);
+      console.error('이메일 로그인 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -122,7 +116,7 @@ class FirebaseAuthService {
     displayName: string
   ): Promise<FirebaseAuthTypes.UserCredential> {
     try {
-      console.log('📝 이메일 회원가입 시작...', email);
+      // 이메일 회원가입 시작
 
       // Firebase Authentication 회원가입
       const userCredential = await auth.createUserWithEmailAndPassword(email, password);
@@ -131,8 +125,6 @@ class FirebaseAuthService {
       await userCredential.user.updateProfile({
         displayName,
       });
-
-      console.log('✅ 이메일 회원가입 성공:', userCredential.user.uid);
 
       // Firestore에 기본 프로필 생성
       await this.createUserProfile(userCredential.user.uid, {
@@ -144,7 +136,7 @@ class FirebaseAuthService {
 
       return userCredential;
     } catch (error) {
-      console.error('❌ 이메일 회원가입 실패:', error);
+      console.error('이메일 회원가입 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -156,15 +148,13 @@ class FirebaseAuthService {
    */
   async loginAnonymously(): Promise<FirebaseAuthTypes.UserCredential> {
     try {
-      console.log('👤 익명 로그인 시작...');
+      // 익명 로그인 시작
 
       const userCredential = await auth.signInAnonymously();
 
-      console.log('✅ 익명 로그인 성공:', userCredential.user.uid);
-
       return userCredential;
     } catch (error) {
-      console.error('❌ 익명 로그인 실패:', error);
+      console.error('익명 로그인 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -174,8 +164,6 @@ class FirebaseAuthService {
    */
   async logout(): Promise<void> {
     try {
-      console.log('🚪 로그아웃 시작...');
-
       const user = auth.currentUser;
       if (user) {
         // 온라인 상태를 오프라인으로 변경
@@ -183,10 +171,8 @@ class FirebaseAuthService {
       }
 
       await auth.signOut();
-
-      console.log('✅ 로그아웃 성공');
     } catch (error) {
-      console.error('❌ 로그아웃 실패:', error);
+      console.error('로그아웃 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -216,7 +202,7 @@ class FirebaseAuthService {
 
       return doc.data() as UserProfile;
     } catch (error) {
-      console.error('❌ 프로필 가져오기 실패:', error);
+      console.error('프로필 가져오기 실패');
       return null;
     }
   }
@@ -256,10 +242,8 @@ class FirebaseAuthService {
       };
 
       await firestore.collection('users').doc(uid).set(userProfile);
-
-      console.log('✅ 사용자 프로필 생성 완료:', uid);
     } catch (error) {
-      console.error('❌ 프로필 생성 실패:', error);
+      console.error('프로필 생성 실패');
       throw error;
     }
   }
@@ -298,10 +282,10 @@ class FirebaseAuthService {
           updatedAt: FirestoreTimestamp.now(),
         });
 
-        console.log('✅ 사용자 프로필 업데이트 완료:', uid);
+        // 사용자 프로필 업데이트 완료
       }
     } catch (error) {
-      console.error('❌ 프로필 업데이트 실패:', error);
+      console.error('프로필 업데이트 실패');
       throw error;
     }
   }
@@ -320,7 +304,7 @@ class FirebaseAuthService {
       // 온라인 상태로 변경
       await this.setUserOnline(uid);
     } catch (error) {
-      console.error('⚠️ 마지막 로그인 시간 업데이트 실패:', error);
+      console.error('마지막 로그인 시간 업데이트 실패');
       // 로그인은 성공했으므로 에러를 던지지 않음
     }
   }
@@ -337,7 +321,7 @@ class FirebaseAuthService {
         lastSeenAt: FirestoreTimestamp.now(),
       });
     } catch (error) {
-      console.error('⚠️ 온라인 상태 변경 실패:', error);
+      console.error('온라인 상태 변경 실패');
     }
   }
 
@@ -353,7 +337,7 @@ class FirebaseAuthService {
         lastSeenAt: FirestoreTimestamp.now(),
       });
     } catch (error) {
-      console.error('⚠️ 오프라인 상태 변경 실패:', error);
+      console.error('오프라인 상태 변경 실패');
     }
   }
 
@@ -373,9 +357,9 @@ class FirebaseAuthService {
         updatedAt: FirestoreTimestamp.now(),
       });
 
-      console.log('✅ 프로필 업데이트 성공:', uid);
+      // 프로필 업데이트 성공
     } catch (error) {
-      console.error('❌ 프로필 업데이트 실패:', error);
+      console.error('프로필 업데이트 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -393,9 +377,9 @@ class FirebaseAuthService {
         updatedAt: FirestoreTimestamp.now(),
       });
 
-      console.log('✅ 핸디캡 업데이트 성공:', uid, handicap);
+      // 핸디캡 업데이트 성공
     } catch (error) {
-      console.error('❌ 핸디캡 업데이트 실패:', error);
+      console.error('핸디캡 업데이트 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -414,9 +398,9 @@ class FirebaseAuthService {
         updatedAt: FirestoreTimestamp.now(),
       });
 
-      console.log('✅ 코치 인증 완료:', uid);
+      // 코치 인증 완료
     } catch (error) {
-      console.error('❌ 코치 인증 실패:', error);
+      console.error('코치 인증 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -463,9 +447,9 @@ class FirebaseAuthService {
         });
       });
 
-      console.log('✅ 포인트 추가 완료:', uid, points);
+      // 포인트 추가 완료
     } catch (error) {
-      console.error('❌ 포인트 추가 실패:', error);
+      console.error('포인트 추가 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -517,9 +501,9 @@ class FirebaseAuthService {
         });
       });
 
-      console.log('✅ 포인트 차감 완료:', uid, points);
+      // 포인트 차감 완료
     } catch (error) {
-      console.error('❌ 포인트 차감 실패:', error);
+      console.error('포인트 차감 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -531,8 +515,6 @@ class FirebaseAuthService {
    */
   async deleteAccount(uid: string): Promise<void> {
     try {
-      console.log('🗑️ 회원 탈퇴 시작...', uid);
-
       // Firestore 사용자 문서 삭제
       await firestore.collection('users').doc(uid).delete();
 
@@ -542,9 +524,9 @@ class FirebaseAuthService {
         await user.delete();
       }
 
-      console.log('✅ 회원 탈퇴 완료:', uid);
+      // 회원 탈퇴 완료
     } catch (error) {
-      console.error('❌ 회원 탈퇴 실패:', error);
+      console.error('회원 탈퇴 실패');
       throw new Error(handleFirebaseError(error));
     }
   }

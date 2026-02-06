@@ -18,7 +18,7 @@ import { ProductCategory, CATEGORIES, Product } from '../../types/marketplace-ty
 // Mock 상품 데이터
 const mockProducts: Product[] = [
   {
-    id: 1,
+    id: '1',
     title: '타이틀리스트 TS3 드라이버',
     description: '거의 안 쓴 드라이버입니다. 상태 아주 좋아요!',
     price: 350000,
@@ -37,7 +37,7 @@ const mockProducts: Product[] = [
     updatedAt: '2025.01.20',
   },
   {
-    id: 2,
+    id: '2',
     title: '캘러웨이 아이언 세트 (5-9번)',
     description: '중고이지만 관리 잘 했습니다.',
     price: 450000,
@@ -56,7 +56,7 @@ const mockProducts: Product[] = [
     updatedAt: '2025.01.18',
   },
   {
-    id: 3,
+    id: '3',
     title: '오디세이 퍼터',
     description: '새제품 급입니다. 한 번도 필드에서 안 써봤어요.',
     price: 180000,
@@ -75,7 +75,7 @@ const mockProducts: Product[] = [
     updatedAt: '2025.01.17',
   },
   {
-    id: 4,
+    id: '4',
     title: '타이틀리스트 볼보이 웨지 52도',
     description: '사용감 좀 있지만 성능은 문제없습니다.',
     price: 80000,
@@ -94,7 +94,7 @@ const mockProducts: Product[] = [
     updatedAt: '2025.01.22',
   },
   {
-    id: 5,
+    id: '5',
     title: '나이키 골프 의류 세트',
     description: '사이즈 L입니다. 깨끗합니다.',
     price: 120000,
@@ -113,7 +113,7 @@ const mockProducts: Product[] = [
     updatedAt: '2025.01.14',
   },
   {
-    id: 6,
+    id: '6',
     title: '골프 거리측정기',
     description: '부시넬 브랜드 정품입니다.',
     price: 250000,
@@ -158,11 +158,11 @@ export const MarketplaceScreen: React.FC = () => {
     setTimeout(() => setRefreshing(false), 1000);
   };
 
-  const handleProductPress = (productId: number) => {
+  const handleProductPress = (productId: string) => {
     navigation.navigate('ProductDetail' as never, { productId } as never);
   };
 
-  const handleLike = (productId: number) => {
+  const handleLike = (productId: string) => {
     setProducts(prev => prev.map(p =>
       p.id === productId ? { ...p, isLiked: !p.isLiked, likeCount: p.isLiked ? p.likeCount - 1 : p.likeCount + 1 } : p
     ));

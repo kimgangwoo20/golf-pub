@@ -22,7 +22,7 @@ const { width } = Dimensions.get('window');
 
 // Mock 상품 상세 데이터
 const mockProduct = {
-  id: 1,
+  id: '1',
   title: '타이틀리스트 TS3 드라이버',
   description: `거의 안 쓴 드라이버입니다. 상태 아주 좋아요!
 

@@ -37,7 +37,27 @@ export const profileAPI = {
       if (!userDoc.exists) {
         // Firestore에 없으면 Auth 정보로 생성
         await profileAPI.createUserProfile();
-        return await profileAPI.getMyProfile();
+        // 생성 후 직접 조회 (재귀 방지)
+        const newDoc = await firestore()
+          .collection(USERS_COLLECTION)
+          .doc(currentUser.uid)
+          .get();
+        if (!newDoc.exists) {
+          return null;
+        }
+        const newData = newDoc.data();
+        return {
+          id: currentUser.uid,
+          name: newData?.name || currentUser.displayName || '익명',
+          profileImage: newData?.photoURL || currentUser.photoURL || '',
+          email: newData?.email || currentUser.email || '',
+          phone: newData?.phone || '',
+          handicap: newData?.handicap || 0,
+          memberSince: newData?.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+          points: newData?.points || 0,
+          coupons: newData?.coupons || 0,
+          bio: newData?.bio || '',
+        } as UserProfile;
       }
 
       const data = userDoc.data();
@@ -54,10 +74,10 @@ export const profileAPI = {
         bio: data?.bio || '',
       } as UserProfile;
 
-      console.log('✅ 프로필 조회 성공');
+      // 프로필 조회 성공
       return profile;
     } catch (error: any) {
-      console.error('❌ 프로필 조회 실패:', error);
+      console.error('프로필 조회 실패');
       throw new Error(error.message || '프로필을 불러오는데 실패했습니다.');
     }
   },
@@ -93,9 +113,9 @@ export const profileAPI = {
         .doc(currentUser.uid)
         .set(userData, { merge: true });
 
-      console.log('✅ 프로필 생성 성공');
+      // 프로필 생성 성공
     } catch (error: any) {
-      console.error('❌ 프로필 생성 실패:', error);
+      console.error('프로필 생성 실패');
       throw new Error(error.message || '프로필 생성에 실패했습니다.');
     }
   },
@@ -135,9 +155,9 @@ export const profileAPI = {
         });
       }
 
-      console.log('✅ 프로필 수정 성공');
+      // 프로필 수정 성공
     } catch (error: any) {
-      console.error('❌ 프로필 수정 실패:', error);
+      console.error('프로필 수정 실패');
       throw new Error(error.message || '프로필 수정에 실패했습니다.');
     }
   },
@@ -177,10 +197,10 @@ export const profileAPI = {
         photoURL: downloadURL,
       });
 
-      console.log('✅ 프로필 이미지 업로드 성공');
+      // 프로필 이미지 업로드 성공
       return downloadURL;
     } catch (error: any) {
-      console.error('❌ 프로필 이미지 업로드 실패:', error);
+      console.error('프로필 이미지 업로드 실패');
       throw new Error(error.message || '이미지 업로드에 실패했습니다.');
     }
   },
@@ -212,10 +232,10 @@ export const profileAPI = {
         date: doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
       })) as Point[];
 
-      console.log(`✅ 포인트 내역 조회 성공: ${points.length}개`);
+      // 포인트 내역 조회 성공
       return points;
     } catch (error: any) {
-      console.error('❌ 포인트 내역 조회 실패:', error);
+      console.error('포인트 내역 조회 실패');
       throw new Error(error.message || '포인트 내역을 불러오는데 실패했습니다.');
     }
   },
@@ -259,9 +279,9 @@ export const profileAPI = {
       });
 
       await batch.commit();
-      console.log('✅ 포인트 적립 성공:', amount);
+      // 포인트 적립 성공
     } catch (error: any) {
-      console.error('❌ 포인트 적립 실패:', error);
+      console.error('포인트 적립 실패');
       throw new Error(error.message || '포인트 적립에 실패했습니다.');
     }
   },
@@ -316,9 +336,9 @@ export const profileAPI = {
       });
 
       await batch.commit();
-      console.log('✅ 포인트 사용 성공:', amount);
+      // 포인트 사용 성공
     } catch (error: any) {
-      console.error('❌ 포인트 사용 실패:', error);
+      console.error('포인트 사용 실패');
       throw new Error(error.message || '포인트 사용에 실패했습니다.');
     }
   },
@@ -348,10 +368,10 @@ export const profileAPI = {
         expiryDate: doc.data().expiryDate?.toDate?.()?.toISOString?.() || new Date().toISOString(),
       })) as Coupon[];
 
-      console.log(`✅ 쿠폰 목록 조회 성공: ${coupons.length}개`);
+      // 쿠폰 목록 조회 성공
       return coupons;
     } catch (error: any) {
-      console.error('❌ 쿠폰 목록 조회 실패:', error);
+      console.error('쿠폰 목록 조회 실패');
       throw new Error(error.message || '쿠폰 목록을 불러오는데 실패했습니다.');
     }
   },
@@ -370,7 +390,7 @@ export const profileAPI = {
         .get();
 
       if (!userDoc.exists) {
-        console.log('ℹ️ 사용자를 찾을 수 없습니다:', userId);
+        // 사용자를 찾을 수 없음
         return null;
       }
 
@@ -388,10 +408,10 @@ export const profileAPI = {
         bio: data?.bio || '',
       } as UserProfile;
 
-      console.log('✅ 사용자 프로필 조회 성공:', userId);
+      // 사용자 프로필 조회 성공
       return profile;
     } catch (error: any) {
-      console.error('❌ 사용자 프로필 조회 실패:', error);
+      console.error('사용자 프로필 조회 실패');
       throw new Error(error.message || '프로필을 불러오는데 실패했습니다.');
     }
   },

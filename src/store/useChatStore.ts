@@ -261,19 +261,23 @@ export const useChatStore = create<ChatState>((set, get) => ({
    */
   markAsRead: async (roomId, userId) => {
     try {
+      // 내가 보내지 않은 메시지 중 아직 읽지 않은 메시지 조회
       const messagesSnapshot = await firebaseFirestore
         .collection('chatRooms')
         .doc(roomId)
         .collection('messages')
-        .where('readBy', 'not-in', [[userId]])
+        .where('senderId', '!=', userId)
         .get();
 
       const batch = firebaseFirestore.batch();
 
       messagesSnapshot.docs.forEach(doc => {
-        batch.update(doc.ref, {
-          readBy: [...(doc.data().readBy || []), userId],
-        });
+        const readBy: string[] = doc.data().readBy || [];
+        if (!readBy.includes(userId)) {
+          batch.update(doc.ref, {
+            readBy: [...readBy, userId],
+          });
+        }
       });
 
       await batch.commit();
