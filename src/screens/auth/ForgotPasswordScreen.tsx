@@ -105,7 +105,7 @@ export const ForgotPasswordScreen: React.FC<{ navigation?: any }> = ({ navigatio
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   header: { padding: 24, paddingTop: 16 },
-  backButton: { fontSize: 16, color: '#2E7D32', marginBottom: 24 },
+  backButton: { fontSize: 16, color: '#10b981', marginBottom: 24 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 8 },
   subtitle: { fontSize: 14, color: '#666', lineHeight: 20 },
   form: { paddingHorizontal: 24, paddingTop: 24 },
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
   },
   sendButton: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#10b981',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -130,11 +130,11 @@ const styles = StyleSheet.create({
   sendButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   sentMessage: {
     fontSize: 14,
-    color: '#2E7D32',
+    color: '#10b981',
     textAlign: 'center',
     marginTop: 16,
     fontWeight: '600',
   },
   loginLink: { alignItems: 'center', marginTop: 32 },
-  loginLinkText: { fontSize: 14, color: '#2E7D32', fontWeight: '600' },
+  loginLinkText: { fontSize: 14, color: '#10b981', fontWeight: '600' },
 });

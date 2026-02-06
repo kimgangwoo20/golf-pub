@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   backIcon: { fontSize: 32, color: '#1A1A1A', fontWeight: '300' },
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A1A' },
   totalCard: {
-    backgroundColor: '#7C3AED', margin: 16, padding: 24, borderRadius: 16, alignItems: 'center',
+    backgroundColor: '#10b981', margin: 16, padding: 24, borderRadius: 16, alignItems: 'center',
   },
   totalLabel: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginBottom: 8 },
   totalAmount: { fontSize: 32, fontWeight: '800', color: '#fff' },
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff',
     borderWidth: 1, borderColor: '#E5E5E5',
   },
-  filterButtonActive: { backgroundColor: '#7C3AED', borderColor: '#7C3AED' },
+  filterButtonActive: { backgroundColor: '#10b981', borderColor: '#10b981' },
   filterText: { fontSize: 14, fontWeight: '600', color: '#666' },
   filterTextActive: { color: '#fff' },
   listContent: { paddingHorizontal: 16, paddingBottom: 40 },

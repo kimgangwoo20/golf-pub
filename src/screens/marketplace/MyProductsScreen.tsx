@@ -166,7 +166,7 @@ export const MyProductsScreen: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     if (status === 'available') {
-      return { text: '판매중', color: '#2E7D32', bgColor: '#E8F5E9' };
+      return { text: '판매중', color: '#10b981', bgColor: '#E8F5E9' };
     } else if (status === 'reserved') {
       return { text: '예약중', color: '#FF9800', bgColor: '#FFF3E0' };
     } else {
@@ -232,8 +232,8 @@ export const MyProductsScreen: React.FC = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor="#2E7D32"
-              colors={['#2E7D32']}
+              tintColor="#10b981"
+              colors={['#10b981']}
             />
           }
         >
@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
     marginBottom: 4,
   },
   statLabel: {
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: '#2E7D32',
+    borderBottomColor: '#10b981',
   },
   tabText: {
     fontSize: 15,
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   activeTabText: {
-    color: '#2E7D32',
+    color: '#10b981',
   },
   scrollView: {
     flex: 1,

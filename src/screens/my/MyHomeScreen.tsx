@@ -675,7 +675,7 @@ export const MyHomeScreen: React.FC = () => {
 
     return (
       <View style={styles.loadingFooter}>
-        <ActivityIndicator size="small" color="#7C3AED" />
+        <ActivityIndicator size="small" color="#10b981" />
         <Text style={styles.loadingText}>로딩 중...</Text>
       </View>
     );
@@ -731,8 +731,8 @@ export const MyHomeScreen: React.FC = () => {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={handleRefresh}
-                tintColor="#7C3AED"
-                colors={['#7C3AED']}
+                tintColor="#10b981"
+                colors={['#10b981']}
               />
             }
             showsVerticalScrollIndicator={false}
@@ -910,7 +910,7 @@ const styles = StyleSheet.create({
   profileHeader: {
     position: 'relative',
     height: 200,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#10b981',
   },
   backgroundImage: {
     width: '100%',
@@ -986,7 +986,7 @@ const styles = StyleSheet.create({
   counterValue: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
   },
   counterDivider: {
     width: 1,
@@ -1021,7 +1021,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
     marginBottom: 2,
   },
   statLabel: {
@@ -1056,7 +1056,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
   },
   tabItemActive: {
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#10b981',
   },
   tabIcon: {
     fontSize: 14,
@@ -1246,7 +1246,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#10b981',
     padding: 16,
     marginHorizontal: 16,
     marginTop: 12,
@@ -1384,7 +1384,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   myBadge: {
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#10b981',
     color: '#fff',
     fontSize: 10,
     fontWeight: '700',

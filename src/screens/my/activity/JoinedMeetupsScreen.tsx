@@ -136,7 +136,7 @@ export const JoinedMeetupsScreen: React.FC = () => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2E7D32" />
+        <ActivityIndicator size="large" color="#10b981" />
         <Text style={styles.loadingText}>내 모임을 불러오는 중...</Text>
       </View>
     );
@@ -181,8 +181,8 @@ export const JoinedMeetupsScreen: React.FC = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor="#2E7D32"
-              colors={['#2E7D32']}
+              tintColor="#10b981"
+              colors={['#10b981']}
             />
           }
         >
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: '#2E7D32',
+    borderBottomColor: '#10b981',
   },
   tabText: {
     fontSize: 15,
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   activeTabText: {
-    color: '#2E7D32',
+    color: '#10b981',
   },
   scrollView: {
     flex: 1,
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
   meetupPrice: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
   },
   meetupPlayers: {
     fontSize: 14,

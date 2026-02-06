@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff',
     borderWidth: 1, borderColor: '#E5E5E5',
   },
-  filterButtonActive: { backgroundColor: '#7C3AED', borderColor: '#7C3AED' },
+  filterButtonActive: { backgroundColor: '#10b981', borderColor: '#10b981' },
   filterText: { fontSize: 13, fontWeight: '600', color: '#666' },
   filterTextActive: { color: '#fff' },
   listContent: { paddingHorizontal: 16, paddingBottom: 40, gap: 12 },
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   couponLeft: {
     flex: 1, padding: 16, borderLeftWidth: 4,
   },
-  couponDiscount: { fontSize: 18, fontWeight: '800', color: '#7C3AED', marginBottom: 4 },
+  couponDiscount: { fontSize: 18, fontWeight: '800', color: '#10b981', marginBottom: 4 },
   couponTitle: { fontSize: 15, fontWeight: '600', color: '#1A1A1A', marginBottom: 2 },
   couponDesc: { fontSize: 13, color: '#666', marginBottom: 6 },
   couponExpiry: { fontSize: 12, color: '#999' },
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   },
   couponCode: { fontSize: 10, color: '#999', marginBottom: 8 },
   useButton: {
-    backgroundColor: '#7C3AED', paddingHorizontal: 16, paddingVertical: 6, borderRadius: 12,
+    backgroundColor: '#10b981', paddingHorizontal: 16, paddingVertical: 6, borderRadius: 12,
   },
   useButtonText: { fontSize: 13, fontWeight: '600', color: '#fff' },
   statusLabel: { fontSize: 12, fontWeight: '600', color: '#999' },

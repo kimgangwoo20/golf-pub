@@ -160,6 +160,9 @@ class FirebaseMessagingService {
         if (remoteMessage) {
           callback(remoteMessage);
         }
+      })
+      .catch(() => {
+        // 초기 알림 조회 실패 - 무시
       });
 
     return unsubscribe;
@@ -439,14 +442,10 @@ class FirebaseMessagingService {
    *
    * @param count - 배지 개수
    */
-  async updateBadgeCount(count: number): Promise<void> {
-    if (Platform.OS === 'ios') {
-      try {
-        await messaging.setAPNSToken(count.toString());
-      } catch (error) {
-        // 배지 업데이트 실패 - 무시
-      }
-    }
+  async updateBadgeCount(_count: number): Promise<void> {
+    // TODO: notifee 라이브러리로 배지 업데이트 구현
+    // import notifee from '@notifee/react-native';
+    // await notifee.setBadgeCount(count);
   }
 
   /**

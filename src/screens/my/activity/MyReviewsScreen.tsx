@@ -82,8 +82,8 @@ export const MyReviewsScreen: React.FC = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor="#2E7D32"
-              colors={['#2E7D32']}
+              tintColor="#10b981"
+              colors={['#10b981']}
             />
           }
         >
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
     marginBottom: 4,
   },
   statLabel: {

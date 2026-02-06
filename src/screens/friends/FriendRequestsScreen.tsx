@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: '#2E7D32',
+    borderBottomColor: '#10b981',
   },
   tabText: {
     fontSize: 15,
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   activeTabText: {
-    color: '#2E7D32',
+    color: '#10b981',
   },
   scrollView: {
     flex: 1,
@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
   mutualText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#10b981',
     marginBottom: 8,
   },
   messageBox: {
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
     minWidth: 80,
   },
   acceptButton: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#10b981',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 6,

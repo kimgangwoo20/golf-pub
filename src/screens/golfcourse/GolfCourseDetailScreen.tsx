@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
   distanceText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
   },
   quickActions: {
     flexDirection: 'row',
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
   priceValue: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
   },
   priceNote: {
     fontSize: 12,
@@ -600,7 +600,7 @@ const styles = StyleSheet.create({
   weatherTemp: {
     fontSize: 48,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
   },
   weatherCondition: {
     fontSize: 16,
@@ -696,7 +696,7 @@ const styles = StyleSheet.create({
   viewAllText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#10b981',
   },
   reviewItem: {
     paddingVertical: 16,
@@ -751,7 +751,7 @@ const styles = StyleSheet.create({
   writeReviewText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
   },
   bottomSpacing: {
     height: 100,
@@ -764,7 +764,7 @@ const styles = StyleSheet.create({
   },
   bookingButton: {
     height: 56,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#10b981',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',

@@ -342,7 +342,8 @@ export default function App() {
   const { user, loading, initAuth } = useAuthStore();
 
   useEffect(() => {
-    initAuth();
+    const unsubscribe = initAuth();
+    return unsubscribe;
   }, []);
 
   if (loading) {

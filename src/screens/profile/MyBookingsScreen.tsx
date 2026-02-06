@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   statusConfirmed: { backgroundColor: '#E8F5E9' },
   statusPending: { backgroundColor: '#FFF3E0' },
   statusText: { fontSize: 12, fontWeight: '600' },
-  statusTextConfirmed: { color: '#2E7D32' },
+  statusTextConfirmed: { color: '#10b981' },
   statusTextPending: { color: '#F57C00' },
   bookingCourse: { fontSize: 14, color: '#666', marginBottom: 4 },
   bookingDate: { fontSize: 14, color: '#666' },

@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
   handicapText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#10b981',
   },
   postTime: {
     fontSize: 13,
@@ -732,7 +732,7 @@ const styles = StyleSheet.create({
   },
   replyingText: {
     fontSize: 13,
-    color: '#2E7D32',
+    color: '#10b981',
     fontWeight: '600',
   },
   replyingCancel: {
@@ -757,7 +757,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#10b981',
     alignItems: 'center',
     justifyContent: 'center',
   },

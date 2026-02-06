@@ -267,7 +267,7 @@ export const HomeScreen: React.FC = () => {
                         activeOpacity={0.8}
                       >
                         <LinearGradient
-                          colors={['#667eea', '#764ba2']}
+                          colors={['#10b981', '#764ba2']}
                           start={{ x: 0, y: 0 }}
                           end={{ x: 1, y: 1 }}
                           style={styles.membershipGradient}
@@ -579,10 +579,10 @@ const styles = StyleSheet.create({
   attendanceSubtitle: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    color: '#2E7D32',
+    color: '#10b981',
   },
   attendanceButton: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#10b981',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.lg,

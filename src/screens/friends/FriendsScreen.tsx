@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
     marginBottom: 4,
   },
   statLabel: {
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   handicapText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#10b981',
   },
   friendBio: {
     fontSize: 14,
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
   },
   mutualFriends: {
     fontSize: 12,
-    color: '#2E7D32',
+    color: '#10b981',
     fontWeight: '600',
   },
   arrowIcon: {
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     bottom: 16,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#10b981',
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderRadius: 24,

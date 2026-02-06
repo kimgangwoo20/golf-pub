@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   editAvatarBtn: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#10b981', width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#fff' },
   name: { fontSize: 24, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 4 },
   email: { fontSize: 14, color: '#666', marginBottom: 12 },
-  membershipBadge: { backgroundColor: '#667eea', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
+  membershipBadge: { backgroundColor: '#10b981', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
   membershipText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   statsContainer: { flexDirection: 'row', backgroundColor: '#fff', padding: 20, marginBottom: 12 },
   statItem: { flex: 1, alignItems: 'center' },

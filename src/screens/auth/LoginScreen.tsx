@@ -87,7 +87,7 @@ export const LoginScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <LinearGradient
-        colors={['#2E7D32', '#1B5E20']}
+        colors={['#10b981', '#1B5E20']}
         style={styles.gradient}
       >
         <KeyboardAvoidingView
@@ -173,7 +173,7 @@ export const LoginScreen: React.FC = () => {
                     activeOpacity={0.8}
                   >
                     {emailLoading ? (
-                      <ActivityIndicator size="small" color="#2E7D32" />
+                      <ActivityIndicator size="small" color="#10b981" />
                     ) : (
                       <Text style={styles.emailLoginButtonText}>로그인</Text>
                     )}
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
   emailLoginButtonText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
   },
   bottomLinks: {
     flexDirection: 'row',

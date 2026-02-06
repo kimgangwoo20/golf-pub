@@ -580,7 +580,7 @@ const styles = StyleSheet.create({
   averageRatingNumber: {
     fontSize: 48,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
     marginBottom: 8,
   },
   stars: {
@@ -653,7 +653,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   filterTextActive: {
-    color: '#2E7D32',
+    color: '#10b981',
   },
   sortSection: {
     backgroundColor: '#fff',
@@ -680,7 +680,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   sortTextActive: {
-    color: '#2E7D32',
+    color: '#10b981',
   },
   reviewsList: {
     padding: 12,
@@ -731,7 +731,7 @@ const styles = StyleSheet.create({
   handicapText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#10b981',
   },
   reviewDate: {
     fontSize: 13,
@@ -831,7 +831,7 @@ const styles = StyleSheet.create({
   modalSubmitText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
   },
   modalScrollView: {
     flex: 1,

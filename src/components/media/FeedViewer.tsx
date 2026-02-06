@@ -752,7 +752,7 @@ const commentStyles = StyleSheet.create({
   },
   editText: {
     fontSize: 12,
-    color: '#7C3AED',
+    color: '#10b981',
   },
   deleteText: {
     fontSize: 12,
@@ -788,7 +788,7 @@ const commentStyles = StyleSheet.create({
   },
   indicatorReplyText: {
     fontSize: 13,
-    color: '#7C3AED',
+    color: '#10b981',
   },
   indicatorEditText: {
     fontSize: 13,
@@ -823,7 +823,7 @@ const commentStyles = StyleSheet.create({
   sendBtn: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#10b981',
     borderRadius: 20,
   },
   sendBtnDisabled: {

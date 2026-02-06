@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   myProductsButton: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#10b981',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   categoryTextActive: {
-    color: '#2E7D32',
+    color: '#10b981',
   },
   scrollView: {
     flex: 1,
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     bottom: 16,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#10b981',
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderRadius: 24,

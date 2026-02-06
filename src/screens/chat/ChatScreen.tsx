@@ -239,7 +239,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#10b981',
   },
   container: {
     flex: 1,
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#10b981',
   },
   backButton: {
     padding: 8,
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   myBubble: {
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#10b981',
   },
   senderName: {
     fontSize: 12,
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     color: '#1a1a1a',
   },
   sendButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#10b981',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,

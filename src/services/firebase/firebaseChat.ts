@@ -74,8 +74,6 @@ class FirebaseChatService {
       // 채팅방 ID 생성 (항상 같은 순서로)
       const roomId = this.generateRoomId(userId1, userId2);
 
-      console.log('💬 채팅방 생성/가져오기:', roomId);
-
       // 채팅방 존재 여부 확인
       const roomRef = database.ref(`chatRooms/${roomId}`);
       const snapshot = await roomRef.once('value');
@@ -106,14 +104,10 @@ class FirebaseChatService {
 
         await roomRef.set(chatRoom);
 
-        console.log('✅ 새 채팅방 생성 완료:', roomId);
-      } else {
-        console.log('✅ 기존 채팅방 사용:', roomId);
       }
 
       return roomId;
     } catch (error) {
-      console.error('❌ 채팅방 생성 실패:', error);
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -144,8 +138,6 @@ class FirebaseChatService {
     }
   ): Promise<string> {
     try {
-      console.log('💬 메시지 전송:', roomId, type);
-
       // 새 메시지 참조 생성
       const messageRef = database.ref(`messages/${roomId}`).push();
       const messageId = messageRef.key!;
@@ -179,11 +171,8 @@ class FirebaseChatService {
       // 수신자의 읽지 않은 메시지 카운트 증가
       await this.incrementUnreadCount(roomId, senderId);
 
-      console.log('✅ 메시지 전송 완료:', messageId);
-
       return messageId;
     } catch (error) {
-      console.error('❌ 메시지 전송 실패:', error);
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -212,16 +201,13 @@ class FirebaseChatService {
           return;
         }
 
-        // readBy 배열에 userId 추가
-        const readBy = message.readBy || [];
-        readBy.push(userId);
+        // readBy 배열에 userId 추가 (불변성 유지)
+        const readBy = [...(message.readBy || []), userId];
 
         await messageRef.update({ readBy });
-
-        console.log('✅ 메시지 읽음 처리:', messageId);
       }
     } catch (error) {
-      console.error('❌ 메시지 읽음 처리 실패:', error);
+      // 에러 무시
     }
   }
 
@@ -236,8 +222,6 @@ class FirebaseChatService {
     userId: string
   ): Promise<void> {
     try {
-      console.log('📖 모든 메시지 읽음 처리:', roomId, userId);
-
       // 채팅방의 모든 메시지 가져오기
       const messagesRef = database.ref(`messages/${roomId}`);
       const snapshot = await messagesRef.once('value');
@@ -255,8 +239,7 @@ class FirebaseChatService {
 
         // 본인이 보낸 메시지가 아니고, 아직 읽지 않은 메시지만
         if (message.senderId !== userId && !message.readBy?.includes(userId)) {
-          const readBy = message.readBy || [];
-          readBy.push(userId);
+          const readBy = [...(message.readBy || []), userId];
           updates[`${messageId}/readBy`] = readBy;
         }
       });
@@ -268,9 +251,8 @@ class FirebaseChatService {
       // 읽지 않은 메시지 카운트 0으로 설정
       await database.ref(`chatRooms/${roomId}/unreadCount/${userId}`).set(0);
 
-      console.log('✅ 모든 메시지 읽음 처리 완료');
     } catch (error) {
-      console.error('❌ 모든 메시지 읽음 처리 실패:', error);
+      // 에러 무시
     }
   }
 
@@ -285,8 +267,6 @@ class FirebaseChatService {
     userId: string,
     callback: (rooms: ChatRoom[]) => void
   ): () => void {
-    console.log('🔄 채팅방 목록 구독:', userId);
-
     const roomsRef = database.ref('chatRooms')
       .orderByChild('updatedAt');
 
@@ -313,7 +293,6 @@ class FirebaseChatService {
     // Unsubscribe function 반환
     return () => {
       roomsRef.off('value', onValueChange);
-      console.log('❌ 채팅방 목록 구독 해제:', userId);
     };
   }
 
@@ -330,8 +309,6 @@ class FirebaseChatService {
     callback: (messages: ChatMessage[]) => void,
     limit: number = 50
   ): () => void {
-    console.log('🔄 메시지 구독:', roomId);
-
     const messagesRef = database.ref(`messages/${roomId}`)
       .orderByChild('timestamp')
       .limitToLast(limit);
@@ -351,7 +328,6 @@ class FirebaseChatService {
     // Unsubscribe function 반환
     return () => {
       messagesRef.off('value', onValueChange);
-      console.log('❌ 메시지 구독 해제:', roomId);
     };
   }
 
@@ -385,7 +361,7 @@ class FirebaseChatService {
         await typingRef.remove();
       }
     } catch (error) {
-      console.error('❌ 타이핑 상태 설정 실패:', error);
+      // 에러 무시
     }
   }
 
@@ -456,7 +432,7 @@ class FirebaseChatService {
         updatedAt: timestamp,
       });
     } catch (error) {
-      console.error('❌ 마지막 메시지 업데이트 실패:', error);
+      // 에러 무시
     }
   }
 
@@ -490,7 +466,7 @@ class FirebaseChatService {
         await roomRef.update(updates);
       }
     } catch (error) {
-      console.error('❌ 읽지 않은 카운트 증가 실패:', error);
+      // 에러 무시
     }
   }
 
@@ -514,8 +490,6 @@ class FirebaseChatService {
    */
   async leaveChatRoom(roomId: string, userId: string): Promise<void> {
     try {
-      console.log('🚪 채팅방 나가기:', roomId, userId);
-
       // 채팅방 삭제 (2명 모두 나가면 삭제)
       const roomRef = database.ref(`chatRooms/${roomId}`);
       await roomRef.remove();
@@ -524,9 +498,7 @@ class FirebaseChatService {
       const messagesRef = database.ref(`messages/${roomId}`);
       await messagesRef.remove();
 
-      console.log('✅ 채팅방 나가기 완료');
     } catch (error) {
-      console.error('❌ 채팅방 나가기 실패:', error);
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -555,10 +527,9 @@ class FirebaseChatService {
 
         await database.ref(`messages/${roomId}`).update(updates);
 
-        console.log('✅ 오래된 메시지 삭제 완료');
       }
     } catch (error) {
-      console.error('❌ 오래된 메시지 삭제 실패:', error);
+      // 에러 무시
     }
   }
 }

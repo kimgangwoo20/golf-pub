@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
   handicapValue: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
   },
   profileLocation: {
     fontSize: 15,
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   mutualText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#10b981',
   },
   statsSection: {
     backgroundColor: '#fff',
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
     marginBottom: 4,
   },
   statLabel: {
@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
   chatButton: {
     flex: 1,
     height: 56,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#10b981',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -410,13 +410,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#2E7D32',
+    borderColor: '#10b981',
     alignItems: 'center',
     justifyContent: 'center',
   },
   inviteButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
   },
 });

@@ -31,7 +31,6 @@ class AuthService {
       const userCredential = await auth().signInWithCustomToken(token);
       return userCredential;
     } catch (error) {
-      console.error('Custom Token 로그인 실패:', error);
       throw error;
     }
   }
@@ -47,7 +46,6 @@ class AuthService {
       const userCredential = await auth().signInWithEmailAndPassword(email, password);
       return userCredential;
     } catch (error) {
-      console.error('이메일 로그인 실패:', error);
       throw error;
     }
   }
@@ -77,7 +75,6 @@ class AuthService {
 
       return userCredential;
     } catch (error) {
-      console.error('회원가입 실패:', error);
       throw error;
     }
   }
@@ -89,7 +86,6 @@ class AuthService {
     try {
       await auth().signOut();
     } catch (error) {
-      console.error('로그아웃 실패:', error);
       throw error;
     }
   }
@@ -120,7 +116,6 @@ class AuthService {
 
       await firestore().collection('users').doc(uid).set(userProfile);
     } catch (error) {
-      console.error('프로필 생성 실패:', error);
       throw error;
     }
   }
@@ -152,7 +147,7 @@ class AuthService {
 
       return doc.data() as UserProfile;
     } catch (error) {
-      console.error('프로필 조회 실패:', error);
+      // 에러 무시
       return null;
     }
   }
@@ -186,7 +181,6 @@ class AuthService {
         }
       }
     } catch (error) {
-      console.error('프로필 업데이트 실패:', error);
       throw error;
     }
   }
@@ -212,7 +206,6 @@ class AuthService {
     try {
       await auth().sendPasswordResetEmail(email);
     } catch (error) {
-      console.error('비밀번호 재설정 이메일 전송 실패:', error);
       throw error;
     }
   }
@@ -227,7 +220,6 @@ class AuthService {
         await currentUser.sendEmailVerification();
       }
     } catch (error) {
-      console.error('이메일 인증 메일 전송 실패:', error);
       throw error;
     }
   }

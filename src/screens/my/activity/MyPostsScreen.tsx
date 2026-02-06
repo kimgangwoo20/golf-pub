@@ -77,7 +77,7 @@ export const MyPostsScreen: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     if (status === 'recruiting') {
-      return { text: '모집중', color: '#2E7D32', bgColor: '#E8F5E9' };
+      return { text: '모집중', color: '#10b981', bgColor: '#E8F5E9' };
     } else if (status === 'completed') {
       return { text: '완료', color: '#666', bgColor: '#F5F5F5' };
     } else {
@@ -149,8 +149,8 @@ export const MyPostsScreen: React.FC = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor="#2E7D32"
-              colors={['#2E7D32']}
+              tintColor="#10b981"
+              colors={['#10b981']}
             />
           }
         >
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
     marginBottom: 4,
   },
   statLabel: {
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
   postPrice: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
   },
   postPlayers: {
     fontSize: 14,
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   editButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#10b981',
   },
   deleteButton: {
     backgroundColor: '#FFE5E5',
