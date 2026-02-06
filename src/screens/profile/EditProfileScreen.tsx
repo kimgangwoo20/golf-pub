@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { profileAPI } from '../../services/api/profileAPI';
-import { showImagePickerOptions } from '../../utils/imageUtils';
 
 export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [phone, setPhone] = useState('');
   const [handicap, setHandicap] = useState('');
-  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -25,28 +22,11 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
         setBio(profile.bio || '');
         setPhone(profile.phone || '');
         setHandicap(profile.handicap?.toString() || '0');
-        setProfileImage(profile.profileImage || null);
       }
     } catch (error) {
       console.error('프로필 로드 실패:', error);
     } finally {
       setIsFetching(false);
-    }
-  };
-
-  const handleChangeProfileImage = async () => {
-    const uri = await showImagePickerOptions();
-    if (uri) {
-      setIsUploadingImage(true);
-      try {
-        const downloadURL = await profileAPI.uploadProfileImage(uri);
-        setProfileImage(downloadURL);
-        Alert.alert('완료', '프로필 이미지가 변경되었습니다.');
-      } catch (error: any) {
-        Alert.alert('오류', error.message || '이미지 업로드에 실패했습니다.');
-      } finally {
-        setIsUploadingImage(false);
-      }
     }
   };
 
@@ -93,33 +73,6 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
       </View>
 
       <View style={styles.form}>
-        {/* 프로필 이미지 */}
-        <View style={styles.imageSection}>
-          <TouchableOpacity
-            style={styles.profileImageContainer}
-            onPress={handleChangeProfileImage}
-            disabled={isUploadingImage}
-          >
-            {profileImage ? (
-              <Image source={{ uri: profileImage }} style={styles.profileImage} />
-            ) : (
-              <View style={styles.profileImagePlaceholder}>
-                <Text style={styles.profileImagePlaceholderText}>👤</Text>
-              </View>
-            )}
-            {isUploadingImage ? (
-              <View style={styles.imageOverlay}>
-                <ActivityIndicator color="#fff" />
-              </View>
-            ) : (
-              <View style={styles.editBadge}>
-                <Text style={styles.editBadgeText}>📷</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-          <Text style={styles.changeImageText}>프로필 사진 변경</Text>
-        </View>
-
         <View style={styles.inputContainer}>
           <Text style={styles.label}>이름 *</Text>
           <TextInput
@@ -192,27 +145,6 @@ const styles = StyleSheet.create({
   backButton: { fontSize: 16, color: '#007AFF', marginBottom: 24 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#1a1a1a' },
   form: { paddingHorizontal: 24, paddingTop: 24 },
-  imageSection: { alignItems: 'center', marginBottom: 32 },
-  profileImageContainer: { width: 120, height: 120, borderRadius: 60, position: 'relative' },
-  profileImage: { width: 120, height: 120, borderRadius: 60 },
-  profileImagePlaceholder: {
-    width: 120, height: 120, borderRadius: 60, backgroundColor: '#E5E5E5',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  profileImagePlaceholderText: { fontSize: 48 },
-  imageOverlay: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    borderRadius: 60, backgroundColor: 'rgba(0,0,0,0.5)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  editBadge: {
-    position: 'absolute', bottom: 0, right: 0,
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: '#007AFF', alignItems: 'center', justifyContent: 'center',
-    borderWidth: 3, borderColor: '#fff',
-  },
-  editBadgeText: { fontSize: 16 },
-  changeImageText: { marginTop: 12, fontSize: 14, color: '#007AFF' },
   inputContainer: { marginBottom: 24 },
   label: { fontSize: 14, fontWeight: '600', color: '#1a1a1a', marginBottom: 8 },
   input: { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 12, padding: 16, fontSize: 16 },
