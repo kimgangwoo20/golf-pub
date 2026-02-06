@@ -14,7 +14,7 @@ export type BookingStatus = 'open' | 'full' | 'closed' | 'cancelled' | 'complete
  * 참가자 정보
  */
 export interface Participant {
-  id: number;
+  id: string;
   avatar: string;
   name?: string;
 }
@@ -23,7 +23,7 @@ export interface Participant {
  * 부킹 (골프 번개 모임)
  */
 export interface Booking {
-  id: number;
+  id: string;
   title: string;
   golfCourse: string;
   location: string;
@@ -40,7 +40,7 @@ export interface Booking {
   hasPub: boolean;
   pubName?: string;
   pubTime?: string;
-  hostId?: number;
+  hostId?: string;
   createdAt?: string;
 }
 
@@ -92,8 +92,8 @@ export interface CreateBookingRequest {
  * 부킹 참가 신청 데이터
  */
 export interface JoinBookingRequest {
-  bookingId: number;
-  userId: number;
+  bookingId: string;
+  userId: string;
   message?: string;
 }
 
@@ -101,7 +101,7 @@ export interface JoinBookingRequest {
  * 부킹 결제 정보
  */
 export interface BookingPayment {
-  bookingId: number;
+  bookingId: string;
   amount: number;
   platformFee: number; // 5% 수수료
   pointsUsed: number;
@@ -114,7 +114,7 @@ export interface BookingPayment {
  * 코치 정보
  */
 export interface Coach {
-  id: number;
+  id: string;
   name: string;
   type: string;
   rating: number;

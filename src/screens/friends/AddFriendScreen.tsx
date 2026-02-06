@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: '#2E7D32',
+    borderBottomColor: '#10b981',
   },
   tabText: {
     fontSize: 15,
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   activeTabText: {
-    color: '#2E7D32',
+    color: '#10b981',
   },
   scrollView: {
     flex: 1,
@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
   },
   searchButton: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#10b981',
     paddingHorizontal: 24,
     borderRadius: 8,
     alignItems: 'center',
@@ -682,7 +682,7 @@ const styles = StyleSheet.create({
   mutualText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#10b981',
   },
   addButton: {
     backgroundColor: '#E8F5E9',
@@ -693,7 +693,7 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
   },
   qrSection: {
     gap: 16,
@@ -780,7 +780,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 30,
     height: 30,
-    borderColor: '#2E7D32',
+    borderColor: '#10b981',
   },
   topLeft: {
     top: 0,
@@ -823,7 +823,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   rescanButton: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#10b981',
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 24,
@@ -909,7 +909,7 @@ const styles = StyleSheet.create({
   },
   myQrCloseBtn: {
     width: '100%',
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#10b981',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',

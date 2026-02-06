@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     fontSize: 16,
-    color: '#2E7D32',
+    color: '#10b981',
     fontWeight: '600',
   },
   headerTitle: {

@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
   },
   draftText: {
     fontSize: 16,
-    color: '#2E7D32',
+    color: '#10b981',
     fontWeight: '600',
   },
   scrollView: {
@@ -424,12 +424,12 @@ const styles = StyleSheet.create({
   },
   hashtagText: {
     fontSize: 14,
-    color: '#1976D2',
+    color: '#10b981',
     fontWeight: '600',
   },
   removeHashtagText: {
     fontSize: 14,
-    color: '#1976D2',
+    color: '#10b981',
   },
   optionsSection: {
     flexDirection: 'row',
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
   },
   visibilityButtonActive: {
     backgroundColor: '#E8F5E9',
-    borderColor: '#2E7D32',
+    borderColor: '#10b981',
   },
   visibilityButtonText: {
     fontSize: 14,
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   visibilityButtonTextActive: {
-    color: '#2E7D32',
+    color: '#10b981',
   },
   bottomSpacing: {
     height: 40,
@@ -505,7 +505,7 @@ const styles = StyleSheet.create({
   },
   publishButton: {
     height: 56,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#10b981',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',

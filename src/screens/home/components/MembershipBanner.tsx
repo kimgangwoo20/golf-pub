@@ -9,7 +9,7 @@ interface Props {
 export const MembershipBanner: React.FC<Props> = ({ onPress }) => (
   <TouchableOpacity onPress={onPress}>
     <LinearGradient
-      colors={['#8b5cf6', '#6366f1']}
+      colors={['#10b981', '#6366f1']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.banner}

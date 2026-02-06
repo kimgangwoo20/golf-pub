@@ -51,8 +51,8 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
           set({ notifications });
         },
-        (error) => {
-          console.error('알림 구독 오류:', error.message);
+        () => {
+          // 알림 구독 오류 - 무시
         }
       );
   },
@@ -79,8 +79,8 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         (snapshot) => {
           set({ unreadCount: snapshot.size });
         },
-        (error) => {
-          console.error('읽지 않은 알림 구독 오류:', error.message);
+        () => {
+          // 읽지 않은 알림 구독 오류 - 무시
         }
       );
   },
@@ -108,7 +108,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         ),
       });
     } catch (error) {
-      console.error('알림 읽음 처리 실패');
+      // 알림 읽음 처리 실패 - 무시
     }
   },
 
@@ -128,7 +128,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
       await batch.commit();
     } catch (error) {
-      console.error('전체 읽음 처리 실패');
+      // 전체 읽음 처리 실패 - 무시
     }
   },
 }));

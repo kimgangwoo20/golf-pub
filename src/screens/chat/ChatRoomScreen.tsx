@@ -305,7 +305,7 @@ export const ChatRoomScreen: React.FC<{ route?: any; navigation?: any }> = ({ ro
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#10b981',
   },
   container: {
     flex: 1,
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#10b981',
   },
   backButton: {
     padding: 8,
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   myMessageBubble: {
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#10b981',
   },
   messageText: {
     fontSize: 14,
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
   sendButton: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#10b981',
     borderRadius: 18,
   },
   sendButtonDisabled: {

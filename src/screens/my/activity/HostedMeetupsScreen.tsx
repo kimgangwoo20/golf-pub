@@ -157,7 +157,7 @@ export const HostedMeetupsScreen: React.FC = () => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2E7D32" />
+        <ActivityIndicator size="large" color="#10b981" />
         <Text style={styles.loadingText}>주최한 모임을 불러오는 중...</Text>
       </View>
     );
@@ -202,8 +202,8 @@ export const HostedMeetupsScreen: React.FC = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor="#2E7D32"
-              colors={['#2E7D32']}
+              tintColor="#10b981"
+              colors={['#10b981']}
             />
           }
         >
@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: '#2E7D32',
+    borderBottomColor: '#10b981',
   },
   tabText: {
     fontSize: 15,
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   activeTabText: {
-    color: '#2E7D32',
+    color: '#10b981',
   },
   scrollView: {
     flex: 1,
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
   meetupPrice: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#10b981',
     marginBottom: 4,
   },
   meetupPlayers: {
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
   },
   manageButton: {
     flex: 1,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#10b981',
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
   },
   editButton: {
     flex: 1,
-    backgroundColor: '#1976D2',
+    backgroundColor: '#10b981',
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
@@ -509,7 +509,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   createButton: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#10b981',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,

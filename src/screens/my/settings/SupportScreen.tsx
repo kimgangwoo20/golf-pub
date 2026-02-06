@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   },
   contactIcon: { fontSize: 32, marginBottom: 8 },
   contactLabel: { fontSize: 15, fontWeight: '700', color: '#1A1A1A', marginBottom: 4 },
-  contactInfo: { fontSize: 13, fontWeight: '600', color: '#7C3AED', marginBottom: 2 },
+  contactInfo: { fontSize: 13, fontWeight: '600', color: '#10b981', marginBottom: 2 },
   contactTime: { fontSize: 11, color: '#999' },
   faqSection: { margin: 16 },
   faqItem: {

@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
   },
   categoryButtonActive: {
-    borderColor: '#2E7D32',
+    borderColor: '#10b981',
     backgroundColor: '#E8F5E9',
   },
   categoryIcon: {
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   categoryButtonTextActive: {
-    color: '#2E7D32',
+    color: '#10b981',
   },
   priceInputContainer: {
     flexDirection: 'row',
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
   },
   conditionButtonActive: {
-    borderColor: '#2E7D32',
+    borderColor: '#10b981',
     backgroundColor: '#E8F5E9',
   },
   conditionButtonText: {
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   conditionButtonTextActive: {
-    color: '#2E7D32',
+    color: '#10b981',
   },
   descriptionInput: {
     height: 150,
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#E5E5E5',
   },
   submitButton: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#10b981',
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',

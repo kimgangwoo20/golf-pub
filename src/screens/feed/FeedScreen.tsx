@@ -858,7 +858,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#10b981',
   },
   headerLeft: {
     flexDirection: 'row',
@@ -917,7 +917,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 4,
     borderWidth: 2,
-    borderColor: '#7C3AED',
+    borderColor: '#10b981',
   },
   notificationBadgeText: {
     color: '#fff',
@@ -936,7 +936,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 4,
     borderWidth: 2,
-    borderColor: '#7C3AED',
+    borderColor: '#10b981',
   },
   messageBadgeText: {
     color: '#fff',
@@ -963,7 +963,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
   },
   tabItemActive: {
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#10b981',
   },
   tabLabel: {
     fontSize: 14,
@@ -1017,7 +1017,7 @@ const styles = StyleSheet.create({
     bottom: -2,
     borderRadius: 34,
     borderWidth: 3,
-    borderColor: '#7C3AED',
+    borderColor: '#10b981',
   },
   storyName: {
     fontSize: 12,
@@ -1098,7 +1098,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 13,
-    color: '#7C3AED',
+    color: '#10b981',
     fontWeight: '600',
   },
   feedActions: {
@@ -1140,7 +1140,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#10b981',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -1285,7 +1285,7 @@ const styles = StyleSheet.create({
   },
   replyIndicatorText: {
     fontSize: 13,
-    color: '#7C3AED',
+    color: '#10b981',
   },
   replyIndicatorCancel: {
     fontSize: 16,
@@ -1317,7 +1317,7 @@ const styles = StyleSheet.create({
   },
   editButtonText: {
     fontSize: 12,
-    color: '#7C3AED',
+    color: '#10b981',
   },
   deleteButtonText: {
     fontSize: 12,
@@ -1347,7 +1347,7 @@ const styles = StyleSheet.create({
   commentSendButton: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#10b981',
     borderRadius: 20,
   },
   commentSendButtonDisabled: {

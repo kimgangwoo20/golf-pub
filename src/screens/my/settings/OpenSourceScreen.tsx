@@ -99,6 +99,6 @@ const styles = StyleSheet.create({
   licenseBadge: {
     backgroundColor: '#E8F5E9', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8,
   },
-  licenseBadgeText: { fontSize: 12, fontWeight: '600', color: '#2E7D32' },
+  licenseBadgeText: { fontSize: 12, fontWeight: '600', color: '#10b981' },
   separator: { height: 8 },
 });

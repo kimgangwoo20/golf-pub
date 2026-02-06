@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 14,
-    color: '#1976D2',
+    color: '#10b981',
     textAlign: 'center',
   },
   footer: {

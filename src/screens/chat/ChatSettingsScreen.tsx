@@ -109,14 +109,14 @@ export const ChatSettingsScreen: React.FC<{ navigation?: any }> = ({ navigation 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#10b981',
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#10b981',
   },
   backButton: {
     padding: 8,

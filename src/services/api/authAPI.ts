@@ -20,14 +20,11 @@ export const authAPI = {
     try {
       const userCredential = await auth().signInWithEmailAndPassword(email, password);
       
-      console.log('✅ 로그인 성공:', userCredential.user.uid);
       return {
         user: userCredential.user,
         token: await userCredential.user.getIdToken(),
       };
     } catch (error: any) {
-      console.error('❌ 로그인 실패:', error);
-      
       let message = '로그인에 실패했습니다.';
       if (error.code === 'auth/user-not-found') {
         message = '존재하지 않는 계정입니다.';
@@ -63,14 +60,11 @@ export const authAPI = {
       // Firestore에 프로필 생성
       await profileAPI.createUserProfile();
 
-      console.log('✅ 회원가입 성공:', userCredential.user.uid);
       return {
         user: userCredential.user,
         token: await userCredential.user.getIdToken(),
       };
     } catch (error: any) {
-      console.error('❌ 회원가입 실패:', error);
-      
       let message = '회원가입에 실패했습니다.';
       if (error.code === 'auth/email-already-in-use') {
         message = '이미 사용 중인 이메일입니다.';
@@ -90,9 +84,7 @@ export const authAPI = {
   logout: async () => {
     try {
       await auth().signOut();
-      console.log('✅ 로그아웃 성공');
     } catch (error: any) {
-      console.error('❌ 로그아웃 실패:', error);
       throw new Error(error.message || '로그아웃에 실패했습니다.');
     }
   },
@@ -114,10 +106,7 @@ export const authAPI = {
   sendPasswordResetEmail: async (email: string) => {
     try {
       await auth().sendPasswordResetEmail(email);
-      console.log('✅ 비밀번호 재설정 이메일 전송 성공');
     } catch (error: any) {
-      console.error('❌ 비밀번호 재설정 이메일 전송 실패:', error);
-      
       let message = '이메일 전송에 실패했습니다.';
       if (error.code === 'auth/user-not-found') {
         message = '존재하지 않는 이메일입니다.';
@@ -142,10 +131,7 @@ export const authAPI = {
       }
 
       await currentUser.updatePassword(newPassword);
-      console.log('✅ 비밀번호 변경 성공');
     } catch (error: any) {
-      console.error('❌ 비밀번호 변경 실패:', error);
-      
       let message = '비밀번호 변경에 실패했습니다.';
       if (error.code === 'auth/requires-recent-login') {
         message = '보안을 위해 다시 로그인해주세요.';
@@ -168,14 +154,11 @@ export const authAPI = {
       }
 
       if (currentUser.emailVerified) {
-        console.log('ℹ️ 이미 인증된 이메일입니다');
         return;
       }
 
       await currentUser.sendEmailVerification();
-      console.log('✅ 이메일 인증 메일 전송 성공');
     } catch (error: any) {
-      console.error('❌ 이메일 인증 메일 전송 실패:', error);
       throw new Error(error.message || '이메일 인증 메일 전송에 실패했습니다.');
     }
   },
@@ -201,9 +184,7 @@ export const authAPI = {
       }
 
       await currentUser.reload();
-      console.log('✅ 사용자 정보 새로고침 성공');
     } catch (error: any) {
-      console.error('❌ 사용자 정보 새로고침 실패:', error);
       throw new Error(error.message || '사용자 정보 새로고침에 실패했습니다.');
     }
   },
@@ -219,10 +200,7 @@ export const authAPI = {
       }
 
       await currentUser.delete();
-      console.log('✅ 계정 삭제 성공');
     } catch (error: any) {
-      console.error('❌ 계정 삭제 실패:', error);
-      
       let message = '계정 삭제에 실패했습니다.';
       if (error.code === 'auth/requires-recent-login') {
         message = '보안을 위해 다시 로그인해주세요.';
@@ -248,7 +226,6 @@ export const authAPI = {
       const token = await currentUser.getIdToken(forceRefresh);
       return token;
     } catch (error: any) {
-      console.error('❌ ID Token 가져오기 실패:', error);
       throw new Error(error.message || 'ID Token을 가져오는데 실패했습니다.');
     }
   },
