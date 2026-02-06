@@ -82,7 +82,7 @@ export const CreateBookingScreen: React.FC = () => {
   const handleSubmit = () => {
     if (!validateForm()) return;
 
-    if (!user?.id) {
+    if (!user?.uid) {
       Alert.alert('오류', '로그인이 필요합니다.');
       return;
     }
@@ -102,11 +102,11 @@ export const CreateBookingScreen: React.FC = () => {
                 course: golfCourse,
                 date,
                 time,
-                hostId: user.id,
+                hostId: user.uid,
                 participants: {
                   current: 1,
                   max: parseInt(maxPlayers, 10),
-                  list: [user.id],
+                  list: [user.uid],
                 },
                 price: {
                   original: parseInt(price, 10),
