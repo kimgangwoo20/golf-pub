@@ -49,8 +49,8 @@ export const MyBookingsScreen: React.FC<{ navigation?: any }> = ({ navigation })
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor="#007AFF"
-            colors={['#007AFF']}
+            tintColor="#10b981"
+            colors={['#10b981']}
           />
         }
       >
@@ -93,7 +93,7 @@ export const MyBookingsScreen: React.FC<{ navigation?: any }> = ({ navigation })
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
   header: { padding: 24, paddingTop: 60, backgroundColor: '#fff', marginBottom: 12 },
-  backButton: { fontSize: 16, color: '#007AFF', marginBottom: 24 },
+  backButton: { fontSize: 16, color: '#10b981', marginBottom: 24 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#1a1a1a' },
   content: { flex: 1, padding: 20 },
   bookingCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 12 },
@@ -110,6 +110,6 @@ const styles = StyleSheet.create({
   emptyContainer: { alignItems: 'center', paddingVertical: 60 },
   emptyIcon: { fontSize: 48, marginBottom: 16 },
   emptyText: { fontSize: 16, color: '#666', marginBottom: 20 },
-  findButton: { backgroundColor: '#007AFF', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 },
+  findButton: { backgroundColor: '#10b981', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 },
   findButtonText: { color: '#fff', fontSize: 15, fontWeight: '600' },
 });

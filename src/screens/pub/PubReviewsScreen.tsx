@@ -7,6 +7,7 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  Alert,
 } from 'react-native';
 
 interface Review {
@@ -93,7 +94,7 @@ export const PubReviewsScreen: React.FC<{ route?: any; navigation?: any }> = ({ 
       {/* 리뷰 작성 버튼 */}
       <TouchableOpacity
         style={styles.writeButton}
-        onPress={() => navigation?.navigate('WriteReview')}
+        onPress={() => Alert.alert('리뷰 작성', '리뷰 작성 기능은 준비 중입니다.')}
       >
         <Text style={styles.writeButtonText}>✍️ 리뷰 작성하기</Text>
       </TouchableOpacity>
@@ -137,7 +138,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   writeButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#10b981',
     margin: 16,
     padding: 16,
     borderRadius: 12,

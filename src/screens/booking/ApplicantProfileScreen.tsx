@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   },
   approveButton: {
     flex: 1,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#10b981',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',

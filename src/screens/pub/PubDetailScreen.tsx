@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   },
   reviewButtonText: {
     fontSize: 14,
-    color: '#007AFF',
+    color: '#10b981',
     fontWeight: '600',
   },
   tags: {
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   linkText: {
-    color: '#007AFF',
+    color: '#10b981',
   },
   menuItem: {
     flexDirection: 'row',
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   },
   callButton: {
     flex: 1,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#10b981',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

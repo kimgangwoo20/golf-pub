@@ -135,8 +135,8 @@ export const ChatListScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor="#007AFF"
-            colors={['#007AFF']}
+            tintColor="#10b981"
+            colors={['#10b981']}
           />
         }
         ListEmptyComponent={
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   unreadBadge: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#10b981',
     borderRadius: 10,
     minWidth: 20,
     height: 20,

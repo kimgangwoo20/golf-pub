@@ -1,6 +1,6 @@
 // SettingsScreen.tsx - 설정 화면
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   StyleSheet,
   Alert,
   Linking,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -17,6 +19,9 @@ import firestore from '@react-native-firebase/firestore';
 
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const [withdrawalPassword, setWithdrawalPassword] = useState('');
+  const [showWithdrawalConfirm, setShowWithdrawalConfirm] = useState(false);
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
 
   const appVersion = '1.0.0';
 
@@ -71,29 +76,53 @@ export const SettingsScreen: React.FC = () => {
         {
           text: '탈퇴',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              const currentUser = auth().currentUser;
-              if (!currentUser) return;
-
-              // Firestore 사용자 데이터 삭제
-              await firestore().collection('users').doc(currentUser.uid).delete();
-
-              // Firebase Auth 계정 삭제
-              await currentUser.delete();
-
-              Alert.alert('완료', '회원 탈퇴가 완료되었습니다.');
-            } catch (error: any) {
-              if (error.code === 'auth/requires-recent-login') {
-                Alert.alert('오류', '보안을 위해 최근 로그인이 필요합니다. 다시 로그인 후 시도해주세요.');
-              } else {
-                Alert.alert('오류', '회원 탈퇴에 실패했습니다. 다시 시도해주세요.');
-              }
-            }
+          onPress: () => {
+            setShowWithdrawalConfirm(true);
+            setWithdrawalPassword('');
           },
         },
       ]
     );
+  };
+
+  const handleConfirmWithdrawal = async () => {
+    if (!withdrawalPassword) {
+      Alert.alert('오류', '비밀번호를 입력해주세요.');
+      return;
+    }
+
+    try {
+      setIsWithdrawing(true);
+      const currentUser = auth().currentUser;
+      if (!currentUser || !currentUser.email) {
+        Alert.alert('오류', '로그인 상태를 확인해주세요.');
+        return;
+      }
+
+      // 재인증
+      const credential = auth.EmailAuthProvider.credential(
+        currentUser.email,
+        withdrawalPassword
+      );
+      await currentUser.reauthenticateWithCredential(credential);
+
+      // Firestore 사용자 데이터 삭제
+      await firestore().collection('users').doc(currentUser.uid).delete();
+
+      // Firebase Auth 계정 삭제
+      await currentUser.delete();
+
+      setShowWithdrawalConfirm(false);
+      Alert.alert('완료', '회원 탈퇴가 완료되었습니다.');
+    } catch (error: any) {
+      if (error.code === 'auth/wrong-password') {
+        Alert.alert('오류', '비밀번호가 올바르지 않습니다.');
+      } else {
+        Alert.alert('오류', '회원 탈퇴에 실패했습니다. 다시 시도해주세요.');
+      }
+    } finally {
+      setIsWithdrawing(false);
+    }
   };
 
   const handleCheckUpdate = () => {
@@ -191,6 +220,52 @@ export const SettingsScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* 회원 탈퇴 비밀번호 확인 */}
+          {showWithdrawalConfirm && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>본인 확인</Text>
+              <View style={styles.menuCard}>
+                <View style={styles.withdrawalSection}>
+                  <Text style={styles.withdrawalInfo}>
+                    회원 탈퇴를 위해 비밀번호를 입력해주세요.
+                  </Text>
+                  <TextInput
+                    style={styles.withdrawalInput}
+                    value={withdrawalPassword}
+                    onChangeText={setWithdrawalPassword}
+                    secureTextEntry
+                    placeholder="비밀번호 입력"
+                    placeholderTextColor="#999"
+                    editable={!isWithdrawing}
+                  />
+                  <View style={styles.withdrawalButtons}>
+                    <TouchableOpacity
+                      style={styles.withdrawalCancelButton}
+                      onPress={() => {
+                        setShowWithdrawalConfirm(false);
+                        setWithdrawalPassword('');
+                      }}
+                      disabled={isWithdrawing}
+                    >
+                      <Text style={styles.withdrawalCancelText}>취소</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.withdrawalConfirmButton, isWithdrawing && styles.withdrawalConfirmDisabled]}
+                      onPress={handleConfirmWithdrawal}
+                      disabled={isWithdrawing}
+                    >
+                      {isWithdrawing ? (
+                        <ActivityIndicator color="#fff" size="small" />
+                      ) : (
+                        <Text style={styles.withdrawalConfirmText}>탈퇴 확인</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
 
           {/* 앱 정보 카드 */}
           <View style={styles.infoCard}>
@@ -318,6 +393,55 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#666',
     marginBottom: 4,
+  },
+  withdrawalSection: {
+    padding: 20,
+  },
+  withdrawalInfo: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  withdrawalInput: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: '#1A1A1A',
+    marginBottom: 16,
+  },
+  withdrawalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  withdrawalCancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 10,
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
+  },
+  withdrawalCancelText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#666',
+  },
+  withdrawalConfirmButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 10,
+    backgroundColor: '#FF3B30',
+    alignItems: 'center',
+  },
+  withdrawalConfirmDisabled: {
+    backgroundColor: '#FF8A80',
+  },
+  withdrawalConfirmText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#fff',
   },
   bottomSpacing: {
     height: 40,

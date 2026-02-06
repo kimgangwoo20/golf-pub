@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
     color: '#ef4444',
   },
   approveButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#10b981',
   },
   approveButtonText: {
     fontSize: 14,

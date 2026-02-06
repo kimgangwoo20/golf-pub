@@ -126,8 +126,8 @@ export const BookingRequestsScreen: React.FC<{ navigation?: any }> = ({ navigati
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor="#007AFF"
-            colors={['#007AFF']}
+            tintColor="#10b981"
+            colors={['#10b981']}
           />
         }
         ListEmptyComponent={
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   },
   approveButton: {
     flex: 1,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#10b981',
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',

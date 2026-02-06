@@ -11,7 +11,6 @@ import auth from '@react-native-firebase/auth';
 
 // Firebase 앱 참조 (자동 초기화됨)
 const firebaseApp = firebase.app();
-console.log('✅ Firebase 연결됨:', firebaseApp.name);
 
 // Firestore 설정 (서울 리전)
 const firestoreInstance = firestore();
@@ -22,16 +21,12 @@ firestoreInstance.settings({
   persistence: true,
 });
 
-console.log('✅ Firestore 오프라인 지속성 활성화');
-
 // Realtime Database 설정 (서울 리전)
 const databaseInstance = database();
 
 // 오프라인 지속성 활성화
 databaseInstance.setPersistenceEnabled(true);
 databaseInstance.setPersistenceCacheSizeBytes(10000000); // 10MB
-
-console.log('✅ Realtime Database 오프라인 지속성 활성화');
 
 // Storage 설정
 const storageInstance = storage();
@@ -194,8 +189,6 @@ export const RealtimeTimestamp = {
  * 에러 핸들링 유틸리티
  */
 export const handleFirebaseError = (error: any): string => {
-  console.error('Firebase Error:', error);
-
   // Firebase 에러 코드 매핑
   const errorMessages: Record<string, string> = {
     'auth/invalid-email': '잘못된 이메일 형식입니다.',

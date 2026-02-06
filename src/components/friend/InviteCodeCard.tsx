@@ -62,10 +62,10 @@ const styles = StyleSheet.create({
   code: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: '#10b981',
   },
   copyButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#10b981',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,

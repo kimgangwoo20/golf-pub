@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 24,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#10b981',
     alignItems: 'center',
   },
   title: {
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: '#10b981',
     marginBottom: 4,
   },
   statLabel: {
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#e0e0e0',
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#10b981',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

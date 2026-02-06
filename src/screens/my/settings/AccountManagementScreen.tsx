@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -22,6 +23,7 @@ export const AccountManagementScreen: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const handleChangePassword = async () => {
     if (!currentPassword) {
@@ -38,6 +40,7 @@ export const AccountManagementScreen: React.FC = () => {
     }
 
     try {
+      setIsChangingPassword(true);
       const currentUser = auth().currentUser;
       if (!currentUser || !currentUser.email) {
         Alert.alert('오류', '로그인 상태를 확인해주세요.');
@@ -70,6 +73,8 @@ export const AccountManagementScreen: React.FC = () => {
       } else {
         Alert.alert('오류', '비밀번호 변경에 실패했습니다. 다시 시도해주세요.');
       }
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -173,8 +178,16 @@ export const AccountManagementScreen: React.FC = () => {
                     >
                       <Text style={styles.cancelButtonText}>취소</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.confirmButton} onPress={handleChangePassword}>
-                      <Text style={styles.confirmButtonText}>변경</Text>
+                    <TouchableOpacity
+                      style={[styles.confirmButton, isChangingPassword && styles.confirmButtonDisabled]}
+                      onPress={handleChangePassword}
+                      disabled={isChangingPassword}
+                    >
+                      {isChangingPassword ? (
+                        <ActivityIndicator color="#fff" size="small" />
+                      ) : (
+                        <Text style={styles.confirmButtonText}>변경</Text>
+                      )}
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -258,7 +271,10 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: { fontSize: 15, fontWeight: '600', color: '#666' },
   confirmButton: {
-    flex: 1, paddingVertical: 14, borderRadius: 10, backgroundColor: '#7C3AED', alignItems: 'center',
+    flex: 1, paddingVertical: 14, borderRadius: 10, backgroundColor: '#10b981', alignItems: 'center',
+  },
+  confirmButtonDisabled: {
+    backgroundColor: '#6ee7b7',
   },
   confirmButtonText: { fontSize: 15, fontWeight: '600', color: '#fff' },
 });

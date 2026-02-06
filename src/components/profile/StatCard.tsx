@@ -14,7 +14,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   label,
   value,
   icon,
-  color = '#007AFF',
+  color = '#10b981',
   onPress,
 }) => {
   const Component = onPress ? TouchableOpacity : View;

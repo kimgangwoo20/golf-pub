@@ -82,7 +82,7 @@ class FirebaseChatService {
 
       if (!snapshot.exists()) {
         // 새 채팅방 생성
-        const now = Date.now();
+        const now = RealtimeTimestamp.now();
 
         const chatRoom: ChatRoom = {
           roomId,
@@ -150,7 +150,7 @@ class FirebaseChatService {
       const messageRef = database.ref(`messages/${roomId}`).push();
       const messageId = messageRef.key!;
 
-      const now = Date.now();
+      const now = RealtimeTimestamp.now();
 
       // 메시지 데이터
       const message: ChatMessage = {
@@ -374,7 +374,7 @@ class FirebaseChatService {
         await typingRef.set({
           userId,
           isTyping: true,
-          timestamp: Date.now(),
+          timestamp: RealtimeTimestamp.now(),
         });
 
         // 3초 후 자동으로 타이핑 상태 제거

@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   selectedCard: {
-    borderColor: '#007AFF',
+    borderColor: '#10b981',
     backgroundColor: '#F0F8FF',
   },
   popularCard: {
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: '#10b981',
     marginBottom: 4,
   },
   yearlyPrice: {

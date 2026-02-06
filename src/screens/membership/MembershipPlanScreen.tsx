@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   toggleButtonActive: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#10b981',
   },
   toggleText: {
     fontSize: 14,
@@ -206,10 +206,10 @@ const styles = StyleSheet.create({
   priceValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: '#10b981',
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#10b981',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

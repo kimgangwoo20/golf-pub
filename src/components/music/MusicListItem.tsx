@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   titlePlaying: {
-    color: '#007AFF',
+    color: '#10b981',
   },
   artist: {
     fontSize: 12,

@@ -264,8 +264,8 @@ const styles = StyleSheet.create({
     borderColor: '#e5e7eb',
   },
   optionButtonSelected: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    backgroundColor: '#10b981',
+    borderColor: '#10b981',
   },
   optionText: {
     fontSize: 14,
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
     flex: 2,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#10b981',
     alignItems: 'center',
   },
   applyButtonText: {

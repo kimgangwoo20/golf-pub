@@ -2,6 +2,7 @@
 // 친구 추가, 검색, 요청 관리
 
 import firestore from '@react-native-firebase/firestore';
+import { FirestoreTimestamp } from './firebaseConfig';
 
 export interface Friend {
   id: string;
@@ -53,7 +54,7 @@ export const searchFriends = async (
           location: data.location || '미등록',
           mutualFriends: 0, // TODO: 공통 친구 수 계산
           status: 'pending',
-          createdAt: data.createdAt || Date.now(),
+          createdAt: data.createdAt || FirestoreTimestamp.now(),
         });
       }
     }
@@ -95,7 +96,7 @@ export const sendFriendRequest = async (
         fromUserId,
         toUserId,
         status: 'pending',
-        createdAt: Date.now(),
+        createdAt: FirestoreTimestamp.now(),
       });
 
     // 상대방에게 알림 발송 (TODO: Firebase Cloud Messaging)
@@ -128,7 +129,7 @@ export const acceptFriendRequest = async (
       .doc(requestId)
       .update({
         status: 'accepted',
-        acceptedAt: Date.now(),
+        acceptedAt: FirestoreTimestamp.now(),
       });
 
     // 양방향 친구 관계 생성
@@ -139,7 +140,7 @@ export const acceptFriendRequest = async (
       {
         userId: fromUserId,
         friendId: toUserId,
-        createdAt: Date.now(),
+        createdAt: FirestoreTimestamp.now(),
       },
     );
 
@@ -148,7 +149,7 @@ export const acceptFriendRequest = async (
       {
         userId: toUserId,
         friendId: fromUserId,
-        createdAt: Date.now(),
+        createdAt: FirestoreTimestamp.now(),
       },
     );
 
@@ -194,7 +195,7 @@ export const rejectFriendRequest = async (
       .doc(requestId)
       .update({
         status: 'rejected',
-        rejectedAt: Date.now(),
+        rejectedAt: FirestoreTimestamp.now(),
       });
 
     return {
@@ -247,7 +248,7 @@ export const getFriendsList = async (userId: string): Promise<Friend[]> => {
           location: data.location || '미등록',
           mutualFriends: 0,
           status: 'accepted',
-          createdAt: data.createdAt || Date.now(),
+          createdAt: data.createdAt || FirestoreTimestamp.now(),
         });
       });
     }

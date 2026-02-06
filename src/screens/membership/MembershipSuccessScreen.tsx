@@ -59,6 +59,6 @@ const styles = StyleSheet.create({
   check: { fontSize: 18, color: '#4CAF50', marginRight: 12 },
   benefitText: { fontSize: 14, color: '#333' },
   footer: { padding: 20 },
-  button: { backgroundColor: '#007AFF', padding: 16, borderRadius: 12, alignItems: 'center' },
+  button: { backgroundColor: '#10b981', padding: 16, borderRadius: 12, alignItems: 'center' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });
