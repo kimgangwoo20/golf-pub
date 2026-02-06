@@ -8,6 +8,7 @@ import { AttendanceBanner } from './components/AttendanceBanner';
 import { FilterChips } from './components/FilterChips';
 import { BookingList } from './components/BookingList';
 import { CreateBookingButton } from './components/CreateBookingButton';
+import { WeatherWidget } from '../../components/weather/WeatherWidget';
 import { useHomeScreen } from './hooks/useHomeScreen';
 
 export const HomeScreen = ({ navigation }: any) => {
@@ -36,6 +37,7 @@ export const HomeScreen = ({ navigation }: any) => {
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
       >
+        <WeatherWidget />
         <SearchBar value={searchQuery} onChangeText={handleSearch} />
         <MembershipBanner onPress={() => navigation.navigate('MembershipIntro')} />
         <AttendanceBanner checked={attendanceChecked} onCheck={handleAttendanceCheck} />

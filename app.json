@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "scheme": "golfpub",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.golfpub.app",
@@ -41,27 +41,8 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "kotlinVersion": "2.0.21"
-          }
-        }
-      ],
-      [
-        "expo-location",
-        {
-          "locationAlwaysAndWhenInUsePermission": "Golf Pub이 현재 위치의 날씨 정보를 제공하기 위해 위치 권한이 필요합니다."
-        }
-      ],
       "@react-native-firebase/app",
-      [
-        "@react-native-seoul/kakao-login",
-        {
-          "kakaoAppKey": "3510fac6140caccff31cffbb0927f378"
-        }
-      ]
+      ["@react-native-seoul/kakao-login", { "nativeAppKey": "f25af6b78693a6f92ecd5cf91b9afb34" }]
     ],
     "experiments": {
       "typedRoutes": false

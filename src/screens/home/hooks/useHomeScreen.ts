@@ -1,14 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useBookingStore } from '@/store/useBookingStore';
-import { checkTodayAttendance, checkIn } from '@/services/firebase/firebaseAttendance';
+import { checkTodayAttendance, markAttendance } from '@/services/firebase/firebaseAttendance';
 import { joinBooking } from '@/services/firebase/firebaseBooking';
 
 export const useHomeScreen = () => {
+  const navigation = useNavigation<any>();
   const { user } = useAuthStore();
   const { bookings, loadBookings } = useBookingStore();
-  
+
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -28,9 +30,9 @@ export const useHomeScreen = () => {
   };
 
   const checkAttendance = async () => {
-    if (!user?.id) return;
+    if (!user?.uid) return;
     try {
-      const checked = await checkTodayAttendance(user.id);
+      const checked = await checkTodayAttendance(user.uid);
       setAttendanceChecked(checked);
     } catch (error) {
       console.error('출석 확인 실패:', error);
@@ -48,11 +50,11 @@ export const useHomeScreen = () => {
   }, []);
 
   const handleBookingPress = (bookingId: string) => {
-    // TODO: 부킹 상세 화면으로 이동
+    navigation.navigate('BookingDetail', { bookingId });
   };
 
   const handleJoinBooking = async (bookingId: string) => {
-    if (!user?.id) {
+    if (!user?.uid) {
       Alert.alert('알림', '로그인이 필요합니다.');
       return;
     }
@@ -66,7 +68,7 @@ export const useHomeScreen = () => {
           text: '참가하기',
           onPress: async () => {
             try {
-              await joinBooking(bookingId, user.id);
+              await joinBooking(bookingId, user.uid);
               Alert.alert('성공', '참가 신청이 완료되었습니다!');
               await loadData();
             } catch (error) {
@@ -79,7 +81,7 @@ export const useHomeScreen = () => {
   };
 
   const handleAttendanceCheck = async () => {
-    if (!user?.id) {
+    if (!user?.uid) {
       Alert.alert('알림', '로그인이 필요합니다.');
       return;
     }
@@ -90,16 +92,27 @@ export const useHomeScreen = () => {
     }
 
     try {
-      await checkIn(user.id);
-      setAttendanceChecked(true);
-      Alert.alert('출석 완료', '100 포인트를 받았습니다! 🎉');
+      const result = await markAttendance(user.uid);
+      if (result.success) {
+        setAttendanceChecked(true);
+        Alert.alert(
+          '출석 완료! 🎉',
+          `+${result.points}P 적립!\n${result.consecutiveDays}일 연속 출석 중`
+        );
+      } else {
+        Alert.alert('알림', result.message);
+      }
     } catch (error) {
       Alert.alert('오류', '출석체크에 실패했습니다.');
     }
   };
 
   const handleCreateBooking = () => {
-    // TODO: 부킹 생성 화면으로 이동
+    if (!user?.uid) {
+      Alert.alert('알림', '로그인이 필요합니다.');
+      return;
+    }
+    navigation.navigate('CreateBooking');
   };
 
   return {
