@@ -14,12 +14,12 @@ import { useAuthStore } from '@/store/useAuthStore';
 const Stack = createNativeStackNavigator();
 
 export const AuthNavigator: React.FC = () => {
-  const { user, isLoading, isAuthenticated } = useAuthStore();
+  const { user, loading, isAuthenticated } = useAuthStore();
 
   // ✅ useEffect 제거! App.tsx에서 이미 loadUserFromStorage() 호출함
 
   // 로딩 중 화면
-  if (isLoading) {
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#2E7D32" />
@@ -48,7 +48,7 @@ export const AuthNavigator: React.FC = () => {
 
 // 임시 메인 화면 (MainTabNavigator 연결 전)
 const PlaceholderMainScreen: React.FC = () => {
-  const { user, logout } = useAuthStore();
+  const { userProfile, signOut } = useAuthStore();
 
   return (
     <View style={styles.placeholderContainer}>
@@ -56,7 +56,7 @@ const PlaceholderMainScreen: React.FC = () => {
         <Text style={styles.successIcon}>✅</Text>
         <Text style={styles.successTitle}>로그인 성공!</Text>
         <Text style={styles.successText}>
-          환영합니다, {user?.nickname}님!
+          환영합니다, {userProfile?.nickname || userProfile?.displayName || '골퍼'}님!
         </Text>
         <Text style={styles.infoText}>
           MainTabNavigator를 연결하면{'\n'}
@@ -66,7 +66,7 @@ const PlaceholderMainScreen: React.FC = () => {
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={async () => {
-            await logout();
+            await signOut();
             // Kakao 로그아웃도 필요하면 추가
           }}
         >

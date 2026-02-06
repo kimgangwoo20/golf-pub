@@ -8,7 +8,7 @@ import { View, Text, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // 🔥 Firebase 초기화
-import './src/config/firebase';
+import './src/services/firebase/firebaseConfig';
 
 // 홈 화면
 import { HomeScreen } from './src/screens/home/HomeScreen';

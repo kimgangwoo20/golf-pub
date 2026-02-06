@@ -5,11 +5,15 @@ import firestore from '@react-native-firebase/firestore';
 export interface UserProfile {
   uid: string;
   email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
-  phoneNumber: string | null;
+  displayName?: string | null;
+  nickname?: string; // Kakao 로그인용
+  photoURL?: string | null;
+  profileImage?: string; // Kakao 로그인용
+  phoneNumber?: string | null;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt?: Date;
+  lastLoginAt?: Date; // Kakao 로그인용
+  provider?: 'firebase' | 'kakao' | 'email'; // 로그인 제공자
   // 추가 프로필 정보
   bio?: string;
   level?: 'beginner' | 'intermediate' | 'advanced' | 'pro';
