@@ -26,7 +26,7 @@ export const UpgradePlanScreen: React.FC = () => {
             <PlanCard
               key={plan.id}
               plan={plan}
-              onSelect={() => navigation.navigate('MembershipPayment' as never, { plan: plan.type } as never)}
+              onSelect={() => navigation.navigate('Home' as never, { screen: 'MembershipPayment', params: { plan: plan.type } } as never)}
             />
           ))}
         </View>

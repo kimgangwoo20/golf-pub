@@ -38,7 +38,7 @@ export const MembershipSuccessScreen: React.FC = () => {
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate('Home' as never)}
+          onPress={() => navigation.navigate('Home' as never, { screen: 'HomeMain' } as never)}
         >
           <Text style={styles.buttonText}>시작하기</Text>
         </TouchableOpacity>

@@ -90,11 +90,13 @@ export const BookingDetailScreen: React.FC = () => {
   };
 
   const handleChat = () => {
-    navigation.navigate('ChatRoom', {
-      chatId: `booking_${booking.id}`,
-      chatTitle: booking.title,
-      userImage: host.avatar,
-    });
+    navigation.navigate('Chat' as never, {
+      screen: 'ChatRoom',
+      params: {
+        chatId: `booking_${booking.id}`,
+        chatName: booking.title,
+      },
+    } as never);
   };
 
   // 새로고침
