@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useBookingStore } from '@/store/useBookingStore';
-import { checkTodayAttendance, checkIn } from '@/services/firebase/firebaseAttendance';
+import { checkTodayAttendance, markAttendance } from '@/services/firebase/firebaseAttendance';
 import { joinBooking } from '@/services/firebase/firebaseBooking';
 
 export const useHomeScreen = () => {
@@ -90,9 +90,16 @@ export const useHomeScreen = () => {
     }
 
     try {
-      await checkIn(user.id);
-      setAttendanceChecked(true);
-      Alert.alert('출석 완료', '100 포인트를 받았습니다! 🎉');
+      const result = await markAttendance(user.id);
+      if (result.success) {
+        setAttendanceChecked(true);
+        Alert.alert(
+          '출석 완료! 🎉',
+          `+${result.points}P 적립!\n${result.consecutiveDays}일 연속 출석 중`
+        );
+      } else {
+        Alert.alert('알림', result.message);
+      }
     } catch (error) {
       Alert.alert('오류', '출석체크에 실패했습니다.');
     }

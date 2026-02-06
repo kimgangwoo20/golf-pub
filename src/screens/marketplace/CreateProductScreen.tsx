@@ -9,13 +9,16 @@ import {
   TextInput,
   StyleSheet,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { CATEGORIES, CONDITION_LABELS, ProductCategory, ProductCondition } from '../../types/marketplace-types';
+import { marketplaceAPI } from '../../services/api/marketplaceAPI';
 
 export const CreateProductScreen: React.FC = () => {
   const navigation = useNavigation();
+  const [isLoading, setIsLoading] = useState(false);
 
   const [images, setImages] = useState<string[]>([]);
   const [title, setTitle] = useState('');
@@ -60,11 +63,26 @@ export const CreateProductScreen: React.FC = () => {
         { text: '취소', style: 'cancel' },
         {
           text: '등록',
-          onPress: () => {
-            console.log('상품 등록:', { title, category, price, condition, location, description });
-            Alert.alert('완료', '상품이 등록되었습니다.', [
-              { text: '확인', onPress: () => navigation.goBack() },
-            ]);
+          onPress: async () => {
+            setIsLoading(true);
+            try {
+              await marketplaceAPI.createProduct({
+                title,
+                category: category!,
+                price: parseInt(price, 10),
+                condition: condition!,
+                location: location || '',
+                description,
+                images, // 현재 빈 배열 (이미지 업로드 추후 구현)
+              });
+              Alert.alert('완료', '상품이 등록되었습니다! 🎉', [
+                { text: '확인', onPress: () => navigation.goBack() },
+              ]);
+            } catch (error: any) {
+              Alert.alert('오류', error.message || '상품 등록에 실패했습니다.');
+            } finally {
+              setIsLoading(false);
+            }
           },
         },
       ]
@@ -217,8 +235,16 @@ export const CreateProductScreen: React.FC = () => {
 
         {/* 등록 버튼 */}
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>등록하기</Text>
+          <TouchableOpacity
+            style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
+            onPress={handleSubmit}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.submitButtonText}>등록하기</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -412,5 +438,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#fff',
+  },
+  submitButtonDisabled: {
+    opacity: 0.7,
   },
 });
