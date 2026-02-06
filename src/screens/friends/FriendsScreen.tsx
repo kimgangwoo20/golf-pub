@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { Friend } from '../../types/friends-types';
+import { Friend } from '../../types/friend-types';
 
 // Mock 친구 데이터
 const mockFriends: Friend[] = [

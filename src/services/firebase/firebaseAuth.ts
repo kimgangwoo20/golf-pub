@@ -63,7 +63,7 @@ class FirebaseAuthService {
       console.log('🔐 카카오 Custom Token 로그인 시작...');
 
       // Custom Token으로 Firebase 인증
-      const userCredential = await auth().signInWithCustomToken(customToken);
+      const userCredential = await auth.signInWithCustomToken(customToken);
 
       console.log('✅ Firebase 인증 성공:', userCredential.user.uid);
 
@@ -94,7 +94,7 @@ class FirebaseAuthService {
     try {
       console.log('📧 이메일 로그인 시작...', email);
 
-      const userCredential = await auth().signInWithEmailAndPassword(email, password);
+      const userCredential = await auth.signInWithEmailAndPassword(email, password);
 
       console.log('✅ 이메일 로그인 성공:', userCredential.user.uid);
 
@@ -125,7 +125,7 @@ class FirebaseAuthService {
       console.log('📝 이메일 회원가입 시작...', email);
 
       // Firebase Authentication 회원가입
-      const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
 
       // 프로필 업데이트
       await userCredential.user.updateProfile({
@@ -158,7 +158,7 @@ class FirebaseAuthService {
     try {
       console.log('👤 익명 로그인 시작...');
 
-      const userCredential = await auth().signInAnonymously();
+      const userCredential = await auth.signInAnonymously();
 
       console.log('✅ 익명 로그인 성공:', userCredential.user.uid);
 
@@ -176,13 +176,13 @@ class FirebaseAuthService {
     try {
       console.log('🚪 로그아웃 시작...');
 
-      const user = auth().currentUser;
+      const user = auth.currentUser;
       if (user) {
         // 온라인 상태를 오프라인으로 변경
         await this.setUserOffline(user.uid);
       }
 
-      await auth().signOut();
+      await auth.signOut();
 
       console.log('✅ 로그아웃 성공');
     } catch (error) {
@@ -197,7 +197,7 @@ class FirebaseAuthService {
    * @returns Firebase User | null
    */
   getCurrentUser(): FirebaseAuthTypes.User | null {
-    return auth().currentUser;
+    return auth.currentUser;
   }
 
   /**
@@ -208,7 +208,7 @@ class FirebaseAuthService {
    */
   async getUserProfile(uid: string): Promise<UserProfile | null> {
     try {
-      const doc = await firestore().collection('users').doc(uid).get();
+      const doc = await firestore.collection('users').doc(uid).get();
 
       if (!doc.exists) {
         return null;
@@ -255,7 +255,7 @@ class FirebaseAuthService {
         lastLoginAt: FirestoreTimestamp.now(),
       };
 
-      await firestore().collection('users').doc(uid).set(userProfile);
+      await firestore.collection('users').doc(uid).set(userProfile);
 
       console.log('✅ 사용자 프로필 생성 완료:', uid);
     } catch (error) {
@@ -275,7 +275,7 @@ class FirebaseAuthService {
     kakaoUserInfo: KakaoUserInfo
   ): Promise<void> {
     try {
-      const userRef = firestore().collection('users').doc(uid);
+      const userRef = firestore.collection('users').doc(uid);
       const doc = await userRef.get();
 
       const profile = kakaoUserInfo.kakao_account.profile;
@@ -313,7 +313,7 @@ class FirebaseAuthService {
    */
   private async updateLastLogin(uid: string): Promise<void> {
     try {
-      await firestore().collection('users').doc(uid).update({
+      await firestore.collection('users').doc(uid).update({
         lastLoginAt: FirestoreTimestamp.now(),
       });
 
@@ -332,7 +332,7 @@ class FirebaseAuthService {
    */
   private async setUserOnline(uid: string): Promise<void> {
     try {
-      await firestore().collection('users').doc(uid).update({
+      await firestore.collection('users').doc(uid).update({
         isOnline: true,
         lastSeenAt: FirestoreTimestamp.now(),
       });
@@ -348,7 +348,7 @@ class FirebaseAuthService {
    */
   private async setUserOffline(uid: string): Promise<void> {
     try {
-      await firestore().collection('users').doc(uid).update({
+      await firestore.collection('users').doc(uid).update({
         isOnline: false,
         lastSeenAt: FirestoreTimestamp.now(),
       });
@@ -368,7 +368,7 @@ class FirebaseAuthService {
     updates: Partial<UserProfile>
   ): Promise<void> {
     try {
-      await firestore().collection('users').doc(uid).update({
+      await firestore.collection('users').doc(uid).update({
         ...updates,
         updatedAt: FirestoreTimestamp.now(),
       });
@@ -388,7 +388,7 @@ class FirebaseAuthService {
    */
   async updateHandicap(uid: string, handicap: number): Promise<void> {
     try {
-      await firestore().collection('users').doc(uid).update({
+      await firestore.collection('users').doc(uid).update({
         handicap,
         updatedAt: FirestoreTimestamp.now(),
       });
@@ -407,7 +407,7 @@ class FirebaseAuthService {
    */
   async verifyCoach(uid: string): Promise<void> {
     try {
-      await firestore().collection('users').doc(uid).update({
+      await firestore.collection('users').doc(uid).update({
         isCoach: true,
         coachVerified: true,
         role: 'COACH',
@@ -430,10 +430,10 @@ class FirebaseAuthService {
    */
   async addPoints(uid: string, points: number, reason: string): Promise<void> {
     try {
-      const userRef = firestore().collection('users').doc(uid);
+      const userRef = firestore.collection('users').doc(uid);
 
       // 트랜잭션으로 포인트 추가
-      await firestore().runTransaction(async (transaction) => {
+      await firestore.runTransaction(async (transaction) => {
         const doc = await transaction.get(userRef);
 
         if (!doc.exists) {
@@ -449,7 +449,7 @@ class FirebaseAuthService {
         });
 
         // 포인트 히스토리 기록
-        const historyRef = firestore()
+        const historyRef = firestore
           .collection('users')
           .doc(uid)
           .collection('pointHistory')
@@ -479,10 +479,10 @@ class FirebaseAuthService {
    */
   async deductPoints(uid: string, points: number, reason: string): Promise<void> {
     try {
-      const userRef = firestore().collection('users').doc(uid);
+      const userRef = firestore.collection('users').doc(uid);
 
       // 트랜잭션으로 포인트 차감
-      await firestore().runTransaction(async (transaction) => {
+      await firestore.runTransaction(async (transaction) => {
         const doc = await transaction.get(userRef);
 
         if (!doc.exists) {
@@ -503,7 +503,7 @@ class FirebaseAuthService {
         });
 
         // 포인트 히스토리 기록
-        const historyRef = firestore()
+        const historyRef = firestore
           .collection('users')
           .doc(uid)
           .collection('pointHistory')
@@ -534,10 +534,10 @@ class FirebaseAuthService {
       console.log('🗑️ 회원 탈퇴 시작...', uid);
 
       // Firestore 사용자 문서 삭제
-      await firestore().collection('users').doc(uid).delete();
+      await firestore.collection('users').doc(uid).delete();
 
       // Firebase Auth 사용자 삭제
-      const user = auth().currentUser;
+      const user = auth.currentUser;
       if (user && user.uid === uid) {
         await user.delete();
       }
@@ -558,7 +558,7 @@ class FirebaseAuthService {
   onAuthStateChanged(
     callback: (user: FirebaseAuthTypes.User | null) => void
   ): () => void {
-    return auth().onAuthStateChanged(callback);
+    return auth.onAuthStateChanged(callback);
   }
 }
 

@@ -1,0 +1,150 @@
+src/components/booking/BookingCard.tsx(30,44): error TS2339: Property 'host' does not exist on type 'Booking'.
+src/components/booking/BookingCard.tsx(31,39): error TS2339: Property 'current' does not exist on type 'Participant[]'.
+src/components/booking/BookingCard.tsx(31,71): error TS2339: Property 'max' does not exist on type 'Participant[]'.
+src/components/booking/BookingCard.tsx(44,36): error TS2339: Property 'host' does not exist on type 'Booking'.
+src/components/booking/BookingCard.tsx(48,52): error TS2339: Property 'host' does not exist on type 'Booking'.
+src/components/booking/BookingCard.tsx(50,58): error TS2339: Property 'host' does not exist on type 'Booking'.
+src/components/booking/BookingCard.tsx(51,63): error TS2339: Property 'host' does not exist on type 'Booking'.
+src/components/booking/BookingCard.tsx(72,52): error TS2339: Property 'course' does not exist on type 'Booking'.
+src/components/booking/BookingCard.tsx(85,35): error TS2339: Property 'current' does not exist on type 'Participant[]'.
+src/components/booking/BookingCard.tsx(85,66): error TS2339: Property 'max' does not exist on type 'Participant[]'.
+src/components/booking/BookingCard.tsx(91,16): error TS2339: Property 'conditions' does not exist on type 'Booking'.
+src/components/booking/BookingCard.tsx(93,20): error TS2339: Property 'conditions' does not exist on type 'Booking'.
+src/components/booking/BookingCard.tsx(95,62): error TS2339: Property 'conditions' does not exist on type 'Booking'.
+src/components/booking/BookingCard.tsx(98,20): error TS2339: Property 'conditions' does not exist on type 'Booking'.
+src/components/booking/BookingCard.tsx(100,62): error TS2339: Property 'conditions' does not exist on type 'Booking'.
+src/components/booking/BookingCard.tsx(109,26): error TS2339: Property 'original' does not exist on type 'number'.
+src/components/booking/BookingCard.tsx(109,51): error TS2339: Property 'discount' does not exist on type 'number'.
+src/components/booking/BookingCard.tsx(111,30): error TS2339: Property 'original' does not exist on type 'number'.
+src/components/booking/BookingCard.tsx(115,28): error TS2339: Property 'discount' does not exist on type 'number'.
+src/components/booking/BookingCard.tsx(149,16): error TS2339: Property 'weather' does not exist on type 'Booking'.
+src/components/booking/BookingCard.tsx(152,22): error TS2339: Property 'weather' does not exist on type 'Booking'.
+src/components/booking/BookingCard.tsx(152,50): error TS2339: Property 'weather' does not exist on type 'Booking'.
+src/components/chat/ChatFloatingButton.tsx(18,10): error TS2304: Cannot find name 'View'.
+src/components/chat/ChatFloatingButton.tsx(20,11): error TS2304: Cannot find name 'View'.
+src/components/membership/MembershipBadge.tsx(27,79): error TS2339: Property 'container' does not exist on type 'ViewStyle | TextStyle | ImageStyle'.
+  Property 'container' does not exist on type 'ViewStyle'.
+src/components/membership/MembershipBadge.tsx(28,46): error TS2339: Property 'emoji' does not exist on type 'ViewStyle | TextStyle | ImageStyle'.
+  Property 'emoji' does not exist on type 'ViewStyle'.
+src/components/membership/MembershipBadge.tsx(29,45): error TS2339: Property 'text' does not exist on type 'ViewStyle | TextStyle | ImageStyle'.
+  Property 'text' does not exist on type 'ViewStyle'.
+src/components/membership/MembershipBadge.tsx(50,5): error TS2353: Object literal may only specify known properties, and 'container' does not exist in type 'ViewStyle | TextStyle | ImageStyle'.
+src/components/membership/MembershipBadge.tsx(63,5): error TS2353: Object literal may only specify known properties, and 'container' does not exist in type 'ViewStyle | TextStyle | ImageStyle'.
+src/components/membership/MembershipBadge.tsx(76,5): error TS2353: Object literal may only specify known properties, and 'container' does not exist in type 'ViewStyle | TextStyle | ImageStyle'.
+src/hooks/useRequireAuth.ts(50,19): error TS2339: Property 'id' does not exist on type 'User'.
+src/screens/booking/BookingDetailScreen.tsx(85,33): error TS2345: Argument of type '[never, never]' is not assignable to parameter of type 'never'.
+src/screens/booking/BookingListScreen.tsx(156,50): error TS2345: Argument of type '[never, never]' is not assignable to parameter of type 'never'.
+src/screens/feed/CreatePostScreen.tsx(72,21): error TS7006: Parameter 'text' implicitly has an 'any' type.
+src/screens/feed/FeedScreen.tsx(171,17): error TS2339: Property 'id' does not exist on type 'User'.
+src/screens/feed/FeedScreen.tsx(172,39): error TS2339: Property 'id' does not exist on type 'User'.
+src/screens/feed/FeedScreen.tsx(173,37): error TS2339: Property 'id' does not exist on type 'User'.
+src/screens/feed/FeedScreen.tsx(179,15): error TS2339: Property 'id' does not exist on type 'User'.
+src/screens/feed/FeedScreen.tsx(386,16): error TS2339: Property 'id' does not exist on type 'User'.
+src/screens/feed/PostDetailScreen.tsx(251,7): error TS2322: Type '{ text: string; onPress: () => void; } | { text: string; onPress: () => void; style: string; }' is not assignable to type 'AlertButton'.
+  Type '{ text: string; onPress: () => void; style: string; }' is not assignable to type 'AlertButton'.
+    Types of property 'style' are incompatible.
+      Type 'string' is not assignable to type '"cancel" | "default" | "destructive" | undefined'.
+src/screens/feed/PostDetailScreen.tsx(260,21): error TS2322: Type 'string' is not assignable to type '"cancel" | "default" | "destructive" | undefined'.
+src/screens/feed/PostDetailScreen.tsx(268,7): error TS2322: Type '{ text: string; onPress: () => void; } | { text: string; onPress: () => void; style: string; }' is not assignable to type 'AlertButton'.
+  Type '{ text: string; onPress: () => void; style: string; }' is not assignable to type 'AlertButton'.
+    Types of property 'style' are incompatible.
+      Type 'string' is not assignable to type '"cancel" | "default" | "destructive" | undefined'.
+src/screens/feed/PostDetailScreen.tsx(277,21): error TS2322: Type 'string' is not assignable to type '"cancel" | "default" | "destructive" | undefined'.
+src/screens/friends/FriendRequestsScreen.tsx(15,31): error TS2307: Cannot find module '../../types/friends-types' or its corresponding type declarations.
+src/screens/friends/FriendsScreen.tsx(16,24): error TS2307: Cannot find module '../../types/friends-types' or its corresponding type declarations.
+src/screens/friends/FriendsScreen.tsx(94,25): error TS2345: Argument of type '[never, never]' is not assignable to parameter of type 'never'.
+src/screens/golfcourse/GolfCourseDetailScreen.tsx(125,25): error TS2345: Argument of type '[never, never]' is not assignable to parameter of type 'never'.
+src/screens/golfcourse/GolfCourseDetailScreen.tsx(135,25): error TS2345: Argument of type '[never, never]' is not assignable to parameter of type 'never'.
+src/screens/golfcourse/GolfCourseDetailScreen.tsx(139,25): error TS2345: Argument of type '[never, never]' is not assignable to parameter of type 'never'.
+src/screens/golfcourse/GolfCourseReviewScreen.tsx(221,7): error TS2322: Type '{ text: string; onPress: () => void; } | { text: string; style: string; onPress: () => void; }' is not assignable to type 'AlertButton'.
+  Type '{ text: string; style: string; onPress: () => void; }' is not assignable to type 'AlertButton'.
+    Types of property 'style' are incompatible.
+      Type 'string' is not assignable to type '"cancel" | "default" | "destructive" | undefined'.
+src/screens/golfcourse/GolfCourseReviewScreen.tsx(242,21): error TS2322: Type 'string' is not assignable to type '"cancel" | "default" | "destructive" | undefined'.
+src/screens/home/HomeScreen.tsx(43,15): error TS2339: Property 'id' does not exist on type 'User'.
+src/screens/home/HomeScreen.tsx(46,13): error TS2339: Property 'id' does not exist on type 'User'.
+src/screens/home/HomeScreen.tsx(49,16): error TS2339: Property 'id' does not exist on type 'User'.
+src/screens/home/HomeScreen.tsx(52,55): error TS2339: Property 'id' does not exist on type 'User'.
+src/screens/home/HomeScreen.tsx(125,16): error TS2339: Property 'id' does not exist on type 'User'.
+src/screens/home/HomeScreen.tsx(133,59): error TS2339: Property 'discount' does not exist on type 'number'.
+src/screens/home/HomeScreen.tsx(140,48): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/screens/home/HomeScreen.tsx(140,65): error TS2339: Property 'id' does not exist on type 'User'.
+src/screens/home/HomeScreen.tsx(171,16): error TS2339: Property 'id' does not exist on type 'User'.
+src/screens/home/HomeScreen.tsx(177,48): error TS2339: Property 'id' does not exist on type 'User'.
+src/screens/home/HomeScreen.tsx(375,17): error TS2740: Type 'Booking' is missing the following properties from type 'Booking': golfCourse, location, maxPlayers, currentPlayers, and 4 more.
+src/screens/home/HomeScreen.tsx(376,51): error TS2345: Argument of type 'import("C:/Projects/golf-pub-app/src/store/useBookingStore").Booking' is not assignable to parameter of type 'import("C:/Projects/golf-pub-app/src/types/booking-types").Booking'.
+  Type 'Booking' is missing the following properties from type 'Booking': golfCourse, location, maxPlayers, currentPlayers, and 4 more.
+src/screens/home/HomeScreen.tsx(377,52): error TS2345: Argument of type 'import("C:/Projects/golf-pub-app/src/store/useBookingStore").Booking' is not assignable to parameter of type 'import("C:/Projects/golf-pub-app/src/types/booking-types").Booking'.
+  Type 'Booking' is missing the following properties from type 'Booking': golfCourse, location, maxPlayers, currentPlayers, and 4 more.
+src/screens/home/HomeScreen.tsx(699,18): error TS2339: Property 'medium' does not exist on type '{ readonly sm: { readonly shadowColor: "rgba(15, 23, 42, 0.08)"; readonly shadowOffset: { readonly width: 0; readonly height: 2; }; readonly shadowOpacity: 0.08; readonly shadowRadius: 8; readonly elevation: 2; }; readonly md: { ...; }; readonly lg: { ...; }; readonly xl: { ...; }; }'.
+src/screens/marketplace/MarketplaceScreen.tsx(162,25): error TS2345: Argument of type '[never, never]' is not assignable to parameter of type 'never'.
+src/screens/marketplace/MyProductsScreen.tsx(109,25): error TS2345: Argument of type '[never, never]' is not assignable to parameter of type 'never'.
+src/screens/marketplace/ProductDetailScreen.tsx(159,20): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'Record<ProductCondition, string>'.
+  No index signature with a parameter of type 'string' was found on type 'Record<ProductCondition, string>'.
+src/screens/membership/MembershipPlanScreen.tsx(28,25): error TS2345: Argument of type '[never, never]' is not assignable to parameter of type 'never'.
+src/screens/membership/UpgradePlanScreen.tsx(13,42): error TS2367: This comparison appears to be unintentional because the types 'MembershipType.PREMIUM | MembershipType.VIP' and 'MembershipType.FREE' have no overlap.
+src/screens/membership/UpgradePlanScreen.tsx(29,51): error TS2345: Argument of type '[never, never]' is not assignable to parameter of type 'never'.
+src/screens/my/MyHomeScreen.tsx(208,17): error TS2339: Property 'name' does not exist on type 'User'.
+src/screens/my/MyHomeScreen.tsx(210,25): error TS2339: Property 'avatar' does not exist on type 'User'.
+src/screens/my/MyHomeScreen.tsx(212,18): error TS2339: Property 'phone' does not exist on type 'User'.
+src/screens/my/MyHomeScreen.tsx(213,19): error TS2339: Property 'points' does not exist on type 'User'.
+src/screens/my/MyHomeScreen.tsx(214,23): error TS2339: Property 'membership' does not exist on type 'User'.
+src/screens/my/MyHomeScreen.tsx(752,11): error TS2322: Type '(itemId: number, comment: string) => void' is not assignable to type '(id: number) => void'.
+  Target signature provides too few arguments. Expected 2 or more, but got 1.
+src/screens/profile/ProfileScreen.tsx(6,17): error TS2339: Property 'logout' does not exist on type 'AuthState'.
+src/screens/profile/ProfileScreen.tsx(80,50): error TS2339: Property 'points' does not exist on type 'User'.
+src/services/api/bookingAPI.ts(215,32): error TS2352: Conversion of type '{ createdAt: any; updatedAt: any; id: string; }' to type 'Booking' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ createdAt: any; updatedAt: any; id: string; }' is missing the following properties from type 'Booking': title, golfCourse, location, date, and 10 more.
+src/services/api/bookingAPI.ts(542,35): error TS2352: Conversion of type '{ createdAt: any; updatedAt: any; id: string; }[]' to type 'Booking[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ createdAt: any; updatedAt: any; id: string; }' is missing the following properties from type 'Booking': title, golfCourse, location, date, and 10 more.
+src/services/api/bookingAPI.ts(588,20): error TS2352: Conversion of type '{ createdAt: any; updatedAt: any; id: string; }' to type 'Booking' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ createdAt: any; updatedAt: any; id: string; }' is missing the following properties from type 'Booking': title, golfCourse, location, date, and 10 more.
+src/services/api/friendAPI.ts(236,24): error TS2352: Conversion of type '{ id: string; name: any; image: any; handicap: any; location: any; bio: any; mutualFriends: number; status: "accepted"; createdAt: any; }' to type 'Friend' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Types of property 'id' are incompatible.
+    Type 'string' is not comparable to type 'number'.
+src/services/api/friendAPI.ts(310,11): error TS2322: Type 'string' is not assignable to type 'number'.
+src/services/api/friendAPI.ts(382,11): error TS2322: Type 'string' is not assignable to type 'number'.
+src/services/api/friendAPI.ts(571,20): error TS2352: Conversion of type '{ id: string; name: any; image: any; handicap: any; location: any; bio: any; mutualFriends: number; status: "pending"; createdAt: any; }' to type 'Friend' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Types of property 'id' are incompatible.
+    Type 'string' is not comparable to type 'number'.
+src/services/api/marketplaceAPI.ts(239,32): error TS2352: Conversion of type '{ isLiked: boolean; createdAt: any; updatedAt: any; id: string; }' to type 'Product' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ isLiked: boolean; createdAt: any; updatedAt: any; id: string; }' is missing the following properties from type 'Product': title, description, price, category, and 9 more.
+src/services/api/marketplaceAPI.ts(364,35): error TS2352: Conversion of type '{ isLiked: false; createdAt: any; updatedAt: any; id: string; }[]' to type 'Product[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ isLiked: false; createdAt: any; updatedAt: any; id: string; }' is missing the following properties from type 'Product': title, description, price, category, and 9 more.
+src/services/api/marketplaceAPI.ts(514,25): error TS2352: Conversion of type '{ isLiked: true; createdAt: any; updatedAt: any; id: string; }' to type 'Product' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ isLiked: true; createdAt: any; updatedAt: any; id: string; }' is missing the following properties from type 'Product': title, description, price, category, and 9 more.
+src/services/api/profileAPI.ts(44,36): error TS2352: Conversion of type '{ id: string; name: any; profileImage: any; email: any; phone: any; handicap: any; memberSince: any; points: any; coupons: any; bio: any; }' to type 'UserProfile' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Types of property 'id' are incompatible.
+    Type 'string' is not comparable to type 'number'.
+src/services/api/profileAPI.ts(209,31): error TS2352: Conversion of type '{ date: any; id: string; }[]' to type 'Point[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ date: any; id: string; }' is missing the following properties from type 'Point': amount, description, type
+src/services/api/profileAPI.ts(345,33): error TS2352: Conversion of type '{ expiryDate: any; id: string; }[]' to type 'Coupon[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ expiryDate: any; id: string; }' is missing the following properties from type 'Coupon': name, discount, discountType, isUsed
+src/services/api/profileAPI.ts(378,36): error TS2352: Conversion of type '{ id: string; name: any; profileImage: any; email: string; phone: string; handicap: any; memberSince: any; points: number; coupons: number; bio: any; }' to type 'UserProfile' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Types of property 'id' are incompatible.
+    Type 'string' is not comparable to type 'number'.
+src/services/authService.ts(178,11): error TS2322: Type 'string | null' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/services/authService.ts(181,11): error TS2322: Type 'string | null' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/services/firebase/firebaseChat.ts(343,26): error TS2345: Argument of type '(child: DataSnapshot) => void' is not assignable to parameter of type '(child: DataSnapshot) => true | undefined'.
+  Type 'void' is not assignable to type 'true | undefined'.
+src/services/firebase/firebaseChat.ts(552,26): error TS2345: Argument of type '(child: DataSnapshot) => void' is not assignable to parameter of type '(child: DataSnapshot) => true | undefined'.
+  Type 'void' is not assignable to type 'true | undefined'.
+src/services/firebase/firebaseMessaging.ts(58,34): error TS2339: Property 'AuthorizationStatus' does not exist on type 'Module'.
+src/services/firebase/firebaseMessaging.ts(59,34): error TS2339: Property 'AuthorizationStatus' does not exist on type 'Module'.
+src/services/firebase/firebaseMessaging.ts(70,24): error TS2339: Property 'AuthorizationStatus' does not exist on type 'Module'.
+src/services/kakao/kakaoLogin.ts(40,9): error TS2322: Type 'number' is not assignable to type 'string'.
+src/services/kakao/kakaoLogin.ts(110,9): error TS2322: Type 'number' is not assignable to type 'string'.
+src/services/kakao/kakaoMessage.ts(4,10): error TS2305: Module '"@react-native-seoul/kakao-login"' has no exported member 'shareMessage'.
+src/services/kakao/kakaoMessage.ts(4,24): error TS2305: Module '"@react-native-seoul/kakao-login"' has no exported member 'shareFeed'.
+src/services/kakao/kakaoMessage.ts(4,35): error TS2305: Module '"@react-native-seoul/kakao-login"' has no exported member 'sendFeed'.
+src/services/kakao/kakaoMessage.ts(4,45): error TS2305: Module '"@react-native-seoul/kakao-login"' has no exported member 'sendLink'.
+src/services/kakao/kakaoMessage.ts(4,55): error TS2305: Module '"@react-native-seoul/kakao-login"' has no exported member 'LinkObject'.
+src/services/kakao/kakaoMessage.ts(4,67): error TS2305: Module '"@react-native-seoul/kakao-login"' has no exported member 'FeedObject'.
+src/services/kakao/kakaoMessage.ts(4,79): error TS2305: Module '"@react-native-seoul/kakao-login"' has no exported member 'ContentObject'.
+src/services/kakao/kakaoMessage.ts(4,94): error TS2305: Module '"@react-native-seoul/kakao-login"' has no exported member 'ButtonObject'.
+src/utils/devicePermissions.ts(87,7): error TS2365: Operator '>=' cannot be applied to types 'string | number' and 'number'.
+src/utils/devicePermissions.ts(152,7): error TS2365: Operator '>=' cannot be applied to types 'string | number' and 'number'.
+src/utils/devicePermissions.ts(229,7): error TS2365: Operator '>=' cannot be applied to types 'string | number' and 'number'.
+src/utils/devicePermissions.ts(240,7): error TS2365: Operator '>=' cannot be applied to types 'string | number' and 'number'.

@@ -9,6 +9,7 @@ import {
   Switch,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export const ChatSettingsScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const [notifications, setNotifications] = useState(true);
@@ -32,6 +33,14 @@ export const ChatSettingsScreen: React.FC<{ navigation?: any }> = ({ navigation 
   };
 
   return (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <View style={styles.headerRow}>
+      <TouchableOpacity onPress={() => navigation?.goBack()} style={styles.backButton}>
+        <Text style={styles.backIcon}>←</Text>
+      </TouchableOpacity>
+      <Text style={styles.headerTitle}>채팅 설정</Text>
+      <View style={{ width: 36 }} />
+    </View>
     <ScrollView style={styles.container}>
       {/* 알림 설정 */}
       <View style={styles.section}>
@@ -93,10 +102,38 @@ export const ChatSettingsScreen: React.FC<{ navigation?: any }> = ({ navigation 
         </TouchableOpacity>
       </View>
     </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#7C3AED',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#7C3AED',
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 8,
+  },
+  backIcon: {
+    fontSize: 20,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#fff',
+    textAlign: 'center',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',

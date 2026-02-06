@@ -208,7 +208,7 @@ class FirebaseStorageService {
   ): Promise<UploadResult> {
     try {
       // Storage 참조 생성
-      const reference = storage().ref(path);
+      const reference = storage.ref(path);
 
       // 업로드 태스크 생성
       const task = reference.putFile(uri, {
@@ -317,7 +317,7 @@ class FirebaseStorageService {
     try {
       console.log('🗑️ 이미지 삭제 시작:', path);
 
-      const reference = storage().ref(path);
+      const reference = storage.ref(path);
       await reference.delete();
 
       console.log('✅ 이미지 삭제 완료:', path);
@@ -377,7 +377,7 @@ class FirebaseStorageService {
    */
   async getImageUrl(path: string): Promise<string> {
     try {
-      const reference = storage().ref(path);
+      const reference = storage.ref(path);
       const url = await reference.getDownloadURL();
       return url;
     } catch (error) {
@@ -396,7 +396,7 @@ class FirebaseStorageService {
     path: string
   ): Promise<FirebaseStorageTypes.FullMetadata> {
     try {
-      const reference = storage().ref(path);
+      const reference = storage.ref(path);
       const metadata = await reference.getMetadata();
       return metadata;
     } catch (error) {
@@ -414,7 +414,7 @@ class FirebaseStorageService {
     try {
       console.log('🗑️ 폴더 삭제 시작:', folderPath);
 
-      const reference = storage().ref(folderPath);
+      const reference = storage.ref(folderPath);
       const result = await reference.listAll();
 
       // 모든 파일 삭제
@@ -489,7 +489,7 @@ class FirebaseStorageService {
    */
   async getFolderSize(folderPath: string): Promise<number> {
     try {
-      const reference = storage().ref(folderPath);
+      const reference = storage.ref(folderPath);
       const result = await reference.listAll();
 
       let totalSize = 0;

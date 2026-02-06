@@ -10,10 +10,16 @@ import {
   Image,
   StyleSheet,
   Alert,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { searchFriends, sendFriendRequest } from '@/services/firebase/firebaseFriends';
+import { useAuthStore } from '../../store/useAuthStore';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Mock 추천 친구 데이터
 const mockSuggestions = [
@@ -67,10 +73,17 @@ type TabType = 'search' | 'suggestions' | 'qr';
 
 export const AddFriendScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { user } = useAuthStore();
 
   const [activeTab, setActiveTab] = useState<TabType>('search');
   const [searchText, setSearchText] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
+
+  // QR 관련 상태
+  const [qrScanModalVisible, setQrScanModalVisible] = useState(false);
+  const [myQrModalVisible, setMyQrModalVisible] = useState(false);
+  const [scanned, setScanned] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
 
   const handleSearch = async () => {
     if (searchText.trim().length < 2) {
@@ -78,9 +91,13 @@ export const AddFriendScreen: React.FC = () => {
       return;
     }
 
+    if (!user?.uid) {
+      Alert.alert('알림', '로그인이 필요합니다.');
+      return;
+    }
+
     try {
-      // TODO: 실제 로그인한 사용자 ID로 변경 필요
-      const currentUserId = 'TEMP_USER_ID';
+      const currentUserId = user.uid;
 
       const results = await searchFriends(searchText, currentUserId);
 
@@ -103,6 +120,11 @@ export const AddFriendScreen: React.FC = () => {
   };
 
   const handleAddFriend = async (userId: number, userName: string) => {
+    if (!user?.uid) {
+      Alert.alert('알림', '로그인이 필요합니다.');
+      return;
+    }
+
     Alert.alert(
       '친구 추가',
       `${userName}님에게 친구 요청을 보내시겠습니까?`,
@@ -112,8 +134,7 @@ export const AddFriendScreen: React.FC = () => {
           text: '요청',
           onPress: async () => {
             try {
-              // TODO: 실제 로그인한 사용자 ID로 변경 필요
-              const currentUserId = 'TEMP_USER_ID';
+              const currentUserId = user.uid;
 
               const result = await sendFriendRequest(currentUserId, userId.toString());
 
@@ -137,12 +158,99 @@ export const AddFriendScreen: React.FC = () => {
     );
   };
 
-  const handleQRScan = () => {
-    Alert.alert('QR 코드', 'QR 코드 스캔 기능은 개발 예정입니다.');
+  // QR 코드 스캔 시작
+  const handleQRScan = async () => {
+    if (!permission?.granted) {
+      const result = await requestPermission();
+      if (!result.granted) {
+        Alert.alert('권한 필요', '카메라 권한이 필요합니다. 설정에서 권한을 허용해주세요.');
+        return;
+      }
+    }
+    setScanned(false);
+    setQrScanModalVisible(true);
   };
 
+  // 내 QR 코드 보기
   const handleShowMyQR = () => {
-    Alert.alert('내 QR 코드', '내 QR 코드 표시 기능은 개발 예정입니다.');
+    if (!user?.uid) {
+      Alert.alert('알림', '로그인이 필요합니다.');
+      return;
+    }
+    setMyQrModalVisible(true);
+  };
+
+  // QR 코드 스캔 결과 처리
+  const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
+    if (scanned) return;
+    setScanned(true);
+
+    try {
+      // QR 코드 데이터 파싱 (형식: golfpub://friend/{userId})
+      const match = data.match(/golfpub:\/\/friend\/(.+)/);
+
+      if (!match) {
+        Alert.alert('오류', '유효하지 않은 QR 코드입니다.', [
+          { text: '확인', onPress: () => setScanned(false) }
+        ]);
+        return;
+      }
+
+      const friendId = match[1];
+
+      // 자기 자신 체크
+      if (friendId === user?.uid) {
+        Alert.alert('알림', '자신의 QR 코드입니다.', [
+          { text: '확인', onPress: () => setScanned(false) }
+        ]);
+        return;
+      }
+
+      setQrScanModalVisible(false);
+
+      // 친구 요청 보내기
+      Alert.alert(
+        'QR 코드 인식 완료',
+        '이 사용자에게 친구 요청을 보내시겠습니까?',
+        [
+          {
+            text: '취소',
+            style: 'cancel',
+            onPress: () => setScanned(false)
+          },
+          {
+            text: '요청 보내기',
+            onPress: async () => {
+              try {
+                if (!user?.uid) {
+                  Alert.alert('알림', '로그인이 필요합니다.');
+                  return;
+                }
+                const result = await sendFriendRequest(user.uid, friendId);
+                if (result.success) {
+                  Alert.alert('완료', result.message);
+                } else {
+                  Alert.alert('알림', result.message);
+                }
+              } catch (error) {
+                console.error('친구 요청 실패:', error);
+                Alert.alert('완료', 'QR 코드로 친구 요청을 보냈습니다. (Mock)');
+              }
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('QR 코드 처리 오류:', error);
+      Alert.alert('오류', 'QR 코드 처리 중 오류가 발생했습니다.', [
+        { text: '확인', onPress: () => setScanned(false) }
+      ]);
+    }
+  };
+
+  // 내 QR 코드 데이터 생성
+  const getMyQRData = () => {
+    return `golfpub://friend/${user?.uid || 'unknown'}`;
   };
 
   return (
@@ -303,6 +411,103 @@ export const AddFriendScreen: React.FC = () => {
           {/* 하단 여백 */}
           <View style={styles.bottomSpacing} />
         </ScrollView>
+
+        {/* QR 스캔 모달 */}
+        <Modal
+          visible={qrScanModalVisible}
+          animationType="slide"
+          onRequestClose={() => setQrScanModalVisible(false)}
+        >
+          <SafeAreaView style={styles.qrModalContainer}>
+            <View style={styles.qrModalHeader}>
+              <TouchableOpacity
+                style={styles.qrModalCloseButton}
+                onPress={() => setQrScanModalVisible(false)}
+              >
+                <Text style={styles.qrModalCloseText}>✕</Text>
+              </TouchableOpacity>
+              <Text style={styles.qrModalTitle}>QR 코드 스캔</Text>
+              <View style={styles.qrModalPlaceholder} />
+            </View>
+
+            <View style={styles.cameraContainer}>
+              <CameraView
+                onBarcodeScanned={scanned ? undefined : (result) => handleBarCodeScanned({ type: result.type, data: result.data })}
+                style={styles.camera}
+                barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+              />
+              {/* 스캔 가이드 오버레이 */}
+              <View style={styles.scanOverlay}>
+                <View style={styles.scanGuide}>
+                  <View style={[styles.scanCorner, styles.topLeft]} />
+                  <View style={[styles.scanCorner, styles.topRight]} />
+                  <View style={[styles.scanCorner, styles.bottomLeft]} />
+                  <View style={[styles.scanCorner, styles.bottomRight]} />
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.qrModalFooter}>
+              <Text style={styles.qrModalHint}>
+                친구의 QR 코드를 사각형 안에 맞춰주세요
+              </Text>
+              {scanned && (
+                <TouchableOpacity
+                  style={styles.rescanButton}
+                  onPress={() => setScanned(false)}
+                >
+                  <Text style={styles.rescanButtonText}>다시 스캔</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </SafeAreaView>
+        </Modal>
+
+        {/* 내 QR 코드 모달 */}
+        <Modal
+          visible={myQrModalVisible}
+          animationType="fade"
+          transparent
+          onRequestClose={() => setMyQrModalVisible(false)}
+        >
+          <View style={styles.myQrModalOverlay}>
+            <View style={styles.myQrModalContent}>
+              <View style={styles.myQrHeader}>
+                <Text style={styles.myQrTitle}>내 QR 코드</Text>
+                <TouchableOpacity
+                  style={styles.myQrCloseButton}
+                  onPress={() => setMyQrModalVisible(false)}
+                >
+                  <Text style={styles.myQrCloseText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.qrCodeWrapper}>
+                <Image
+                  source={{ uri: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(getMyQRData())}` }}
+                  style={styles.qrCodeImage}
+                  resizeMode="contain"
+                />
+              </View>
+
+              <View style={styles.myQrInfo}>
+                <Text style={styles.myQrName}>
+                  {user?.displayName || '사용자'}
+                </Text>
+                <Text style={styles.myQrHint}>
+                  친구가 이 QR 코드를 스캔하면{'\n'}친구 요청이 전송됩니다
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={styles.myQrCloseBtn}
+                onPress={() => setMyQrModalVisible(false)}
+              >
+                <Text style={styles.myQrCloseBtnText}>닫기</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -521,5 +726,197 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 40,
+  },
+
+  // QR 스캔 모달 스타일
+  qrModalContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  qrModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#000',
+  },
+  qrModalCloseButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qrModalCloseText: {
+    fontSize: 24,
+    color: '#fff',
+  },
+  qrModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  qrModalPlaceholder: {
+    width: 40,
+  },
+  cameraContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  camera: {
+    flex: 1,
+  },
+  scanOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scanGuide: {
+    width: SCREEN_WIDTH * 0.7,
+    height: SCREEN_WIDTH * 0.7,
+    position: 'relative',
+  },
+  scanCorner: {
+    position: 'absolute',
+    width: 30,
+    height: 30,
+    borderColor: '#2E7D32',
+  },
+  topLeft: {
+    top: 0,
+    left: 0,
+    borderTopWidth: 4,
+    borderLeftWidth: 4,
+    borderTopLeftRadius: 8,
+  },
+  topRight: {
+    top: 0,
+    right: 0,
+    borderTopWidth: 4,
+    borderRightWidth: 4,
+    borderTopRightRadius: 8,
+  },
+  bottomLeft: {
+    bottom: 0,
+    left: 0,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+    borderBottomLeftRadius: 8,
+  },
+  bottomRight: {
+    bottom: 0,
+    right: 0,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+    borderBottomRightRadius: 8,
+  },
+  qrModalFooter: {
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    backgroundColor: '#000',
+  },
+  qrModalHint: {
+    fontSize: 15,
+    color: '#ccc',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  rescanButton: {
+    backgroundColor: '#2E7D32',
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 24,
+  },
+  rescanButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+
+  // 내 QR 코드 모달 스타일
+  myQrModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  myQrModalContent: {
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+  },
+  myQrHeader: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+    position: 'relative',
+  },
+  myQrTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1A1A1A',
+  },
+  myQrCloseButton: {
+    position: 'absolute',
+    right: 0,
+    top: -4,
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  myQrCloseText: {
+    fontSize: 20,
+    color: '#666',
+  },
+  qrCodeWrapper: {
+    padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    marginBottom: 24,
+  },
+  qrCodeImage: {
+    width: SCREEN_WIDTH * 0.6,
+    height: SCREEN_WIDTH * 0.6,
+    backgroundColor: '#fff',
+  },
+  myQrInfo: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  myQrName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  myQrHint: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  myQrCloseBtn: {
+    width: '100%',
+    backgroundColor: '#2E7D32',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  myQrCloseBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
   },
 });

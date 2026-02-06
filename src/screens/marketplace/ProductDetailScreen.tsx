@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CONDITION_LABELS, STATUS_LABELS } from '../../types/marketplace-types';
 
 const { width } = Dimensions.get('window');
@@ -54,7 +55,7 @@ const mockProduct = {
 };
 
 export const ProductDetailScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(mockProduct.isLiked);
@@ -65,12 +66,18 @@ export const ProductDetailScreen: React.FC = () => {
   };
 
   const handleChat = () => {
-    Alert.alert('채팅', '채팅 기능은 개발 예정입니다.');
+    navigation.navigate('ChatRoom', {
+      chatId: `product_${mockProduct.id}`,
+      chatTitle: mockProduct.sellerName,
+      userImage: mockProduct.sellerImage,
+    });
   };
 
   const handleSellerPress = () => {
-    console.log('판매자 프로필');
-    // TODO: 판매자 프로필 화면으로 이동
+    navigation.navigate('FriendProfile', {
+      friendId: mockProduct.id,
+      friendName: mockProduct.sellerName,
+    });
   };
 
   return (

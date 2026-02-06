@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { FriendRequest } from '../../types/friends-types';
+import { FriendRequest } from '../../types/friend-types';
 
 // Mock 받은 요청 데이터
 const mockReceivedRequests: FriendRequest[] = [
@@ -84,6 +84,8 @@ type TabType = 'received' | 'sent';
 export const FriendRequestsScreen: React.FC = () => {
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState<TabType>('received');
+  const [receivedRequests, setReceivedRequests] = useState(mockReceivedRequests);
+  const [sentRequests, setSentRequests] = useState(mockSentRequests);
 
   const handleAccept = (requestId: number, userName: string) => {
     Alert.alert(
@@ -94,8 +96,9 @@ export const FriendRequestsScreen: React.FC = () => {
         {
           text: '승인',
           onPress: () => {
-            console.log('승인:', requestId);
-            Alert.alert('완료', '친구가 되었습니다!');
+            // TODO: Firebase API 호출
+            setReceivedRequests(prev => prev.filter(r => r.id !== requestId));
+            Alert.alert('완료', `${userName}님과 친구가 되었습니다!`);
           },
         },
       ]
@@ -112,7 +115,8 @@ export const FriendRequestsScreen: React.FC = () => {
           text: '거절',
           style: 'destructive',
           onPress: () => {
-            console.log('거절:', requestId);
+            // TODO: Firebase API 호출
+            setReceivedRequests(prev => prev.filter(r => r.id !== requestId));
             Alert.alert('완료', '요청을 거절했습니다.');
           },
         },
@@ -130,7 +134,8 @@ export const FriendRequestsScreen: React.FC = () => {
           text: '취소하기',
           style: 'destructive',
           onPress: () => {
-            console.log('요청 취소:', requestId);
+            // TODO: Firebase API 호출
+            setSentRequests(prev => prev.filter(r => r.id !== requestId));
             Alert.alert('완료', '요청을 취소했습니다.');
           },
         },
@@ -138,7 +143,7 @@ export const FriendRequestsScreen: React.FC = () => {
     );
   };
 
-  const displayRequests = activeTab === 'received' ? mockReceivedRequests : mockSentRequests;
+  const displayRequests = activeTab === 'received' ? receivedRequests : sentRequests;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -159,7 +164,7 @@ export const FriendRequestsScreen: React.FC = () => {
             onPress={() => setActiveTab('received')}
           >
             <Text style={[styles.tabText, activeTab === 'received' && styles.activeTabText]}>
-              받은 요청 ({mockReceivedRequests.length})
+              받은 요청 ({receivedRequests.length})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -167,7 +172,7 @@ export const FriendRequestsScreen: React.FC = () => {
             onPress={() => setActiveTab('sent')}
           >
             <Text style={[styles.tabText, activeTab === 'sent' && styles.activeTabText]}>
-              보낸 요청 ({mockSentRequests.length})
+              보낸 요청 ({sentRequests.length})
             </Text>
           </TouchableOpacity>
         </View>

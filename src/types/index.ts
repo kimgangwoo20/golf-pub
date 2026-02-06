@@ -99,3 +99,7 @@ export interface GolfCourse {
   };
   images: string[];
 }
+
+// Re-exports from sub-type files
+export type { Weather, WeatherForecast } from './weather-types';
+export type { Booking, BookingFilter, BookingPayment, SkillLevel } from './booking-types';

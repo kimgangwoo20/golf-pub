@@ -139,9 +139,10 @@ export const MarketplaceScreen: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | 'all'>('all');
   const [searchText, setSearchText] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [products, setProducts] = useState(mockProducts);
 
   // 카테고리 필터링
-  const filteredProducts = mockProducts.filter(product => {
+  const filteredProducts = products.filter(product => {
     if (selectedCategory !== 'all' && product.category !== selectedCategory) {
       return false;
     }
@@ -153,17 +154,18 @@ export const MarketplaceScreen: React.FC = () => {
 
   const handleRefresh = () => {
     setRefreshing(true);
+    // TODO: 실제 API 호출
     setTimeout(() => setRefreshing(false), 1000);
   };
 
   const handleProductPress = (productId: number) => {
-    console.log('상품 클릭:', productId);
     navigation.navigate('ProductDetail' as never, { productId } as never);
   };
 
   const handleLike = (productId: number) => {
-    console.log('찜하기:', productId);
-    // TODO: 찜하기 토글
+    setProducts(prev => prev.map(p =>
+      p.id === productId ? { ...p, isLiked: !p.isLiked, likeCount: p.isLiked ? p.likeCount - 1 : p.likeCount + 1 } : p
+    ));
   };
 
   const getStatusBadge = (status: string) => {

@@ -6,6 +6,7 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  RefreshControl,
 } from 'react-native';
 
 interface Booking {
@@ -43,7 +44,17 @@ const MOCK_BOOKINGS: Booking[] = [
 ];
 
 export const PopularBookingsScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
-  const [bookings] = useState<Booking[]>(MOCK_BOOKINGS);
+  const [bookings, setBookings] = useState<Booking[]>(MOCK_BOOKINGS);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    // TODO: 실제 API 호출
+    setTimeout(() => {
+      setBookings(MOCK_BOOKINGS);
+      setRefreshing(false);
+    }, 1000);
+  };
 
   const renderBooking = ({ item }: { item: Booking }) => (
     <TouchableOpacity
@@ -75,6 +86,14 @@ export const PopularBookingsScreen: React.FC<{ navigation?: any }> = ({ navigati
         renderItem={renderBooking}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#007AFF"
+            colors={['#007AFF']}
+          />
+        }
       />
     </View>
   );

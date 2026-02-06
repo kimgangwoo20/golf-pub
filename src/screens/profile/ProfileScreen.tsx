@@ -1,28 +1,75 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert, RefreshControl } from 'react-native';
+import { useAuthStore } from '../../store/useAuthStore';
 
 export const ProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
-  const user = {
-    name: '홍길동',
-    email: 'hong@golf.com',
-    membership: 'PREMIUM',
-    points: 15000,
-    level: '골린이',
+  const { user, logout } = useAuthStore();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    // TODO: 실제 사용자 데이터 새로고침 API 호출
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  }, []);
+
+  const handleLogout = () => {
+    Alert.alert(
+      '로그아웃',
+      '정말 로그아웃 하시겠습니까?',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '로그아웃',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+              Alert.alert('완료', '로그아웃 되었습니다.');
+            } catch (error) {
+              Alert.alert('오류', '로그아웃에 실패했습니다.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleEditAvatar = () => {
+    Alert.alert('프로필 사진', '프로필 사진 변경은 프로필 수정에서 가능합니다.', [
+      { text: '취소', style: 'cancel' },
+      { text: '프로필 수정', onPress: () => navigation?.navigate('EditProfile') },
+    ]);
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor="#007AFF"
+          colors={['#007AFF']}
+        />
+      }
+    >
       <View style={styles.header}>
         <View style={styles.avatarContainer}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>👤</Text>
+            {user?.photoURL ? (
+              <Image source={{ uri: user.photoURL }} style={styles.avatarImage} />
+            ) : (
+              <Text style={styles.avatarText}>👤</Text>
+            )}
           </View>
-          <TouchableOpacity style={styles.editAvatarBtn}>
+          <TouchableOpacity style={styles.editAvatarBtn} onPress={handleEditAvatar}>
             <Text>✏️</Text>
           </TouchableOpacity>
         </View>
-        <Text style={styles.name}>{user.name}</Text>
-        <Text style={styles.email}>{user.email}</Text>
+        <Text style={styles.name}>{user?.displayName || '사용자'}</Text>
+        <Text style={styles.email}>{user?.email || ''}</Text>
         <View style={styles.membershipBadge}>
           <Text style={styles.membershipText}>👑 프리미엄 회원</Text>
         </View>
@@ -30,7 +77,7 @@ export const ProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) =>
 
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{user.points.toLocaleString()}</Text>
+          <Text style={styles.statValue}>{(user?.points || 0).toLocaleString()}</Text>
           <Text style={styles.statLabel}>포인트</Text>
         </View>
         <View style={styles.divider} />
@@ -71,7 +118,7 @@ export const ProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) =>
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.logoutButton}>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>로그아웃</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -82,7 +129,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
   header: { alignItems: 'center', padding: 24, backgroundColor: '#fff', marginBottom: 12 },
   avatarContainer: { position: 'relative', marginBottom: 16 },
-  avatar: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#E3F2FD', alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#E3F2FD', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  avatarImage: { width: 100, height: 100, borderRadius: 50 },
   avatarText: { fontSize: 40 },
   editAvatarBtn: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#007AFF', width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#fff' },
   name: { fontSize: 24, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 4 },

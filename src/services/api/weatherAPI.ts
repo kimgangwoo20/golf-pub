@@ -1,347 +1,43 @@
 // 🌤️ weatherAPI.ts
-// 기상청 단기예보 API 통합 서비스
-// 초단기실황 + 초단기예보 + 단기예보 + 중기예보
+// Open-Meteo API 연동 날씨 서비스
+// https://open-meteo.com/en/docs
 
 import axios from 'axios';
 import { Weather, WeatherForecast } from '@/types';
 
 // ========================================
-// 🔑 기상청 API 설정
+// 🔑 Open-Meteo API 설정
 // ========================================
-const KMA_API_KEY = '2H1BdPMCR2C9QXTzAgdgyg';
-const BASE_URL = 'http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0';
-const MIDTERM_URL = 'http://apis.data.go.kr/1360000/MidFcstInfoService';
+const BASE_URL = 'https://api.open-meteo.com/v1/forecast';
 
 // ========================================
-// 📍 GPS → 격자 좌표 변환
+// 📊 WMO 날씨 코드 → 텍스트 변환
 // ========================================
-interface GridCoords {
-  nx: number;
-  ny: number;
-}
-
-/**
- * GPS 좌표를 기상청 격자 좌표로 변환
- * @param lat 위도
- * @param lon 경도
- * @returns 격자 좌표 {nx, ny}
- */
-function gpsToGrid(lat: number, lon: number): GridCoords {
-  const RE = 6371.00877; // 지구 반경(km)
-  const GRID = 5.0; // 격자 간격(km)
-  const SLAT1 = 30.0; // 투영 위도1(degree)
-  const SLAT2 = 60.0; // 투영 위도2(degree)
-  const OLON = 126.0; // 기준점 경도(degree)
-  const OLAT = 38.0; // 기준점 위도(degree)
-  const XO = 43; // 기준점 X좌표(GRID)
-  const YO = 136; // 기준점 Y좌표(GRID)
-
-  const DEGRAD = Math.PI / 180.0;
-  const re = RE / GRID;
-  const slat1 = SLAT1 * DEGRAD;
-  const slat2 = SLAT2 * DEGRAD;
-  const olon = OLON * DEGRAD;
-  const olat = OLAT * DEGRAD;
-
-  let sn = Math.tan(Math.PI * 0.25 + slat2 * 0.5) / Math.tan(Math.PI * 0.25 + slat1 * 0.5);
-  sn = Math.log(Math.cos(slat1) / Math.cos(slat2)) / Math.log(sn);
-  let sf = Math.tan(Math.PI * 0.25 + slat1 * 0.5);
-  sf = (Math.pow(sf, sn) * Math.cos(slat1)) / sn;
-  let ro = Math.tan(Math.PI * 0.25 + olat * 0.5);
-  ro = (re * sf) / Math.pow(ro, sn);
-
-  let ra = Math.tan(Math.PI * 0.25 + lat * DEGRAD * 0.5);
-  ra = (re * sf) / Math.pow(ra, sn);
-  let theta = lon * DEGRAD - olon;
-  if (theta > Math.PI) theta -= 2.0 * Math.PI;
-  if (theta < -Math.PI) theta += 2.0 * Math.PI;
-  theta *= sn;
-
-  const nx = Math.floor(ra * Math.sin(theta) + XO + 0.5);
-  const ny = Math.floor(ro - ra * Math.cos(theta) + YO + 0.5);
-
-  return { nx, ny };
-}
-
-/**
- * GPS 좌표를 중기예보 지역코드로 변환
- * @param lat 위도
- * @param lon 경도
- * @returns 지역코드 (예: 11B00000)
- */
-function gpsToRegionCode(lat: number, lon: number): string {
-  // 간단한 지역 매핑 (실제로는 더 정교한 매핑 필요)
-
-  // 제주도
-  if (lat >= 33.0 && lat <= 33.6) {
-    return '11G00000';
-  }
-
-  // 경상남도
-  if (lat >= 34.7 && lat <= 35.5 && lon >= 127.5 && lon <= 129.5) {
-    return '11H20000';
-  }
-
-  // 부산
-  if (lat >= 35.0 && lat <= 35.3 && lon >= 128.9 && lon <= 129.3) {
-    return '11H20000';
-  }
-
-  // 경상북도
-  if (lat >= 35.5 && lat <= 37.5 && lon >= 128.0 && lon <= 129.5) {
-    return '11H10000';
-  }
-
-  // 전라남도
-  if (lat >= 34.2 && lat <= 35.5 && lon >= 126.0 && lon <= 127.5) {
-    return '11F20000';
-  }
-
-  // 전북자치도
-  if (lat >= 35.5 && lat <= 36.2 && lon >= 126.5 && lon <= 127.8) {
-    return '11F10000';
-  }
-
-  // 충청남도
-  if (lat >= 36.0 && lat <= 37.0 && lon >= 126.0 && lon <= 127.5) {
-    return '11C20000';
-  }
-
-  // 충청북도
-  if (lat >= 36.0 && lat <= 37.5 && lon >= 127.2 && lon <= 128.5) {
-    return '11C10000';
-  }
-
-  // 강원영동
-  if (lat >= 37.5 && lat <= 38.6 && lon >= 128.5 && lon <= 129.5) {
-    return '11D20000';
-  }
-
-  // 강원영서
-  if (lat >= 37.5 && lat <= 38.6 && lon >= 127.0 && lon <= 128.5) {
-    return '11D10000';
-  }
-
-  // 서울/인천/경기 (기본값)
-  return '11B00000';
+function getWeatherText(code: number): string {
+  // WMO Weather interpretation codes (WW)
+  // https://open-meteo.com/en/docs
+  if (code === 0) return '맑음';
+  if (code === 1) return '대체로 맑음';
+  if (code === 2) return '구름조금';
+  if (code === 3) return '흐림';
+  if (code >= 45 && code <= 48) return '안개';
+  if (code >= 51 && code <= 55) return '이슬비';
+  if (code >= 56 && code <= 57) return '진눈깨비';
+  if (code >= 61 && code <= 65) return '비';
+  if (code >= 66 && code <= 67) return '진눈깨비';
+  if (code >= 71 && code <= 77) return '눈';
+  if (code >= 80 && code <= 82) return '소나기';
+  if (code >= 85 && code <= 86) return '눈보라';
+  if (code >= 95 && code <= 99) return '뇌우';
+  return '맑음';
 }
 
 // ========================================
-// 📅 날짜/시간 유틸리티
+// 🌧️ 강수 여부 확인
 // ========================================
-function getBaseDateTime(): { baseDate: string; baseTime: string } {
-  const now = new Date();
-  const kstOffset = 9 * 60; // KST = UTC+9
-  const kst = new Date(now.getTime() + kstOffset * 60 * 1000);
-
-  let year = kst.getUTCFullYear();
-  let month = String(kst.getUTCMonth() + 1).padStart(2, '0');
-  let day = String(kst.getUTCDate()).padStart(2, '0');
-  let hour = kst.getUTCHours();
-
-  // 초단기실황: 매 정시 40분에 생성 (현재시각-1시간)
-  // 초단기예보: 매 시각 30분에 생성 (현재시각)
-  if (kst.getUTCMinutes() < 40) {
-    hour = hour - 1;
-    if (hour < 0) {
-      hour = 23;
-      const yesterday = new Date(kst);
-      yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-      year = yesterday.getUTCFullYear();
-      month = String(yesterday.getUTCMonth() + 1).padStart(2, '0');
-      day = String(yesterday.getUTCDate()).padStart(2, '0');
-    }
-  }
-
-  const baseDate = `${year}${month}${day}`;
-  const baseTime = String(hour).padStart(2, '0') + '00';
-
-  return { baseDate, baseTime };
-}
-
-function getCurrentDate(): string {
-  const now = new Date();
-  const kstOffset = 9 * 60;
-  const kst = new Date(now.getTime() + kstOffset * 60 * 1000);
-
-  const year = kst.getUTCFullYear();
-  const month = String(kst.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(kst.getUTCDate()).padStart(2, '0');
-
-  return `${year}${month}${day}`;
-}
-
-function getTodayAt6AM(): string {
-  const now = new Date();
-  const kstOffset = 9 * 60;
-  const kst = new Date(now.getTime() + kstOffset * 60 * 1000);
-
-  const year = kst.getUTCFullYear();
-  const month = String(kst.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(kst.getUTCDate()).padStart(2, '0');
-
-  return `${year}${month}${day}0600`;
-}
-
-// ========================================
-// 🌡️ 초단기실황 API (현재 날씨)
-// ========================================
-async function fetchUltraSrtNcst(nx: number, ny: number) {
-  const { baseDate, baseTime } = getBaseDateTime();
-
-  try {
-    const response = await axios.get(`${BASE_URL}/getUltraSrtNcst`, {
-      params: {
-        serviceKey: KMA_API_KEY,
-        numOfRows: 10,
-        pageNo: 1,
-        dataType: 'JSON',
-        base_date: baseDate,
-        base_time: baseTime,
-        nx,
-        ny,
-      },
-      timeout: 10000,
-    });
-
-    const items = response.data?.response?.body?.items?.item || [];
-
-    const data: any = {};
-    items.forEach((item: any) => {
-      data[item.category] = item.obsrValue;
-    });
-
-    return {
-      temp: data.T1H || '0', // 기온
-      humidity: data.REH || '0', // 습도
-      precipitation: data.RN1 || '0', // 1시간 강수량
-      windSpeed: data.WSD || '0', // 풍속
-      windDirection: data.VEC || '0', // 풍향
-    };
-  } catch (error) {
-    console.error('초단기실황 API 에러:', error);
-    return null;
-  }
-}
-
-// ========================================
-// 🌤️ 초단기예보 API (6시간 예보)
-// ========================================
-async function fetchUltraSrtFcst(nx: number, ny: number) {
-  const { baseDate, baseTime } = getBaseDateTime();
-
-  try {
-    const response = await axios.get(`${BASE_URL}/getUltraSrtFcst`, {
-      params: {
-        serviceKey: KMA_API_KEY,
-        numOfRows: 60,
-        pageNo: 1,
-        dataType: 'JSON',
-        base_date: baseDate,
-        base_time: baseTime,
-        nx,
-        ny,
-      },
-      timeout: 10000,
-    });
-
-    const items = response.data?.response?.body?.items?.item || [];
-
-    // 가장 가까운 시간의 예보 데이터
-    const forecastData: any = {};
-    items.forEach((item: any) => {
-      if (!forecastData[item.category]) {
-        forecastData[item.category] = item.fcstValue;
-      }
-    });
-
-    return {
-      sky: forecastData.SKY || '1', // 하늘상태 (1:맑음, 3:구름많음, 4:흐림)
-      precipitation: forecastData.PTY || '0', // 강수형태 (0:없음, 1:비, 2:비/눈, 3:눈)
-      temp: forecastData.T1H || '0', // 기온
-      humidity: forecastData.REH || '0', // 습도
-      windSpeed: forecastData.WSD || '0', // 풍속
-    };
-  } catch (error) {
-    console.error('초단기예보 API 에러:', error);
-    return null;
-  }
-}
-
-// ========================================
-// 📊 단기예보 API (0~3일)
-// ========================================
-async function fetchVilageFcst(nx: number, ny: number) {
-  const baseDate = getCurrentDate();
-  const baseTime = '0500'; // 05시 발표 기준
-
-  try {
-    const response = await axios.get(`${BASE_URL}/getVilageFcst`, {
-      params: {
-        serviceKey: KMA_API_KEY,
-        numOfRows: 100,
-        pageNo: 1,
-        dataType: 'JSON',
-        base_date: baseDate,
-        base_time: baseTime,
-        nx,
-        ny,
-      },
-      timeout: 10000,
-    });
-
-    const items = response.data?.response?.body?.items?.item || [];
-    return items;
-  } catch (error) {
-    console.error('단기예보 API 에러:', error);
-    return [];
-  }
-}
-
-// ========================================
-// 🔮 중기예보 API (4~10일)
-// ========================================
-async function fetchMidTermFcst(regionCode: string) {
-  const tmFc = getTodayAt6AM(); // 06시 발표 기준
-
-  try {
-    // 중기기온조회
-    const tempResponse = await axios.get(`${MIDTERM_URL}/getMidTa`, {
-      params: {
-        serviceKey: KMA_API_KEY,
-        numOfRows: 10,
-        pageNo: 1,
-        dataType: 'JSON',
-        regId: regionCode,
-        tmFc,
-      },
-      timeout: 10000,
-    });
-
-    // 중기육상예보조회
-    const landResponse = await axios.get(`${MIDTERM_URL}/getMidLandFcst`, {
-      params: {
-        serviceKey: KMA_API_KEY,
-        numOfRows: 10,
-        pageNo: 1,
-        dataType: 'JSON',
-        regId: regionCode,
-        tmFc,
-      },
-      timeout: 10000,
-    });
-
-    const tempData = tempResponse.data?.response?.body?.items?.item?.[0] || {};
-    const landData = landResponse.data?.response?.body?.items?.item?.[0] || {};
-
-    return {
-      temp: tempData,
-      land: landData,
-    };
-  } catch (error) {
-    console.error('중기예보 API 에러:', error);
-    return null;
-  }
+function isPrecipitation(code: number): boolean {
+  // 비, 눈, 소나기 등 강수가 있는 코드
+  return code >= 51;
 }
 
 // ========================================
@@ -351,8 +47,7 @@ function calculateGolfScore(
   temp: number,
   humidity: number,
   windSpeed: number,
-  precipitation: string,
-  sky: string
+  weatherCode: number
 ): { score: number; recommendation: string } {
   let score = 100;
 
@@ -389,16 +84,13 @@ function calculateGolfScore(
     score -= 10;
   }
 
-  // 4️⃣ 강수 점수
-  if (precipitation !== '0' && precipitation !== '없음') {
+  // 4️⃣ 날씨 상태 점수
+  if (isPrecipitation(weatherCode)) {
     score -= 50; // 비/눈 오면 대폭 감점
-  }
-
-  // 5️⃣ 하늘 상태
-  if (sky === '4' || sky === '흐림') {
-    score -= 10;
-  } else if (sky === '3' || sky === '구름많음') {
-    score -= 5;
+  } else if (weatherCode === 3) {
+    score -= 10; // 흐림
+  } else if (weatherCode === 2) {
+    score -= 5; // 구름조금
   }
 
   // 점수 범위 제한
@@ -420,71 +112,55 @@ function calculateGolfScore(
 }
 
 // ========================================
-// 🌦️ 하늘 상태 텍스트 변환
-// ========================================
-function getSkyText(skyCode: string, ptyCode: string): string {
-  // 강수형태 우선
-  if (ptyCode === '1') return '비';
-  if (ptyCode === '2') return '비/눈';
-  if (ptyCode === '3') return '눈';
-  if (ptyCode === '4') return '소나기';
-
-  // 하늘상태
-  if (skyCode === '1') return '맑음';
-  if (skyCode === '3') return '구름많음';
-  if (skyCode === '4') return '흐림';
-
-  return '맑음';
-}
-
-// ========================================
 // 🎯 메인 API: 현재 날씨 조회
 // ========================================
 export async function fetchWeather(
   lat: number = 37.5665, // 기본값: 서울시청
-  lon: number = 126.9780
+  lon: number = 126.978
 ): Promise<Weather> {
   try {
-    // GPS → 격자 좌표 변환
-    const grid = gpsToGrid(lat, lon);
-    console.log(`📍 GPS (${lat}, ${lon}) → 격자 (${grid.nx}, ${grid.ny})`);
+    console.log(`📍 날씨 조회: (${lat}, ${lon})`);
 
-    // 초단기실황 (현재 날씨)
-    const ncst = await fetchUltraSrtNcst(grid.nx, grid.ny);
+    const response = await axios.get(BASE_URL, {
+      params: {
+        latitude: lat,
+        longitude: lon,
+        current: [
+          'temperature_2m',
+          'relative_humidity_2m',
+          'weather_code',
+          'wind_speed_10m',
+          'precipitation',
+        ].join(','),
+        timezone: 'Asia/Seoul',
+      },
+      timeout: 10000,
+    });
 
-    // 초단기예보 (6시간)
-    const fcst = await fetchUltraSrtFcst(grid.nx, grid.ny);
+    const current = response.data?.current;
 
-    if (!ncst && !fcst) {
+    if (!current) {
       throw new Error('날씨 데이터를 가져올 수 없습니다');
     }
 
-    // 데이터 병합 (실황 우선, 없으면 예보 사용)
-    const temp = parseFloat(ncst?.temp || fcst?.temp || '20');
-    const humidity = parseFloat(ncst?.humidity || fcst?.humidity || '50');
-    const windSpeed = parseFloat(ncst?.windSpeed || fcst?.windSpeed || '2');
-    const precipitation = ncst?.precipitation || '0';
-    const skyCode = fcst?.sky || '1';
-    const ptyCode = fcst?.precipitation || '0';
+    const temp = current.temperature_2m ?? 20;
+    const humidity = current.relative_humidity_2m ?? 50;
+    const windSpeed = current.wind_speed_10m ?? 2;
+    const weatherCode = current.weather_code ?? 0;
+    const precipitation = current.precipitation ?? 0;
 
     // 골프 점수 계산
-    const golfScore = calculateGolfScore(
-      temp,
-      humidity,
-      windSpeed,
-      precipitation,
-      skyCode
-    );
+    const golfScore = calculateGolfScore(temp, humidity, windSpeed, weatherCode);
 
     // 하늘 상태 텍스트
-    const skyText = getSkyText(skyCode, ptyCode);
+    const skyText = getWeatherText(weatherCode);
 
     return {
       temp: `${temp.toFixed(1)}°C`,
       sky: skyText,
       wind: `${windSpeed.toFixed(1)}m/s`,
       humidity: `${humidity.toFixed(0)}%`,
-      precipitation: precipitation === '0' ? '0mm' : `${precipitation}mm`,
+      precipitation: precipitation === 0 ? '0mm' : `${precipitation.toFixed(1)}mm`,
       golfScore,
     };
   } catch (error) {
@@ -510,59 +186,143 @@ export async function fetchWeather(
 // ========================================
 export async function fetch10DayForecast(
   lat: number = 37.5665,
-  lon: number = 126.9780
+  lon: number = 126.978
 ): Promise<WeatherForecast[]> {
   try {
-    const grid = gpsToGrid(lat, lon);
-    const regionCode = gpsToRegionCode(lat, lon);
+    console.log(`📅 10일 예보 조회: (${lat}, ${lon})`);
 
-    // 단기예보 (0~3일)
-    const shortTerm = await fetchVilageFcst(grid.nx, grid.ny);
+    const response = await axios.get(BASE_URL, {
+      params: {
+        latitude: lat,
+        longitude: lon,
+        daily: [
+          'weather_code',
+          'temperature_2m_max',
+          'temperature_2m_min',
+          'precipitation_probability_max',
+          'wind_speed_10m_max',
+        ].join(','),
+        timezone: 'Asia/Seoul',
+        forecast_days: 10,
+      },
+      timeout: 10000,
+    });
 
-    // 중기예보 (4~10일)
-    const midTerm = await fetchMidTermFcst(regionCode);
+    const daily = response.data?.daily;
+
+    if (!daily || !daily.time) {
+      throw new Error('예보 데이터를 가져올 수 없습니다');
+    }
 
     const forecast: WeatherForecast[] = [];
 
-    // 단기예보 데이터 파싱 (간단 버전)
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < daily.time.length; i++) {
+      const tempMax = daily.temperature_2m_max?.[i] ?? 25;
+      const tempMin = daily.temperature_2m_min?.[i] ?? 15;
+      const weatherCode = daily.weather_code?.[i] ?? 0;
+      const precipProb = daily.precipitation_probability_max?.[i] ?? 0;
+      const windSpeed = daily.wind_speed_10m_max?.[i] ?? 2;
+
+      // 일별 골프 점수 계산 (평균 온도, 예상 습도 사용)
+      const avgTemp = (tempMax + tempMin) / 2;
+      const { score } = calculateGolfScore(avgTemp, 50, windSpeed, weatherCode);
+
+      forecast.push({
+        date: daily.time[i],
+        tempMax: `${tempMax.toFixed(0)}°C`,
+        tempMin: `${tempMin.toFixed(0)}°C`,
+        sky: getWeatherText(weatherCode),
+        precipitation: `${precipProb}%`,
+        golfScore: score,
+      });
+    }
+
+    return forecast;
+  } catch (error) {
+    console.error('10일 예보 에러:', error);
+
+    // 빈 배열 대신 기본 예보 반환
+    const forecast: WeatherForecast[] = [];
+    for (let i = 0; i < 10; i++) {
       const date = new Date();
       date.setDate(date.getDate() + i);
-
       forecast.push({
         date: date.toISOString().split('T')[0],
         tempMax: '25°C',
         tempMin: '15°C',
         sky: '맑음',
         precipitation: '10%',
-        golfScore: 80,
+        golfScore: 75,
       });
     }
+    return forecast;
+  }
+}
 
-    // 중기예보 데이터 파싱
-    if (midTerm?.temp && midTerm?.land) {
-      for (let i = 3; i < 10; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() + i);
+// ========================================
+// 🕐 시간별 예보 조회 (추가 기능)
+// ========================================
+export async function fetchHourlyForecast(
+  lat: number = 37.5665,
+  lon: number = 126.978,
+  hours: number = 24
+): Promise<
+  Array<{
+    time: string;
+    temp: string;
+    sky: string;
+    precipitation: string;
+    golfScore: number;
+  }>
+> {
+  try {
+    const response = await axios.get(BASE_URL, {
+      params: {
+        latitude: lat,
+        longitude: lon,
+        hourly: [
+          'temperature_2m',
+          'relative_humidity_2m',
+          'weather_code',
+          'wind_speed_10m',
+          'precipitation_probability',
+        ].join(','),
+        timezone: 'Asia/Seoul',
+        forecast_hours: hours,
+      },
+      timeout: 10000,
+    });
 
-        const dayKey = `taMax${i + 1}`;
-        const minKey = `taMin${i + 1}`;
-        const rnKey = `rnSt${i + 1}Am`;
+    const hourly = response.data?.hourly;
 
-        forecast.push({
-          date: date.toISOString().split('T')[0],
-          tempMax: `${midTerm.temp[dayKey] || 25}°C`,
-          tempMin: `${midTerm.temp[minKey] || 15}°C`,
-          sky: '맑음',
-          precipitation: `${midTerm.land[rnKey] || 10}%`,
-          golfScore: 75,
-        });
-      }
+    if (!hourly || !hourly.time) {
+      return [];
+    }
+
+    const forecast = [];
+    const limit = Math.min(hours, hourly.time.length);
+
+    for (let i = 0; i < limit; i++) {
+      const temp = hourly.temperature_2m?.[i] ?? 20;
+      const humidity = hourly.relative_humidity_2m?.[i] ?? 50;
+      const weatherCode = hourly.weather_code?.[i] ?? 0;
+      const windSpeed = hourly.wind_speed_10m?.[i] ?? 2;
+      const precipProb = hourly.precipitation_probability?.[i] ?? 0;
+
+      const { score } = calculateGolfScore(temp, humidity, windSpeed, weatherCode);
+
+      forecast.push({
+        time: hourly.time[i],
+        temp: `${temp.toFixed(1)}°C`,
+        sky: getWeatherText(weatherCode),
+        precipitation: `${precipProb}%`,
+        golfScore: score,
+      });
     }
 
     return forecast;
   } catch (error) {
-    console.error('10일 예보 에러:', error);
+    console.error('시간별 예보 에러:', error);
     return [];
   }
 }

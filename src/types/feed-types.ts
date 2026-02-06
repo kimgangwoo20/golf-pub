@@ -3,7 +3,7 @@
 export interface Post {
   id: number;
   author: {
-    id: number;
+    id: number | string; // Firebase UID(string) 또는 기존 Mock ID(number) 호환
     name: string;
     image: string;
     handicap: number;
@@ -24,7 +24,7 @@ export interface Comment {
   id: number;
   postId: number;
   author: {
-    id: number;
+    id: number | string; // Firebase UID(string) 또는 기존 Mock ID(number) 호환
     name: string;
     image: string;
   };
@@ -39,7 +39,7 @@ export interface Reply {
   id: number;
   commentId: number;
   author: {
-    id: number;
+    id: number | string; // Firebase UID(string) 또는 기존 Mock ID(number) 호환
     name: string;
     image: string;
   };

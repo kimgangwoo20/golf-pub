@@ -20,7 +20,7 @@ export const GolfCourseSearchScreen = ({ navigation }: any) => {
   } = useCourseSearch();
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <SearchHeader
         query={searchQuery}
         onSearch={handleSearch}
