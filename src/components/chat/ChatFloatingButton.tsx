@@ -1,6 +1,6 @@
 // ChatFloatingButton.tsx - 채팅 플로팅 버튼
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 
 interface ChatFloatingButtonProps {
   onPress: () => void;
@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#10b981',
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 5,

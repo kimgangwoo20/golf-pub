@@ -52,13 +52,13 @@ class FirebaseStorageService {
     onProgress?: (progress: number) => void
   ): Promise<UploadResult> {
     try {
-      console.log('📸 프로필 이미지 업로드 시작:', userId);
+      // 프로필 이미지 업로드
 
       const path = `profiles/${userId}/avatar_${Date.now()}.jpg`;
 
       return await this.uploadImage(uri, path, onProgress);
     } catch (error) {
-      console.error('❌ 프로필 이미지 업로드 실패:', error);
+      console.error('프로필 이미지 업로드 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -77,14 +77,14 @@ class FirebaseStorageService {
     onProgress?: (progress: number) => void
   ): Promise<UploadResult> {
     try {
-      console.log('💬 채팅 이미지 업로드 시작:', roomId);
+      // 채팅 이미지 업로드
 
       const imageId = Date.now();
       const path = `chats/${roomId}/${imageId}.jpg`;
 
       return await this.uploadImage(uri, path, onProgress);
     } catch (error) {
-      console.error('❌ 채팅 이미지 업로드 실패:', error);
+      console.error('채팅 이미지 업로드 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -103,14 +103,14 @@ class FirebaseStorageService {
     onProgress?: (progress: number) => void
   ): Promise<UploadResult> {
     try {
-      console.log('⛳ 부킹 이미지 업로드 시작:', bookingId);
+      // 부킹 이미지 업로드 시작
 
       const imageId = Date.now();
       const path = `bookings/${bookingId}/${imageId}.jpg`;
 
       return await this.uploadImage(uri, path, onProgress);
     } catch (error) {
-      console.error('❌ 부킹 이미지 업로드 실패:', error);
+      console.error('부킹 이미지 업로드 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -129,14 +129,14 @@ class FirebaseStorageService {
     onProgress?: (progress: number) => void
   ): Promise<UploadResult> {
     try {
-      console.log('🛒 상품 이미지 업로드 시작:', productId);
+      // 상품 이미지 업로드 시작
 
       const imageId = Date.now();
       const path = `products/${productId}/${imageId}.jpg`;
 
       return await this.uploadImage(uri, path, onProgress);
     } catch (error) {
-      console.error('❌ 상품 이미지 업로드 실패:', error);
+      console.error('상품 이미지 업로드 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -155,14 +155,14 @@ class FirebaseStorageService {
     onProgress?: (progress: number) => void
   ): Promise<UploadResult> {
     try {
-      console.log('📝 포스트 이미지 업로드 시작:', postId);
+      // 포스트 이미지 업로드 시작
 
       const imageId = Date.now();
       const path = `posts/${postId}/${imageId}.jpg`;
 
       return await this.uploadImage(uri, path, onProgress);
     } catch (error) {
-      console.error('❌ 포스트 이미지 업로드 실패:', error);
+      console.error('포스트 이미지 업로드 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -181,14 +181,14 @@ class FirebaseStorageService {
     onProgress?: (progress: number) => void
   ): Promise<UploadResult> {
     try {
-      console.log('⭐ 리뷰 이미지 업로드 시작:', reviewId);
+      // 리뷰 이미지 업로드 시작
 
       const imageId = Date.now();
       const path = `reviews/${reviewId}/${imageId}.jpg`;
 
       return await this.uploadImage(uri, path, onProgress);
     } catch (error) {
-      console.error('❌ 리뷰 이미지 업로드 실패:', error);
+      console.error('리뷰 이미지 업로드 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -232,7 +232,7 @@ class FirebaseStorageService {
       // 메타데이터 가져오기
       const metadata = await reference.getMetadata();
 
-      console.log('✅ 이미지 업로드 완료:', path);
+      // 이미지 업로드 완료
 
       const result: UploadResult = {
         url: downloadUrl,
@@ -252,7 +252,7 @@ class FirebaseStorageService {
 
       return result;
     } catch (error) {
-      console.error('❌ 이미지 업로드 실패:', error);
+      console.error('이미지 업로드 실패');
       throw error;
     }
   }
@@ -269,7 +269,7 @@ class FirebaseStorageService {
     imageName: string
   ): Promise<string | null> {
     try {
-      console.log('☁️ Cloudflare Images 업로드 시작...');
+      // Cloudflare Images 업로드 시작
 
       if (!CLOUDFLARE_CONFIG.accountId || !CLOUDFLARE_CONFIG.apiToken) {
         console.warn('⚠️ Cloudflare 설정이 없습니다. Firebase URL 사용');
@@ -296,14 +296,14 @@ class FirebaseStorageService {
 
       if (data.success && data.result?.variants) {
         const cloudflareUrl = data.result.variants[0];
-        console.log('✅ Cloudflare Images 업로드 완료');
+        // Cloudflare Images 업로드 완료
         return cloudflareUrl;
       } else {
         console.warn('⚠️ Cloudflare Images 업로드 실패. Firebase URL 사용');
         return null;
       }
     } catch (error) {
-      console.error('❌ Cloudflare Images 업로드 에러:', error);
+      console.error('Cloudflare Images 업로드 에러');
       return null;
     }
   }
@@ -315,14 +315,10 @@ class FirebaseStorageService {
    */
   async deleteImage(path: string): Promise<void> {
     try {
-      console.log('🗑️ 이미지 삭제 시작:', path);
-
       const reference = storage.ref(path);
       await reference.delete();
-
-      console.log('✅ 이미지 삭제 완료:', path);
     } catch (error) {
-      console.error('❌ 이미지 삭제 실패:', error);
+      console.error('이미지 삭제 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -341,7 +337,7 @@ class FirebaseStorageService {
     onProgress?: (overall: number, current: number, total: number) => void
   ): Promise<UploadResult[]> {
     try {
-      console.log(`📸 ${uris.length}개 이미지 업로드 시작`);
+      // 다중 이미지 업로드 시작
 
       const results: UploadResult[] = [];
       const total = uris.length;
@@ -360,11 +356,11 @@ class FirebaseStorageService {
         results.push(result);
       }
 
-      console.log(`✅ ${total}개 이미지 업로드 완료`);
+      // 다중 이미지 업로드 완료
 
       return results;
     } catch (error) {
-      console.error('❌ 다중 이미지 업로드 실패:', error);
+      console.error('다중 이미지 업로드 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -381,7 +377,7 @@ class FirebaseStorageService {
       const url = await reference.getDownloadURL();
       return url;
     } catch (error) {
-      console.error('❌ 이미지 URL 가져오기 실패:', error);
+      console.error('이미지 URL 가져오기 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -400,7 +396,7 @@ class FirebaseStorageService {
       const metadata = await reference.getMetadata();
       return metadata;
     } catch (error) {
-      console.error('❌ 메타데이터 가져오기 실패:', error);
+      console.error('메타데이터 가져오기 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -412,18 +408,14 @@ class FirebaseStorageService {
    */
   async deleteFolder(folderPath: string): Promise<void> {
     try {
-      console.log('🗑️ 폴더 삭제 시작:', folderPath);
-
       const reference = storage.ref(folderPath);
       const result = await reference.listAll();
 
       // 모든 파일 삭제
       const deletePromises = result.items.map((item) => item.delete());
       await Promise.all(deletePromises);
-
-      console.log('✅ 폴더 삭제 완료:', folderPath);
     } catch (error) {
-      console.error('❌ 폴더 삭제 실패:', error);
+      console.error('폴더 삭제 실패');
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -447,7 +439,7 @@ class FirebaseStorageService {
       // React Native Image Resizer 또는 Expo ImageManipulator 사용
       // 여기서는 예시로 구현
 
-      console.log('🔨 이미지 압축 시작...');
+      // 이미지 압축 시작
 
       // TODO: 실제 압축 로직 구현
       // import * as ImageManipulator from 'expo-image-manipulator';
@@ -457,12 +449,12 @@ class FirebaseStorageService {
       //   { compress: options.quality, format: ImageManipulator.SaveFormat.JPEG }
       // );
 
-      console.log('✅ 이미지 압축 완료');
+      // 이미지 압축 완료
 
       // 임시로 원본 URI 반환
       return uri;
     } catch (error) {
-      console.error('❌ 이미지 압축 실패:', error);
+      console.error('이미지 압축 실패');
       return uri; // 압축 실패 시 원본 반환
     }
   }
@@ -475,9 +467,8 @@ class FirebaseStorageService {
   cancelUpload(task: FirebaseStorageTypes.Task): void {
     try {
       task.cancel();
-      console.log('⏸️ 업로드 취소됨');
     } catch (error) {
-      console.error('❌ 업로드 취소 실패:', error);
+      console.error('업로드 취소 실패');
     }
   }
 
@@ -499,11 +490,11 @@ class FirebaseStorageService {
         totalSize += metadata.size;
       }
 
-      console.log(`📊 폴더 크기: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
+      // 폴더 크기 조회 완료
 
       return totalSize;
     } catch (error) {
-      console.error('❌ 폴더 크기 확인 실패:', error);
+      console.error('폴더 크기 확인 실패');
       return 0;
     }
   }

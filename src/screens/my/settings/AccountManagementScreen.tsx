@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import auth from '@react-native-firebase/auth';
 import { useAuthStore } from '../../../store/useAuthStore';
 
 export const AccountManagementScreen: React.FC = () => {
@@ -22,7 +23,7 @@ export const AccountManagementScreen: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPasswordSection, setShowPasswordSection] = useState(false);
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (!currentPassword) {
       Alert.alert('오류', '현재 비밀번호를 입력해주세요.');
       return;
@@ -36,15 +37,40 @@ export const AccountManagementScreen: React.FC = () => {
       return;
     }
 
-    // TODO: Firebase Auth password change
-    Alert.alert('완료', '비밀번호가 변경되었습니다.', [
-      { text: '확인', onPress: () => {
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-        setShowPasswordSection(false);
-      }},
-    ]);
+    try {
+      const currentUser = auth().currentUser;
+      if (!currentUser || !currentUser.email) {
+        Alert.alert('오류', '로그인 상태를 확인해주세요.');
+        return;
+      }
+
+      // 현재 비밀번호로 재인증
+      const credential = auth.EmailAuthProvider.credential(
+        currentUser.email,
+        currentPassword
+      );
+      await currentUser.reauthenticateWithCredential(credential);
+
+      // 비밀번호 변경
+      await currentUser.updatePassword(newPassword);
+
+      Alert.alert('완료', '비밀번호가 변경되었습니다.', [
+        { text: '확인', onPress: () => {
+          setCurrentPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
+          setShowPasswordSection(false);
+        }},
+      ]);
+    } catch (error: any) {
+      if (error.code === 'auth/wrong-password') {
+        Alert.alert('오류', '현재 비밀번호가 올바르지 않습니다.');
+      } else if (error.code === 'auth/weak-password') {
+        Alert.alert('오류', '새 비밀번호가 너무 약합니다. 더 강력한 비밀번호를 사용해주세요.');
+      } else {
+        Alert.alert('오류', '비밀번호 변경에 실패했습니다. 다시 시도해주세요.');
+      }
+    }
   };
 
   const handleChangeEmail = () => {

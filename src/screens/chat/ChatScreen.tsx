@@ -10,10 +10,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Alert,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
 import { useChatStore, ChatMessage } from '../../store/useChatStore';
 import { useAuthStore } from '../../store/useAuthStore';
+import { firebaseStorage } from '../../services/firebase/firebaseStorage';
 
 interface ChatScreenProps {
   route: {
@@ -58,6 +61,42 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
 
     return () => unsubscribe();
   }, [roomId, user]);
+
+  // 이미지 선택 및 전송
+  const handlePickImage = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('권한 필요', '사진을 보내려면 갤러리 접근 권한이 필요합니다.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.7,
+        allowsEditing: true,
+      });
+
+      if (!result.canceled && result.assets[0]?.uri && user) {
+        const imageUri = result.assets[0].uri;
+        const uploadResult = await firebaseStorage.uploadChatImage(roomId, imageUri);
+
+        await sendImage(
+          roomId,
+          user.uid,
+          user.displayName || '익명',
+          uploadResult.url,
+          user.photoURL || undefined
+        );
+
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
+    } catch (error) {
+      Alert.alert('오류', '이미지 전송에 실패했습니다.');
+    }
+  };
 
   // 메시지 전송
   const handleSend = async () => {
@@ -169,7 +208,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
 
           {/* 입력창 */}
           <View style={styles.inputContainer}>
-            <TouchableOpacity style={styles.imageButton}>
+            <TouchableOpacity style={styles.imageButton} onPress={handlePickImage}>
               <Text style={styles.imageButtonText}>📷</Text>
             </TouchableOpacity>
 

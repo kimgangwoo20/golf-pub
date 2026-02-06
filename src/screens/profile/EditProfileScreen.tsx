@@ -56,13 +56,27 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
       return;
     }
 
+    // 전화번호 형식 검증
+    const phoneRegex = /^(010-?\d{4}-?\d{4})?$/;
+    if (phone.trim() && !phoneRegex.test(phone.trim().replace(/-/g, '').replace(/^(\d{3})(\d{4})(\d{4})$/, '$1-$2-$3')) && !/^\d{10,11}$/.test(phone.trim().replace(/-/g, ''))) {
+      Alert.alert('알림', '올바른 전화번호 형식을 입력해주세요. (예: 010-0000-0000)');
+      return;
+    }
+
+    // 핸디캡 범위 검증
+    const handicapNum = parseInt(handicap, 10) || 0;
+    if (handicapNum < 0 || handicapNum > 54) {
+      Alert.alert('알림', '핸디캡은 0~54 사이의 값을 입력해주세요.');
+      return;
+    }
+
     setIsLoading(true);
     try {
       await profileAPI.updateProfile({
         name: name.trim(),
         bio: bio.trim(),
         phone: phone.trim(),
-        handicap: parseInt(handicap, 10) || 0,
+        handicap: handicapNum,
       });
       Alert.alert('저장 완료', '프로필이 수정되었습니다!', [
         { text: '확인', onPress: () => navigation?.goBack() },
@@ -77,7 +91,7 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
   if (isFetching) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color="#10b981" />
         <Text style={styles.loadingText}>프로필 불러오는 중...</Text>
       </View>
     );
@@ -189,7 +203,7 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
   loadingText: { marginTop: 12, fontSize: 14, color: '#666' },
   header: { padding: 24, paddingTop: 60 },
-  backButton: { fontSize: 16, color: '#007AFF', marginBottom: 24 },
+  backButton: { fontSize: 16, color: '#10b981', marginBottom: 24 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#1a1a1a' },
   form: { paddingHorizontal: 24, paddingTop: 24 },
   imageSection: { alignItems: 'center', marginBottom: 32 },
@@ -208,17 +222,17 @@ const styles = StyleSheet.create({
   editBadge: {
     position: 'absolute', bottom: 0, right: 0,
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: '#007AFF', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#10b981', alignItems: 'center', justifyContent: 'center',
     borderWidth: 3, borderColor: '#fff',
   },
   editBadgeText: { fontSize: 16 },
-  changeImageText: { marginTop: 12, fontSize: 14, color: '#007AFF' },
+  changeImageText: { marginTop: 12, fontSize: 14, color: '#10b981' },
   inputContainer: { marginBottom: 24 },
   label: { fontSize: 14, fontWeight: '600', color: '#1a1a1a', marginBottom: 8 },
   input: { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 12, padding: 16, fontSize: 16 },
   textArea: { height: 100, textAlignVertical: 'top' },
   charCount: { fontSize: 12, color: '#999', textAlign: 'right', marginTop: 4 },
-  saveButton: { backgroundColor: '#007AFF', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 24, marginBottom: 40 },
+  saveButton: { backgroundColor: '#10b981', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 24, marginBottom: 40 },
   saveButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   saveButtonDisabled: { opacity: 0.7 },
 });

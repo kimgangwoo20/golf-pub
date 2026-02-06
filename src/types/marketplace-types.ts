@@ -15,7 +15,7 @@ export type ProductCondition = 'new' | 'like-new' | 'good' | 'fair';
 export type ProductStatus = 'available' | 'reserved' | 'sold';
 
 export interface Product {
-  id: number;
+  id: string;
   title: string;
   description: string;
   price: number;

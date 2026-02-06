@@ -29,6 +29,13 @@ export const RegisterScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
       return;
     }
 
+    // 이메일 형식 검증
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('알림', '올바른 이메일 형식을 입력해주세요.');
+      return;
+    }
+
     if (password !== confirmPassword) {
       Alert.alert('알림', '비밀번호가 일치하지 않습니다.');
       return;
@@ -36,6 +43,14 @@ export const RegisterScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
 
     if (password.length < 6) {
       Alert.alert('알림', '비밀번호는 최소 6자 이상이어야 합니다.');
+      return;
+    }
+
+    // 비밀번호 복잡도 검증
+    const hasLetter = /[a-zA-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    if (!hasLetter || !hasNumber) {
+      Alert.alert('알림', '비밀번호는 영문자와 숫자를 모두 포함해야 합니다.');
       return;
     }
 
@@ -157,7 +172,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scrollContent: { flexGrow: 1 },
   header: { padding: 24, paddingTop: 16 },
-  backButton: { fontSize: 16, color: '#2E7D32', marginBottom: 24 },
+  backButton: { fontSize: 16, color: '#10b981', marginBottom: 24 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 8 },
   subtitle: { fontSize: 14, color: '#666' },
   form: { paddingHorizontal: 24, paddingTop: 8 },
@@ -172,15 +187,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
   },
   registerButton: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#10b981',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 24,
   },
-  registerButtonDisabled: { backgroundColor: '#a5d6a7' },
+  registerButtonDisabled: { backgroundColor: '#6ee7b7' },
   registerButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   loginLink: { alignItems: 'center', marginTop: 20, paddingBottom: 24 },
   loginLinkText: { fontSize: 14, color: '#666' },
-  loginLinkBold: { color: '#2E7D32', fontWeight: '700' },
+  loginLinkBold: { color: '#10b981', fontWeight: '700' },
 });

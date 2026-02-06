@@ -17,7 +17,7 @@ interface AuthState {
   signOut: () => Promise<void>;
   loadUserProfile: (uid: string) => Promise<void>;
   updateUserProfile: (uid: string, data: Partial<UserProfile>) => Promise<void>;
-  initAuth: () => void;
+  initAuth: () => (() => void);
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -52,9 +52,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         loading: false,
       });
 
-      console.log('✅ 카카오 로그인 상태 저장 완료');
+      // 카카오 로그인 상태 저장 완료
     } catch (error: any) {
-      console.error('로그인 실패:', error);
+      console.error('로그인 실패');
       set({
         error: error.message || '로그인에 실패했습니다',
         loading: false,
@@ -80,7 +80,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         loading: false,
       });
     } catch (error: any) {
-      console.error('로그인 실패:', error);
+      console.error('로그인 실패');
       set({
         error: error.message || '로그인에 실패했습니다',
         loading: false,
@@ -106,7 +106,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         loading: false,
       });
     } catch (error: any) {
-      console.error('로그인 실패:', error);
+      console.error('로그인 실패');
       set({
         error: error.message || '로그인에 실패했습니다',
         loading: false,
@@ -132,7 +132,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         loading: false,
       });
     } catch (error: any) {
-      console.error('회원가입 실패:', error);
+      console.error('회원가입 실패');
       set({
         error: error.message || '회원가입에 실패했습니다',
         loading: false,
@@ -157,7 +157,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         loading: false,
       });
     } catch (error: any) {
-      console.error('로그아웃 실패:', error);
+      console.error('로그아웃 실패');
       set({
         error: error.message || '로그아웃에 실패했습니다',
         loading: false,
@@ -180,7 +180,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         loading: false,
       });
     } catch (error: any) {
-      console.error('프로필 로드 실패:', error);
+      console.error('프로필 로드 실패');
       set({
         error: error.message || '프로필을 불러올 수 없습니다',
         loading: false,
@@ -206,7 +206,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         });
       }
     } catch (error: any) {
-      console.error('프로필 업데이트 실패:', error);
+      console.error('프로필 업데이트 실패');
       set({
         error: error.message || '프로필을 업데이트할 수 없습니다',
         loading: false,
@@ -227,7 +227,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const timeout = setTimeout(() => {
       if (!resolved) {
         resolved = true;
-        console.warn('⚠️ Auth 초기화 타임아웃 - 로그인 화면으로 이동');
         set({
           user: null,
           userProfile: null,
@@ -237,7 +236,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     }, 5000);
 
-    authService.onAuthStateChanged(async (user) => {
+    const unsubscribe = authService.onAuthStateChanged(async (user) => {
       if (resolved) return;
       resolved = true;
       clearTimeout(timeout);
@@ -260,7 +259,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           });
         }
       } catch (error) {
-        console.error('❌ Auth 초기화 에러:', error);
         set({
           user: null,
           userProfile: null,
@@ -269,5 +267,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         });
       }
     });
+
+    return unsubscribe;
   },
 }));

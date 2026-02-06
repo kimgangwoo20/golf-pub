@@ -12,6 +12,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -47,7 +50,14 @@ export const SettingsScreen: React.FC = () => {
         {
           text: '삭제',
           style: 'destructive',
-          onPress: () => console.log('캐시 삭제'),
+          onPress: async () => {
+            try {
+              await AsyncStorage.clear();
+              Alert.alert('완료', '캐시가 삭제되었습니다.');
+            } catch {
+              Alert.alert('오류', '캐시 삭제에 실패했습니다.');
+            }
+          },
         },
       ]
     );
@@ -62,7 +72,26 @@ export const SettingsScreen: React.FC = () => {
         {
           text: '탈퇴',
           style: 'destructive',
-          onPress: () => console.log('회원 탈퇴'),
+          onPress: async () => {
+            try {
+              const currentUser = auth().currentUser;
+              if (!currentUser) return;
+
+              // Firestore 사용자 데이터 삭제
+              await firestore().collection('users').doc(currentUser.uid).delete();
+
+              // Firebase Auth 계정 삭제
+              await currentUser.delete();
+
+              Alert.alert('완료', '회원 탈퇴가 완료되었습니다.');
+            } catch (error: any) {
+              if (error.code === 'auth/requires-recent-login') {
+                Alert.alert('오류', '보안을 위해 최근 로그인이 필요합니다. 다시 로그인 후 시도해주세요.');
+              } else {
+                Alert.alert('오류', '회원 탈퇴에 실패했습니다. 다시 시도해주세요.');
+              }
+            }
+          },
         },
       ]
     );

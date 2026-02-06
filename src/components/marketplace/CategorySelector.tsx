@@ -23,13 +23,11 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
     { id: 'driver', name: '드라이버', icon: '🏌️' },
     { id: 'iron', name: '아이언', icon: '⛳' },
     { id: 'putter', name: '퍼터', icon: '🎯' },
-    { id: 'wedge', name: '웨지', icon: '🔧' },
+    { id: 'wedge', name: '웨지', icon: '🔺' },
     { id: 'wood', name: '우드', icon: '🌲' },
-    { id: 'shoes', name: '골프화', icon: '👟' },
-    { id: 'bag', name: '골프백', icon: '🎒' },
-    { id: 'clothes', name: '의류', icon: '👕' },
-    { id: 'accessory', name: '액세서리', icon: '⌚' },
-    { id: 'etc', name: '기타', icon: '📌' },
+    { id: 'apparel', name: '의류', icon: '👕' },
+    { id: 'accessory', name: '액세서리', icon: '🎒' },
+    { id: 'other', name: '기타', icon: '📦' },
   ];
 
   return (
@@ -83,8 +81,8 @@ const styles = StyleSheet.create({
     borderColor: '#e5e7eb',
   },
   categoryButtonSelected: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    backgroundColor: '#10b981',
+    borderColor: '#10b981',
   },
   categoryIcon: {
     fontSize: 16,
