@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { MembershipType } from '../../../types/membership';
+import { MembershipType } from '../../types/membership';
 
 interface MembershipBadgeProps {
   type: MembershipType;

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { firebaseFirestore } from '../config/firebase';
+import { firestore as firebaseFirestore } from '../services/firebase/firebaseConfig';
 import { useAuthStore } from './useAuthStore';
 
 export interface Booking {

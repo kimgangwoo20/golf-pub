@@ -1,5 +1,5 @@
 // BookingDetailScreen.tsx - 부킹 상세 화면
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,48 +10,99 @@ import {
   SafeAreaView,
   Dimensions,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors } from '../../styles/theme';
 import { Booking } from '../../types/booking-types';
+import { getBookingDetail, joinBooking } from '../../services/firebase/firebaseBooking';
+import { profileAPI } from '../../services/api/profileAPI';
+import { useAuthStore } from '../../store/useAuthStore';
 
 const { width } = Dimensions.get('window');
 
 export const BookingDetailScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { bookingId } = route.params as { bookingId: number };
+  const { bookingId } = route.params as { bookingId: string };
+  const { user } = useAuthStore();
 
-  // Mock 데이터 (실제로는 API에서 가져옴)
-  const booking: Booking = {
-    id: bookingId,
-    title: '주말 라운딩 같이 치실 분!',
-    golfCourse: '세라지오CC',
-    location: '경기 광주',
-    date: '2025-01-18',
-    time: '08:00',
-    maxPlayers: 4,
-    currentPlayers: 2,
-    price: 120000,
-    level: 'intermediate',
-    status: 'open',
-    description: '주말 아침 상쾌하게 라운딩하실 분 찾습니다!\n\n⛳ 코스: 세라지오CC 정규 18홀\n🕐 시간: 오전 8시 티오프\n💰 비용: 1인당 12만원 (그린피 포함)\n\n초중급자 환영합니다. 편하게 즐기실 분들만 신청해주세요!\n\n라운딩 후 근처 맛집에서 식사 예정입니다.',
-    image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800',
-    participants: [
-      { id: 1, avatar: 'https://i.pravatar.cc/150?img=12', name: '김골프' },
-      { id: 2, avatar: 'https://i.pravatar.cc/150?img=25', name: '박버디' },
-    ],
-    hasPub: false,
-    hostId: 1,
-  };
+  const [booking, setBooking] = useState<any>(null);
+  const [host, setHost] = useState<any>(null);
+  const [participants, setParticipants] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isJoining, setIsJoining] = useState(false);
 
-  const host = {
-    id: 1,
-    name: '김골프',
-    avatar: 'https://i.pravatar.cc/150?img=12',
-    rating: 4.8,
-    reviewCount: 23,
-    bio: '골프 경력 3년차입니다. 즐겁게 치실 분들 환영해요!',
+  useEffect(() => {
+    loadBookingDetail();
+  }, [bookingId]);
+
+  const loadBookingDetail = async () => {
+    try {
+      setIsLoading(true);
+      const bookingData = await getBookingDetail(bookingId);
+
+      if (!bookingData) {
+        Alert.alert('오류', '부킹 정보를 찾을 수 없습니다.', [
+          { text: '확인', onPress: () => navigation.goBack() }
+        ]);
+        return;
+      }
+
+      // 부킹 데이터 매핑
+      setBooking({
+        id: bookingData.id,
+        title: bookingData.title,
+        golfCourse: bookingData.course,
+        location: (bookingData as any).location || '',
+        date: bookingData.date,
+        time: bookingData.time,
+        maxPlayers: bookingData.participants.max,
+        currentPlayers: bookingData.participants.current,
+        price: bookingData.price.original,
+        level: (bookingData as any).level || 'any',
+        status: bookingData.status,
+        description: (bookingData as any).description || '',
+        image: (bookingData as any).image || 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800',
+        hasPub: (bookingData as any).hasPub || false,
+        pubName: (bookingData as any).pubName,
+        pubTime: (bookingData as any).pubTime,
+        hostId: bookingData.hostId,
+        participantIds: bookingData.participants.list,
+      });
+
+      // 호스트 정보 로드
+      const hostProfile = await profileAPI.getUserProfile(bookingData.hostId);
+      if (hostProfile) {
+        setHost({
+          id: hostProfile.id,
+          name: hostProfile.name,
+          avatar: hostProfile.profileImage || 'https://i.pravatar.cc/150?img=1',
+          rating: 4.5,
+          reviewCount: 0,
+          bio: hostProfile.bio || '',
+        });
+      }
+
+      // 참가자 정보 로드
+      const participantProfiles = await Promise.all(
+        bookingData.participants.list.map(async (userId: string) => {
+          const profile = await profileAPI.getUserProfile(userId);
+          return profile ? {
+            id: profile.id,
+            name: profile.name,
+            avatar: profile.profileImage || 'https://i.pravatar.cc/150?img=1',
+          } : null;
+        })
+      );
+      setParticipants(participantProfiles.filter(Boolean));
+
+    } catch (error) {
+      console.error('부킹 상세 로드 실패:', error);
+      Alert.alert('오류', '부킹 정보를 불러오는데 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getLevelText = (level: string): string => {
@@ -65,9 +116,20 @@ export const BookingDetailScreen: React.FC = () => {
     return `${date.getMonth() + 1}월 ${date.getDate()}일 (${days[date.getDay()]})`;
   };
 
-  const handleJoinBooking = () => {
+  const handleJoinBooking = async () => {
+    if (!user?.uid) {
+      Alert.alert('알림', '로그인이 필요합니다.');
+      return;
+    }
+
     if (booking.status === 'full') {
       Alert.alert('마감된 모임', '이미 정원이 마감되었습니다.');
+      return;
+    }
+
+    // 이미 참가중인지 확인
+    if (booking.participantIds?.includes(user.uid)) {
+      Alert.alert('알림', '이미 참가 중인 모임입니다.');
       return;
     }
 
@@ -77,10 +139,22 @@ export const BookingDetailScreen: React.FC = () => {
       [
         { text: '취소', style: 'cancel' },
         {
-          text: '확인',
-          onPress: () => {
-            // 결제 화면으로 이동
-            navigation.navigate('Payment' as never, { bookingId: booking.id } as never);
+          text: '참가하기',
+          onPress: async () => {
+            setIsJoining(true);
+            try {
+              const result = await joinBooking(bookingId, user.uid);
+              if (result.success) {
+                Alert.alert('성공', result.message);
+                loadBookingDetail(); // 데이터 새로고침
+              } else {
+                Alert.alert('오류', result.message);
+              }
+            } catch (error) {
+              Alert.alert('오류', '참가 신청에 실패했습니다.');
+            } finally {
+              setIsJoining(false);
+            }
           },
         },
       ]
@@ -88,8 +162,38 @@ export const BookingDetailScreen: React.FC = () => {
   };
 
   const handleChat = () => {
-    Alert.alert('준비 중', '채팅 기능은 곧 출시됩니다!');
+    if (!host?.id) return;
+    // 채팅 화면으로 이동 (1:1 채팅)
+    navigation.navigate('Chat' as never, { recipientId: host.id } as never);
   };
+
+  // 이미 참가 중인지 확인
+  const isAlreadyJoined = user?.uid && booking?.participantIds?.includes(user.uid);
+  const isHost = user?.uid === booking?.hostId;
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>부킹 정보 불러오는 중...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!booking) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>부킹 정보를 찾을 수 없습니다.</Text>
+          <TouchableOpacity style={styles.goBackButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.goBackButtonText}>돌아가기</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -164,7 +268,7 @@ export const BookingDetailScreen: React.FC = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>참가자 ({booking.currentPlayers}명)</Text>
           <View style={styles.participantsList}>
-            {booking.participants.map((participant) => (
+            {participants.map((participant) => (
               <View key={participant.id} style={styles.participantItem}>
                 <Image source={{ uri: participant.avatar }} style={styles.participantAvatar} />
                 <Text style={styles.participantName}>{participant.name}</Text>
@@ -209,17 +313,28 @@ export const BookingDetailScreen: React.FC = () => {
           <Text style={styles.price}>{booking.price.toLocaleString()}원</Text>
         </View>
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.chatButton} onPress={handleChat}>
-            <Text style={styles.chatButtonText}>💬</Text>
-          </TouchableOpacity>
+          {!isHost && (
+            <TouchableOpacity style={styles.chatButton} onPress={handleChat}>
+              <Text style={styles.chatButtonText}>💬</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
-            style={[styles.joinButton, booking.status === 'full' && styles.joinButtonDisabled]}
+            style={[
+              styles.joinButton,
+              (booking.status === 'full' || isAlreadyJoined || isHost) && styles.joinButtonDisabled
+            ]}
             onPress={handleJoinBooking}
-            disabled={booking.status === 'full'}
+            disabled={booking.status === 'full' || isAlreadyJoined || isHost || isJoining}
           >
-            <Text style={styles.joinButtonText}>
-              {booking.status === 'full' ? '마감되었습니다' : '참가 신청'}
-            </Text>
+            {isJoining ? (
+              <ActivityIndicator color="white" size="small" />
+            ) : (
+              <Text style={styles.joinButtonText}>
+                {isHost ? '내가 만든 모임' :
+                 isAlreadyJoined ? '참가 중' :
+                 booking.status === 'full' ? '마감되었습니다' : '참가 신청'}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -231,6 +346,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  goBackButton: {
+    marginTop: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+  },
+  goBackButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
   scrollView: {
     flex: 1,

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { firebaseFirestore } from '../config/firebase';
+import { firestore as firebaseFirestore } from '../services/firebase/firebaseConfig';
 
 export interface ChatMessage {
   id: string;

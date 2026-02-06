@@ -220,16 +220,47 @@ export const useAuthStore = create<AuthState>((set, get) => ({
    */
   initAuth: () => {
     set({ loading: true });
-    authService.onAuthStateChanged(async (user) => {
-      if (user) {
-        const profile = await authService.getUserProfile(user.uid);
+
+    let resolved = false;
+
+    // 5초 타임아웃: Firebase Auth 응답이 없으면 로그인 화면으로
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        console.warn('⚠️ Auth 초기화 타임아웃 - 로그인 화면으로 이동');
         set({
-          user,
-          userProfile: profile,
-          isAuthenticated: true,
+          user: null,
+          userProfile: null,
+          isAuthenticated: false,
           loading: false,
         });
-      } else {
+      }
+    }, 5000);
+
+    authService.onAuthStateChanged(async (user) => {
+      if (resolved) return;
+      resolved = true;
+      clearTimeout(timeout);
+
+      try {
+        if (user) {
+          const profile = await authService.getUserProfile(user.uid);
+          set({
+            user,
+            userProfile: profile,
+            isAuthenticated: true,
+            loading: false,
+          });
+        } else {
+          set({
+            user: null,
+            userProfile: null,
+            isAuthenticated: false,
+            loading: false,
+          });
+        }
+      } catch (error) {
+        console.error('❌ Auth 초기화 에러:', error);
         set({
           user: null,
           userProfile: null,

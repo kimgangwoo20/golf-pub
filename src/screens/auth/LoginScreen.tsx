@@ -1,5 +1,4 @@
-// 🔐 LoginScreen - Kakao 로그인 화면
-// 앱 첫 진입 시 표시되는 로그인 화면
+// 🔐 LoginScreen - 로그인 화면 (카카오 + 이메일)
 
 import React, { useState } from 'react';
 import {
@@ -7,60 +6,83 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
+  TextInput,
   ActivityIndicator,
   Alert,
   Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { kakaoLogin } from '@/services/kakao/kakaoLogin';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useNavigation } from '@react-navigation/native';
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 export const LoginScreen: React.FC = () => {
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuthStore();
+  const [kakaoLoading, setKakaoLoading] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showEmailLogin, setShowEmailLogin] = useState(false);
+  const { login, signInWithEmailAndPassword } = useAuthStore();
+  const navigation = useNavigation<any>();
 
   const handleKakaoLogin = async () => {
     try {
-      setLoading(true);
-      console.log('🔐 Kakao 로그인 시작...');
+      setKakaoLoading(true);
 
-      // 1. Kakao 로그인
       const result = await kakaoLogin();
 
       if (!result.success) {
         Alert.alert('로그인 실패', result.error || '로그인에 실패했습니다.');
-        setLoading(false);
         return;
       }
 
       if (!result.profile) {
         Alert.alert('로그인 실패', '프로필 정보를 가져올 수 없습니다.');
-        setLoading(false);
         return;
       }
 
-      console.log('✅ Kakao 로그인 성공:', result.profile);
-
-      // 2. 사용자 정보 저장 (Firebase + AsyncStorage)
       await login(result.profile.id, result.profile);
-
-      console.log('✅ 전체 로그인 프로세스 완료');
-      
-      // 자동으로 MainTabNavigator로 이동됨 (AuthNavigator에서 처리)
     } catch (error: any) {
-      console.error('❌ 로그인 오류:', error);
       Alert.alert(
         '로그인 오류',
-        error.message || '로그인 중 오류가 발생했습니다. 다시 시도해주세요.',
+        error.message || '로그인 중 오류가 발생했습니다.',
       );
     } finally {
-      setLoading(false);
+      setKakaoLoading(false);
     }
   };
+
+  const handleEmailLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('알림', '이메일과 비밀번호를 입력하세요.');
+      return;
+    }
+
+    try {
+      setEmailLoading(true);
+      await signInWithEmailAndPassword(email, password);
+    } catch (error: any) {
+      let message = '로그인에 실패했습니다.';
+      if (error.code === 'auth/user-not-found') {
+        message = '등록되지 않은 이메일입니다.';
+      } else if (error.code === 'auth/wrong-password') {
+        message = '비밀번호가 올바르지 않습니다.';
+      } else if (error.code === 'auth/invalid-email') {
+        message = '이메일 형식이 올바르지 않습니다.';
+      }
+      Alert.alert('로그인 실패', message);
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const loading = kakaoLoading || emailLoading;
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -68,60 +90,119 @@ export const LoginScreen: React.FC = () => {
         colors={['#2E7D32', '#1B5E20']}
         style={styles.gradient}
       >
-        {/* 로고 영역 */}
-        <View style={styles.logoContainer}>
-          <View style={styles.logoCircle}>
-            <Text style={styles.logoIcon}>⛳</Text>
-          </View>
-          <Text style={styles.logoText}>골프 Pub</Text>
-          <Text style={styles.logoSubtext}>골프를 사랑하는 사람들의 모임</Text>
-        </View>
-
-        {/* 설명 영역 */}
-        <View style={styles.featureContainer}>
-          <FeatureItem icon="⛳" text="골프장 예약 및 모임" />
-          <FeatureItem icon="👥" text="새로운 골프 친구 만나기" />
-          <FeatureItem icon="💬" text="실시간 채팅 및 소통" />
-          <FeatureItem icon="🛒" text="중고 골프 용품 거래" />
-        </View>
-
-        {/* 로그인 버튼 영역 */}
-        <View style={styles.loginContainer}>
-          <TouchableOpacity
-            style={styles.kakaoButton}
-            onPress={handleKakaoLogin}
-            disabled={loading}
-            activeOpacity={0.8}
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
-            {loading ? (
-              <ActivityIndicator size="small" color="#000000" />
-            ) : (
-              <>
-                <View style={styles.kakaoLogoPlaceholder}>
-                  <Text style={styles.kakaoLogoText}>K</Text>
-                </View>
-                <Text style={styles.kakaoButtonText}>카카오로 시작하기</Text>
-              </>
-            )}
-          </TouchableOpacity>
+            {/* 로고 영역 */}
+            <View style={styles.logoContainer}>
+              <View style={styles.logoCircle}>
+                <Text style={styles.logoIcon}>⛳</Text>
+              </View>
+              <Text style={styles.logoText}>골프 Pub</Text>
+              <Text style={styles.logoSubtext}>골프를 사랑하는 사람들의 모임</Text>
+            </View>
 
-          <Text style={styles.termsText}>
-            로그인 시 <Text style={styles.termsLink}>이용약관</Text> 및{'\n'}
-            <Text style={styles.termsLink}>개인정보처리방침</Text>에 동의합니다.
-          </Text>
-        </View>
+            {/* 로그인 버튼 영역 */}
+            <View style={styles.loginContainer}>
+              {/* 카카오 로그인 */}
+              <TouchableOpacity
+                style={styles.kakaoButton}
+                onPress={handleKakaoLogin}
+                disabled={loading}
+                activeOpacity={0.8}
+              >
+                {kakaoLoading ? (
+                  <ActivityIndicator size="small" color="#000000" />
+                ) : (
+                  <>
+                    <View style={styles.kakaoLogoPlaceholder}>
+                      <Text style={styles.kakaoLogoText}>K</Text>
+                    </View>
+                    <Text style={styles.kakaoButtonText}>카카오로 시작하기</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              {/* 구분선 */}
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>또는</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              {/* 이메일 로그인 토글 / 폼 */}
+              {!showEmailLogin ? (
+                <TouchableOpacity
+                  style={styles.emailToggleButton}
+                  onPress={() => setShowEmailLogin(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.emailToggleText}>이메일로 로그인</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.emailForm}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="이메일"
+                    placeholderTextColor="rgba(255,255,255,0.5)"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    editable={!loading}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="비밀번호"
+                    placeholderTextColor="rgba(255,255,255,0.5)"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    editable={!loading}
+                  />
+                  <TouchableOpacity
+                    style={styles.emailLoginButton}
+                    onPress={handleEmailLogin}
+                    disabled={loading}
+                    activeOpacity={0.8}
+                  >
+                    {emailLoading ? (
+                      <ActivityIndicator size="small" color="#2E7D32" />
+                    ) : (
+                      <Text style={styles.emailLoginButtonText}>로그인</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* 하단 링크들 */}
+              <View style={styles.bottomLinks}>
+                <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                  <Text style={styles.linkText}>회원가입</Text>
+                </TouchableOpacity>
+                <Text style={styles.linkDivider}>|</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+                  <Text style={styles.linkText}>비밀번호 찾기</Text>
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.termsText}>
+                로그인 시 <Text style={styles.termsLink}>이용약관</Text> 및{' '}
+                <Text style={styles.termsLink}>개인정보처리방침</Text>에 동의합니다.
+              </Text>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </LinearGradient>
     </SafeAreaView>
   );
 };
-
-// 기능 소개 아이템
-const FeatureItem: React.FC<{ icon: string; text: string }> = ({ icon, text }) => (
-  <View style={styles.featureItem}>
-    <Text style={styles.featureIcon}>{icon}</Text>
-    <Text style={styles.featureText}>{text}</Text>
-  </View>
-);
 
 const styles = StyleSheet.create({
   container: {
@@ -129,13 +210,16 @@ const styles = StyleSheet.create({
   },
   gradient: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'space-between',
     paddingHorizontal: 24,
     paddingVertical: 40,
   },
   logoContainer: {
     alignItems: 'center',
-    marginTop: height * 0.1,
+    marginTop: height * 0.08,
   },
   logoCircle: {
     width: 120,
@@ -160,28 +244,8 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
   },
-  featureContainer: {
-    gap: 16,
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderRadius: 12,
-  },
-  featureIcon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  featureText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
   loginContainer: {
-    gap: 16,
+    gap: 12,
   },
   kakaoButton: {
     flexDirection: 'row',
@@ -209,6 +273,73 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: '#000000',
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 4,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  dividerText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 13,
+    marginHorizontal: 12,
+  },
+  emailToggleButton: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  emailToggleText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  emailForm: {
+    gap: 10,
+  },
+  input: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: '#FFFFFF',
+  },
+  emailLoginButton: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  emailLoginButtonText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2E7D32',
+  },
+  bottomLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 4,
+  },
+  linkText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  linkDivider: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.5)',
   },
   termsText: {
     fontSize: 12,
