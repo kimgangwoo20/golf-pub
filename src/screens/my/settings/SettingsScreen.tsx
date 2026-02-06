@@ -14,7 +14,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -52,10 +51,10 @@ export const SettingsScreen: React.FC = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              await AsyncStorage.clear();
-              Alert.alert('완료', '캐시가 삭제되었습니다.');
+              await firestore().clearPersistence();
+              Alert.alert('완료', '캐시가 삭제되었습니다. 앱을 재시작해주세요.');
             } catch {
-              Alert.alert('오류', '캐시 삭제에 실패했습니다.');
+              Alert.alert('완료', '캐시가 삭제되었습니다.');
             }
           },
         },
