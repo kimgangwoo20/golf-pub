@@ -28,7 +28,6 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
-import com.google.common.collect.Iterables;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.Blob;
 import com.google.firebase.firestore.DocumentChange;
@@ -99,7 +98,8 @@ public class ReactNativeFirebaseFirestoreSerialize {
    * @param documentSnapshot DocumentSnapshot
    * @return WritableMap
    */
-  static WritableMap snapshotToWritableMap(String appName, DocumentSnapshot documentSnapshot) {
+  static WritableMap snapshotToWritableMap(
+      String appName, String databaseId, DocumentSnapshot documentSnapshot) {
     WritableArray metadata = Arguments.createArray();
     WritableMap documentMap = Arguments.createMap();
     SnapshotMetadata snapshotMetadata = documentSnapshot.getMetadata();
@@ -113,7 +113,7 @@ public class ReactNativeFirebaseFirestoreSerialize {
     documentMap.putBoolean(KEY_EXISTS, documentSnapshot.exists());
 
     DocumentSnapshot.ServerTimestampBehavior timestampBehavior =
-        getServerTimestampBehavior(appName);
+        getServerTimestampBehavior(appName, databaseId);
 
     if (documentSnapshot.exists()) {
       if (documentSnapshot.getData(timestampBehavior) != null) {
@@ -133,6 +133,7 @@ public class ReactNativeFirebaseFirestoreSerialize {
    */
   static WritableMap snapshotToWritableMap(
       String appName,
+      String databaseId,
       String source,
       QuerySnapshot querySnapshot,
       @Nullable MetadataChanges metadataChanges) {
@@ -149,7 +150,8 @@ public class ReactNativeFirebaseFirestoreSerialize {
       // indicating the data does not include these changes
       writableMap.putBoolean("excludesMetadataChanges", true);
       writableMap.putArray(
-          KEY_CHANGES, documentChangesToWritableArray(appName, documentChangesList, null));
+          KEY_CHANGES,
+          documentChangesToWritableArray(appName, databaseId, documentChangesList, null));
     } else {
       // If listening to metadata changes, get the changes list with document changes array.
       // To indicate whether a document change was because of metadata change, we check whether
@@ -160,7 +162,7 @@ public class ReactNativeFirebaseFirestoreSerialize {
       writableMap.putArray(
           KEY_CHANGES,
           documentChangesToWritableArray(
-              appName, documentMetadataChangesList, documentChangesList));
+              appName, databaseId, documentMetadataChangesList, documentChangesList));
     }
 
     SnapshotMetadata snapshotMetadata = querySnapshot.getMetadata();
@@ -168,7 +170,7 @@ public class ReactNativeFirebaseFirestoreSerialize {
 
     // set documents
     for (DocumentSnapshot documentSnapshot : documentSnapshots) {
-      documents.pushMap(snapshotToWritableMap(appName, documentSnapshot));
+      documents.pushMap(snapshotToWritableMap(appName, databaseId, documentSnapshot));
     }
     writableMap.putArray(KEY_DOCUMENTS, documents);
 
@@ -189,6 +191,7 @@ public class ReactNativeFirebaseFirestoreSerialize {
    */
   private static WritableArray documentChangesToWritableArray(
       String appName,
+      String databaseId,
       List<DocumentChange> documentChanges,
       @Nullable List<DocumentChange> comparableDocumentChanges) {
     WritableArray documentChangesWritable = Arguments.createArray();
@@ -199,10 +202,12 @@ public class ReactNativeFirebaseFirestoreSerialize {
       boolean isMetadataChange = false;
       if (checkIfMetadataChange) {
         int hashCode = documentChange.hashCode();
-        DocumentChange exists =
-            Iterables.tryFind(
-                    comparableDocumentChanges, docChange -> docChange.hashCode() == hashCode)
-                .orNull();
+        DocumentChange exists = null;
+        for (DocumentChange docChange : comparableDocumentChanges) {
+          if (docChange.hashCode() == hashCode) {
+            exists = docChange;
+          }
+        }
 
         // Exists in docChanges with meta, but doesnt exist in docChanges without meta
         if (exists == null) {
@@ -211,7 +216,7 @@ public class ReactNativeFirebaseFirestoreSerialize {
       }
 
       documentChangesWritable.pushMap(
-          documentChangeToWritableMap(appName, documentChange, isMetadataChange));
+          documentChangeToWritableMap(appName, databaseId, documentChange, isMetadataChange));
     }
 
     return documentChangesWritable;
@@ -224,7 +229,7 @@ public class ReactNativeFirebaseFirestoreSerialize {
    * @return WritableMap
    */
   private static WritableMap documentChangeToWritableMap(
-      String appName, DocumentChange documentChange, boolean isMetadataChange) {
+      String appName, String databaseId, DocumentChange documentChange, boolean isMetadataChange) {
     WritableMap documentChangeMap = Arguments.createMap();
     documentChangeMap.putBoolean("isMetadataChange", isMetadataChange);
 
@@ -241,7 +246,8 @@ public class ReactNativeFirebaseFirestoreSerialize {
     }
 
     documentChangeMap.putMap(
-        KEY_DOC_CHANGE_DOCUMENT, snapshotToWritableMap(appName, documentChange.getDocument()));
+        KEY_DOC_CHANGE_DOCUMENT,
+        snapshotToWritableMap(appName, databaseId, documentChange.getDocument()));
 
     documentChangeMap.putInt(KEY_DOC_CHANGE_NEW_INDEX, documentChange.getNewIndex());
     documentChangeMap.putInt(KEY_DOC_CHANGE_OLD_INDEX, documentChange.getOldIndex());
