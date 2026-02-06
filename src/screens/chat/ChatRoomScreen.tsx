@@ -208,7 +208,7 @@ export const ChatRoomScreen: React.FC<{ route?: any; navigation?: any }> = ({ ro
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <View style={styles.container}>
         {/* 헤더 */}
         <View style={styles.header}>
@@ -231,7 +231,7 @@ export const ChatRoomScreen: React.FC<{ route?: any; navigation?: any }> = ({ ro
         />
 
         {/* 입력창 - 키보드 위에 표시 */}
-        <Animated.View style={[styles.inputWrapper, { paddingBottom: Animated.add(keyboardHeight, insets.bottom || 0) }]}>
+        <Animated.View style={[styles.inputWrapper, { paddingBottom: keyboardHeight }]}>
           <View style={styles.inputContainer}>
             <TouchableOpacity
               style={styles.plusButton}

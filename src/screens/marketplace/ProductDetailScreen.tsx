@@ -10,6 +10,8 @@ import {
   StyleSheet,
   Dimensions,
   Alert,
+  Share,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -59,25 +61,87 @@ export const ProductDetailScreen: React.FC = () => {
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(mockProduct.isLiked);
+  const [moreMenuVisible, setMoreMenuVisible] = useState(false);
 
   const handleLike = () => {
     setIsLiked(!isLiked);
     console.log('찜하기 토글');
   };
 
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `[골프 Pub] ${mockProduct.title}\n${mockProduct.price.toLocaleString()}원\n${mockProduct.description.slice(0, 50)}...`,
+      });
+    } catch (error) {
+      console.error('공유 실패:', error);
+    }
+  };
+
+  const handleReport = () => {
+    setMoreMenuVisible(false);
+    Alert.alert(
+      '신고하기',
+      '이 상품을 신고하시겠습니까?',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '허위 매물',
+          onPress: () => Alert.alert('신고 완료', '신고가 접수되었습니다. 검토 후 처리됩니다.'),
+        },
+        {
+          text: '사기 의심',
+          onPress: () => Alert.alert('신고 완료', '신고가 접수되었습니다. 검토 후 처리됩니다.'),
+        },
+      ],
+    );
+  };
+
+  const handleHide = () => {
+    setMoreMenuVisible(false);
+    Alert.alert('숨기기', '이 상품이 목록에서 숨겨집니다.', [
+      { text: '취소', style: 'cancel' },
+      { text: '숨기기', onPress: () => navigation.goBack() },
+    ]);
+  };
+
+  const handleBlockSeller = () => {
+    setMoreMenuVisible(false);
+    Alert.alert(
+      '판매자 차단',
+      `${mockProduct.sellerName}님을 차단하시겠습니까?\n차단하면 이 판매자의 상품이 더 이상 표시되지 않습니다.`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '차단',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert('차단 완료', `${mockProduct.sellerName}님이 차단되었습니다.`);
+            navigation.goBack();
+          },
+        },
+      ],
+    );
+  };
+
   const handleChat = () => {
-    navigation.navigate('ChatRoom', {
-      chatId: `product_${mockProduct.id}`,
-      chatTitle: mockProduct.sellerName,
-      userImage: mockProduct.sellerImage,
-    });
+    navigation.navigate('Chat' as never, {
+      screen: 'ChatRoom',
+      params: {
+        chatId: `product_${mockProduct.id}`,
+        chatName: mockProduct.sellerName,
+      },
+    } as never);
   };
 
   const handleSellerPress = () => {
-    navigation.navigate('FriendProfile', {
-      friendId: mockProduct.id,
-      friendName: mockProduct.sellerName,
-    });
+    navigation.navigate('MyHome' as never, {
+      screen: 'FriendProfile',
+      params: {
+        friendId: mockProduct.id,
+        friendName: mockProduct.sellerName,
+      },
+    } as never);
   };
 
   return (
@@ -89,10 +153,10 @@ export const ProductDetailScreen: React.FC = () => {
             <Text style={styles.backIcon}>‹</Text>
           </TouchableOpacity>
           <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.iconButton}>
+            <TouchableOpacity style={styles.iconButton} onPress={handleShare}>
               <Text style={styles.headerIcon}>🔗</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton}>
+            <TouchableOpacity style={styles.iconButton} onPress={() => setMoreMenuVisible(true)}>
               <Text style={styles.headerIcon}>⋯</Text>
             </TouchableOpacity>
           </View>
@@ -190,6 +254,44 @@ export const ProductDetailScreen: React.FC = () => {
             <Text style={styles.chatButtonText}>채팅하기</Text>
           </TouchableOpacity>
         </View>
+
+        {/* 더보기 메뉴 모달 */}
+        <Modal
+          visible={moreMenuVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setMoreMenuVisible(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setMoreMenuVisible(false)}
+          >
+            <View style={styles.moreMenuContainer}>
+              <TouchableOpacity style={styles.moreMenuItem} onPress={handleReport}>
+                <Text style={styles.moreMenuIcon}>🚨</Text>
+                <Text style={styles.moreMenuText}>신고하기</Text>
+              </TouchableOpacity>
+              <View style={styles.moreMenuDivider} />
+              <TouchableOpacity style={styles.moreMenuItem} onPress={handleHide}>
+                <Text style={styles.moreMenuIcon}>🙈</Text>
+                <Text style={styles.moreMenuText}>이 상품 숨기기</Text>
+              </TouchableOpacity>
+              <View style={styles.moreMenuDivider} />
+              <TouchableOpacity style={styles.moreMenuItem} onPress={handleBlockSeller}>
+                <Text style={styles.moreMenuIcon}>🚫</Text>
+                <Text style={[styles.moreMenuText, styles.dangerText]}>판매자 차단</Text>
+              </TouchableOpacity>
+              <View style={styles.moreMenuDivider} />
+              <TouchableOpacity
+                style={styles.moreMenuCancel}
+                onPress={() => setMoreMenuVisible(false)}
+              >
+                <Text style={styles.moreMenuCancelText}>취소</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -406,5 +508,51 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#fff',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  moreMenuContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 12,
+    paddingBottom: 40,
+  },
+  moreMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+  },
+  moreMenuIcon: {
+    fontSize: 20,
+    marginRight: 14,
+    width: 28,
+  },
+  moreMenuText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  moreMenuDivider: {
+    height: 1,
+    backgroundColor: '#F0F0F0',
+    marginHorizontal: 24,
+  },
+  dangerText: {
+    color: '#FF3B30',
+  },
+  moreMenuCancel: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  moreMenuCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
   },
 });

@@ -139,7 +139,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <View style={styles.container}>
         {/* 헤더 */}
         <View style={styles.header}>
@@ -168,7 +168,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
           />
 
           {/* 입력창 */}
-          <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+          <View style={styles.inputContainer}>
             <TouchableOpacity style={styles.imageButton}>
               <Text style={styles.imageButtonText}>📷</Text>
             </TouchableOpacity>
