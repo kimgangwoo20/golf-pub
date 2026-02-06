@@ -60,7 +60,7 @@ export const SettingsScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
   header: { padding: 24, paddingTop: 60, backgroundColor: '#fff', marginBottom: 12 },
-  backButton: { fontSize: 16, color: '#007AFF', marginBottom: 24 },
+  backButton: { fontSize: 16, color: '#10b981', marginBottom: 24 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#1a1a1a' },
   section: { backgroundColor: '#fff', marginBottom: 12, padding: 20 },
   sectionTitle: { fontSize: 14, fontWeight: '600', color: '#666', marginBottom: 16 },

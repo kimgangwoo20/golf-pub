@@ -2,6 +2,7 @@
 // 사용자의 일일 출석 체크 및 포인트 적립 관리
 
 import firestore from '@react-native-firebase/firestore';
+import { FirestoreTimestamp } from './firebaseConfig';
 
 interface AttendanceRecord {
   userId: string;
@@ -41,7 +42,7 @@ export const markAttendance = async (userId: string): Promise<{
 }> => {
   try {
     const today = new Date().toISOString().split('T')[0];
-    const timestamp = Date.now();
+    const timestamp = FirestoreTimestamp.now();
 
     // 이미 출석했는지 확인
     const alreadyChecked = await checkTodayAttendance(userId);
@@ -171,7 +172,7 @@ const updateUserPoints = async (userId: string, points: number): Promise<void> =
         userId,
         type: 'attendance',
         amount: points,
-        timestamp: Date.now(),
+        timestamp: FirestoreTimestamp.now(),
         description: '출석 체크 포인트',
       });
   } catch (error) {

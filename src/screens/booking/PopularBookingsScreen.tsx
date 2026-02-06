@@ -90,8 +90,8 @@ export const PopularBookingsScreen: React.FC<{ navigation?: any }> = ({ navigati
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor="#007AFF"
-            colors={['#007AFF']}
+            tintColor="#10b981"
+            colors={['#10b981']}
           />
         }
       />
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   participants: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#007AFF',
+    color: '#10b981',
   },
   views: {
     fontSize: 12,

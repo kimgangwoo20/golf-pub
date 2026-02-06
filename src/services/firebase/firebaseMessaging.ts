@@ -51,22 +51,9 @@ class FirebaseMessagingService {
    */
   async requestPermission(): Promise<FirebaseMessagingTypes.AuthorizationStatus> {
     try {
-      console.log('🔔 FCM 권한 요청...');
-
       const authStatus = await messaging.requestPermission();
-      const enabled =
-        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
-      if (enabled) {
-        console.log('✅ FCM 권한 승인됨:', authStatus);
-      } else {
-        console.log('❌ FCM 권한 거부됨:', authStatus);
-      }
-
       return authStatus;
     } catch (error) {
-      console.error('❌ FCM 권한 요청 실패:', error);
       return messaging.AuthorizationStatus.DENIED;
     }
   }
@@ -84,16 +71,8 @@ class FirebaseMessagingService {
       }
 
       const token = await messaging.getToken();
-
-      if (token) {
-        console.log('✅ FCM 토큰 가져오기 성공:', token.substring(0, 20) + '...');
-        return token;
-      } else {
-        console.log('❌ FCM 토큰 없음');
-        return null;
-      }
+      return token || null;
     } catch (error) {
-      console.error('❌ FCM 토큰 가져오기 실패:', error);
       return null;
     }
   }
@@ -106,17 +85,12 @@ class FirebaseMessagingService {
    */
   async saveToken(userId: string, token: string): Promise<void> {
     try {
-      console.log('💾 FCM 토큰 저장 중...');
-
       await firestore.collection('users').doc(userId).update({
         fcmToken: token,
         fcmTokenUpdatedAt: FirestoreTimestamp.now(),
         platform: Platform.OS,
       });
-
-      console.log('✅ FCM 토큰 저장 완료');
     } catch (error) {
-      console.error('❌ FCM 토큰 저장 실패:', error);
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -128,18 +102,14 @@ class FirebaseMessagingService {
    */
   async deleteToken(userId: string): Promise<void> {
     try {
-      console.log('🗑️ FCM 토큰 삭제 중...');
-
       await messaging.deleteToken();
 
       await firestore.collection('users').doc(userId).update({
         fcmToken: null,
         fcmTokenUpdatedAt: FirestoreTimestamp.now(),
       });
-
-      console.log('✅ FCM 토큰 삭제 완료');
     } catch (error) {
-      console.error('❌ FCM 토큰 삭제 실패:', error);
+      // 토큰 삭제 실패 - 무시
     }
   }
 
@@ -152,14 +122,7 @@ class FirebaseMessagingService {
   onForegroundMessage(
     callback: (message: FirebaseMessagingTypes.RemoteMessage) => void
   ): () => void {
-    console.log('🔄 포그라운드 메시지 리스너 등록');
-
     const unsubscribe = messaging.onMessage(async (remoteMessage) => {
-      console.log('📬 포그라운드 메시지 수신:', remoteMessage);
-
-      // 로컬 알림 표시 (선택)
-      // await this.displayLocalNotification(remoteMessage);
-
       callback(remoteMessage);
     });
 
@@ -171,11 +134,8 @@ class FirebaseMessagingService {
    * (App.tsx에서 최상위에서 호출해야 함)
    */
   static setBackgroundMessageHandler(): void {
-    messaging.setBackgroundMessageHandler(async (remoteMessage) => {
-      console.log('📭 백그라운드 메시지 수신:', remoteMessage);
-
+    messaging.setBackgroundMessageHandler(async (_remoteMessage) => {
       // 백그라운드에서 메시지 처리
-      // 예: 로컬 알림 표시, 데이터 동기화 등
     });
   }
 
@@ -188,11 +148,8 @@ class FirebaseMessagingService {
   onNotificationOpened(
     callback: (message: FirebaseMessagingTypes.RemoteMessage) => void
   ): () => void {
-    console.log('🔄 알림 탭 리스너 등록');
-
     // 앱이 백그라운드에 있을 때 알림 탭
     const unsubscribe = messaging.onNotificationOpenedApp((remoteMessage) => {
-      console.log('👆 알림 탭 (백그라운드):', remoteMessage);
       callback(remoteMessage);
     });
 
@@ -201,7 +158,6 @@ class FirebaseMessagingService {
       .getInitialNotification()
       .then((remoteMessage) => {
         if (remoteMessage) {
-          console.log('👆 알림 탭 (종료 상태):', remoteMessage);
           callback(remoteMessage);
         }
       });
@@ -216,13 +172,8 @@ class FirebaseMessagingService {
    */
   async subscribeToTopic(topic: string): Promise<void> {
     try {
-      console.log('📢 토픽 구독:', topic);
-
       await messaging.subscribeToTopic(topic);
-
-      console.log('✅ 토픽 구독 완료:', topic);
     } catch (error) {
-      console.error('❌ 토픽 구독 실패:', error);
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -234,13 +185,9 @@ class FirebaseMessagingService {
    */
   async unsubscribeFromTopic(topic: string): Promise<void> {
     try {
-      console.log('🔕 토픽 구독 해제:', topic);
-
       await messaging.unsubscribeFromTopic(topic);
-
-      console.log('✅ 토픽 구독 해제 완료:', topic);
     } catch (error) {
-      console.error('❌ 토픽 구독 해제 실패:', error);
+      // 구독 해제 실패 - 무시
     }
   }
 
@@ -264,8 +211,6 @@ class FirebaseMessagingService {
     imageUrl?: string
   ): Promise<string> {
     try {
-      console.log('🔔 알림 생성:', userId, type);
-
       const notificationRef = firestore
         .collection('users')
         .doc(userId)
@@ -286,11 +231,8 @@ class FirebaseMessagingService {
 
       await notificationRef.set(notification);
 
-      console.log('✅ 알림 생성 완료:', notificationRef.id);
-
       return notificationRef.id;
     } catch (error) {
-      console.error('❌ 알림 생성 실패:', error);
       throw new Error(handleFirebaseError(error));
     }
   }
@@ -323,7 +265,6 @@ class FirebaseMessagingService {
 
       return notifications;
     } catch (error) {
-      console.error('❌ 알림 목록 가져오기 실패:', error);
       return [];
     }
   }
@@ -341,8 +282,6 @@ class FirebaseMessagingService {
     callback: (notifications: NotificationData[]) => void,
     limit: number = 20
   ): () => void {
-    console.log('🔄 알림 구독:', userId);
-
     const unsubscribe = firestore
       .collection('users')
       .doc(userId)
@@ -376,10 +315,8 @@ class FirebaseMessagingService {
         .collection('notifications')
         .doc(notificationId)
         .update({ isRead: true });
-
-      console.log('✅ 알림 읽음 처리:', notificationId);
     } catch (error) {
-      console.error('❌ 알림 읽음 처리 실패:', error);
+      // 읽음 처리 실패 - 무시
     }
   }
 
@@ -390,8 +327,6 @@ class FirebaseMessagingService {
    */
   async markAllAsRead(userId: string): Promise<void> {
     try {
-      console.log('📖 모든 알림 읽음 처리:', userId);
-
       const snapshot = await firestore
         .collection('users')
         .doc(userId)
@@ -406,10 +341,8 @@ class FirebaseMessagingService {
       });
 
       await batch.commit();
-
-      console.log('✅ 모든 알림 읽음 처리 완료');
     } catch (error) {
-      console.error('❌ 모든 알림 읽음 처리 실패:', error);
+      // 모든 알림 읽음 처리 실패 - 무시
     }
   }
 
@@ -427,10 +360,8 @@ class FirebaseMessagingService {
         .collection('notifications')
         .doc(notificationId)
         .delete();
-
-      console.log('✅ 알림 삭제:', notificationId);
     } catch (error) {
-      console.error('❌ 알림 삭제 실패:', error);
+      // 알림 삭제 실패 - 무시
     }
   }
 
@@ -441,8 +372,6 @@ class FirebaseMessagingService {
    */
   async deleteAllNotifications(userId: string): Promise<void> {
     try {
-      console.log('🗑️ 모든 알림 삭제:', userId);
-
       const snapshot = await firestore
         .collection('users')
         .doc(userId)
@@ -456,10 +385,8 @@ class FirebaseMessagingService {
       });
 
       await batch.commit();
-
-      console.log('✅ 모든 알림 삭제 완료');
     } catch (error) {
-      console.error('❌ 모든 알림 삭제 실패:', error);
+      // 모든 알림 삭제 실패 - 무시
     }
   }
 
@@ -480,7 +407,6 @@ class FirebaseMessagingService {
 
       return snapshot.size;
     } catch (error) {
-      console.error('❌ 읽지 않은 알림 개수 가져오기 실패:', error);
       return 0;
     }
   }
@@ -496,8 +422,6 @@ class FirebaseMessagingService {
     userId: string,
     callback: (count: number) => void
   ): () => void {
-    console.log('🔄 읽지 않은 알림 개수 구독:', userId);
-
     const unsubscribe = firestore
       .collection('users')
       .doc(userId)
@@ -519,9 +443,8 @@ class FirebaseMessagingService {
     if (Platform.OS === 'ios') {
       try {
         await messaging.setAPNSToken(count.toString());
-        console.log('✅ 배지 개수 업데이트:', count);
       } catch (error) {
-        console.error('❌ 배지 개수 업데이트 실패:', error);
+        // 배지 업데이트 실패 - 무시
       }
     }
   }
@@ -532,14 +455,9 @@ class FirebaseMessagingService {
    * @param remoteMessage - FCM 메시지
    */
   private async displayLocalNotification(
-    remoteMessage: FirebaseMessagingTypes.RemoteMessage
+    _remoteMessage: FirebaseMessagingTypes.RemoteMessage
   ): Promise<void> {
     try {
-      // React Native Notifee 또는 react-native-push-notification 사용
-      // 여기서는 예시로 구현
-
-      console.log('🔔 로컬 알림 표시:', remoteMessage.notification?.title);
-
       // TODO: 실제 로컬 알림 구현
       // import notifee from '@notifee/react-native';
       // await notifee.displayNotification({
@@ -550,7 +468,7 @@ class FirebaseMessagingService {
       //   },
       // });
     } catch (error) {
-      console.error('❌ 로컬 알림 표시 실패:', error);
+      // 로컬 알림 표시 실패 - 무시
     }
   }
 
@@ -561,8 +479,6 @@ class FirebaseMessagingService {
    */
   async initialize(userId: string): Promise<void> {
     try {
-      console.log('🚀 FCM 초기화 시작...');
-
       // 토큰 가져오기 및 저장
       const token = await this.getToken();
       if (token) {
@@ -571,13 +487,10 @@ class FirebaseMessagingService {
 
       // 토큰 갱신 리스너
       messaging.onTokenRefresh(async (newToken) => {
-        console.log('🔄 FCM 토큰 갱신:', newToken.substring(0, 20) + '...');
         await this.saveToken(userId, newToken);
       });
-
-      console.log('✅ FCM 초기화 완료');
     } catch (error) {
-      console.error('❌ FCM 초기화 실패:', error);
+      // FCM 초기화 실패 - 무시
     }
   }
 }

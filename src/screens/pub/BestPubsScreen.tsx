@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
+  Alert,
 } from 'react-native';
 
 interface Pub {
@@ -96,7 +97,7 @@ export const BestPubsScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
       {/* 헤더 */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>인기 펍</Text>
-        <TouchableOpacity onPress={() => navigation?.navigate('PubMap')}>
+        <TouchableOpacity onPress={() => Alert.alert('지도', '지도 기능은 준비 중입니다.')}>
           <Text style={styles.mapButton}>🗺️ 지도</Text>
         </TouchableOpacity>
       </View>
@@ -160,7 +161,7 @@ const styles = StyleSheet.create({
   },
   mapButton: {
     fontSize: 16,
-    color: '#007AFF',
+    color: '#10b981',
   },
   searchContainer: {
     flexDirection: 'row',

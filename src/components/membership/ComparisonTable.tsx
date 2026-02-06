@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     color: '#1a1a1a',
   },
   premiumText: {
-    color: '#007AFF',
+    color: '#10b981',
   },
   featureText: {
     fontSize: 13,
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   premiumValue: {
-    color: '#007AFF',
+    color: '#10b981',
     fontWeight: '600',
   },
 });

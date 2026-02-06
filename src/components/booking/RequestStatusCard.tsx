@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#10b981',
     alignItems: 'center',
   },
   detailButtonText: {

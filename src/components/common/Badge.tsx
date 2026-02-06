@@ -32,7 +32,7 @@ export const Badge: React.FC<BadgeProps> = ({
   const getBackgroundColor = () => {
     switch (variant) {
       case 'primary':
-        return '#007AFF';
+        return '#10b981';
       case 'success':
         return '#10b981';
       case 'warning':

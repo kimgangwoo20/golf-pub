@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
   label: { fontSize: 14, color: '#666' },
   value: { fontSize: 14, fontWeight: '600', color: '#1a1a1a' },
-  button: { backgroundColor: '#007AFF', padding: 16, borderRadius: 12, alignItems: 'center', marginBottom: 12 },
+  button: { backgroundColor: '#10b981', padding: 16, borderRadius: 12, alignItems: 'center', marginBottom: 12 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   dangerButton: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#FF3B30' },
   dangerText: { color: '#FF3B30' },

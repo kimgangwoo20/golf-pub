@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   songItemSelected: {
     backgroundColor: '#dbeafe',
     borderWidth: 2,
-    borderColor: '#007AFF',
+    borderColor: '#10b981',
   },
   songInfo: {
     flex: 1,
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     fontSize: 18,
-    color: '#007AFF',
+    color: '#10b981',
     fontWeight: 'bold',
   },
   messageContainer: {
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   sendButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#10b981',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',

@@ -138,7 +138,7 @@ export const ProductDetailScreen: React.FC = () => {
     navigation.navigate('MyHome' as never, {
       screen: 'FriendProfile',
       params: {
-        friendId: mockProduct.id,
+        friendId: 'seller_001',
         friendName: mockProduct.sellerName,
       },
     } as never);
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
   chatButton: {
     flex: 1,
     height: 56,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#10b981',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',

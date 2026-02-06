@@ -476,8 +476,6 @@ export const MyHomeScreen: React.FC = () => {
       navigation.navigate('Support' as never);
     } else if (screen === 'Profile') {
       navigation.navigate('Profile' as never);
-    } else if (screen === 'Theme') {
-      navigation.navigate('Theme' as never);
     } else {
       Alert.alert(screen, `${screen} 화면은 개발 예정입니다.`);
     }

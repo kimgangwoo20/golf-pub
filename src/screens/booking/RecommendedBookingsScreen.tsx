@@ -164,6 +164,6 @@ const styles = StyleSheet.create({
   participants: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#007AFF',
+    color: '#10b981',
   },
 });

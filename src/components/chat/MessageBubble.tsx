@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   myBubble: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#10b981',
   },
   text: {
     fontSize: 15,

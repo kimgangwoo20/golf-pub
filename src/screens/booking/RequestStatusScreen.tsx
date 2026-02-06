@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   detailButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#10b981',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

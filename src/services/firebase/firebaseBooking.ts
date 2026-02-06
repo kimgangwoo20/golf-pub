@@ -2,6 +2,7 @@
 // 골프 부킹 생성, 참가, 관리
 
 import firestore from '@react-native-firebase/firestore';
+import { FirestoreTimestamp } from './firebaseConfig';
 
 export interface Booking {
   id: string;
@@ -43,8 +44,8 @@ export const createBooking = async (bookingData: Partial<Booking>): Promise<{
           max: bookingData.participants?.max || 4,
           list: [bookingData.hostId],
         },
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        createdAt: FirestoreTimestamp.now(),
+        updatedAt: FirestoreTimestamp.now(),
       });
 
     // 호스트 통계 업데이트
@@ -120,7 +121,7 @@ export const joinBooking = async (
     await bookingRef.update({
       'participants.current': firestore.FieldValue.increment(1),
       'participants.list': firestore.FieldValue.arrayUnion(userId),
-      updatedAt: Date.now(),
+      updatedAt: FirestoreTimestamp.now(),
     });
 
     // 정원이 찼으면 상태 변경
@@ -138,7 +139,7 @@ export const joinBooking = async (
         userId,
         hostId: bookingData.hostId,
         status: 'pending', // pending, approved, rejected
-        joinedAt: Date.now(),
+        joinedAt: FirestoreTimestamp.now(),
       });
 
     // 사용자 통계 업데이트
@@ -301,7 +302,7 @@ export const cancelBooking = async (
       .doc(bookingId)
       .update({
         status: 'closed',
-        updatedAt: Date.now(),
+        updatedAt: FirestoreTimestamp.now(),
       });
 
     // 참가자들에게 알림 (TODO: Firebase Cloud Messaging)
@@ -355,7 +356,7 @@ export const leaveBooking = async (
       'participants.current': firestore.FieldValue.increment(-1),
       'participants.list': firestore.FieldValue.arrayRemove(userId),
       status: 'open', // 정원이 비었으므로 다시 open
-      updatedAt: Date.now(),
+      updatedAt: FirestoreTimestamp.now(),
     });
 
     // 참가 기록 업데이트
@@ -368,7 +369,7 @@ export const leaveBooking = async (
     if (!participantSnapshot.empty) {
       await participantSnapshot.docs[0].ref.update({
         status: 'cancelled',
-        cancelledAt: Date.now(),
+        cancelledAt: FirestoreTimestamp.now(),
       });
     }
 
