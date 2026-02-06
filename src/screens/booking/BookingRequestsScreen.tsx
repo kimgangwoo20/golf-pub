@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  RefreshControl,
 } from 'react-native';
 
 interface Request {
@@ -48,6 +49,16 @@ const MOCK_REQUESTS: Request[] = [
 
 export const BookingRequestsScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const [requests, setRequests] = useState<Request[]>(MOCK_REQUESTS);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    // TODO: 실제 API 호출
+    setTimeout(() => {
+      setRequests(MOCK_REQUESTS);
+      setRefreshing(false);
+    }, 1000);
+  };
 
   const handleApprove = (id: string) => {
     Alert.alert('승인', '신청을 승인하시겠습니까?', [
@@ -111,6 +122,14 @@ export const BookingRequestsScreen: React.FC<{ navigation?: any }> = ({ navigati
         renderItem={renderRequest}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#007AFF"
+            colors={['#007AFF']}
+          />
+        }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>신청이 없습니다</Text>

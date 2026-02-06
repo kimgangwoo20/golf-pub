@@ -77,7 +77,7 @@ class FirebaseChatService {
       console.log('💬 채팅방 생성/가져오기:', roomId);
 
       // 채팅방 존재 여부 확인
-      const roomRef = database().ref(`chatRooms/${roomId}`);
+      const roomRef = database.ref(`chatRooms/${roomId}`);
       const snapshot = await roomRef.once('value');
 
       if (!snapshot.exists()) {
@@ -147,7 +147,7 @@ class FirebaseChatService {
       console.log('💬 메시지 전송:', roomId, type);
 
       // 새 메시지 참조 생성
-      const messageRef = database().ref(`messages/${roomId}`).push();
+      const messageRef = database.ref(`messages/${roomId}`).push();
       const messageId = messageRef.key!;
 
       const now = Date.now();
@@ -201,7 +201,7 @@ class FirebaseChatService {
     messageId: string
   ): Promise<void> {
     try {
-      const messageRef = database().ref(`messages/${roomId}/${messageId}`);
+      const messageRef = database.ref(`messages/${roomId}/${messageId}`);
       const snapshot = await messageRef.once('value');
 
       if (snapshot.exists()) {
@@ -239,7 +239,7 @@ class FirebaseChatService {
       console.log('📖 모든 메시지 읽음 처리:', roomId, userId);
 
       // 채팅방의 모든 메시지 가져오기
-      const messagesRef = database().ref(`messages/${roomId}`);
+      const messagesRef = database.ref(`messages/${roomId}`);
       const snapshot = await messagesRef.once('value');
 
       if (!snapshot.exists()) {
@@ -266,7 +266,7 @@ class FirebaseChatService {
       }
 
       // 읽지 않은 메시지 카운트 0으로 설정
-      await database().ref(`chatRooms/${roomId}/unreadCount/${userId}`).set(0);
+      await database.ref(`chatRooms/${roomId}/unreadCount/${userId}`).set(0);
 
       console.log('✅ 모든 메시지 읽음 처리 완료');
     } catch (error) {
@@ -287,7 +287,7 @@ class FirebaseChatService {
   ): () => void {
     console.log('🔄 채팅방 목록 구독:', userId);
 
-    const roomsRef = database().ref('chatRooms')
+    const roomsRef = database.ref('chatRooms')
       .orderByChild('updatedAt');
 
     const onValueChange = roomsRef.on('value', (snapshot) => {
@@ -332,7 +332,7 @@ class FirebaseChatService {
   ): () => void {
     console.log('🔄 메시지 구독:', roomId);
 
-    const messagesRef = database().ref(`messages/${roomId}`)
+    const messagesRef = database.ref(`messages/${roomId}`)
       .orderByChild('timestamp')
       .limitToLast(limit);
 
@@ -368,7 +368,7 @@ class FirebaseChatService {
     isTyping: boolean
   ): Promise<void> {
     try {
-      const typingRef = database().ref(`typing/${roomId}/${userId}`);
+      const typingRef = database.ref(`typing/${roomId}/${userId}`);
 
       if (isTyping) {
         await typingRef.set({
@@ -402,7 +402,7 @@ class FirebaseChatService {
     currentUserId: string,
     callback: (isTyping: boolean) => void
   ): () => void {
-    const typingRef = database().ref(`typing/${roomId}`);
+    const typingRef = database.ref(`typing/${roomId}`);
 
     const onValueChange = typingRef.on('value', (snapshot) => {
       if (snapshot.exists()) {
@@ -443,7 +443,7 @@ class FirebaseChatService {
     timestamp: number
   ): Promise<void> {
     try {
-      const roomRef = database().ref(`chatRooms/${roomId}`);
+      const roomRef = database.ref(`chatRooms/${roomId}`);
 
       await roomRef.update({
         lastMessage: {
@@ -471,7 +471,7 @@ class FirebaseChatService {
     senderId: string
   ): Promise<void> {
     try {
-      const roomRef = database().ref(`chatRooms/${roomId}`);
+      const roomRef = database.ref(`chatRooms/${roomId}`);
       const snapshot = await roomRef.once('value');
 
       if (snapshot.exists()) {
@@ -517,11 +517,11 @@ class FirebaseChatService {
       console.log('🚪 채팅방 나가기:', roomId, userId);
 
       // 채팅방 삭제 (2명 모두 나가면 삭제)
-      const roomRef = database().ref(`chatRooms/${roomId}`);
+      const roomRef = database.ref(`chatRooms/${roomId}`);
       await roomRef.remove();
 
       // 메시지도 삭제
-      const messagesRef = database().ref(`messages/${roomId}`);
+      const messagesRef = database.ref(`messages/${roomId}`);
       await messagesRef.remove();
 
       console.log('✅ 채팅방 나가기 완료');
@@ -540,7 +540,7 @@ class FirebaseChatService {
     try {
       const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
 
-      const messagesRef = database().ref(`messages/${roomId}`)
+      const messagesRef = database.ref(`messages/${roomId}`)
         .orderByChild('timestamp')
         .endAt(thirtyDaysAgo);
 
@@ -553,7 +553,7 @@ class FirebaseChatService {
           updates[child.key!] = null;
         });
 
-        await database().ref(`messages/${roomId}`).update(updates);
+        await database.ref(`messages/${roomId}`).update(updates);
 
         console.log('✅ 오래된 메시지 삭제 완료');
       }

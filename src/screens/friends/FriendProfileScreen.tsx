@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 // Mock 친구 상세 데이터
 const mockFriendProfile = {
@@ -52,10 +53,14 @@ const mockFriendProfile = {
 };
 
 export const FriendProfileScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
   const handleChat = () => {
-    Alert.alert('채팅', '채팅 기능은 개발 예정입니다.');
+    navigation.navigate('ChatRoom', {
+      chatId: `friend_${mockFriendProfile.id}`,
+      chatTitle: mockFriendProfile.name,
+      userImage: mockFriendProfile.image,
+    });
   };
 
   const handleInvite = () => {

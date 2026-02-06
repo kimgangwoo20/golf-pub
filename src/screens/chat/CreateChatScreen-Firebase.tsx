@@ -10,6 +10,7 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFriendStore } from '../../store/useFriendStore';
 import { useChatStore } from '../../store/useChatStore';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -81,7 +82,17 @@ export const CreateChatScreen: React.FC<{ navigation?: any }> = ({ navigation })
   );
 
   return (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
     <View style={styles.container}>
+      {/* 헤더 */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation?.goBack()} style={styles.backButton}>
+          <Text style={styles.backIcon}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>새 채팅</Text>
+        <View style={{ width: 36 }} />
+      </View>
+
       {/* 검색 */}
       <View style={styles.searchContainer}>
         <Text style={styles.searchIcon}>🔍</Text>
@@ -111,13 +122,41 @@ export const CreateChatScreen: React.FC<{ navigation?: any }> = ({ navigation })
         }
       />
     </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#7C3AED',
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#7C3AED',
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 8,
+  },
+  backIcon: {
+    fontSize: 20,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#fff',
+    textAlign: 'center',
   },
   searchContainer: {
     flexDirection: 'row',

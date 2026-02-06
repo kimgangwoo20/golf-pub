@@ -11,6 +11,7 @@ import {
   Platform,
   Image,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useChatStore, ChatMessage } from '../../store/useChatStore';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -36,29 +37,21 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
     listenToMessages,
     loading,
   } = useChatStore();
+  const insets = useSafeAreaInsets();
 
   const [message, setMessage] = useState('');
   const flatListRef = useRef<FlatList>(null);
-
-  // 헤더 타이틀 설정
-  useEffect(() => {
-    if (chatName) {
-      navigation.setOptions({ title: chatName });
-    }
-  }, [navigation, chatName]);
 
   // 실시간 메시지 리스너
   useEffect(() => {
     if (!roomId) return;
 
     const unsubscribe = listenToMessages(roomId, (messages) => {
-      // 메시지 수신 시 자동 스크롤
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     });
 
-    // 읽음 처리
     if (user?.uid) {
       markAsRead(roomId, user.uid);
     }
@@ -80,7 +73,6 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
       );
       setMessage('');
 
-      // 전송 후 스크롤
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
@@ -113,7 +105,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
           <Image source={{ uri: item.senderAvatar }} style={styles.avatar} />
         )}
 
-        <View style={styles.messageBubble}>
+        <View style={[styles.messageBubble, isMyMessage && styles.myBubble]}>
           {!isMyMessage && (
             <Text style={styles.senderName}>{item.senderName}</Text>
           )}
@@ -136,10 +128,10 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
           )}
 
           <Text style={styles.messageTime}>
-            {item.createdAt.toLocaleTimeString('ko-KR', {
+            {item.createdAt?.toLocaleTimeString?.('ko-KR', {
               hour: '2-digit',
               minute: '2-digit',
-            })}
+            }) || ''}
           </Text>
         </View>
       </View>
@@ -147,55 +139,95 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={90}
-    >
-      {/* 메시지 목록 */}
-      <FlatList
-        ref={flatListRef}
-        data={currentRoomMessages}
-        renderItem={renderMessage}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.messageList}
-        onContentSizeChange={() =>
-          flatListRef.current?.scrollToEnd({ animated: true })
-        }
-      />
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <View style={styles.container}>
+        {/* 헤더 */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle} numberOfLines={1}>{chatName || '채팅'}</Text>
+          <View style={{ width: 36 }} />
+        </View>
 
-      {/* 입력창 */}
-      <View style={styles.inputContainer}>
-        <TouchableOpacity style={styles.imageButton}>
-          <Text style={styles.imageButtonText}>📷</Text>
-        </TouchableOpacity>
-
-        <TextInput
-          style={styles.input}
-          value={message}
-          onChangeText={setMessage}
-          placeholder="메시지를 입력하세요..."
-          placeholderTextColor="#999"
-          multiline
-          maxLength={500}
-        />
-
-        <TouchableOpacity
-          style={[styles.sendButton, !message.trim() && styles.sendButtonDisabled]}
-          onPress={handleSend}
-          disabled={!message.trim()}
+        {/* 메시지 목록 */}
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={0}
         >
-          <Text style={styles.sendButtonText}>전송</Text>
-        </TouchableOpacity>
+          <FlatList
+            ref={flatListRef}
+            data={currentRoomMessages}
+            renderItem={renderMessage}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.messageList}
+            onContentSizeChange={() =>
+              flatListRef.current?.scrollToEnd({ animated: true })
+            }
+          />
+
+          {/* 입력창 */}
+          <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+            <TouchableOpacity style={styles.imageButton}>
+              <Text style={styles.imageButtonText}>📷</Text>
+            </TouchableOpacity>
+
+            <TextInput
+              style={styles.input}
+              value={message}
+              onChangeText={setMessage}
+              placeholder="메시지를 입력하세요..."
+              placeholderTextColor="#999"
+              multiline
+              maxLength={500}
+            />
+
+            <TouchableOpacity
+              style={[styles.sendButton, !message.trim() && styles.sendButtonDisabled]}
+              onPress={handleSend}
+              disabled={!message.trim()}
+            >
+              <Text style={styles.sendButtonText}>전송</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
       </View>
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#7C3AED',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#7C3AED',
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 8,
+  },
+  backIcon: {
+    fontSize: 20,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#fff',
+    textAlign: 'center',
   },
   messageList: {
     padding: 16,
@@ -222,6 +254,9 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 16,
     backgroundColor: '#fff',
+  },
+  myBubble: {
+    backgroundColor: '#7C3AED',
   },
   senderName: {
     fontSize: 12,
@@ -289,6 +324,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     maxHeight: 100,
     fontSize: 15,
+    color: '#1a1a1a',
   },
   sendButton: {
     backgroundColor: '#8B5CF6',

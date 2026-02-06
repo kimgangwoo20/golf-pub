@@ -42,7 +42,15 @@
     },
     "plugins": [
       "@react-native-firebase/app",
-      ["@react-native-seoul/kakao-login", { "nativeAppKey": "f25af6b78693a6f92ecd5cf91b9afb34" }]
+      [
+        "@react-native-seoul/kakao-login",
+        {
+          "kakaoAppKey": "f25af6b78693a6f92ecd5cf91b9afb34",
+          "kotlinVersion": "2.1.20"
+        }
+      ],
+      "expo-camera",
+      "./plugins/withKakaoMaven"
     ],
     "experiments": {
       "typedRoutes": false

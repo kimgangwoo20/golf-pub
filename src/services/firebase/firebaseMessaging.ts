@@ -53,7 +53,7 @@ class FirebaseMessagingService {
     try {
       console.log('🔔 FCM 권한 요청...');
 
-      const authStatus = await messaging().requestPermission();
+      const authStatus = await messaging.requestPermission();
       const enabled =
         authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
         authStatus === messaging.AuthorizationStatus.PROVISIONAL;
@@ -83,7 +83,7 @@ class FirebaseMessagingService {
         await this.requestPermission();
       }
 
-      const token = await messaging().getToken();
+      const token = await messaging.getToken();
 
       if (token) {
         console.log('✅ FCM 토큰 가져오기 성공:', token.substring(0, 20) + '...');
@@ -108,7 +108,7 @@ class FirebaseMessagingService {
     try {
       console.log('💾 FCM 토큰 저장 중...');
 
-      await firestore().collection('users').doc(userId).update({
+      await firestore.collection('users').doc(userId).update({
         fcmToken: token,
         fcmTokenUpdatedAt: FirestoreTimestamp.now(),
         platform: Platform.OS,
@@ -130,9 +130,9 @@ class FirebaseMessagingService {
     try {
       console.log('🗑️ FCM 토큰 삭제 중...');
 
-      await messaging().deleteToken();
+      await messaging.deleteToken();
 
-      await firestore().collection('users').doc(userId).update({
+      await firestore.collection('users').doc(userId).update({
         fcmToken: null,
         fcmTokenUpdatedAt: FirestoreTimestamp.now(),
       });
@@ -154,7 +154,7 @@ class FirebaseMessagingService {
   ): () => void {
     console.log('🔄 포그라운드 메시지 리스너 등록');
 
-    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+    const unsubscribe = messaging.onMessage(async (remoteMessage) => {
       console.log('📬 포그라운드 메시지 수신:', remoteMessage);
 
       // 로컬 알림 표시 (선택)
@@ -171,7 +171,7 @@ class FirebaseMessagingService {
    * (App.tsx에서 최상위에서 호출해야 함)
    */
   static setBackgroundMessageHandler(): void {
-    messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+    messaging.setBackgroundMessageHandler(async (remoteMessage) => {
       console.log('📭 백그라운드 메시지 수신:', remoteMessage);
 
       // 백그라운드에서 메시지 처리
@@ -191,13 +191,13 @@ class FirebaseMessagingService {
     console.log('🔄 알림 탭 리스너 등록');
 
     // 앱이 백그라운드에 있을 때 알림 탭
-    const unsubscribe = messaging().onNotificationOpenedApp((remoteMessage) => {
+    const unsubscribe = messaging.onNotificationOpenedApp((remoteMessage) => {
       console.log('👆 알림 탭 (백그라운드):', remoteMessage);
       callback(remoteMessage);
     });
 
     // 앱이 종료된 상태에서 알림 탭 (초기 알림)
-    messaging()
+    messaging
       .getInitialNotification()
       .then((remoteMessage) => {
         if (remoteMessage) {
@@ -218,7 +218,7 @@ class FirebaseMessagingService {
     try {
       console.log('📢 토픽 구독:', topic);
 
-      await messaging().subscribeToTopic(topic);
+      await messaging.subscribeToTopic(topic);
 
       console.log('✅ 토픽 구독 완료:', topic);
     } catch (error) {
@@ -236,7 +236,7 @@ class FirebaseMessagingService {
     try {
       console.log('🔕 토픽 구독 해제:', topic);
 
-      await messaging().unsubscribeFromTopic(topic);
+      await messaging.unsubscribeFromTopic(topic);
 
       console.log('✅ 토픽 구독 해제 완료:', topic);
     } catch (error) {
@@ -266,7 +266,7 @@ class FirebaseMessagingService {
     try {
       console.log('🔔 알림 생성:', userId, type);
 
-      const notificationRef = firestore()
+      const notificationRef = firestore
         .collection('users')
         .doc(userId)
         .collection('notifications')
@@ -307,7 +307,7 @@ class FirebaseMessagingService {
     limit: number = 20
   ): Promise<NotificationData[]> {
     try {
-      const snapshot = await firestore()
+      const snapshot = await firestore
         .collection('users')
         .doc(userId)
         .collection('notifications')
@@ -343,7 +343,7 @@ class FirebaseMessagingService {
   ): () => void {
     console.log('🔄 알림 구독:', userId);
 
-    const unsubscribe = firestore()
+    const unsubscribe = firestore
       .collection('users')
       .doc(userId)
       .collection('notifications')
@@ -370,7 +370,7 @@ class FirebaseMessagingService {
    */
   async markAsRead(userId: string, notificationId: string): Promise<void> {
     try {
-      await firestore()
+      await firestore
         .collection('users')
         .doc(userId)
         .collection('notifications')
@@ -392,14 +392,14 @@ class FirebaseMessagingService {
     try {
       console.log('📖 모든 알림 읽음 처리:', userId);
 
-      const snapshot = await firestore()
+      const snapshot = await firestore
         .collection('users')
         .doc(userId)
         .collection('notifications')
         .where('isRead', '==', false)
         .get();
 
-      const batch = firestore().batch();
+      const batch = firestore.batch();
 
       snapshot.forEach((doc) => {
         batch.update(doc.ref, { isRead: true });
@@ -421,7 +421,7 @@ class FirebaseMessagingService {
    */
   async deleteNotification(userId: string, notificationId: string): Promise<void> {
     try {
-      await firestore()
+      await firestore
         .collection('users')
         .doc(userId)
         .collection('notifications')
@@ -443,13 +443,13 @@ class FirebaseMessagingService {
     try {
       console.log('🗑️ 모든 알림 삭제:', userId);
 
-      const snapshot = await firestore()
+      const snapshot = await firestore
         .collection('users')
         .doc(userId)
         .collection('notifications')
         .get();
 
-      const batch = firestore().batch();
+      const batch = firestore.batch();
 
       snapshot.forEach((doc) => {
         batch.delete(doc.ref);
@@ -471,7 +471,7 @@ class FirebaseMessagingService {
    */
   async getUnreadCount(userId: string): Promise<number> {
     try {
-      const snapshot = await firestore()
+      const snapshot = await firestore
         .collection('users')
         .doc(userId)
         .collection('notifications')
@@ -498,7 +498,7 @@ class FirebaseMessagingService {
   ): () => void {
     console.log('🔄 읽지 않은 알림 개수 구독:', userId);
 
-    const unsubscribe = firestore()
+    const unsubscribe = firestore
       .collection('users')
       .doc(userId)
       .collection('notifications')
@@ -518,7 +518,7 @@ class FirebaseMessagingService {
   async updateBadgeCount(count: number): Promise<void> {
     if (Platform.OS === 'ios') {
       try {
-        await messaging().setAPNSToken(count.toString());
+        await messaging.setAPNSToken(count.toString());
         console.log('✅ 배지 개수 업데이트:', count);
       } catch (error) {
         console.error('❌ 배지 개수 업데이트 실패:', error);
@@ -570,7 +570,7 @@ class FirebaseMessagingService {
       }
 
       // 토큰 갱신 리스너
-      messaging().onTokenRefresh(async (newToken) => {
+      messaging.onTokenRefresh(async (newToken) => {
         console.log('🔄 FCM 토큰 갱신:', newToken.substring(0, 20) + '...');
         await this.saveToken(userId, newToken);
       });

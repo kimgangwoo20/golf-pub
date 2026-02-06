@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Props {
   visible: boolean;
@@ -10,11 +11,12 @@ interface Props {
 
 export const FilterSheet: React.FC<Props> = ({ visible, filters, onClose, onApply }) => {
   const [tempFilters, setTempFilters] = React.useState(filters);
+  const insets = useSafeAreaInsets();
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.overlay}>
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingBottom: 20 + insets.bottom }]}>
           <View style={styles.header}>
             <Text style={styles.title}>필터</Text>
             <TouchableOpacity onPress={onClose}>

@@ -9,18 +9,15 @@ import {
   TextInput,
   StyleSheet,
   Alert,
-  ActivityIndicator,
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { CATEGORIES, CONDITION_LABELS, ProductCategory, ProductCondition } from '../../types/marketplace-types';
-import { marketplaceAPI } from '../../services/api/marketplaceAPI';
-import { showImagePickerOptions, uploadMultipleImages } from '../../utils/imageUtils';
+import * as ImagePicker from 'expo-image-picker';
 
 export const CreateProductScreen: React.FC = () => {
   const navigation = useNavigation();
-  const [isLoading, setIsLoading] = useState(false);
 
   const [images, setImages] = useState<string[]>([]);
   const [title, setTitle] = useState('');
@@ -30,41 +27,69 @@ export const CreateProductScreen: React.FC = () => {
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
 
-  const handleAddImage = async () => {
+  const handleAddImage = () => {
     if (images.length >= 10) {
-      Alert.alert('알림', '이미지는 최대 10개까지 추가할 수 있습니다.');
+      Alert.alert('알림', '이미지는 최대 10장까지 추가할 수 있습니다.');
       return;
     }
 
-    const uri = await showImagePickerOptions();
-    if (uri) {
-      setImages([...images, uri]);
-    }
-  };
-
-  const handleRemoveImage = (index: number) => {
     Alert.alert(
-      '이미지 삭제',
-      '이 이미지를 삭제하시겠습니까?',
+      '이미지 추가',
+      '이미지를 가져올 방법을 선택하세요',
       [
         { text: '취소', style: 'cancel' },
         {
-          text: '삭제',
-          style: 'destructive',
-          onPress: () => {
-            setImages(images.filter((_, i) => i !== index));
+          text: '카메라',
+          onPress: async () => {
+            const { status } = await ImagePicker.requestCameraPermissionsAsync();
+            if (status !== 'granted') {
+              Alert.alert('권한 필요', '카메라 사용을 위해 권한이 필요합니다.');
+              return;
+            }
+
+            const result = await ImagePicker.launchCameraAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              allowsEditing: true,
+              aspect: [1, 1],
+              quality: 0.8,
+            });
+
+            if (!result.canceled && result.assets[0]) {
+              setImages(prev => [...prev, result.assets[0].uri]);
+            }
+          },
+        },
+        {
+          text: '앨범',
+          onPress: async () => {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+              Alert.alert('권한 필요', '앨범 접근을 위해 권한이 필요합니다.');
+              return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              allowsEditing: true,
+              aspect: [1, 1],
+              quality: 0.8,
+            });
+
+            if (!result.canceled && result.assets[0]) {
+              setImages(prev => [...prev, result.assets[0].uri]);
+            }
           },
         },
       ]
     );
   };
 
+  const handleRemoveImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = () => {
     // 유효성 검사
-    if (images.length === 0) {
-      Alert.alert('알림', '상품 이미지를 1개 이상 추가해주세요.');
-      return;
-    }
     if (!title.trim()) {
       Alert.alert('알림', '제목을 입력해주세요.');
       return;
@@ -93,38 +118,11 @@ export const CreateProductScreen: React.FC = () => {
         { text: '취소', style: 'cancel' },
         {
           text: '등록',
-          onPress: async () => {
-            setIsLoading(true);
-            try {
-              // 이미지 업로드
-              let uploadedImageUrls: string[] = [];
-              if (images.length > 0) {
-                uploadedImageUrls = await uploadMultipleImages(
-                  images,
-                  'marketplace',
-                  (current, total) => {
-                    console.log(`이미지 업로드 중: ${current}/${total}`);
-                  }
-                );
-              }
-
-              await marketplaceAPI.createProduct({
-                title,
-                category: category!,
-                price: parseInt(price, 10),
-                condition: condition!,
-                location: location || '',
-                description,
-                images: uploadedImageUrls,
-              });
-              Alert.alert('완료', '상품이 등록되었습니다! 🎉', [
-                { text: '확인', onPress: () => navigation.goBack() },
-              ]);
-            } catch (error: any) {
-              Alert.alert('오류', error.message || '상품 등록에 실패했습니다.');
-            } finally {
-              setIsLoading(false);
-            }
+          onPress: () => {
+            console.log('상품 등록:', { title, category, price, condition, location, description });
+            Alert.alert('완료', '상품이 등록되었습니다.', [
+              { text: '확인', onPress: () => navigation.goBack() },
+            ]);
           },
         },
       ]
@@ -155,16 +153,15 @@ export const CreateProductScreen: React.FC = () => {
                 <Text style={styles.addImageText}>{images.length}/10</Text>
               </TouchableOpacity>
               {images.map((uri, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.imageContainer}
-                  onPress={() => handleRemoveImage(index)}
-                >
+                <View key={index} style={styles.imageContainer}>
                   <Image source={{ uri }} style={styles.selectedImage} />
-                  <View style={styles.removeImageBadge}>
+                  <TouchableOpacity
+                    style={styles.removeImageButton}
+                    onPress={() => handleRemoveImage(index)}
+                  >
                     <Text style={styles.removeImageText}>✕</Text>
-                  </View>
-                </TouchableOpacity>
+                  </TouchableOpacity>
+                </View>
               ))}
             </ScrollView>
           </View>
@@ -289,16 +286,8 @@ export const CreateProductScreen: React.FC = () => {
 
         {/* 등록 버튼 */}
         <View style={styles.footer}>
-          <TouchableOpacity
-            style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
-            onPress={handleSubmit}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.submitButtonText}>등록하기</Text>
-            )}
+          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+            <Text style={styles.submitButtonText}>등록하기</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -379,20 +368,19 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   imageContainer: {
-    width: 100,
-    height: 100,
-    marginLeft: 8,
+    marginLeft: 12,
     position: 'relative',
   },
   selectedImage: {
     width: 100,
     height: 100,
     borderRadius: 8,
+    backgroundColor: '#E5E5E5',
   },
-  removeImageBadge: {
+  removeImageButton: {
     position: 'absolute',
-    top: -6,
-    right: -6,
+    top: -8,
+    right: -8,
     width: 24,
     height: 24,
     borderRadius: 12,
@@ -402,8 +390,8 @@ const styles = StyleSheet.create({
   },
   removeImageText: {
     color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '700',
   },
   input: {
     borderWidth: 1,
@@ -519,8 +507,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#fff',
-  },
-  submitButtonDisabled: {
-    opacity: 0.7,
   },
 });

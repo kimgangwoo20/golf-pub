@@ -35,7 +35,7 @@ export interface GolfCourseReview {
   id: number;
   courseId: number;
   author: {
-    id: number;
+    id: number | string; // Firebase UID(string) 또는 기존 Mock ID(number) 호환
     name: string;
     image: string;
     handicap: number;

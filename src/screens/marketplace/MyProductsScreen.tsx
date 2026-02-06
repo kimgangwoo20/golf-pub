@@ -1,6 +1,6 @@
 // MyProductsScreen.tsx - 내 판매 상품 화면
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Image,
   StyleSheet,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -80,11 +81,21 @@ type TabType = 'selling' | 'sold';
 export const MyProductsScreen: React.FC = () => {
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState<TabType>('selling');
+  const [products, setProducts] = useState(mockMyProducts);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const sellingProducts = mockMyProducts.filter(
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    // TODO: 실제 데이터 새로고침 API 호출
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  }, []);
+
+  const sellingProducts = products.filter(
     p => p.status === 'available' || p.status === 'reserved'
   );
-  const soldProducts = mockMyProducts.filter(p => p.status === 'sold');
+  const soldProducts = products.filter(p => p.status === 'sold');
 
   const displayProducts = activeTab === 'selling' ? sellingProducts : soldProducts;
 
@@ -94,19 +105,23 @@ export const MyProductsScreen: React.FC = () => {
   };
 
   const handleEdit = (productId: number) => {
-    Alert.alert('상품 수정', '수정 기능은 개발 예정입니다.');
+    // TODO: 상품 수정 화면으로 이동
+    navigation.navigate('CreateProduct' as never, { productId, editMode: true } as never);
   };
 
   const handleDelete = (productId: number) => {
     Alert.alert(
       '상품 삭제',
-      '정말 삭제하시겠습니까?',
+      '정말 삭제하시겠습니까?\n삭제된 상품은 복구할 수 없습니다.',
       [
         { text: '취소', style: 'cancel' },
         {
           text: '삭제',
           style: 'destructive',
-          onPress: () => console.log('삭제:', productId),
+          onPress: () => {
+            setProducts(prev => prev.filter(p => p.id !== productId));
+            Alert.alert('완료', '상품이 삭제되었습니다.');
+          },
         },
       ]
     );
@@ -115,12 +130,36 @@ export const MyProductsScreen: React.FC = () => {
   const handleChangeStatus = (productId: number) => {
     Alert.alert(
       '상태 변경',
-      '상품 상태를 변경하시겠습니까?',
+      '상품 상태를 선택하세요',
       [
         { text: '취소', style: 'cancel' },
-        { text: '판매중', onPress: () => console.log('판매중') },
-        { text: '예약중', onPress: () => console.log('예약중') },
-        { text: '판매완료', onPress: () => console.log('판매완료') },
+        {
+          text: '판매중',
+          onPress: () => {
+            setProducts(prev => prev.map(p =>
+              p.id === productId ? { ...p, status: 'available' as const } : p
+            ));
+            Alert.alert('완료', '판매중으로 변경되었습니다.');
+          },
+        },
+        {
+          text: '예약중',
+          onPress: () => {
+            setProducts(prev => prev.map(p =>
+              p.id === productId ? { ...p, status: 'reserved' as const } : p
+            ));
+            Alert.alert('완료', '예약중으로 변경되었습니다.');
+          },
+        },
+        {
+          text: '판매완료',
+          onPress: () => {
+            setProducts(prev => prev.map(p =>
+              p.id === productId ? { ...p, status: 'sold' as const } : p
+            ));
+            Alert.alert('완료', '판매완료로 변경되었습니다.');
+          },
+        },
       ]
     );
   };
@@ -150,7 +189,7 @@ export const MyProductsScreen: React.FC = () => {
         {/* 통계 */}
         <View style={styles.statsCard}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{mockMyProducts.length}</Text>
+            <Text style={styles.statValue}>{products.length}</Text>
             <Text style={styles.statLabel}>총 상품</Text>
           </View>
           <View style={styles.statDivider} />
@@ -186,7 +225,18 @@ export const MyProductsScreen: React.FC = () => {
         </View>
 
         {/* 상품 목록 */}
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#2E7D32"
+              colors={['#2E7D32']}
+            />
+          }
+        >
           <View style={styles.productList}>
             {displayProducts.length > 0 ? (
               displayProducts.map((product) => {

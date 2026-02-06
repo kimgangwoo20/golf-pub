@@ -23,6 +23,7 @@ export interface ChatRoom {
     name: string;
     avatar?: string;
   }>;
+  participantIds: string[]; // uid 배열 (Firestore array-contains 쿼리용)
   lastMessage?: {
     message: string;
     senderId: string;
@@ -46,7 +47,7 @@ interface ChatState {
   sendImage: (roomId: string, senderId: string, senderName: string, imageUrl: string, senderAvatar?: string) => Promise<void>;
   sendSystemMessage: (roomId: string, message: string) => Promise<void>;
   markAsRead: (roomId: string, userId: string) => Promise<void>;
-  createChatRoom: (room: Omit<ChatRoom, 'id' | 'createdAt' | 'updatedAt' | 'unreadCount'>) => Promise<string>;
+  createChatRoom: (room: Omit<ChatRoom, 'id' | 'createdAt' | 'updatedAt' | 'unreadCount' | 'participantIds'>) => Promise<string>;
   deleteChatRoom: (roomId: string) => Promise<void>;
   listenToMessages: (roomId: string, callback: (messages: ChatMessage[]) => void) => () => void;
 }
@@ -66,7 +67,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       const snapshot = await firebaseFirestore
         .collection('chatRooms')
-        .where('participants', 'array-contains', { uid: userId })
+        .where('participantIds', 'array-contains', userId)
         .orderBy('updatedAt', 'desc')
         .get();
 
@@ -302,8 +303,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
         unreadCount[p.uid] = 0;
       });
 
+      const participantIds = room.participants.map(p => p.uid);
+
       const newRoom = {
         ...room,
+        participantIds,
         unreadCount,
         createdAt: now,
         updatedAt: now,

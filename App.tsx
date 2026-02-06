@@ -5,7 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { View, Text, ActivityIndicator } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Firebase 초기화
 import './src/services/firebase/firebaseConfig';
@@ -37,10 +37,24 @@ import { RequestStatusScreen } from './src/screens/booking/RequestStatusScreen';
 // My 홈피 화면
 import { MyHomeScreen } from './src/screens/my/MyHomeScreen';
 
+// 활동 화면들
+import { HostedMeetupsScreen } from './src/screens/my/activity/HostedMeetupsScreen';
+import { JoinedMeetupsScreen } from './src/screens/my/activity/JoinedMeetupsScreen';
+import { MyPostsScreen } from './src/screens/my/activity/MyPostsScreen';
+import { MyReviewsScreen } from './src/screens/my/activity/MyReviewsScreen';
+
 // 프로필 화면들
 import { ProfileScreen } from './src/screens/profile/ProfileScreen';
 import { EditProfileScreen } from './src/screens/profile/EditProfileScreen';
-import { SettingsScreen } from './src/screens/profile/SettingsScreen';
+import { SettingsScreen } from './src/screens/my/settings/SettingsScreen';
+import { PointHistoryScreen } from './src/screens/my/settings/PointHistoryScreen';
+import { CouponsScreen } from './src/screens/my/settings/CouponsScreen';
+import { SupportScreen } from './src/screens/my/settings/SupportScreen';
+import { AccountManagementScreen } from './src/screens/my/settings/AccountManagementScreen';
+import { PrivacyPolicyScreen } from './src/screens/my/settings/PrivacyPolicyScreen';
+import { TermsOfServiceScreen } from './src/screens/my/settings/TermsOfServiceScreen';
+import { LocationTermsScreen } from './src/screens/my/settings/LocationTermsScreen';
+import { OpenSourceScreen } from './src/screens/my/settings/OpenSourceScreen';
 import { MyBookingsScreen } from './src/screens/profile/MyBookingsScreen';
 
 // 중고거래 화면들
@@ -60,11 +74,17 @@ import { InviteScreen } from './src/screens/friend/InviteScreen';
 import { CreateGroupScreen } from './src/screens/friend/CreateGroupScreen';
 import { GroupListScreen } from './src/screens/friend/GroupListScreen';
 
-// Feed 화면
+// Feed 화면들
+import { FeedScreen } from './src/screens/feed/FeedScreen';
+import { CreatePostScreen } from './src/screens/feed/CreatePostScreen';
 import { PostDetailScreen } from './src/screens/feed/PostDetailScreen';
+
+// 알림 화면
+import { NotificationListScreen } from './src/screens/notification/NotificationListScreen';
 
 // 골프장 화면들
 import { GolfCourseSearchScreen } from './src/screens/golfcourse/GolfCourseSearchScreen';
+import { GolfCourseDetailScreen } from './src/screens/golfcourse/GolfCourseDetailScreen';
 import { GolfCourseReviewScreen } from './src/screens/golfcourse/GolfCourseReviewScreen';
 
 // 펍 화면들
@@ -75,6 +95,7 @@ import { PubReviewsScreen } from './src/screens/pub/PubReviewsScreen';
 // 채팅 화면들 (Firebase)
 import { ChatListScreen } from './src/screens/chat/ChatListScreen-Firebase';
 import { ChatScreen } from './src/screens/chat/ChatScreen';
+import { ChatRoomScreen } from './src/screens/chat/ChatRoomScreen';
 import { CreateChatScreen } from './src/screens/chat/CreateChatScreen-Firebase';
 import { ChatSettingsScreen } from './src/screens/chat/ChatSettingsScreen';
 
@@ -91,20 +112,11 @@ const GolfCourseStack = createNativeStackNavigator();
 const ChatStack = createNativeStackNavigator();
 const FeedStack = createNativeStackNavigator();
 
-// 임시 Feed 메인 화면
-const TempFeedScreen = () => (
-  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8fafc' }}>
-    <Text style={{ fontSize: 32, marginBottom: 10 }}>📱</Text>
-    <Text style={{ fontSize: 18, fontWeight: '600', color: '#0f172a' }}>Feed 화면</Text>
-    <Text style={{ fontSize: 14, color: '#94a3b8', marginTop: 5 }}>개발 예정</Text>
-  </View>
-);
-
 // 홈 스택 (멤버십 포함)
 const HomeStackNavigator = () => (
   <HomeStack.Navigator screenOptions={{ headerShown: false }}>
     <HomeStack.Screen name="HomeMain" component={HomeScreen} />
-    <HomeStack.Screen name="MembershipIntro" component={MembershipIntroScreen} />
+    <HomeStack.Screen name="Membership" component={MembershipIntroScreen} />
     <HomeStack.Screen name="MembershipPlan" component={MembershipPlanScreen} />
     <HomeStack.Screen name="PlanComparison" component={PlanComparisonScreen} />
     <HomeStack.Screen name="MembershipPayment" component={MembershipPaymentScreen} />
@@ -112,6 +124,7 @@ const HomeStackNavigator = () => (
     <HomeStack.Screen name="MembershipBenefits" component={MembershipBenefitsScreen} />
     <HomeStack.Screen name="MembershipManage" component={MembershipManageScreen} />
     <HomeStack.Screen name="UpgradePlan" component={UpgradePlanScreen} />
+    <HomeStack.Screen name="NotificationList" component={NotificationListScreen} />
   </HomeStack.Navigator>
 );
 
@@ -130,7 +143,7 @@ const BookingStackNavigator = () => (
   </BookingStack.Navigator>
 );
 
-// My 홈피 스택 (친구그룹, 내예약 포함)
+// My 홈피 스택 (친구그룹, 내예약, 활동 포함)
 const MyHomeStackNavigator = () => (
   <MyHomeStack.Navigator screenOptions={{ headerShown: false }}>
     <MyHomeStack.Screen name="MyHomeMain" component={MyHomeScreen} />
@@ -147,11 +160,27 @@ const MyHomeStackNavigator = () => (
     <MyHomeStack.Screen name="Profile" component={ProfileScreen} />
     <MyHomeStack.Screen name="EditProfile" component={EditProfileScreen} />
     <MyHomeStack.Screen name="MyBookings" component={MyBookingsScreen} />
+    {/* 활동 화면들 */}
+    <MyHomeStack.Screen name="HostedMeetups" component={HostedMeetupsScreen} />
+    <MyHomeStack.Screen name="JoinedMeetups" component={JoinedMeetupsScreen} />
+    <MyHomeStack.Screen name="MyPosts" component={MyPostsScreen} />
+    <MyHomeStack.Screen name="MyReviews" component={MyReviewsScreen} />
     {/* 멤버십 관리 (프로필에서 접근) */}
     <MyHomeStack.Screen name="MembershipManage" component={MembershipManageScreen} />
     <MyHomeStack.Screen name="UpgradePlan" component={UpgradePlanScreen} />
-    {/* 설정 */}
+    {/* 설정 & 알림 */}
     <MyHomeStack.Screen name="Settings" component={SettingsScreen} />
+    <MyHomeStack.Screen name="Notifications" component={NotificationListScreen} />
+    {/* 포인트, 쿠폰, 고객센터 */}
+    <MyHomeStack.Screen name="PointHistory" component={PointHistoryScreen} />
+    <MyHomeStack.Screen name="Coupons" component={CouponsScreen} />
+    <MyHomeStack.Screen name="Support" component={SupportScreen} />
+    {/* 설정 하위 화면들 */}
+    <MyHomeStack.Screen name="AccountManagement" component={AccountManagementScreen} />
+    <MyHomeStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+    <MyHomeStack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
+    <MyHomeStack.Screen name="LocationTerms" component={LocationTermsScreen} />
+    <MyHomeStack.Screen name="OpenSource" component={OpenSourceScreen} />
   </MyHomeStack.Navigator>
 );
 
@@ -169,6 +198,7 @@ const MarketplaceStackNavigator = () => (
 const GolfCourseStackNavigator = () => (
   <GolfCourseStack.Navigator screenOptions={{ headerShown: false }}>
     <GolfCourseStack.Screen name="GolfCourseSearch" component={GolfCourseSearchScreen} />
+    <GolfCourseStack.Screen name="GolfCourseDetail" component={GolfCourseDetailScreen} />
     <GolfCourseStack.Screen name="GolfCourseReview" component={GolfCourseReviewScreen as any} />
     <GolfCourseStack.Screen name="BestPubs" component={BestPubsScreen} />
     <GolfCourseStack.Screen name="PubDetail" component={PubDetailScreen} />
@@ -181,6 +211,7 @@ const ChatStackNavigator = () => (
   <ChatStack.Navigator screenOptions={{ headerShown: false }}>
     <ChatStack.Screen name="ChatList" component={ChatListScreen} />
     <ChatStack.Screen name="ChatScreen" component={ChatScreen as any} />
+    <ChatStack.Screen name="ChatRoom" component={ChatRoomScreen} />
     <ChatStack.Screen name="CreateChat" component={CreateChatScreen} />
     <ChatStack.Screen name="ChatSettings" component={ChatSettingsScreen} />
   </ChatStack.Navigator>
@@ -189,12 +220,16 @@ const ChatStackNavigator = () => (
 // Feed 스택
 const FeedStackNavigator = () => (
   <FeedStack.Navigator screenOptions={{ headerShown: false }}>
-    <FeedStack.Screen name="FeedMain" component={TempFeedScreen} />
+    <FeedStack.Screen name="FeedMain" component={FeedScreen} />
+    <FeedStack.Screen name="CreatePost" component={CreatePostScreen} />
     <FeedStack.Screen name="PostDetail" component={PostDetailScreen as any} />
+    <FeedStack.Screen name="NotificationList" component={NotificationListScreen} />
   </FeedStack.Navigator>
 );
 
 function AppContent() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -206,6 +241,8 @@ function AppContent() {
           borderTopWidth: 1,
           borderTopColor: '#e2e8f0',
           paddingTop: 8,
+          paddingBottom: Math.max(insets.bottom, 12),
+          height: 58 + Math.max(insets.bottom, 12),
         },
         tabBarLabelStyle: {
           fontSize: 11,
@@ -226,13 +263,25 @@ function AppContent() {
         }}
       />
       <Tab.Screen
-        name="Booking"
+        name="Bookings"
         component={BookingStackNavigator}
         options={{
           tabBarLabel: '부킹',
           tabBarIcon: ({ focused }) => (
             <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
               ⛳
+            </Text>
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Feed"
+        component={FeedStackNavigator}
+        options={{
+          tabBarLabel: 'Feed',
+          tabBarIcon: ({ focused }) => (
+            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
+              📱
             </Text>
           ),
         }}
@@ -257,18 +306,6 @@ function AppContent() {
           tabBarIcon: ({ focused }) => (
             <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
               🛒
-            </Text>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Feed"
-        component={FeedStackNavigator}
-        options={{
-          tabBarLabel: 'Feed',
-          tabBarIcon: ({ focused }) => (
-            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-              📱
             </Text>
           ),
         }}
