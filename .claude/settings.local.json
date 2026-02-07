@@ -54,7 +54,14 @@
       "Bash(if not exist \"C:\\\\Projects\\\\golf-pub-app\\\\plugins\" mkdir \"C:\\\\Projects\\\\golf-pub-app\\\\plugins\")",
       "Bash(git tag:*)",
       "Bash(npx expo start:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(tasklist:*)",
+      "Bash(for file in src/screens/booking/BookingDetailScreen.tsx src/screens/booking/BookingListScreen.tsx src/screens/friends/FriendProfileScreen.tsx src/screens/friends/FriendsScreen.tsx src/screens/marketplace/MarketplaceScreen.tsx src/screens/marketplace/MyProductsScreen.tsx src/screens/marketplace/ProductDetailScreen.tsx src/screens/membership/UpgradePlanScreen.tsx src/screens/my/activity/HostedMeetupsScreen.tsx)",
+      "Bash(do sed -i \"s/} as never\\)/} as any\\)/g; s/as never, {/as never, {/g\" \"$file\")",
+      "Bash(for file in src/screens/booking/BookingListScreen.tsx src/screens/booking/PaymentScreen.tsx src/screens/feed/FeedScreen.tsx src/screens/friends/FriendsScreen.tsx src/screens/marketplace/MarketplaceScreen.tsx src/screens/marketplace/MyProductsScreen.tsx src/screens/membership/MembershipIntroScreen.tsx src/screens/membership/MembershipPaymentScreen.tsx src/screens/membership/PlanComparisonScreen.tsx src/screens/membership/UpgradePlanScreen.tsx src/screens/my/MyHomeScreen.tsx)",
+      "Bash(do sed -i 's/= useNavigation\\(\\);/= useNavigation<any>\\(\\);/' \"$file\")",
+      "Bash(npm run typecheck:*)",
+      "Bash(git push:*)"
     ]
   }
 }
