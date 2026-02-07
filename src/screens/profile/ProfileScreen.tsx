@@ -1,18 +1,26 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert, RefreshControl } from 'react-native';
-import { useAuthStore } from '../../store/useAuthStore';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert, RefreshControl, ActivityIndicator } from 'react-native';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useProfileStore } from '@/store/useProfileStore';
+import { colors } from '@/styles/theme';
 
 export const ProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const { user, signOut } = useAuthStore();
+  const { profile, loading: profileLoading, loadProfile } = useProfileStore();
   const [refreshing, setRefreshing] = useState(false);
 
-  const handleRefresh = useCallback(() => {
+  useEffect(() => {
+    if (user?.uid) {
+      loadProfile(user.uid);
+    }
+  }, [user?.uid, loadProfile]);
+
+  const handleRefresh = useCallback(async () => {
+    if (!user?.uid) return;
     setRefreshing(true);
-    // TODO: 실제 사용자 데이터 새로고침 API 호출
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
-  }, []);
+    await loadProfile(user.uid);
+    setRefreshing(false);
+  }, [user?.uid, loadProfile]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -43,6 +51,9 @@ export const ProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) =>
     ]);
   };
 
+  const totalRounds = profile?.totalRounds || (profile?.stats?.gamesPlayed) || 0;
+  const rating = profile?.rating || 0;
+
   return (
     <ScrollView
       style={styles.container}
@@ -50,16 +61,16 @@ export const ProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) =>
         <RefreshControl
           refreshing={refreshing}
           onRefresh={handleRefresh}
-          tintColor="#10b981"
-          colors={['#10b981']}
+          tintColor={colors.primary}
+          colors={[colors.primary]}
         />
       }
     >
       <View style={styles.header}>
         <View style={styles.avatarContainer}>
           <View style={styles.avatar}>
-            {user?.photoURL ? (
-              <Image source={{ uri: user.photoURL }} style={styles.avatarImage} />
+            {(profile?.photoURL || user?.photoURL) ? (
+              <Image source={{ uri: profile?.photoURL || user?.photoURL || '' }} style={styles.avatarImage} />
             ) : (
               <Text style={styles.avatarText}>👤</Text>
             )}
@@ -68,7 +79,7 @@ export const ProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) =>
             <Text>✏️</Text>
           </TouchableOpacity>
         </View>
-        <Text style={styles.name}>{user?.displayName || '사용자'}</Text>
+        <Text style={styles.name}>{profile?.displayName || user?.displayName || '사용자'}</Text>
         <Text style={styles.email}>{user?.email || ''}</Text>
         <View style={styles.membershipBadge}>
           <Text style={styles.membershipText}>👑 프리미엄 회원</Text>
@@ -77,17 +88,17 @@ export const ProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) =>
 
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{((user as any)?.pointBalance || 0).toLocaleString()}</Text>
+          <Text style={styles.statValue}>{(profile?.pointBalance || (user as any)?.pointBalance || 0).toLocaleString()}</Text>
           <Text style={styles.statLabel}>포인트</Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>24</Text>
+          <Text style={styles.statValue}>{totalRounds}</Text>
           <Text style={styles.statLabel}>부킹 참가</Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>4.8★</Text>
+          <Text style={styles.statValue}>{rating > 0 ? `${rating.toFixed(1)}★` : '-'}</Text>
           <Text style={styles.statLabel}>평점</Text>
         </View>
       </View>
@@ -132,14 +143,14 @@ const styles = StyleSheet.create({
   avatar: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#E3F2FD', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarImage: { width: 100, height: 100, borderRadius: 50 },
   avatarText: { fontSize: 40 },
-  editAvatarBtn: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#10b981', width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#fff' },
+  editAvatarBtn: { position: 'absolute', bottom: 0, right: 0, backgroundColor: colors.primary, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#fff' },
   name: { fontSize: 24, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 4 },
   email: { fontSize: 14, color: '#666', marginBottom: 12 },
-  membershipBadge: { backgroundColor: '#10b981', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
+  membershipBadge: { backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
   membershipText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   statsContainer: { flexDirection: 'row', backgroundColor: '#fff', padding: 20, marginBottom: 12 },
   statItem: { flex: 1, alignItems: 'center' },
-  statValue: { fontSize: 20, fontWeight: 'bold', color: '#10b981', marginBottom: 4 },
+  statValue: { fontSize: 20, fontWeight: 'bold', color: colors.primary, marginBottom: 4 },
   statLabel: { fontSize: 12, color: '#666' },
   divider: { width: 1, backgroundColor: '#e0e0e0' },
   menuContainer: { backgroundColor: '#fff', marginBottom: 12 },

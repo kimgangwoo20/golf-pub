@@ -1,40 +1,60 @@
-// CouponsScreen.tsx - 쿠폰함
-import React, { useState } from 'react';
+// CouponsScreen.tsx - 쿠폰함 (Firestore 연동)
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { profileAPI } from '@/services/api/profileAPI';
+import { Coupon } from '@/types/profile-types';
 
-interface Coupon {
-  id: string;
-  title: string;
-  description: string;
-  discount: string;
-  expiry: string;
-  status: 'available' | 'used' | 'expired';
-  code: string;
-}
+type CouponStatus = 'available' | 'used' | 'expired';
 
-const MOCK_COUPONS: Coupon[] = [
-  { id: '1', title: '신규 가입 축하 쿠폰', description: '첫 부킹 시 사용 가능', discount: '10,000원 할인', expiry: '2025-03-31', status: 'available', code: 'WELCOME10K' },
-  { id: '2', title: '라운딩 할인 쿠폰', description: '주중 라운딩 전용', discount: '15% 할인', expiry: '2025-02-28', status: 'available', code: 'WEEKDAY15' },
-  { id: '3', title: '골프용품 할인', description: '중고거래 구매 시 사용', discount: '5,000원 할인', expiry: '2025-04-30', status: 'available', code: 'MARKET5K' },
-  { id: '4', title: '친구 초대 보상 쿠폰', description: '부킹 시 사용 가능', discount: '20% 할인', expiry: '2025-01-31', status: 'expired', code: 'INVITE20' },
-  { id: '5', title: '설날 특별 쿠폰', description: '전 골프장 사용 가능', discount: '30,000원 할인', expiry: '2025-01-10', status: 'used', code: 'NEWYEAR30K' },
-];
+const getCouponStatus = (coupon: Coupon): CouponStatus => {
+  if (coupon.isUsed) return 'used';
+  if (new Date(coupon.expiryDate) < new Date()) return 'expired';
+  return 'available';
+};
 
 export const CouponsScreen: React.FC = () => {
   const navigation = useNavigation();
-  const [filter, setFilter] = useState<'available' | 'used' | 'expired'>('available');
+  const [filter, setFilter] = useState<CouponStatus>('available');
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const filteredCoupons = MOCK_COUPONS.filter(c => c.status === filter);
+  const loadCoupons = useCallback(async () => {
+    try {
+      setLoading(true);
+      const result = await profileAPI.getCoupons();
+      setCoupons(result);
+    } catch (error) {
+      console.error('쿠폰 로드 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const getStatusColor = (status: Coupon['status']) => {
+  useEffect(() => {
+    loadCoupons();
+  }, [loadCoupons]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadCoupons();
+    setRefreshing(false);
+  }, [loadCoupons]);
+
+  const filteredCoupons = coupons.filter(c => getCouponStatus(c) === filter);
+  const availableCount = coupons.filter(c => getCouponStatus(c) === 'available').length;
+
+  const getStatusColor = (status: CouponStatus) => {
     switch (status) {
       case 'available': return '#4CAF50';
       case 'used': return '#999';
@@ -42,27 +62,60 @@ export const CouponsScreen: React.FC = () => {
     }
   };
 
-  const renderItem = ({ item }: { item: Coupon }) => (
-    <View style={[styles.couponCard, item.status !== 'available' && styles.couponInactive]}>
-      <View style={[styles.couponLeft, { borderLeftColor: getStatusColor(item.status) }]}>
-        <Text style={styles.couponDiscount}>{item.discount}</Text>
-        <Text style={styles.couponTitle}>{item.title}</Text>
-        <Text style={styles.couponDesc}>{item.description}</Text>
-        <Text style={styles.couponExpiry}>유효기간: {item.expiry}까지</Text>
+  const formatDiscount = (coupon: Coupon) => {
+    if (coupon.discountType === 'percent') {
+      return `${coupon.discount}% 할인`;
+    }
+    return `${coupon.discount.toLocaleString()}원 할인`;
+  };
+
+  const renderItem = ({ item }: { item: Coupon }) => {
+    const status = getCouponStatus(item);
+    return (
+      <View style={[styles.couponCard, status !== 'available' && styles.couponInactive]}>
+        <View style={[styles.couponLeft, { borderLeftColor: getStatusColor(status) }]}>
+          <Text style={styles.couponDiscount}>{formatDiscount(item)}</Text>
+          <Text style={styles.couponTitle}>{item.name}</Text>
+          {item.minAmount && (
+            <Text style={styles.couponDesc}>{item.minAmount.toLocaleString()}원 이상 구매 시</Text>
+          )}
+          <Text style={styles.couponExpiry}>
+            유효기간: {new Date(item.expiryDate).toLocaleDateString('ko-KR')}까지
+          </Text>
+        </View>
+        <View style={styles.couponRight}>
+          <View style={styles.couponDivider} />
+          {status === 'available' && (
+            <TouchableOpacity style={styles.useButton}>
+              <Text style={styles.useButtonText}>사용</Text>
+            </TouchableOpacity>
+          )}
+          {status === 'used' && <Text style={styles.statusLabel}>사용완료</Text>}
+          {status === 'expired' && <Text style={[styles.statusLabel, { color: '#FF5722' }]}>기간만료</Text>}
+        </View>
       </View>
-      <View style={styles.couponRight}>
-        <View style={[styles.couponDivider]} />
-        <Text style={styles.couponCode}>{item.code}</Text>
-        {item.status === 'available' && (
-          <TouchableOpacity style={styles.useButton}>
-            <Text style={styles.useButtonText}>사용</Text>
-          </TouchableOpacity>
-        )}
-        {item.status === 'used' && <Text style={styles.statusLabel}>사용완료</Text>}
-        {item.status === 'expired' && <Text style={[styles.statusLabel, { color: '#FF5722' }]}>기간만료</Text>}
-      </View>
-    </View>
-  );
+    );
+  };
+
+  if (loading && coupons.length === 0) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Text style={styles.backIcon}>‹</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>쿠폰함</Text>
+            <View style={{ width: 40 }} />
+          </View>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#10b981" />
+            <Text style={styles.loadingText}>쿠폰을 불러오는 중...</Text>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -83,7 +136,7 @@ export const CouponsScreen: React.FC = () => {
               onPress={() => setFilter(f)}
             >
               <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
-                {f === 'available' ? `사용가능 (${MOCK_COUPONS.filter(c => c.status === 'available').length})` : f === 'used' ? '사용완료' : '기간만료'}
+                {f === 'available' ? `사용가능 (${availableCount})` : f === 'used' ? '사용완료' : '기간만료'}
               </Text>
             </TouchableOpacity>
           ))}
@@ -91,9 +144,17 @@ export const CouponsScreen: React.FC = () => {
 
         <FlatList
           data={filteredCoupons}
-          keyExtractor={item => item.id}
+          keyExtractor={item => String(item.id)}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#10b981"
+              colors={['#10b981']}
+            />
+          }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyIcon}>🎫</Text>
@@ -109,6 +170,8 @@ export const CouponsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#fff' },
   container: { flex: 1, backgroundColor: '#F5F5F5' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 12, fontSize: 14, color: '#666' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingVertical: 16, backgroundColor: '#fff',
@@ -147,7 +210,6 @@ const styles = StyleSheet.create({
     position: 'absolute', left: 0, top: 12, bottom: 12, width: 1,
     borderLeftWidth: 1, borderLeftColor: '#E5E5E5', borderStyle: 'dashed',
   },
-  couponCode: { fontSize: 10, color: '#999', marginBottom: 8 },
   useButton: {
     backgroundColor: '#10b981', paddingHorizontal: 16, paddingVertical: 6, borderRadius: 12,
   },

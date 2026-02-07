@@ -1,4 +1,4 @@
-// JoinedMeetupsScreen.tsx - 참가한 모임 화면 (수정됨 - 실제 API 연동)
+// JoinedMeetupsScreen.tsx - 참가한 모임 화면 (Firestore 연동)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -14,119 +14,50 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useAuthStore } from '../../../store/useAuthStore'; // ✅ 추가
-// import { bookingAPI } from '../../../services/api/bookingAPI'; // ✅ 추가 (API 준비 시)
+import { useAuthStore } from '@/store/useAuthStore';
+import { getMyJoinedBookings } from '@/services/firebase/firebaseBooking';
 
 type TabType = 'upcoming' | 'completed';
 
 export const JoinedMeetupsScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
-  const { user } = useAuthStore(); // ✅ useAuthStore 사용
-  
+  const { user } = useAuthStore();
+
   const [activeTab, setActiveTab] = useState<TabType>('upcoming');
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await loadMyBookings();
-    setRefreshing(false);
-  }, []);
-
-  useEffect(() => {
-    loadMyBookings();
-  }, []);
-
-  const loadMyBookings = async () => {
+  const loadMyBookings = useCallback(async () => {
+    if (!user?.uid) return;
     try {
       setLoading(true);
-      
-      // TODO: 실제 API 호출로 변경
-      // const allBookings = await bookingAPI.getBookings();
-      // const myBookings = allBookings.filter(booking => 
-      //   booking.participants?.some(p => p.userId === user?.id)
-      // );
-      // setBookings(myBookings);
-      
-      // 임시 Mock 데이터 (API 준비 전까지)
-      const mockJoinedMeetups = [
-        {
-          id: 1,
-          title: '평일 오후 라운딩',
-          golfCourse: '남서울CC',
-          location: '서울 강남',
-          date: '2025.01.30',
-          time: '14:00',
-          price: 150000,
-          currentPlayers: 3,
-          maxPlayers: 4,
-          status: 'upcoming',
-          hostName: '이호스트',
-          image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400',
-          hasPub: true,
-        },
-        {
-          id: 2,
-          title: '초보 환영 라운딩',
-          golfCourse: '대관령CC',
-          location: '강원 평창',
-          date: '2025.02.05',
-          time: '09:00',
-          price: 100000,
-          currentPlayers: 2,
-          maxPlayers: 4,
-          status: 'upcoming',
-          hostName: '박골프',
-          image: 'https://images.unsplash.com/photo-1592919505780-303950717480?w=400',
-          hasPub: false,
-        },
-        {
-          id: 3,
-          title: '주말 라운딩 같이 치실 분!',
-          golfCourse: '세라지오CC',
-          location: '경기 광주',
-          date: '2025.01.17',
-          time: '10:00',
-          price: 120000,
-          currentPlayers: 4,
-          maxPlayers: 4,
-          status: 'completed',
-          hostName: '김라운딩',
-          image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400',
-          hasPub: true,
-        },
-        {
-          id: 4,
-          title: '강원도 겨울 라운딩',
-          golfCourse: '하이원CC',
-          location: '강원 정선',
-          date: '2025.01.10',
-          time: '11:00',
-          price: 90000,
-          currentPlayers: 4,
-          maxPlayers: 4,
-          status: 'completed',
-          hostName: '최겨울',
-          image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400',
-          hasPub: false,
-        },
-      ];
-      
-      setBookings(mockJoinedMeetups);
+      const result = await getMyJoinedBookings(user.uid);
+      setBookings(result);
     } catch (error) {
       console.error('내 모임 로드 실패:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.uid]);
 
-  const upcomingMeetups = bookings.filter(m => m.status === 'upcoming');
-  const completedMeetups = bookings.filter(m => m.status === 'completed');
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadMyBookings();
+    setRefreshing(false);
+  }, [loadMyBookings]);
+
+  useEffect(() => {
+    loadMyBookings();
+  }, [loadMyBookings]);
+
+  // status 매핑: Firestore OPEN → upcoming, COMPLETED/CLOSED → completed
+  const upcomingMeetups = bookings.filter(m => m.status === 'OPEN' || m.status === 'upcoming');
+  const completedMeetups = bookings.filter(m => m.status === 'COMPLETED' || m.status === 'CLOSED' || m.status === 'completed');
 
   const displayMeetups = activeTab === 'upcoming' ? upcomingMeetups : completedMeetups;
 
-  const handleCardPress = (id: number) => {
+  const handleCardPress = (id: string) => {
     navigation.navigate('Bookings', {
       screen: 'BookingDetail',
       params: { bookingId: id },
@@ -195,7 +126,9 @@ export const JoinedMeetupsScreen: React.FC = () => {
                   onPress={() => handleCardPress(meetup.id)}
                 >
                   {/* 이미지 */}
-                  <Image source={{ uri: meetup.image }} style={styles.meetupImage} />
+                  {meetup.image && (
+                    <Image source={{ uri: meetup.image }} style={styles.meetupImage} />
+                  )}
 
                   {/* 술집 연계 배지 */}
                   {meetup.hasPub && (
@@ -207,17 +140,19 @@ export const JoinedMeetupsScreen: React.FC = () => {
                   {/* 내용 */}
                   <View style={styles.meetupContent}>
                     <Text style={styles.meetupTitle}>{meetup.title}</Text>
-                    <Text style={styles.meetupInfo}>⛳ {meetup.golfCourse}</Text>
-                    <Text style={styles.meetupInfo}>📍 {meetup.location}</Text>
+                    <Text style={styles.meetupInfo}>⛳ {meetup.course}</Text>
+                    {meetup.location && <Text style={styles.meetupInfo}>📍 {meetup.location}</Text>}
                     <Text style={styles.meetupInfo}>📅 {meetup.date} {meetup.time}</Text>
-                    <Text style={styles.meetupInfo}>👤 호스트: {meetup.hostName}</Text>
+                    {meetup.host?.name && (
+                      <Text style={styles.meetupInfo}>👤 호스트: {meetup.host.name}</Text>
+                    )}
 
                     <View style={styles.meetupFooter}>
                       <Text style={styles.meetupPrice}>
-                        {meetup.price.toLocaleString()}원/인
+                        {(meetup.price?.original || 0).toLocaleString()}원/인
                       </Text>
                       <Text style={styles.meetupPlayers}>
-                        {meetup.currentPlayers}/{meetup.maxPlayers}명
+                        {meetup.participants?.current || 0}/{meetup.participants?.max || 4}명
                       </Text>
                     </View>
                   </View>
