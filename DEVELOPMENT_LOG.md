@@ -109,6 +109,17 @@
 - [x] ~~HomeScreen - 알림 뱃지 하드코딩 "3" → useNotificationStore 실시간 연결~~ (2026.02.07 완료)
 - [x] ~~HomeScreen - 멤버십 배너 하드코딩 텍스트 → MEMBERSHIP_PLANS 상수 연결~~ (2026.02.07 완료)
 
+### 2026.02.07 예약 화면 Mock→Firestore 전환 (5차 배치)
+
+- [x] ~~ApplicantProfileScreen - MOCK_APPLICANT 제거 → getApplicantProfile + approveBookingRequest/rejectBookingRequest 실제 API 연결~~ (2026.02.07 완료)
+- [x] ~~PaymentScreen - 하드코딩 booking 객체 제거 → getBookingDetail + users 조인 연결, console.log/setTimeout 제거, bookingId number→string~~ (2026.02.07 완료)
+- [x] ~~PopularBookingsScreen - MOCK_BOOKINGS 2건 + 로컬 Booking 제거 → getPopularBookings 연결, setTimeout 제거~~ (2026.02.07 완료)
+- [x] ~~RecommendedBookingsScreen - MOCK_BOOKINGS 2건 + 로컬 Booking 제거 → getRecommendedBookings 연결~~ (2026.02.07 완료)
+- [x] ~~RequestStatusScreen - MOCK_REQUEST 제거 → getRequestStatus 연결 (bookingParticipants + bookings + users 조인)~~ (2026.02.07 완료)
+- [x] ~~firebaseBooking.ts - getPopularBookings, getRecommendedBookings, getRequestStatus, getApplicantProfile 4개 함수 추가~~ (2026.02.07 완료)
+- [x] ~~5개 화면 상대 경로(../../) → @/ 경로 별칭 변경~~ (2026.02.07 완료)
+- [x] ~~5개 화면 로딩/빈 상태 UI + Pull-to-refresh 추가~~ (2026.02.07 완료)
+
 ### 2026.02.07 친구 관리 Mock→Firestore 전환 (4차 배치)
 
 - [x] ~~FriendsScreen - mockFriends 5건 제거 → getFriendsList + getPendingRequests 연결, console.log 제거, 통계 실제 데이터 연결~~ (2026.02.07 완료)
@@ -179,6 +190,11 @@
   - [x] ~~FriendRequestsScreen - Mock 제거 → Firebase accept/reject/cancel 연결~~ (2026.02.07 완료)
   - [x] ~~FriendProfileScreen - Mock 제거 → getFriendProfile 연결~~ (2026.02.07 완료)
   - [x] ~~AddFriendScreen - Mock 제거 → getSuggestedFriends 연결, fallback 제거~~ (2026.02.07 완료)
+  - [x] ~~ApplicantProfileScreen - Mock 제거 → getApplicantProfile + approve/reject 연결~~ (2026.02.07 완료)
+  - [x] ~~PaymentScreen - 하드코딩 제거 → getBookingDetail 연결, console.log/setTimeout 제거~~ (2026.02.07 완료)
+  - [x] ~~PopularBookingsScreen - Mock 제거 → getPopularBookings 연결~~ (2026.02.07 완료)
+  - [x] ~~RecommendedBookingsScreen - Mock 제거 → getRecommendedBookings 연결~~ (2026.02.07 완료)
+  - [x] ~~RequestStatusScreen - Mock 제거 → getRequestStatus 연결~~ (2026.02.07 완료)
 
 - [ ] **푸시 알림 완성** - Firebase Cloud Messaging
   - [ ] FCM 토큰 등록 & 서버 전송
@@ -282,7 +298,8 @@
 | 테스트/배포 | 10 | 0 | 10 | 0% |
 | 코드 품질 | 4 | 4 | 0 | 100% |
 | 친구 Mock→API 전환 | 4 | 4 | 0 | 100% |
-| **전체** | **102** | **77** | **25** | **75%** |
+| 예약 Mock→API 전환 (5차) | 5 | 5 | 0 | 100% |
+| **전체** | **107** | **82** | **25** | **77%** |
 
 ---
 
@@ -290,6 +307,15 @@
 
 ### 2026.02.07
 
+> **예약 화면 Mock→Firestore 전환 5차 배치 (5개 화면 + firebase 함수 4개)**
+> - ApplicantProfileScreen: MOCK_APPLICANT 제거 → getApplicantProfile로 Firestore users 컬렉션 조회, approveBookingRequest/rejectBookingRequest 실제 API 연결, 로딩/빈 상태 UI 추가
+> - PaymentScreen: 하드코딩 booking 객체 제거 → getBookingDetail + users 컬렉션 호스트 이름 조인, console.log 제거, setTimeout 제거, 상대 경로 → @/ 수정, bookingId 타입 number→string
+> - PopularBookingsScreen: MOCK_BOOKINGS 2건 + 로컬 Booking 인터페이스 제거 → getPopularBookings 연결 (참가자 많은 순 정렬), setTimeout 제거, 로딩/빈 상태 UI 추가
+> - RecommendedBookingsScreen: MOCK_BOOKINGS 2건 + 로컬 Booking 인터페이스 제거 → getRecommendedBookings 연결 (본인 호스팅 제외), 로딩/새로고침/빈 상태 UI 추가
+> - RequestStatusScreen: MOCK_REQUEST 제거 → getRequestStatus 연결 (bookingParticipants + bookings + users 3개 컬렉션 조인), 로딩/빈 상태 UI 추가
+> - firebaseBooking.ts: getPopularBookings(인기 부킹), getRecommendedBookings(추천 부킹), getRequestStatus(신청 상태), getApplicantProfile(신청자 프로필) 4개 함수 추가
+> - typecheck 0 에러 유지
+>
 > **친구 관리 Mock→Firestore 전환 4차 배치 (4개 화면 + firebase 함수 4개)**
 > - FriendsScreen: mockFriends 5건 제거 → getFriendsList + getPendingRequests 연결, console.log 제거, 하드코딩 통계(24, 48) → user.stats 연결, 뱃지 "3" → pendingCount 동적 표시
 > - FriendRequestsScreen: mockReceivedRequests 3건 + mockSentRequests 2건 제거 → getPendingRequests/getSentRequests 연결, accept/reject/cancel 실제 Firebase API 호출, 사용자 정보 enrichment(users 컬렉션 조회)
