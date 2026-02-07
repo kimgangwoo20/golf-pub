@@ -1,6 +1,6 @@
-// AddFriendScreen.tsx - 친구 추가 화면
+// AddFriendScreen.tsx - 친구 추가 화면 (Firestore 연동)
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,62 +12,20 @@ import {
   Alert,
   Modal,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { searchFriends, sendFriendRequest } from '@/services/firebase/firebaseFriends';
-import { useAuthStore } from '../../store/useAuthStore';
+import {
+  searchFriends,
+  sendFriendRequest,
+  getSuggestedFriends,
+} from '@/services/firebase/firebaseFriends';
+import { useAuthStore } from '@/store/useAuthStore';
+import { Friend } from '@/services/firebase/firebaseFriends';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-// Mock 추천 친구 데이터
-const mockSuggestions = [
-  {
-    id: 1,
-    name: '강준호',
-    image: 'https://i.pravatar.cc/150?img=8',
-    handicap: 16,
-    location: '서울 강동구',
-    mutualFriends: 12,
-  },
-  {
-    id: 2,
-    name: '윤서연',
-    image: 'https://i.pravatar.cc/150?img=25',
-    handicap: 20,
-    location: '경기 하남시',
-    mutualFriends: 8,
-  },
-  {
-    id: 3,
-    name: '한민재',
-    image: 'https://i.pravatar.cc/150?img=31',
-    handicap: 14,
-    location: '서울 송파구',
-    mutualFriends: 15,
-  },
-];
-
-// Mock 검색 결과
-const mockSearchResults = [
-  {
-    id: 4,
-    name: '이도현',
-    image: 'https://i.pravatar.cc/150?img=52',
-    handicap: 18,
-    location: '서울 강남구',
-    mutualFriends: 3,
-  },
-  {
-    id: 5,
-    name: '이지은',
-    image: 'https://i.pravatar.cc/150?img=47',
-    handicap: 22,
-    location: '서울 서초구',
-    mutualFriends: 0,
-  },
-];
 
 type TabType = 'search' | 'suggestions' | 'qr';
 
@@ -77,13 +35,34 @@ export const AddFriendScreen: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<TabType>('search');
   const [searchText, setSearchText] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<Friend[]>([]);
+  const [suggestions, setSuggestions] = useState<Friend[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   // QR 관련 상태
   const [qrScanModalVisible, setQrScanModalVisible] = useState(false);
   const [myQrModalVisible, setMyQrModalVisible] = useState(false);
   const [scanned, setScanned] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
+
+  // 추천 친구 로드
+  const loadSuggestions = useCallback(async () => {
+    if (!user?.uid) return;
+    try {
+      setSuggestionsLoading(true);
+      const result = await getSuggestedFriends(user.uid);
+      setSuggestions(result);
+    } catch (error) {
+      console.error('추천 친구 로드 실패:', error);
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  }, [user?.uid]);
+
+  useEffect(() => {
+    loadSuggestions();
+  }, [loadSuggestions]);
 
   const handleSearch = async () => {
     if (searchText.trim().length < 2) {
@@ -97,9 +76,8 @@ export const AddFriendScreen: React.FC = () => {
     }
 
     try {
-      const currentUserId = user.uid;
-
-      const results = await searchFriends(searchText, currentUserId);
+      setSearchLoading(true);
+      const results = await searchFriends(searchText, user.uid);
 
       if (results.length === 0) {
         Alert.alert('검색 결과 없음', '검색 결과가 없습니다. 다른 검색어를 입력해주세요.');
@@ -109,17 +87,14 @@ export const AddFriendScreen: React.FC = () => {
       }
     } catch (error) {
       console.error('친구 검색 실패:', error);
-      // Firebase 연결 실패 시 Mock 데이터 사용
-      Alert.alert(
-        '알림',
-        'Firebase 연결이 필요합니다.\n임시로 Mock 데이터를 표시합니다.',
-        [{ text: '확인' }]
-      );
-      setSearchResults(mockSearchResults);
+      Alert.alert('오류', '검색 중 오류가 발생했습니다.');
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
     }
   };
 
-  const handleAddFriend = async (userId: number, userName: string) => {
+  const handleAddFriend = async (targetUserId: string, userName: string) => {
     if (!user?.uid) {
       Alert.alert('알림', '로그인이 필요합니다.');
       return;
@@ -134,9 +109,7 @@ export const AddFriendScreen: React.FC = () => {
           text: '요청',
           onPress: async () => {
             try {
-              const currentUserId = user.uid;
-
-              const result = await sendFriendRequest(currentUserId, userId.toString());
+              const result = await sendFriendRequest(user.uid, targetUserId);
 
               if (result.success) {
                 Alert.alert('완료', result.message);
@@ -145,12 +118,7 @@ export const AddFriendScreen: React.FC = () => {
               }
             } catch (error) {
               console.error('친구 요청 실패:', error);
-              // Firebase 연결 실패 시 Mock 동작
-              Alert.alert(
-                '알림',
-                'Firebase 연결이 필요합니다.\n친구 요청을 보냈습니다. (Mock)',
-                [{ text: '확인' }]
-              );
+              Alert.alert('오류', '친구 요청에 실패했습니다.');
             }
           },
         },
@@ -181,7 +149,7 @@ export const AddFriendScreen: React.FC = () => {
   };
 
   // QR 코드 스캔 결과 처리
-  const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
+  const handleBarCodeScanned = ({ data }: { type: string; data: string }) => {
     if (scanned) return;
     setScanned(true);
 
@@ -233,8 +201,8 @@ export const AddFriendScreen: React.FC = () => {
                   Alert.alert('알림', result.message);
                 }
               } catch (error) {
-                console.error('친구 요청 실패:', error);
-                Alert.alert('완료', 'QR 코드로 친구 요청을 보냈습니다. (Mock)');
+                console.error('QR 친구 요청 실패:', error);
+                Alert.alert('오류', '친구 요청에 실패했습니다.');
               }
             },
           },
@@ -252,6 +220,33 @@ export const AddFriendScreen: React.FC = () => {
   const getMyQRData = () => {
     return `golfpub://friend/${user?.uid || 'unknown'}`;
   };
+
+  const renderUserCard = (userItem: Friend, isSearch: boolean = false) => (
+    <View key={userItem.id} style={styles.userCard}>
+      <Image
+        source={{ uri: userItem.avatar || 'https://i.pravatar.cc/150' }}
+        style={styles.userImage}
+      />
+
+      <View style={styles.userInfo}>
+        <Text style={styles.userName}>{userItem.name}</Text>
+        <Text style={styles.userHandicap}>⛳ {userItem.handicap}</Text>
+        <Text style={styles.userLocation}>📍 {userItem.location}</Text>
+        {userItem.mutualFriends > 0 && (
+          <Text style={styles.mutualText}>
+            공통 친구 {userItem.mutualFriends}명
+          </Text>
+        )}
+      </View>
+
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => handleAddFriend(userItem.id, userItem.name)}
+      >
+        <Text style={styles.addButtonText}>추가</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -312,7 +307,11 @@ export const AddFriendScreen: React.FC = () => {
                     onSubmitEditing={handleSearch}
                   />
                   <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-                    <Text style={styles.searchButtonText}>검색</Text>
+                    {searchLoading ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Text style={styles.searchButtonText}>검색</Text>
+                    )}
                   </TouchableOpacity>
                 </View>
               </View>
@@ -321,29 +320,7 @@ export const AddFriendScreen: React.FC = () => {
               {searchResults.length > 0 && (
                 <View style={styles.resultsSection}>
                   <Text style={styles.sectionTitle}>검색 결과</Text>
-                  {searchResults.map((user) => (
-                    <View key={user.id} style={styles.userCard}>
-                      <Image source={{ uri: user.image }} style={styles.userImage} />
-
-                      <View style={styles.userInfo}>
-                        <Text style={styles.userName}>{user.name}</Text>
-                        <Text style={styles.userHandicap}>⛳ {user.handicap}</Text>
-                        <Text style={styles.userLocation}>📍 {user.location}</Text>
-                        {user.mutualFriends > 0 && (
-                          <Text style={styles.mutualText}>
-                            공통 친구 {user.mutualFriends}명
-                          </Text>
-                        )}
-                      </View>
-
-                      <TouchableOpacity
-                        style={styles.addButton}
-                        onPress={() => handleAddFriend(user.id, user.name)}
-                      >
-                        <Text style={styles.addButtonText}>추가</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ))}
+                  {searchResults.map((u) => renderUserCard(u, true))}
                 </View>
               )}
             </View>
@@ -355,30 +332,22 @@ export const AddFriendScreen: React.FC = () => {
               <View style={styles.suggestionsSection}>
                 <Text style={styles.sectionTitle}>추천 친구</Text>
                 <Text style={styles.sectionDescription}>
-                  공통 친구가 많은 골퍼를 추천합니다
+                  새로 가입한 골퍼를 추천합니다
                 </Text>
 
-                {mockSuggestions.map((user) => (
-                  <View key={user.id} style={styles.userCard}>
-                    <Image source={{ uri: user.image }} style={styles.userImage} />
-
-                    <View style={styles.userInfo}>
-                      <Text style={styles.userName}>{user.name}</Text>
-                      <Text style={styles.userHandicap}>⛳ {user.handicap}</Text>
-                      <Text style={styles.userLocation}>📍 {user.location}</Text>
-                      <Text style={styles.mutualText}>
-                        공통 친구 {user.mutualFriends}명
-                      </Text>
-                    </View>
-
-                    <TouchableOpacity
-                      style={styles.addButton}
-                      onPress={() => handleAddFriend(user.id, user.name)}
-                    >
-                      <Text style={styles.addButtonText}>추가</Text>
-                    </TouchableOpacity>
+                {suggestionsLoading ? (
+                  <View style={styles.suggestionsLoading}>
+                    <ActivityIndicator size="large" color="#10b981" />
+                    <Text style={styles.suggestionsLoadingText}>추천 친구를 불러오는 중...</Text>
                   </View>
-                ))}
+                ) : suggestions.length > 0 ? (
+                  suggestions.map((u) => renderUserCard(u))
+                ) : (
+                  <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyIcon}>👥</Text>
+                    <Text style={styles.emptyTitle}>추천 친구가 없습니다</Text>
+                  </View>
+                )}
               </View>
             </View>
           )}
@@ -645,6 +614,27 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+  },
+  suggestionsLoading: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  suggestionsLoadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    color: '#666',
   },
   userCard: {
     flexDirection: 'row',

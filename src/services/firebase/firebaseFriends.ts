@@ -283,6 +283,178 @@ export const getPendingRequests = async (userId: string): Promise<FriendRequest[
 };
 
 /**
+ * 보낸 친구 요청 목록
+ */
+export const getSentRequests = async (userId: string): Promise<FriendRequest[]> => {
+  try {
+    const snapshot = await firestore()
+      .collection('friendRequests')
+      .where('fromUserId', '==', userId)
+      .where('status', '==', 'pending')
+      .orderBy('createdAt', 'desc')
+      .get();
+
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as FriendRequest[];
+  } catch (error) {
+    console.error('보낸 요청 조회 실패:', error);
+    return [];
+  }
+};
+
+/**
+ * 친구 요청 취소 (보낸 요청 삭제)
+ */
+export const cancelFriendRequest = async (
+  requestId: string,
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    await firestore()
+      .collection('friendRequests')
+      .doc(requestId)
+      .delete();
+
+    return {
+      success: true,
+      message: '친구 요청을 취소했습니다.',
+    };
+  } catch (error) {
+    console.error('친구 요청 취소 실패:', error);
+    return {
+      success: false,
+      message: '친구 요청 취소에 실패했습니다.',
+    };
+  }
+};
+
+/**
+ * 친구 프로필 조회 (users 컬렉션에서 사용자 정보 + 친구 관계 정보)
+ */
+export const getFriendProfile = async (
+  currentUserId: string,
+  friendId: string,
+): Promise<{
+  profile: any;
+  friendshipInfo: any;
+  recentMeetups: any[];
+} | null> => {
+  try {
+    // 사용자 프로필 조회
+    const userDoc = await firestore()
+      .collection('users')
+      .doc(friendId)
+      .get();
+
+    if (!userDoc.exists) {
+      return null;
+    }
+
+    const profileData = userDoc.data();
+
+    // 친구 관계 정보 조회
+    const friendDoc = await firestore()
+      .collection('friends')
+      .doc(`${currentUserId}_${friendId}`)
+      .get();
+
+    const friendshipInfo = friendDoc.exists ? friendDoc.data() : null;
+
+    // 최근 함께한 모임 조회 (bookings에서 둘 다 참여한 것)
+    const bookingsSnapshot = await firestore()
+      .collection('bookings')
+      .where('participants.list', 'array-contains', friendId)
+      .orderBy('date', 'desc')
+      .limit(5)
+      .get();
+
+    const recentMeetups = bookingsSnapshot.docs
+      .map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }))
+      .filter((b: any) => b.participants?.list?.includes(currentUserId));
+
+    return {
+      profile: {
+        id: friendId,
+        name: profileData?.name || profileData?.displayName || '사용자',
+        avatar: profileData?.avatar || profileData?.photoURL || '',
+        handicap: profileData?.handicap || 0,
+        location: profileData?.location || '미등록',
+        bio: profileData?.bio || '',
+        joinedDate: profileData?.createdAt?.toDate?.() || null,
+        stats: {
+          totalMeetups: profileData?.stats?.gamesPlayed || 0,
+          totalRounds: profileData?.stats?.totalRounds || 0,
+          averageScore: profileData?.stats?.averageScore || 0,
+        },
+      },
+      friendshipInfo: friendshipInfo ? {
+        friendsSince: friendshipInfo.createdAt?.toDate?.() || null,
+      } : null,
+      recentMeetups: recentMeetups.map((m: any) => ({
+        id: m.id,
+        title: m.title || '모임',
+        course: m.course?.name || m.golfCourse || '',
+        date: m.date,
+      })),
+    };
+  } catch (error) {
+    console.error('친구 프로필 조회 실패:', error);
+    return null;
+  }
+};
+
+/**
+ * 추천 친구 목록 (최근 가입한 사용자 중 아직 친구가 아닌 사용자)
+ */
+export const getSuggestedFriends = async (userId: string): Promise<Friend[]> => {
+  try {
+    // 현재 친구 목록 가져오기
+    const friendsSnapshot = await firestore()
+      .collection('friends')
+      .where('userId', '==', userId)
+      .get();
+
+    const friendIds = new Set(friendsSnapshot.docs.map((doc) => doc.data().friendId));
+    friendIds.add(userId); // 자기 자신 제외
+
+    // 최근 가입한 사용자 조회
+    const usersSnapshot = await firestore()
+      .collection('users')
+      .orderBy('createdAt', 'desc')
+      .limit(30)
+      .get();
+
+    const suggestions: Friend[] = [];
+
+    for (const doc of usersSnapshot.docs) {
+      if (friendIds.has(doc.id)) continue;
+      if (suggestions.length >= 10) break;
+
+      const data = doc.data();
+      suggestions.push({
+        id: doc.id,
+        name: data.name || data.displayName || '사용자',
+        avatar: data.avatar || data.photoURL || '',
+        handicap: data.handicap || 0,
+        location: data.location || '미등록',
+        mutualFriends: 0,
+        status: 'pending',
+        createdAt: data.createdAt || FirestoreTimestamp.now(),
+      });
+    }
+
+    return suggestions;
+  } catch (error) {
+    console.error('추천 친구 조회 실패:', error);
+    return [];
+  }
+};
+
+/**
  * 친구 삭제
  */
 export const removeFriend = async (
