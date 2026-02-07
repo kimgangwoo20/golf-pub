@@ -1,4 +1,4 @@
-// ChatRoomScreen.tsx - 1:1 채팅방
+// ChatRoomScreen.tsx - 1:1 채팅방 (Firestore 연동)
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -15,52 +15,21 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useChatStore, ChatMessage } from '@/store/useChatStore';
 import * as ImagePicker from 'expo-image-picker';
 
-interface Message {
-  id: string;
-  text: string;
-  senderId: string;
-  timestamp: string;
-  isMine: boolean;
-  image?: string;
-}
+export const ChatRoomScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+  const chatId = route.params?.chatId as string;
+  const chatName = route.params?.chatName || route.params?.chatTitle || '채팅';
 
-const MOCK_MESSAGES: Message[] = [
-  {
-    id: '1',
-    text: '안녕하세요! 내일 라운딩 가시나요?',
-    senderId: 'other',
-    timestamp: '오전 10:20',
-    isMine: false,
-  },
-  {
-    id: '2',
-    text: '네, 가려고요! 시간은 몇 시인가요?',
-    senderId: 'me',
-    timestamp: '오전 10:21',
-    isMine: true,
-  },
-  {
-    id: '3',
-    text: '오전 8시 티오프입니다',
-    senderId: 'other',
-    timestamp: '오전 10:22',
-    isMine: false,
-  },
-  {
-    id: '4',
-    text: '알겠습니다. 저도 참가할게요!',
-    senderId: 'me',
-    timestamp: '오전 10:23',
-    isMine: true,
-  },
-];
-
-export const ChatRoomScreen: React.FC<{ route?: any; navigation?: any }> = ({ route, navigation }) => {
-  const chatName = route?.params?.chatName || route?.params?.chatTitle || '채팅';
+  const { user } = useAuthStore();
+  const { currentRoomMessages, sendMessage, sendImage, markAsRead, listenToMessages } = useChatStore();
   const insets = useSafeAreaInsets();
-  const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
+
   const [inputText, setInputText] = useState('');
   const [attachmentModalVisible, setAttachmentModalVisible] = useState(false);
   const flatListRef = useRef<FlatList>(null);
@@ -68,6 +37,27 @@ export const ChatRoomScreen: React.FC<{ route?: any; navigation?: any }> = ({ ro
 
   // 키보드 높이 애니메이션
   const keyboardHeight = useRef(new Animated.Value(0)).current;
+
+  // 실시간 메시지 리스너
+  useEffect(() => {
+    if (!chatId) return;
+
+    const unsubscribe = listenToMessages(chatId, () => {
+      // 메시지가 업데이트되면 스크롤
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    });
+
+    // 읽음 처리
+    if (user?.uid) {
+      markAsRead(chatId, user.uid);
+    }
+
+    return () => {
+      unsubscribe();
+    };
+  }, [chatId, user?.uid]);
 
   useEffect(() => {
     const keyboardWillShow = Keyboard.addListener(
@@ -116,7 +106,7 @@ export const ChatRoomScreen: React.FC<{ route?: any; navigation?: any }> = ({ ro
     });
 
     if (!result.canceled && result.assets[0]) {
-      sendImageMessage(result.assets[0].uri);
+      handleSendImage(result.assets[0].uri);
     }
   };
 
@@ -138,81 +128,87 @@ export const ChatRoomScreen: React.FC<{ route?: any; navigation?: any }> = ({ ro
     });
 
     if (!result.canceled && result.assets[0]) {
-      sendImageMessage(result.assets[0].uri);
+      handleSendImage(result.assets[0].uri);
     }
   };
 
   // 이미지 메시지 전송
-  const sendImageMessage = (imageUri: string) => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text: '',
-      senderId: 'me',
-      timestamp: new Date().toLocaleTimeString('ko-KR', {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      isMine: true,
-      image: imageUri,
-    };
-
-    setMessages(prev => [...prev, newMessage]);
-
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+  const handleSendImage = async (imageUri: string) => {
+    if (!user?.uid || !chatId) return;
+    try {
+      await sendImage(
+        chatId,
+        user.uid,
+        user.displayName || '사용자',
+        imageUri,
+        user.photoURL || undefined
+      );
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    } catch (error) {
+      console.error('이미지 전송 실패:', error);
+    }
   };
 
-  const handleSend = () => {
-    if (!inputText.trim()) return;
+  const handleSend = async () => {
+    if (!inputText.trim() || !user?.uid || !chatId) return;
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text: inputText.trim(),
-      senderId: 'me',
-      timestamp: new Date().toLocaleTimeString('ko-KR', {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      isMine: true,
-    };
-
-    setMessages(prev => [...prev, newMessage]);
+    const text = inputText.trim();
     setInputText('');
 
-    // 스크롤을 맨 아래로
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+    try {
+      await sendMessage(
+        chatId,
+        user.uid,
+        user.displayName || '사용자',
+        text,
+        user.photoURL || undefined
+      );
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    } catch (error) {
+      console.error('메시지 전송 실패:', error);
+    }
   };
 
-  const renderMessage = ({ item }: { item: Message }) => (
-    <View style={[styles.messageContainer, item.isMine && styles.myMessageContainer]}>
-      {!item.isMine && (
-        <Image
-          source={{ uri: 'https://i.pravatar.cc/150?img=12' }}
-          style={styles.senderAvatar}
-        />
-      )}
-      {item.image ? (
-        <Image source={{ uri: item.image }} style={styles.messageImage} />
-      ) : (
-        <View style={[styles.messageBubble, item.isMine && styles.myMessageBubble]}>
-          <Text style={[styles.messageText, item.isMine && styles.myMessageText]}>
-            {item.text}
-          </Text>
-        </View>
-      )}
-      <Text style={styles.timestamp}>{item.timestamp}</Text>
-    </View>
-  );
+  const formatMessageTime = (date: Date | undefined) => {
+    if (!date) return '';
+    return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const renderMessage = ({ item }: { item: ChatMessage }) => {
+    const isMine = item.senderId === user?.uid;
+
+    return (
+      <View style={[styles.messageContainer, isMine && styles.myMessageContainer]}>
+        {!isMine && (
+          <Image
+            source={{ uri: item.senderAvatar || 'https://i.pravatar.cc/150' }}
+            style={styles.senderAvatar}
+          />
+        )}
+        {item.type === 'image' && item.imageUrl ? (
+          <Image source={{ uri: item.imageUrl }} style={styles.messageImage} />
+        ) : (
+          <View style={[styles.messageBubble, isMine && styles.myMessageBubble]}>
+            <Text style={[styles.messageText, isMine && styles.myMessageText]}>
+              {item.message}
+            </Text>
+          </View>
+        )}
+        <Text style={styles.timestamp}>{formatMessageTime(item.createdAt)}</Text>
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <View style={styles.container}>
         {/* 헤더 */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation?.goBack()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle} numberOfLines={1}>{chatName}</Text>
@@ -221,7 +217,7 @@ export const ChatRoomScreen: React.FC<{ route?: any; navigation?: any }> = ({ ro
         {/* 메시지 목록 */}
         <FlatList
           ref={flatListRef}
-          data={messages}
+          data={currentRoomMessages}
           renderItem={renderMessage}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.messagesList}

@@ -15,29 +15,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { GolfCourse } from '../../types/golfcourse-types';
-import { fetchWeather } from '../../services/api/weatherAPI';
-import { Weather } from '../../types';
+import { GolfCourse, GolfCourseReview } from '@/types/golfcourse-types';
+import { fetchWeather } from '@/services/api/weatherAPI';
+import { Weather } from '@/types';
+import { golfCourseAPI } from '@/services/api/golfCourseAPI';
 
 const { width } = Dimensions.get('window');
-
-// Mock 리뷰 데이터
-const mockReviews = [
-  {
-    id: 1,
-    author: { name: '김철수', image: 'https://i.pravatar.cc/150?img=12' },
-    rating: 5,
-    content: '코스 관리가 정말 잘 되어있어요. 다시 오고 싶습니다!',
-    createdAt: '2025.01.20',
-  },
-  {
-    id: 2,
-    author: { name: '이영희', image: 'https://i.pravatar.cc/150?img=45' },
-    rating: 4,
-    content: '시설도 좋고 직원분들도 친절하세요. 그린피가 조금 비싸긴 하지만 만족합니다.',
-    createdAt: '2025.01.18',
-  },
-];
 
 export const GolfCourseDetailScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -48,6 +31,9 @@ export const GolfCourseDetailScreen: React.FC = () => {
 
   const [course, setCourse] = useState<GolfCourse>(courseParam);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // 리뷰 미리보기 상태
+  const [reviews, setReviews] = useState<GolfCourseReview[]>([]);
 
   // 날씨 상태
   const [weather, setWeather] = useState<Weather | null>(null);
@@ -72,6 +58,19 @@ export const GolfCourseDetailScreen: React.FC = () => {
 
     loadWeather();
   }, [course.location.latitude, course.location.longitude]);
+
+  // 리뷰 미리보기 로드
+  useEffect(() => {
+    const loadReviews = async () => {
+      try {
+        const data = await golfCourseAPI.getGolfCourseReviews(course.id, 2);
+        setReviews(data);
+      } catch (error) {
+        console.error('리뷰 미리보기 로드 실패:', error);
+      }
+    };
+    loadReviews();
+  }, [course.id]);
 
   const handleToggleFavorite = () => {
     setCourse({ ...course, isFavorite: !course.isFavorite });
@@ -331,7 +330,7 @@ export const GolfCourseDetailScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
 
-            {mockReviews.slice(0, 2).map((review) => (
+            {reviews.map((review) => (
               <View key={review.id} style={styles.reviewItem}>
                 <View style={styles.reviewHeader}>
                   <Image source={{ uri: review.author.image }} style={styles.reviewAuthorImage} />

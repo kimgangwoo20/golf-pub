@@ -1,6 +1,6 @@
 // PostDetailScreen.tsx - 게시물 상세 화면
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,95 +13,15 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { Post, Comment } from '../../types/feed-types';
-import { useAuthStore } from '../../store/useAuthStore';
+import { Post, Comment } from '@/types/feed-types';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useFeedStore } from '@/store/useFeedStore';
 
 const { width } = Dimensions.get('window');
-
-// Mock 게시물 데이터
-const mockPost: Post = {
-  id: '1',
-  author: {
-    id: '2',
-    name: '김철수',
-    image: 'https://i.pravatar.cc/150?img=12',
-    handicap: 18,
-  },
-  images: [
-    'https://picsum.photos/800/600?random=10',
-    'https://picsum.photos/800/600?random=11',
-  ],
-  content: '오늘 남서울CC에서 라운딩했습니다! 날씨 최고였어요 ⛳\n#골프 #라운딩 #남서울CC',
-  hashtags: ['골프', '라운딩', '남서울CC'],
-  location: '남서울CC',
-  likes: 24,
-  comments: 8,
-  isLiked: false,
-  createdAt: '2시간 전',
-  visibility: 'public',
-  status: 'published',
-};
-
-// Mock 댓글 데이터
-const mockComments: Comment[] = [
-  {
-    id: '1',
-    postId: '1',
-    author: {
-      id: '3',
-      name: '이영희',
-      image: 'https://i.pravatar.cc/150?img=45',
-    },
-    content: '날씨 좋을 때 라운딩 최고죠! 부럽습니다 👍',
-    likes: 5,
-    isLiked: false,
-    replies: [
-      {
-        id: '101',
-        commentId: '1',
-        author: {
-          id: '2',
-          name: '김철수',
-          image: 'https://i.pravatar.cc/150?img=12',
-        },
-        content: '감사합니다! 다음에 같이 가요 😊',
-        createdAt: '1시간 전',
-      },
-    ],
-    createdAt: '2시간 전',
-  },
-  {
-    id: '2',
-    postId: '1',
-    author: {
-      id: '4',
-      name: '박민수',
-      image: 'https://i.pravatar.cc/150?img=33',
-    },
-    content: '스코어는 어떻게 나왔나요?',
-    likes: 2,
-    isLiked: false,
-    replies: [],
-    createdAt: '1시간 전',
-  },
-  {
-    id: '3',
-    postId: '1',
-    author: {
-      id: 'mock-current-user',
-      name: '나',
-      image: 'https://i.pravatar.cc/150?img=1',
-    },
-    content: '저도 다음주에 남서울CC 예약했어요!',
-    likes: 0,
-    isLiked: false,
-    replies: [],
-    createdAt: '30분 전',
-  },
-];
 
 export const PostDetailScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -111,10 +31,55 @@ export const PostDetailScreen: React.FC = () => {
   // 현재 사용자 ID
   const currentUserId = user?.uid || '';
 
-  const [post, setPost] = useState<Post>(mockPost);
-  const [comments, setComments] = useState<Comment[]>(mockComments);
+  // @ts-ignore
+  const postId = route.params?.postId as string;
+  const { getPostById, getPostComments } = useFeedStore();
+
+  const [post, setPost] = useState<Post | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [commentText, setCommentText] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // 게시글/댓글 로드
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [postData, commentsData] = await Promise.all([
+          getPostById(postId),
+          getPostComments(postId),
+        ]);
+        if (postData) setPost(postData);
+        if (commentsData) setComments(commentsData);
+      } catch (error) {
+        console.error('게시글 로드 실패:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (postId) loadData();
+  }, [postId]);
+
+  // 로딩 또는 게시글 없음
+  if (loading || !post) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Text style={styles.backIcon}>‹</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>게시물</Text>
+            <View style={{ width: 24 }} />
+          </View>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#10b981" />
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const handleLike = () => {
     setPost({
@@ -230,7 +195,6 @@ export const PostDetailScreen: React.FC = () => {
           text: '삭제',
           style: 'destructive',
           onPress: () => {
-            console.log('게시물 삭제:', post.id);
             Alert.alert('완료', '게시물이 삭제되었습니다.', [
               { text: '확인', onPress: () => navigation.goBack() },
             ]);

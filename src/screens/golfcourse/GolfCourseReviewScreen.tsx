@@ -1,6 +1,6 @@
 // GolfCourseReviewScreen.tsx - 골프장 리뷰 화면
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,74 +12,15 @@ import {
   Alert,
   Modal,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { GolfCourse, GolfCourseReview } from '../../types/golfcourse-types';
-import { useAuthStore } from '../../store/useAuthStore';
+import { GolfCourse, GolfCourseReview } from '@/types/golfcourse-types';
+import { useAuthStore } from '@/store/useAuthStore';
+import { golfCourseAPI } from '@/services/api/golfCourseAPI';
 
 const { width } = Dimensions.get('window');
-
-// Mock 리뷰 데이터
-const mockReviews: GolfCourseReview[] = [
-  {
-    id: 1,
-    courseId: 1,
-    author: {
-      id: 2,
-      name: '김철수',
-      image: 'https://i.pravatar.cc/150?img=12',
-      handicap: 18,
-    },
-    rating: 5,
-    courseRating: 5,
-    facilityRating: 4,
-    serviceRating: 5,
-    content: '코스 관리가 정말 잘 되어있어요. 페어웨이가 넓고 그린 컨디션이 최고입니다. 다시 오고 싶습니다!',
-    images: ['https://picsum.photos/400/300?random=50', 'https://picsum.photos/400/300?random=51'],
-    likes: 12,
-    isLiked: false,
-    createdAt: '2025.01.20',
-  },
-  {
-    id: 2,
-    courseId: 1,
-    author: {
-      id: 3,
-      name: '이영희',
-      image: 'https://i.pravatar.cc/150?img=45',
-      handicap: 22,
-    },
-    rating: 4,
-    courseRating: 4,
-    facilityRating: 4,
-    serviceRating: 4,
-    content: '시설도 좋고 직원분들도 친절하세요. 그린피가 조금 비싸긴 하지만 전반적으로 만족합니다.',
-    images: [],
-    likes: 8,
-    isLiked: true,
-    createdAt: '2025.01.18',
-  },
-  {
-    id: 3,
-    courseId: 1,
-    author: {
-      id: 4,
-      name: '박민수',
-      image: 'https://i.pravatar.cc/150?img=33',
-      handicap: 15,
-    },
-    rating: 3,
-    courseRating: 3,
-    facilityRating: 3,
-    serviceRating: 4,
-    content: '평범한 골프장이에요. 특별히 나쁜 건 없지만 그렇다고 엄청 좋지도 않아요.',
-    images: ['https://picsum.photos/400/300?random=52'],
-    likes: 3,
-    isLiked: false,
-    createdAt: '2025.01.15',
-  },
-];
 
 type FilterType = 'all' | '5' | '4' | '3' | '2' | '1';
 type SortType = 'recent' | 'rating_high' | 'rating_low' | 'likes';
@@ -97,7 +38,8 @@ export const GolfCourseReviewScreen: React.FC = () => {
   // @ts-ignore
   const writeReviewParam = route.params?.writeReview as boolean;
 
-  const [reviews, setReviews] = useState<GolfCourseReview[]>(mockReviews);
+  const [reviews, setReviews] = useState<GolfCourseReview[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>('all');
   const [sortBy, setSortBy] = useState<SortType>('recent');
   const [showWriteModal, setShowWriteModal] = useState(writeReviewParam || false);
@@ -110,6 +52,23 @@ export const GolfCourseReviewScreen: React.FC = () => {
   const [reviewText, setReviewText] = useState('');
   const [reviewImages, setReviewImages] = useState<string[]>([]);
 
+  // Firestore에서 리뷰 로드
+  const loadReviews = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await golfCourseAPI.getGolfCourseReviews(courseParam.id);
+      setReviews(data);
+    } catch (error) {
+      console.error('리뷰 로드 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [courseParam.id]);
+
+  useEffect(() => {
+    loadReviews();
+  }, [loadReviews]);
+
   // 평점 분포 계산
   const ratingDistribution = {
     5: reviews.filter(r => r.rating === 5).length,
@@ -119,11 +78,11 @@ export const GolfCourseReviewScreen: React.FC = () => {
     1: reviews.filter(r => r.rating === 1).length,
   };
 
-  const averageRating = (
-    reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-  ).toFixed(1);
+  const averageRating = reviews.length > 0
+    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+    : '0.0';
 
-  const handleLike = (reviewId: number) => {
+  const handleLike = (reviewId: number | string) => {
     setReviews(reviews.map(review => {
       if (review.id === reviewId) {
         return {
@@ -163,42 +122,36 @@ export const GolfCourseReviewScreen: React.FC = () => {
     setReviews(sorted);
   };
 
-  const handleWriteReview = () => {
+  const handleWriteReview = async () => {
     if (reviewText.trim().length === 0) {
       Alert.alert('알림', '리뷰 내용을 입력해주세요.');
       return;
     }
 
-    const newReview: GolfCourseReview = {
-      id: Date.now(),
-      courseId: courseParam.id,
-      author: {
-        id: currentUserId,
-        name: user?.displayName || '사용자',
-        image: user?.photoURL || 'https://i.pravatar.cc/150?img=1',
-        handicap: 18, // TODO: 사용자 프로필에서 핸디캡 가져오기
-      },
-      rating,
-      courseRating,
-      facilityRating,
-      serviceRating,
-      content: reviewText,
-      images: reviewImages,
-      likes: 0,
-      isLiked: false,
-      createdAt: '방금',
-    };
+    try {
+      await golfCourseAPI.createGolfCourseReview(courseParam.id, {
+        rating,
+        courseRating,
+        facilityRating,
+        serviceRating,
+        content: reviewText,
+        images: reviewImages,
+      });
 
-    setReviews([newReview, ...reviews]);
-    setShowWriteModal(false);
-    setReviewText('');
-    setReviewImages([]);
-    setRating(5);
-    setCourseRating(5);
-    setFacilityRating(5);
-    setServiceRating(5);
+      setShowWriteModal(false);
+      setReviewText('');
+      setReviewImages([]);
+      setRating(5);
+      setCourseRating(5);
+      setFacilityRating(5);
+      setServiceRating(5);
 
-    Alert.alert('완료', '리뷰가 등록되었습니다.');
+      // 리뷰 목록 다시 로드
+      await loadReviews();
+      Alert.alert('완료', '리뷰가 등록되었습니다.');
+    } catch (error: any) {
+      Alert.alert('오류', error.message || '리뷰 등록에 실패했습니다.');
+    }
   };
 
   const handleAddImage = () => {
@@ -356,7 +309,16 @@ export const GolfCourseReviewScreen: React.FC = () => {
 
           {/* 리뷰 목록 */}
           <View style={styles.reviewsList}>
-            {filteredReviews.map((review) => (
+            {loading ? (
+              <View style={{ padding: 40, alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#10b981" />
+              </View>
+            ) : filteredReviews.length === 0 ? (
+              <View style={{ padding: 40, alignItems: 'center' }}>
+                <Text style={{ fontSize: 15, color: '#999' }}>리뷰가 없습니다</Text>
+              </View>
+            ) : null}
+            {!loading && filteredReviews.map((review) => (
               <View key={review.id} style={styles.reviewCard}>
                 <View style={styles.reviewHeader}>
                   <Image source={{ uri: review.author.image }} style={styles.reviewAuthorImage} />
