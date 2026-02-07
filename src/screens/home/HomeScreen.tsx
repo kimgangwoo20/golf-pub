@@ -267,7 +267,7 @@ export const HomeScreen: React.FC = () => {
                         activeOpacity={0.8}
                       >
                         <LinearGradient
-                          colors={['#10b981', '#764ba2']}
+                          colors={['#7c3aed', '#a855f7']}
                           start={{ x: 0, y: 0 }}
                           end={{ x: 1, y: 1 }}
                           style={styles.membershipGradient}
