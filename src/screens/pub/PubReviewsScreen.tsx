@@ -1,5 +1,5 @@
-// PubReviewsScreen.tsx - 펍 리뷰 목록
-import React, { useState } from 'react';
+// PubReviewsScreen.tsx - 펍 리뷰 목록 (Firestore 연동)
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,66 +8,76 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
+import { useRoute } from '@react-navigation/native';
+import { pubAPI, PubReview } from '@/services/api/pubAPI';
 
-interface Review {
-  id: string;
-  userName: string;
-  userAvatar: string;
-  rating: number;
-  date: string;
-  content: string;
-  images?: string[];
-}
+export const PubReviewsScreen: React.FC = () => {
+  const route = useRoute<any>();
+  const pubId = route.params?.pubId as string;
 
-const MOCK_REVIEWS: Review[] = [
-  {
-    id: '1',
-    userName: '김골프',
-    userAvatar: 'https://i.pravatar.cc/150?img=12',
-    rating: 5,
-    date: '2024-01-20',
-    content: '라운딩 후 팀원들과 방문했어요. 분위기도 좋고 음식도 맛있었습니다!',
-    images: ['https://i.pravatar.cc/200?img=50'],
-  },
-  {
-    id: '2',
-    userName: '이영희',
-    userAvatar: 'https://i.pravatar.cc/150?img=25',
-    rating: 4,
-    date: '2024-01-18',
-    content: '주차가 편리하고 직원분들이 친절합니다. 다음에도 올게요!',
-  },
-  {
-    id: '3',
-    userName: '박민수',
-    userAvatar: 'https://i.pravatar.cc/150?img=33',
-    rating: 5,
-    date: '2024-01-15',
-    content: '단체석이 넓어서 좋았어요. 골프 Pub 회원 할인도 받을 수 있어서 만족!',
-  },
-];
+  const [reviews, setReviews] = useState<PubReview[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-export const PubReviewsScreen: React.FC<{ route?: any; navigation?: any }> = ({ route, navigation }) => {
-  const [reviews] = useState<Review[]>(MOCK_REVIEWS);
+  const loadReviews = useCallback(async () => {
+    if (!pubId) return;
+    try {
+      setLoading(true);
+      const result = await pubAPI.getPubReviews(pubId);
+      setReviews(result);
+    } catch (error) {
+      console.error('펍 리뷰 로드 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [pubId]);
+
+  useEffect(() => {
+    loadReviews();
+  }, [loadReviews]);
+
+  const handleRefresh = useCallback(async () => {
+    if (!pubId) return;
+    setRefreshing(true);
+    try {
+      const result = await pubAPI.getPubReviews(pubId);
+      setReviews(result);
+    } catch (error) {
+      console.error('펍 리뷰 새로고침 실패:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [pubId]);
 
   const renderStars = (rating: number) => {
     return '⭐'.repeat(rating);
   };
 
-  const renderReview = ({ item }: { item: Review }) => (
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('ko-KR');
+  };
+
+  const renderReview = ({ item }: { item: PubReview }) => (
     <View style={styles.reviewCard}>
       <View style={styles.reviewHeader}>
-        <Image source={{ uri: item.userAvatar }} style={styles.avatar} />
+        <Image
+          source={{ uri: item.userImage || 'https://i.pravatar.cc/150' }}
+          style={styles.avatar}
+        />
         <View style={styles.userInfo}>
           <Text style={styles.userName}>{item.userName}</Text>
           <View style={styles.ratingRow}>
             <Text style={styles.stars}>{renderStars(item.rating)}</Text>
-            <Text style={styles.date}>{item.date}</Text>
+            <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
           </View>
         </View>
       </View>
-      <Text style={styles.content}>{item.content}</Text>
+      <Text style={styles.content}>{item.comment}</Text>
       {item.images && item.images.length > 0 && (
         <View style={styles.images}>
           {item.images.map((image, index) => (
@@ -78,9 +88,20 @@ export const PubReviewsScreen: React.FC<{ route?: any; navigation?: any }> = ({ 
     </View>
   );
 
-  const averageRating = (
-    reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
-  ).toFixed(1);
+  const averageRating = reviews.length > 0
+    ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
+    : '0.0';
+
+  if (loading && reviews.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#10b981" />
+          <Text style={styles.loadingText}>리뷰를 불러오는 중...</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -88,7 +109,7 @@ export const PubReviewsScreen: React.FC<{ route?: any; navigation?: any }> = ({ 
       <View style={styles.summary}>
         <Text style={styles.averageRating}>{averageRating}</Text>
         <Text style={styles.stars}>{renderStars(Math.round(Number(averageRating)))}</Text>
-        <Text style={styles.reviewCount}>{reviews.length}개의 리뷰</Text>
+        <Text style={styles.reviewCountText}>{reviews.length}개의 리뷰</Text>
       </View>
 
       {/* 리뷰 작성 버튼 */}
@@ -106,6 +127,20 @@ export const PubReviewsScreen: React.FC<{ route?: any; navigation?: any }> = ({ 
         keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#10b981"
+            colors={['#10b981']}
+          />
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>📝</Text>
+            <Text style={styles.emptyText}>아직 리뷰가 없습니다</Text>
+          </View>
+        }
       />
     </View>
   );
@@ -115,6 +150,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
   },
   summary: {
     backgroundColor: '#fff',
@@ -133,7 +178,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     marginBottom: 8,
   },
-  reviewCount: {
+  reviewCountText: {
     fontSize: 14,
     color: '#666',
   },
@@ -203,5 +248,17 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 8,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 80,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
   },
 });

@@ -1,5 +1,5 @@
-// BestPubsScreen.tsx - 인기 펍 목록
-import React, { useState } from 'react';
+// BestPubsScreen.tsx - 인기 펍 목록 (Firestore 연동)
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,55 +9,46 @@ import {
   Image,
   TextInput,
   Alert,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { pubAPI, Pub } from '@/services/api/pubAPI';
 
-interface Pub {
-  id: string;
-  name: string;
-  image: string;
-  rating: number;
-  reviewCount: number;
-  distance: string;
-  tags: string[];
-  isPartner: boolean;
-}
-
-const MOCK_PUBS: Pub[] = [
-  {
-    id: '1',
-    name: '골프 펍 강남점',
-    image: 'https://i.pravatar.cc/300?img=1',
-    rating: 4.8,
-    reviewCount: 156,
-    distance: '1.2km',
-    tags: ['주차가능', '단체석'],
-    isPartner: true,
-  },
-  {
-    id: '2',
-    name: '19홀 스포츠바',
-    image: 'https://i.pravatar.cc/300?img=2',
-    rating: 4.5,
-    reviewCount: 89,
-    distance: '2.5km',
-    tags: ['스크린골프', '맥주'],
-    isPartner: true,
-  },
-  {
-    id: '3',
-    name: '그린 클럽하우스',
-    image: 'https://i.pravatar.cc/300?img=3',
-    rating: 4.9,
-    reviewCount: 234,
-    distance: '3.1km',
-    tags: ['고급', '조용함'],
-    isPartner: false,
-  },
-];
-
-export const BestPubsScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
-  const [pubs] = useState<Pub[]>(MOCK_PUBS);
+export const BestPubsScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  const [pubs, setPubs] = useState<Pub[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const loadPubs = useCallback(async () => {
+    try {
+      setLoading(true);
+      const result = await pubAPI.getPopularPubs(20);
+      setPubs(result);
+    } catch (error) {
+      console.error('인기 펍 로드 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPubs();
+  }, [loadPubs]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const result = await pubAPI.getPopularPubs(20);
+      setPubs(result);
+    } catch (error) {
+      console.error('인기 펍 새로고침 실패:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
 
   const filteredPubs = pubs.filter(pub =>
     pub.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -66,10 +57,13 @@ export const BestPubsScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
   const renderPub = ({ item }: { item: Pub }) => (
     <TouchableOpacity
       style={styles.pubCard}
-      onPress={() => navigation?.navigate('PubDetail', { pubId: item.id })}
+      onPress={() => navigation.navigate('PubDetail', { pubId: item.id })}
     >
-      <Image source={{ uri: item.image }} style={styles.pubImage} />
-      {item.isPartner && (
+      <Image
+        source={{ uri: item.images?.[0] || 'https://i.pravatar.cc/300' }}
+        style={styles.pubImage}
+      />
+      {item.features?.includes('제휴') && (
         <View style={styles.partnerBadge}>
           <Text style={styles.partnerText}>제휴</Text>
         </View>
@@ -79,18 +73,39 @@ export const BestPubsScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
         <View style={styles.rating}>
           <Text style={styles.ratingText}>⭐ {item.rating}</Text>
           <Text style={styles.reviewCount}>({item.reviewCount})</Text>
-          <Text style={styles.distance}>• {item.distance}</Text>
+          {item.location ? (
+            <Text style={styles.distance}>• {item.location}</Text>
+          ) : null}
         </View>
-        <View style={styles.tags}>
-          {item.tags.map((tag, index) => (
-            <View key={index} style={styles.tag}>
-              <Text style={styles.tagText}>{tag}</Text>
-            </View>
-          ))}
-        </View>
+        {item.features && item.features.length > 0 && (
+          <View style={styles.tags}>
+            {item.features.slice(0, 3).map((tag, index) => (
+              <View key={index} style={styles.tag}>
+                <Text style={styles.tagText}>{tag}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   );
+
+  if (loading && pubs.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>인기 펍</Text>
+          <TouchableOpacity onPress={() => Alert.alert('지도', '지도 기능은 준비 중입니다.')}>
+            <Text style={styles.mapButtonText}>🗺️ 지도</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#10b981" />
+          <Text style={styles.loadingText}>인기 펍을 불러오는 중...</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -98,7 +113,7 @@ export const BestPubsScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
       <View style={styles.header}>
         <Text style={styles.headerTitle}>인기 펍</Text>
         <TouchableOpacity onPress={() => Alert.alert('지도', '지도 기능은 준비 중입니다.')}>
-          <Text style={styles.mapButton}>🗺️ 지도</Text>
+          <Text style={styles.mapButtonText}>🗺️ 지도</Text>
         </TouchableOpacity>
       </View>
 
@@ -134,6 +149,22 @@ export const BestPubsScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
         keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#10b981"
+            colors={['#10b981']}
+          />
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>🍺</Text>
+            <Text style={styles.emptyText}>
+              {searchQuery ? '검색 결과가 없습니다' : '등록된 펍이 없습니다'}
+            </Text>
+          </View>
+        }
       />
     </View>
   );
@@ -143,6 +174,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
   },
   header: {
     flexDirection: 'row',
@@ -156,10 +197,10 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#1a1a1a',
   },
-  mapButton: {
+  mapButtonText: {
     fontSize: 16,
     color: '#10b981',
   },
@@ -230,14 +271,14 @@ const styles = StyleSheet.create({
   partnerText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   pubInfo: {
     padding: 16,
   },
   pubName: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#1a1a1a',
     marginBottom: 8,
   },
@@ -274,6 +315,18 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 12,
+    color: '#666',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 80,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 16,
     color: '#666',
   },
 });

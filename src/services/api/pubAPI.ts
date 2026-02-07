@@ -76,7 +76,6 @@ export const pubAPI = {
         ...doc.data(),
       }));
 
-      console.log(`✅ 퍼블릭 목록 조회 성공: ${pubs.length}개`);
       return pubs;
     } catch (error: any) {
       console.error('❌ 퍼블릭 목록 조회 실패:', error);
@@ -98,7 +97,6 @@ export const pubAPI = {
         .get();
 
       if (!doc.exists) {
-        console.log('ℹ️ 퍼블릭을 찾을 수 없습니다:', pubId);
         return null;
       }
 
@@ -107,7 +105,6 @@ export const pubAPI = {
         ...doc.data(),
       } as Pub;
 
-      console.log('✅ 퍼블릭 상세 조회 성공:', pubId);
       return pub;
     } catch (error: any) {
       console.error('❌ 퍼블릭 상세 조회 실패:', error);
@@ -135,7 +132,6 @@ export const pubAPI = {
         ...doc.data(),
       })) as Pub[];
 
-      console.log(`✅ 인기 퍼블릭 조회 성공: ${pubs.length}개`);
       return pubs;
     } catch (error: any) {
       console.error('❌ 인기 퍼블릭 조회 실패:', error);
@@ -165,7 +161,6 @@ export const pubAPI = {
         createdAt: doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
       })) as PubReview[];
 
-      console.log(`✅ 퍼블릭 리뷰 조회 성공: ${reviews.length}개`);
       return reviews;
     } catch (error: any) {
       console.error('❌ 퍼블릭 리뷰 조회 실패:', error);
@@ -212,7 +207,6 @@ export const pubAPI = {
       // 퍼블릭 평점 업데이트
       await pubAPI.updatePubRating(pubId);
 
-      console.log('✅ 퍼블릭 리뷰 작성 성공:', reviewRef.id);
       return reviewRef.id;
     } catch (error: any) {
       console.error('❌ 퍼블릭 리뷰 작성 실패:', error);
@@ -249,7 +243,6 @@ export const pubAPI = {
           reviewCount: reviewsSnapshot.size,
         });
 
-      console.log('✅ 퍼블릭 평점 업데이트 성공');
     } catch (error: any) {
       console.error('❌ 퍼블릭 평점 업데이트 실패:', error);
     }
@@ -303,7 +296,6 @@ export const pubAPI = {
         return distA - distB;
       });
 
-      console.log(`✅ 주변 퍼블릭 검색 성공: ${pubs.length}개`);
       return pubs;
     } catch (error: any) {
       console.error('❌ 주변 퍼블릭 검색 실패:', error);
