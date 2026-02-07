@@ -1,5 +1,5 @@
-// PopularBookingsScreen.tsx - 인기 부킹 목록
-import React, { useState } from 'react';
+// PopularBookingsScreen.tsx - 인기 부킹 목록 (Firestore 연동)
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,12 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { getPopularBookings } from '@/services/firebase/firebaseBooking';
 
-interface Booking {
+interface PopularBooking {
   id: string;
   course: string;
   date: string;
@@ -17,49 +20,46 @@ interface Booking {
   organizer: string;
   participants: number;
   maxParticipants: number;
-  views: number;
 }
 
-const MOCK_BOOKINGS: Booking[] = [
-  {
-    id: '1',
-    course: '스카이72 골프클럽',
-    date: '2024-02-01',
-    time: '08:00',
-    organizer: '김골프',
-    participants: 3,
-    maxParticipants: 4,
-    views: 156,
-  },
-  {
-    id: '2',
-    course: '남서울 컨트리클럽',
-    date: '2024-02-03',
-    time: '10:00',
-    organizer: '이영희',
-    participants: 2,
-    maxParticipants: 4,
-    views: 98,
-  },
-];
-
-export const PopularBookingsScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
-  const [bookings, setBookings] = useState<Booking[]>(MOCK_BOOKINGS);
+export const PopularBookingsScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  const [bookings, setBookings] = useState<PopularBooking[]>([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const handleRefresh = () => {
-    setRefreshing(true);
-    // TODO: 실제 API 호출
-    setTimeout(() => {
-      setBookings(MOCK_BOOKINGS);
-      setRefreshing(false);
-    }, 1000);
-  };
+  const loadBookings = useCallback(async () => {
+    try {
+      setLoading(true);
+      const result = await getPopularBookings(20);
+      setBookings(result);
+    } catch (error) {
+      console.error('인기 부킹 로드 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const renderBooking = ({ item }: { item: Booking }) => (
+  useEffect(() => {
+    loadBookings();
+  }, [loadBookings]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const result = await getPopularBookings(20);
+      setBookings(result);
+    } catch (error) {
+      console.error('인기 부킹 새로고침 실패:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  const renderBooking = ({ item }: { item: PopularBooking }) => (
     <TouchableOpacity
       style={styles.bookingCard}
-      onPress={() => navigation?.navigate('BookingDetail', { bookingId: item.id })}
+      onPress={() => navigation.navigate('BookingDetail', { bookingId: item.id })}
     >
       <View style={styles.badge}>
         <Text style={styles.badgeText}>🔥 인기</Text>
@@ -75,9 +75,19 @@ export const PopularBookingsScreen: React.FC<{ navigation?: any }> = ({ navigati
           {item.participants}/{item.maxParticipants}명
         </Text>
       </View>
-      <Text style={styles.views}>👁️ {item.views}</Text>
     </TouchableOpacity>
   );
+
+  if (loading && bookings.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#10b981" />
+          <Text style={styles.loadingText}>인기 부킹을 불러오는 중...</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -94,6 +104,12 @@ export const PopularBookingsScreen: React.FC<{ navigation?: any }> = ({ navigati
             colors={['#10b981']}
           />
         }
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>🔥</Text>
+            <Text style={styles.emptyText}>인기 부킹이 없습니다</Text>
+          </View>
+        }
       />
     </View>
   );
@@ -103,6 +119,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
   },
   list: {
     padding: 16,
@@ -126,11 +152,11 @@ const styles = StyleSheet.create({
   badgeText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   course: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#1a1a1a',
     marginBottom: 8,
   },
@@ -147,7 +173,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
   },
   organizer: {
     fontSize: 14,
@@ -158,8 +183,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#10b981',
   },
-  views: {
-    fontSize: 12,
-    color: '#999',
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 80,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
   },
 });

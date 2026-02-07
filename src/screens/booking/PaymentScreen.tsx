@@ -1,5 +1,5 @@
-// PaymentScreen.tsx - 결제 화면
-import React, { useState } from 'react';
+// PaymentScreen.tsx - 결제 화면 (Firestore 연동)
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,31 +8,68 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { colors } from '../../styles/theme';
+import { colors } from '@/styles/theme';
+import { getBookingDetail } from '@/services/firebase/firebaseBooking';
+import firestore from '@react-native-firebase/firestore';
 
 type PaymentMethod = 'card' | 'account' | 'kakao' | 'naver';
 
 export const PaymentScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const route = useRoute();
-  const { bookingId } = route.params as { bookingId: number };
+  const route = useRoute<any>();
+  const bookingId = route.params?.bookingId as string;
 
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('card');
   const [agreed, setAgreed] = useState(false);
+  const [booking, setBooking] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Mock 데이터 (실제로는 API에서 가져옴)
-  const booking = {
-    id: bookingId,
-    title: '주말 라운딩 같이 치실 분!',
-    golfCourse: '세라지오CC',
-    location: '경기 광주',
-    date: '2025-01-18',
-    time: '08:00',
-    price: 120000,
-    hostName: '김골프',
-  };
+  const loadBooking = useCallback(async () => {
+    if (!bookingId) return;
+    try {
+      setLoading(true);
+      const bookingData = await getBookingDetail(bookingId);
+
+      if (bookingData) {
+        // 호스트 이름 조회
+        let hostName = '호스트';
+        if (bookingData.hostId) {
+          try {
+            const hostDoc = await firestore()
+              .collection('users')
+              .doc(bookingData.hostId)
+              .get();
+            const hostData = hostDoc.data();
+            hostName = hostData?.name || hostData?.displayName || '호스트';
+          } catch {
+            // 호스트 정보 조회 실패 시 기본값 사용
+          }
+        }
+
+        setBooking({
+          id: bookingData.id,
+          title: bookingData.title || '',
+          golfCourse: bookingData.course || '',
+          location: '',
+          date: bookingData.date || '',
+          time: bookingData.time || '',
+          price: bookingData.price?.original || 0,
+          hostName,
+        });
+      }
+    } catch (error) {
+      console.error('부킹 정보 로드 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [bookingId]);
+
+  useEffect(() => {
+    loadBooking();
+  }, [loadBooking]);
 
   const paymentMethods = [
     { key: 'card' as PaymentMethod, label: '신용/체크카드', icon: '💳' },
@@ -41,8 +78,7 @@ export const PaymentScreen: React.FC = () => {
     { key: 'naver' as PaymentMethod, label: '네이버페이', icon: '💚' },
   ];
 
-  const platformFee = Math.round(booking.price * 0.05); // 5% 수수료
-  const totalAmount = booking.price;
+  const totalAmount = booking?.price || 0;
 
   const handlePayment = () => {
     if (!agreed) {
@@ -58,35 +94,60 @@ export const PaymentScreen: React.FC = () => {
         {
           text: '결제',
           onPress: () => {
-            // Toss Payments API 호출
-            // 실제로는 Toss Payments SDK 사용
-            console.log('결제 시작:', {
-              bookingId,
-              method: selectedMethod,
-              amount: totalAmount,
-            });
-
-            // 결제 성공 시뮬레이션
-            setTimeout(() => {
-              Alert.alert(
-                '결제 완료! 🎉',
-                '참가 신청이 완료되었습니다.\n호스트의 승인을 기다려주세요.',
-                [
-                  {
-                    text: '확인',
-                    onPress: () => {
-                      // 부킹 목록으로 이동
-                      navigation.navigate('BookingList' as any);
-                    },
+            // TODO: Toss Payments SDK 연동 예정
+            Alert.alert(
+              '결제 완료! 🎉',
+              '참가 신청이 완료되었습니다.\n호스트의 승인을 기다려주세요.',
+              [
+                {
+                  text: '확인',
+                  onPress: () => {
+                    navigation.navigate('BookingList' as any);
                   },
-                ]
-              );
-            }, 1000);
+                },
+              ]
+            );
           },
         },
       ]
     );
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.backButton}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>결제</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>결제 정보를 불러오는 중...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!booking) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.backButton}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>결제</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.emptyIcon}>📋</Text>
+          <Text style={styles.emptyText}>부킹 정보를 찾을 수 없습니다</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -109,10 +170,12 @@ export const PaymentScreen: React.FC = () => {
               <Text style={styles.bookingLabel}>골프장</Text>
               <Text style={styles.bookingValue}>{booking.golfCourse}</Text>
             </View>
-            <View style={styles.bookingInfo}>
-              <Text style={styles.bookingLabel}>지역</Text>
-              <Text style={styles.bookingValue}>{booking.location}</Text>
-            </View>
+            {booking.location ? (
+              <View style={styles.bookingInfo}>
+                <Text style={styles.bookingLabel}>지역</Text>
+                <Text style={styles.bookingValue}>{booking.location}</Text>
+              </View>
+            ) : null}
             <View style={styles.bookingInfo}>
               <Text style={styles.bookingLabel}>날짜</Text>
               <Text style={styles.bookingValue}>{booking.date}</Text>
@@ -134,7 +197,7 @@ export const PaymentScreen: React.FC = () => {
           <View style={styles.priceBreakdown}>
             <View style={styles.priceRow}>
               <Text style={styles.priceLabel}>라운딩 비용</Text>
-              <Text style={styles.priceValue}>{booking.price.toLocaleString()}원</Text>
+              <Text style={styles.priceValue}>{totalAmount.toLocaleString()}원</Text>
             </View>
             <View style={styles.priceRow}>
               <Text style={styles.priceLabel}>플랫폼 수수료 (5%)</Text>
@@ -237,6 +300,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bgSecondary,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
   },
   header: {
     flexDirection: 'row',
@@ -362,14 +443,6 @@ const styles = StyleSheet.create({
   methodCard: {
     width: '50%',
     padding: 6,
-  },
-  methodCardInner: {
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: 'white',
-    alignItems: 'center',
   },
   methodCardActive: {
     borderWidth: 2,

@@ -477,6 +477,237 @@ export const rejectBookingRequest = async (requestId: string): Promise<{
 };
 
 /**
+ * 인기 부킹 목록 (OPEN 상태, 참가자 많은 순)
+ */
+export const getPopularBookings = async (limitCount: number = 20): Promise<{
+  id: string;
+  course: string;
+  date: string;
+  time: string;
+  organizer: string;
+  participants: number;
+  maxParticipants: number;
+  hostId: string;
+}[]> => {
+  try {
+    const snapshot = await firestore()
+      .collection('bookings')
+      .where('status', '==', 'open')
+      .orderBy('createdAt', 'desc')
+      .limit(limitCount)
+      .get();
+
+    if (snapshot.empty) return [];
+
+    const bookings = await Promise.all(
+      snapshot.docs.map(async (doc) => {
+        const data = doc.data();
+        let organizerName = '알 수 없음';
+
+        if (data.hostId) {
+          try {
+            const hostDoc = await firestore().collection('users').doc(data.hostId).get();
+            const hostData = hostDoc.data();
+            organizerName = hostData?.name || hostData?.displayName || '알 수 없음';
+          } catch {
+            // 호스트 정보 조회 실패 시 기본값 사용
+          }
+        }
+
+        return {
+          id: doc.id,
+          course: data.course || '',
+          date: data.date || '',
+          time: data.time || '',
+          organizer: organizerName,
+          participants: data.participants?.current || 0,
+          maxParticipants: data.participants?.max || 4,
+          hostId: data.hostId || '',
+        };
+      })
+    );
+
+    // 참가자 많은 순으로 정렬
+    return bookings.sort((a, b) => b.participants - a.participants);
+  } catch (error) {
+    console.error('인기 부킹 조회 실패:', error);
+    return [];
+  }
+};
+
+/**
+ * 추천 부킹 목록 (OPEN 상태, 본인 호스팅 제외)
+ */
+export const getRecommendedBookings = async (userId: string, limitCount: number = 20): Promise<{
+  id: string;
+  course: string;
+  date: string;
+  time: string;
+  organizer: string;
+  participants: number;
+  maxParticipants: number;
+  hostId: string;
+}[]> => {
+  try {
+    const snapshot = await firestore()
+      .collection('bookings')
+      .where('status', '==', 'open')
+      .orderBy('createdAt', 'desc')
+      .limit(limitCount + 10) // 본인 부킹 필터링 여유분
+      .get();
+
+    if (snapshot.empty) return [];
+
+    const bookings = await Promise.all(
+      snapshot.docs
+        .filter((doc) => doc.data().hostId !== userId)
+        .slice(0, limitCount)
+        .map(async (doc) => {
+          const data = doc.data();
+          let organizerName = '알 수 없음';
+
+          if (data.hostId) {
+            try {
+              const hostDoc = await firestore().collection('users').doc(data.hostId).get();
+              const hostData = hostDoc.data();
+              organizerName = hostData?.name || hostData?.displayName || '알 수 없음';
+            } catch {
+              // 호스트 정보 조회 실패 시 기본값 사용
+            }
+          }
+
+          return {
+            id: doc.id,
+            course: data.course || '',
+            date: data.date || '',
+            time: data.time || '',
+            organizer: organizerName,
+            participants: data.participants?.current || 0,
+            maxParticipants: data.participants?.max || 4,
+            hostId: data.hostId || '',
+          };
+        })
+    );
+
+    return bookings;
+  } catch (error) {
+    console.error('추천 부킹 조회 실패:', error);
+    return [];
+  }
+};
+
+/**
+ * 참가 신청 상태 조회 (bookingParticipants + bookings 조인)
+ */
+export const getRequestStatus = async (requestId: string): Promise<{
+  id: string;
+  status: string;
+  course: string;
+  date: string;
+  time: string;
+  organizer: string;
+  appliedAt: any;
+  bookingId: string;
+} | null> => {
+  try {
+    const requestDoc = await firestore()
+      .collection('bookingParticipants')
+      .doc(requestId)
+      .get();
+
+    if (!requestDoc.exists) return null;
+
+    const requestData = requestDoc.data();
+
+    // 부킹 정보 조인
+    let course = '';
+    let date = '';
+    let time = '';
+    let organizerName = '알 수 없음';
+
+    if (requestData?.bookingId) {
+      const bookingDoc = await firestore()
+        .collection('bookings')
+        .doc(requestData.bookingId)
+        .get();
+
+      if (bookingDoc.exists) {
+        const bookingData = bookingDoc.data();
+        course = bookingData?.course || '';
+        date = bookingData?.date || '';
+        time = bookingData?.time || '';
+
+        // 호스트 이름 조회
+        if (bookingData?.hostId) {
+          try {
+            const hostDoc = await firestore()
+              .collection('users')
+              .doc(bookingData.hostId)
+              .get();
+            const hostData = hostDoc.data();
+            organizerName = hostData?.name || hostData?.displayName || '알 수 없음';
+          } catch {
+            // 호스트 정보 조회 실패 시 기본값 사용
+          }
+        }
+      }
+    }
+
+    return {
+      id: requestDoc.id,
+      status: requestData?.status || 'pending',
+      course,
+      date,
+      time,
+      organizer: organizerName,
+      appliedAt: requestData?.joinedAt,
+      bookingId: requestData?.bookingId || '',
+    };
+  } catch (error) {
+    console.error('신청 상태 조회 실패:', error);
+    return null;
+  }
+};
+
+/**
+ * 신청자 프로필 조회 (users 컬렉션)
+ */
+export const getApplicantProfile = async (userId: string): Promise<{
+  name: string;
+  level: string;
+  rating: number;
+  avatar: string;
+  avgScore: number;
+  experience: string;
+  rounds: number;
+  bio: string;
+} | null> => {
+  try {
+    const userDoc = await firestore()
+      .collection('users')
+      .doc(userId)
+      .get();
+
+    if (!userDoc.exists) return null;
+
+    const data = userDoc.data();
+    return {
+      name: data?.name || data?.displayName || '사용자',
+      level: data?.golfLevel || data?.level || '미등록',
+      rating: data?.rating || 0,
+      avatar: data?.avatar || data?.photoURL || '',
+      avgScore: data?.avgScore || data?.stats?.averageScore || 0,
+      experience: data?.experience || '',
+      rounds: data?.stats?.totalRounds || 0,
+      bio: data?.bio || '',
+    };
+  } catch (error) {
+    console.error('신청자 프로필 조회 실패:', error);
+    return null;
+  }
+};
+
+/**
  * 부킹 참가 취소
  */
 export const leaveBooking = async (
