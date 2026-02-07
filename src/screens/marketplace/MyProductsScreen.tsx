@@ -19,6 +19,7 @@ import { Product } from '../../types/marketplace-types';
 const mockMyProducts: Product[] = [
   {
     id: '1',
+    sellerId: 'mock-user-1',
     title: '타이틀리스트 TS3 드라이버',
     description: '거의 안 쓴 드라이버입니다.',
     price: 350000,
@@ -38,6 +39,7 @@ const mockMyProducts: Product[] = [
   },
   {
     id: '2',
+    sellerId: 'mock-user-1',
     title: '오디세이 퍼터',
     description: '새제품 급입니다.',
     price: 180000,
@@ -57,6 +59,7 @@ const mockMyProducts: Product[] = [
   },
   {
     id: '3',
+    sellerId: 'mock-user-1',
     title: '골프 거리측정기',
     description: '부시넬 브랜드 정품입니다.',
     price: 250000,

@@ -17,146 +17,59 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { useAuthStore } from '../../store/useAuthStore';
-import { useNotificationStore } from '../../store/useNotificationStore';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useNotificationStore } from '@/store/useNotificationStore';
+import { useFeedStore } from '@/store/useFeedStore';
+import { colors } from '@/styles/theme';
 
 const { width } = Dimensions.get('window');
 
-// Mock 사용자 데이터
-const mockUser = {
-  id: 1,
-  name: '김골프',
-  profileImage: 'https://i.pravatar.cc/150?img=12',
-  isLive: false,
-};
-
-// Mock 친구 스토리 데이터
-const mockStories = [
-  {
-    id: 1,
-    userId: 2,
-    userName: '이민지',
-    userImage: 'https://i.pravatar.cc/150?img=45',
-    image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400',
-  },
-  {
-    id: 2,
-    userId: 3,
-    userName: '박정우',
-    userImage: 'https://i.pravatar.cc/150?img=33',
-    image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400',
-  },
-  {
-    id: 3,
-    userId: 4,
-    userName: '최수진',
-    userImage: 'https://i.pravatar.cc/150?img=27',
-    image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400',
-  },
-];
-
-// Mock 댓글 데이터
-interface Comment {
-  id: number;
-  feedId: number;
+// 댓글 타입 (화면 내부 로컬 사용)
+interface LocalComment {
+  id: string;
+  feedId: string;
   userName: string;
   userImage: string;
   content: string;
   time: string;
   likes: number;
-  replies?: Comment[];
-  parentId?: number;
+  replies?: LocalComment[];
+  parentId?: string;
 }
 
 // 답글 대상 정보
 interface ReplyTarget {
-  commentId: number;
+  commentId: string;
   userName: string;
 }
-
-const mockCommentsData: Comment[] = [
-  { id: 1, feedId: 1, userName: '박정우', userImage: 'https://i.pravatar.cc/150?img=33', content: '우와 날씨 진짜 좋아보여요!', time: '1시간 전', likes: 5, replies: [
-    { id: 101, feedId: 1, userName: '이민지', userImage: 'https://i.pravatar.cc/150?img=45', content: '감사합니다! 😊', time: '50분 전', likes: 2, parentId: 1 }
-  ] },
-  { id: 2, feedId: 1, userName: '최수진', userImage: 'https://i.pravatar.cc/150?img=27', content: '스코어 어떻게 되셨어요?', time: '1시간 전', likes: 3 },
-  { id: 3, feedId: 1, userName: '김철수', userImage: 'https://i.pravatar.cc/150?img=15', content: '저도 다음에 같이 가요~', time: '30분 전', likes: 1 },
-  { id: 4, feedId: 2, userName: '이민지', userImage: 'https://i.pravatar.cc/150?img=45', content: '어떤 드라이버예요?', time: '4시간 전', likes: 8, replies: [
-    { id: 104, feedId: 2, userName: '박정우', userImage: 'https://i.pravatar.cc/150?img=33', content: '테일러메이드 스텔스2예요!', time: '3시간 전', likes: 4, parentId: 4 }
-  ] },
-  { id: 5, feedId: 2, userName: '최수진', userImage: 'https://i.pravatar.cc/150?img=27', content: '비거리 30m 대박이네요 👍', time: '3시간 전', likes: 12 },
-  { id: 6, feedId: 3, userName: '박정우', userImage: 'https://i.pravatar.cc/150?img=33', content: '축하드려요!! 🎉🎉', time: '20시간 전', likes: 15 },
-  { id: 7, feedId: 3, userName: '이민지', userImage: 'https://i.pravatar.cc/150?img=45', content: '대단해요! 저도 빨리 100타 깨고 싶네요', time: '18시간 전', likes: 7 },
-];
-
-// Mock 피드 데이터
-const mockFeeds = [
-  {
-    id: 1,
-    userId: 2,
-    userName: '이민지',
-    userImage: 'https://i.pravatar.cc/150?img=45',
-    time: '2시간 전',
-    content: '오늘 남서울CC에서 라운딩했습니다! 날씨 최고였어요 ⛳🏌️',
-    image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=600',
-    likes: 67,
-    comments: 45,
-    location: '남서울CC',
-    tags: ['#골프', '#라운딩', '#남서울CC'],
-  },
-  {
-    id: 2,
-    userId: 3,
-    userName: '박정우',
-    userImage: 'https://i.pravatar.cc/150?img=33',
-    time: '5시간 전',
-    content: '드라이버 새로 샀어요! 비거리가 30m 늘었습니다 🚀',
-    image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=600',
-    likes: 124,
-    comments: 38,
-    location: null,
-    tags: ['#골프용품', '#드라이버', '#테일러메이드'],
-  },
-  {
-    id: 3,
-    userId: 4,
-    userName: '최수진',
-    userImage: 'https://i.pravatar.cc/150?img=27',
-    time: '1일 전',
-    content: '100타 돌파 기념! 🎉 드디어 100타를 깼습니다!',
-    image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=600',
-    likes: 232,
-    comments: 89,
-    location: '레이크사이드CC',
-    tags: ['#100타돌파', '#기념', '#골프'],
-  },
-];
 
 export const FeedScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { user } = useAuthStore();
   const {
-    notifications,
     unreadCount: unreadNotifications,
     subscribeToNotifications,
     unsubscribeFromNotifications,
     subscribeToUnreadCount,
     unsubscribeFromUnreadCount,
   } = useNotificationStore();
+  const { posts, stories, loading, error, loadPosts, loadStories } = useFeedStore();
   const insets = useSafeAreaInsets();
 
   const [selectedTab, setSelectedTab] = useState('all');
-  const [likedFeeds, setLikedFeeds] = useState<number[]>([]);
-  const [likedComments, setLikedComments] = useState<Set<number>>(new Set());
-  const [comments, setComments] = useState<Comment[]>(mockCommentsData);
-  const [selectedFeedId, setSelectedFeedId] = useState<number | null>(null);
+  const [likedFeeds, setLikedFeeds] = useState<string[]>([]);
+  const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
+  const [comments, setComments] = useState<LocalComment[]>([]);
+  const [selectedFeedId, setSelectedFeedId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
   const [commentModalVisible, setCommentModalVisible] = useState(false);
   const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null);
-  const [editingComment, setEditingComment] = useState<{ id: number; parentId?: number } | null>(null);
-  const [unreadMessages, setUnreadMessages] = useState(7); // TODO: 실제 메시지 store에서 가져오기
+  const [editingComment, setEditingComment] = useState<{ id: string; parentId?: string } | null>(null);
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   // Instagram/YouTube 스타일 키보드 처리
   const keyboardHeight = useRef(new Animated.Value(0)).current;
@@ -165,13 +78,15 @@ export const FeedScreen: React.FC = () => {
   // 현재 사용자 이름 (본인 댓글 확인용)
   const currentUserName = user?.displayName || '사용자';
 
-  // 알림 구독
+  // 알림 구독 & 피드 로드
   useFocusEffect(
     useCallback(() => {
       if (user?.uid) {
         subscribeToNotifications(user.uid);
         subscribeToUnreadCount(user.uid);
       }
+      loadPosts();
+      loadStories();
       return () => {
         unsubscribeFromNotifications();
         unsubscribeFromUnreadCount();
@@ -215,7 +130,7 @@ export const FeedScreen: React.FC = () => {
     { id: 'following', label: '팔로잉' },
   ];
 
-  const handleLike = (feedId: number) => {
+  const handleLike = (feedId: string) => {
     if (likedFeeds.includes(feedId)) {
       setLikedFeeds(likedFeeds.filter(id => id !== feedId));
     } else {
@@ -223,7 +138,7 @@ export const FeedScreen: React.FC = () => {
     }
   };
 
-  const handleComment = useCallback((feedId: number) => {
+  const handleComment = useCallback((feedId: string) => {
     setSelectedFeedId(feedId);
     setCommentModalVisible(true);
   }, []);
@@ -237,8 +152,8 @@ export const FeedScreen: React.FC = () => {
       return;
     }
 
-    const newComment: Comment = {
-      id: Date.now(),
+    const newComment: LocalComment = {
+      id: String(Date.now()),
       feedId: selectedFeedId,
       userName: currentUserName,
       userImage: user?.photoURL || 'https://i.pravatar.cc/150?img=1',
@@ -267,7 +182,7 @@ export const FeedScreen: React.FC = () => {
   };
 
   // 댓글 좋아요
-  const handleCommentLike = (commentId: number) => {
+  const handleCommentLike = (commentId: string) => {
     setLikedComments(prev => {
       const newSet = new Set(prev);
       if (newSet.has(commentId)) {
@@ -280,7 +195,7 @@ export const FeedScreen: React.FC = () => {
   };
 
   // 답글 달기 시작
-  const startReply = (commentId: number, userName: string) => {
+  const startReply = (commentId: string, userName: string) => {
     setReplyTarget({ commentId, userName });
     setEditingComment(null);
     // setTimeout으로 state 업데이트 후 focus
@@ -295,7 +210,7 @@ export const FeedScreen: React.FC = () => {
   };
 
   // 댓글 수정 시작
-  const startEditComment = (comment: Comment, parentId?: number) => {
+  const startEditComment = (comment: LocalComment, parentId?: string) => {
     setEditingComment({ id: comment.id, parentId });
     setCommentText(comment.content);
     setReplyTarget(null);
@@ -311,7 +226,7 @@ export const FeedScreen: React.FC = () => {
   };
 
   // 댓글 삭제
-  const handleDeleteComment = (commentId: number, parentId?: number) => {
+  const handleDeleteComment = (commentId: string, parentId?: string) => {
     Alert.alert(
       '댓글 삭제',
       '이 댓글을 삭제하시겠습니까?',
@@ -374,15 +289,15 @@ export const FeedScreen: React.FC = () => {
     setCommentText('');
   };
 
-  const getCommentsForFeed = (feedId: number) => {
+  const getCommentsForFeed = (feedId: string) => {
     return comments.filter(c => c.feedId === feedId);
   };
 
-  const handleStoryPress = (storyId: number) => {
+  const handleStoryPress = (storyId: string) => {
     Alert.alert('스토리', '스토리 상세 보기는 개발 예정입니다.');
   };
 
-  const handleAddFriend = (userId: number, userName: string) => {
+  const handleAddFriend = (userId: string, userName: string) => {
     if (!user?.uid) {
       Alert.alert('알림', '로그인이 필요합니다.');
       return;
@@ -429,18 +344,13 @@ export const FeedScreen: React.FC = () => {
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Image
-              source={{ uri: mockUser.profileImage }}
+              source={{ uri: user?.photoURL || 'https://i.pravatar.cc/150?img=1' }}
               style={styles.headerAvatar}
             />
-            <Text style={styles.headerName}>{mockUser.name}</Text>
+            <Text style={styles.headerName}>{user?.displayName || '사용자'}</Text>
           </View>
 
           <View style={styles.headerRight}>
-            {mockUser.isLive && (
-              <View style={styles.liveButton}>
-                <Text style={styles.liveText}>LIVE</Text>
-              </View>
-            )}
             <TouchableOpacity
               style={styles.iconButton}
               onPress={() => navigation.navigate('NotificationList' as any)}
@@ -501,37 +411,65 @@ export const FeedScreen: React.FC = () => {
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {/* 스토리 섹션 */}
-          <View style={styles.storySection}>
-            <Text style={styles.sectionTitle}>스토리</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.storyContainer}
-            >
-              {mockStories.map((story) => (
-                <TouchableOpacity
-                  key={story.id}
-                  style={styles.storyItem}
-                  onPress={() => handleStoryPress(story.id)}
-                >
-                  <View style={styles.storyImageWrapper}>
-                    <Image
-                      source={{ uri: story.userImage }}
-                      style={styles.storyImage}
-                    />
-                    <View style={styles.storyRing} />
-                  </View>
-                  <Text style={styles.storyName} numberOfLines={1}>
-                    {story.userName}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
+          {stories.length > 0 && (
+            <View style={styles.storySection}>
+              <Text style={styles.sectionTitle}>스토리</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.storyContainer}
+              >
+                {stories.map((story) => (
+                  <TouchableOpacity
+                    key={story.id}
+                    style={styles.storyItem}
+                    onPress={() => handleStoryPress(story.id)}
+                  >
+                    <View style={styles.storyImageWrapper}>
+                      <Image
+                        source={{ uri: story.userImage }}
+                        style={styles.storyImage}
+                      />
+                      <View style={styles.storyRing} />
+                    </View>
+                    <Text style={styles.storyName} numberOfLines={1}>
+                      {story.userName}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* 로딩 상태 */}
+          {loading && posts.length === 0 && (
+            <View style={styles.emptyContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={styles.emptyDescription}>피드를 불러오는 중...</Text>
+            </View>
+          )}
+
+          {/* 에러 상태 */}
+          {error && posts.length === 0 && !loading && (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyIcon}>😢</Text>
+              <Text style={styles.emptyTitle}>불러오기 실패</Text>
+              <Text style={styles.emptyDescription}>{error}</Text>
+            </View>
+          )}
+
+          {/* 빈 상태 */}
+          {!loading && !error && posts.length === 0 && (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyIcon}>📝</Text>
+              <Text style={styles.emptyTitle}>아직 게시글이 없습니다</Text>
+              <Text style={styles.emptyDescription}>첫 번째 게시글을 작성해보세요!</Text>
+            </View>
+          )}
 
           {/* 피드 리스트 */}
           <View style={styles.feedSection}>
-            {mockFeeds.map((feed) => (
+            {posts.map((feed) => (
               <View key={feed.id} style={styles.feedCard}>
                 {/* 피드 헤더 */}
                 <View style={styles.feedHeader}>
@@ -549,10 +487,12 @@ export const FeedScreen: React.FC = () => {
                 <Text style={styles.feedContent}>{feed.content}</Text>
 
                 {/* 피드 이미지 */}
-                <Image
-                  source={{ uri: feed.image }}
-                  style={styles.feedImage}
-                />
+                {feed.image && (
+                  <Image
+                    source={{ uri: feed.image }}
+                    style={styles.feedImage}
+                  />
+                )}
 
                 {/* 위치 */}
                 {feed.location && (
@@ -665,7 +605,7 @@ export const FeedScreen: React.FC = () => {
               {/* 댓글 목록 */}
               <FlatList
                 data={selectedFeedId ? getCommentsForFeed(selectedFeedId) : []}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={(item) => item.id}
                 renderItem={({ item: comment }) => {
                   const isCommentLiked = likedComments.has(comment.id);
                   const isMyComment = comment.userName === currentUserName;
@@ -1357,5 +1297,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#fff',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  emptyDescription: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 12,
   },
 });

@@ -6,95 +6,28 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { Booking, BookingFilter as FilterType, BookingSortType } from '../../types/booking-types';
-import { BookingListItem } from '../../components/booking/BookingListItem';
-import { BookingFilter } from '../../components/booking/BookingFilter';
-import { colors } from '../../styles/theme';
+import { BookingFilter as FilterType, BookingSortType } from '@/types/booking-types';
+import { BookingListItem } from '@/components/booking/BookingListItem';
+import { BookingFilter } from '@/components/booking/BookingFilter';
+import { useBookingStore } from '@/store/useBookingStore';
+import { colors } from '@/styles/theme';
 
 export const BookingListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { bookings, loading, error, loadBookings } = useBookingStore();
+  const [filteredBookings, setFilteredBookings] = useState<typeof bookings>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>({});
   const [sortType, setSortType] = useState<BookingSortType>('latest');
 
-  // ✅ useFocusEffect로 변경 - 화면 포커스 시 자동 새로고침
+  // 화면 포커스 시 자동 새로고침
   useFocusEffect(
     React.useCallback(() => {
       loadBookings();
     }, [])
   );
-  
-  useEffect(() => { applyFiltersAndSort(); }, [bookings, activeFilter, sortType]);
 
-  const loadBookings = async () => {
-    try {
-      setLoading(true);
-      const mockBookings: Booking[] = [
-        {
-          id: '1', hostId: 'host1', title: '주말 라운딩 같이 치실 분!', course: '세라지오CC', location: '경기 광주',
-          date: '2025-01-18', time: '08:00',
-          host: { name: '김골프', avatar: 'https://i.pravatar.cc/150?img=12', rating: 4.5, handicap: 15, level: 'intermediate' },
-          price: { original: 120000, discount: 120000, perPerson: true },
-          participants: {
-            current: 2, max: 4,
-            members: [
-              { uid: '1', name: '김골프', role: 'host' },
-              { uid: '2', name: '이골프', role: 'member' },
-            ],
-          },
-          level: 'intermediate', status: 'OPEN', description: '주말 아침 상쾌하게 라운딩하실 분 찾습니다!',
-          image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800',
-          hasPub: false,
-          createdAt: new Date(), updatedAt: new Date(),
-        },
-        {
-          id: '2', hostId: 'host2', title: '프로 동행 레슨 라운딩', course: '남서울CC', location: '경기 성남',
-          date: '2025-01-20', time: '14:00',
-          host: { name: '박프로', avatar: 'https://i.pravatar.cc/150?img=33', rating: 4.8, handicap: 5, level: 'advanced' },
-          price: { original: 150000, discount: 150000, perPerson: true },
-          participants: {
-            current: 3, max: 4,
-            members: [
-              { uid: '3', name: '박프로', role: 'host' },
-              { uid: '4', name: '최골프', role: 'member' },
-              { uid: '5', name: '정골프', role: 'member' },
-            ],
-          },
-          level: 'beginner', status: 'OPEN', description: '초보자도 환영합니다! 친절하게 가르쳐드려요.',
-          image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=800',
-          hasPub: false,
-          createdAt: new Date(), updatedAt: new Date(),
-        },
-        {
-          id: '3', hostId: 'host3', title: '강원도 출장 골프 번개!', course: '대관령CC', location: '강원 평창',
-          date: '2025-01-17', time: '10:00',
-          host: { name: '송골프', avatar: 'https://i.pravatar.cc/150?img=1', rating: 4.2, handicap: 20, level: 'beginner' },
-          price: { original: 100000, discount: 100000, perPerson: true },
-          participants: {
-            current: 4, max: 4,
-            members: [
-              { uid: '1', name: '송골프', role: 'host' },
-              { uid: '2', name: '윤골프', role: 'member' },
-              { uid: '3', name: '한골프', role: 'member' },
-              { uid: '4', name: '임골프', role: 'member' },
-            ],
-          },
-          level: 'any', status: 'CLOSED', description: '강원도 출장 중 골프 번개 모임!',
-          image: 'https://images.unsplash.com/photo-1592919505780-303950717480?w=800',
-          hasPub: true, pubName: '골프 Pub 횡성점', pubTime: '19:00',
-          createdAt: new Date(), updatedAt: new Date(),
-        },
-      ];
-      setBookings(mockBookings);
-    } catch (error) {
-      console.error('부킹 로드 에러:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => { applyFiltersAndSort(); }, [bookings, activeFilter, sortType]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -141,11 +74,24 @@ export const BookingListScreen: React.FC = () => {
     setFilteredBookings(filtered);
   };
 
-  if (loading) {
+  if (loading && bookings.length === 0) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>부킹 목록을 불러오는 중...</Text>
+      </View>
+    );
+  }
+
+  if (error && bookings.length === 0) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.emptyText}>😢</Text>
+        <Text style={styles.emptyTitle}>불러오기 실패</Text>
+        <Text style={styles.emptyDescription}>{error}</Text>
+        <TouchableOpacity style={styles.createButton} onPress={() => loadBookings()}>
+          <Text style={styles.createButtonText}>다시 시도</Text>
+        </TouchableOpacity>
       </View>
     );
   }
