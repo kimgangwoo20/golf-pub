@@ -321,6 +321,162 @@ export const cancelBooking = async (
 };
 
 /**
+ * 참가 신청 목록 조회 (호스트용)
+ * bookingParticipants 컬렉션에서 pending 상태 쿼리 + users 프로필 조인
+ */
+export const getBookingRequests = async (bookingId: string): Promise<{
+  id: string;
+  userId: string;
+  name: string;
+  avatar: string;
+  level: string;
+  rating: number;
+  message: string;
+  status: string;
+  joinedAt: any;
+}[]> => {
+  try {
+    const snapshot = await firestore()
+      .collection('bookingParticipants')
+      .where('bookingId', '==', bookingId)
+      .where('status', '==', 'pending')
+      .orderBy('joinedAt', 'desc')
+      .get();
+
+    if (snapshot.empty) {
+      return [];
+    }
+
+    // 신청자 프로필 정보 조인
+    const requests = await Promise.all(
+      snapshot.docs.map(async (doc) => {
+        const data = doc.data();
+        let userProfile = { name: '알 수 없음', avatar: '', level: '', rating: 0 };
+
+        try {
+          const userDoc = await firestore()
+            .collection('users')
+            .doc(data.userId)
+            .get();
+
+          if (userDoc.exists) {
+            const userData = userDoc.data();
+            userProfile = {
+              name: userData?.displayName || userData?.name || '알 수 없음',
+              avatar: userData?.photoURL || userData?.avatar || '',
+              level: userData?.golfLevel || userData?.level || '',
+              rating: userData?.rating || 0,
+            };
+          }
+        } catch {
+          // 사용자 정보 조회 실패 시 기본값 사용
+        }
+
+        return {
+          id: doc.id,
+          userId: data.userId,
+          name: userProfile.name,
+          avatar: userProfile.avatar,
+          level: userProfile.level,
+          rating: userProfile.rating,
+          message: data.message || '',
+          status: data.status,
+          joinedAt: data.joinedAt,
+        };
+      })
+    );
+
+    return requests;
+  } catch (error) {
+    console.error('참가 신청 목록 조회 실패:', error);
+    return [];
+  }
+};
+
+/**
+ * 참가 신청 승인
+ * bookingParticipants 문서 status → 'approved'
+ * bookings 문서의 participants 업데이트
+ */
+export const approveBookingRequest = async (
+  requestId: string,
+  bookingId: string,
+  userId: string,
+): Promise<{
+  success: boolean;
+  message: string;
+}> => {
+  try {
+    // 신청 상태를 approved로 변경
+    await firestore()
+      .collection('bookingParticipants')
+      .doc(requestId)
+      .update({
+        status: 'approved',
+        approvedAt: FirestoreTimestamp.now(),
+      });
+
+    // bookings 문서의 participants 업데이트
+    const bookingRef = firestore().collection('bookings').doc(bookingId);
+    await bookingRef.update({
+      'participants.current': firestore.FieldValue.increment(1),
+      'participants.list': firestore.FieldValue.arrayUnion(userId),
+      updatedAt: FirestoreTimestamp.now(),
+    });
+
+    // 정원 확인 후 상태 변경
+    const bookingDoc = await bookingRef.get();
+    if (bookingDoc.exists) {
+      const bookingData = bookingDoc.data();
+      if (bookingData?.participants?.current >= bookingData?.participants?.max) {
+        await bookingRef.update({ status: 'full' });
+      }
+    }
+
+    return {
+      success: true,
+      message: '참가가 승인되었습니다.',
+    };
+  } catch (error) {
+    console.error('참가 승인 실패:', error);
+    return {
+      success: false,
+      message: '참가 승인에 실패했습니다.',
+    };
+  }
+};
+
+/**
+ * 참가 신청 거절
+ * bookingParticipants 문서 status → 'rejected'
+ */
+export const rejectBookingRequest = async (requestId: string): Promise<{
+  success: boolean;
+  message: string;
+}> => {
+  try {
+    await firestore()
+      .collection('bookingParticipants')
+      .doc(requestId)
+      .update({
+        status: 'rejected',
+        rejectedAt: FirestoreTimestamp.now(),
+      });
+
+    return {
+      success: true,
+      message: '참가가 거절되었습니다.',
+    };
+  } catch (error) {
+    console.error('참가 거절 실패:', error);
+    return {
+      success: false,
+      message: '참가 거절에 실패했습니다.',
+    };
+  }
+};
+
+/**
  * 부킹 참가 취소
  */
 export const leaveBooking = async (

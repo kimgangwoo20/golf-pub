@@ -1,6 +1,6 @@
 // MyProductsScreen.tsx - 내 판매 상품 화면
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,90 +10,43 @@ import {
   StyleSheet,
   Alert,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { Product } from '../../types/marketplace-types';
-
-// Mock 내 상품 데이터
-const mockMyProducts: Product[] = [
-  {
-    id: '1',
-    sellerId: 'mock-user-1',
-    title: '타이틀리스트 TS3 드라이버',
-    description: '거의 안 쓴 드라이버입니다.',
-    price: 350000,
-    category: 'driver',
-    condition: 'like-new',
-    status: 'available',
-    images: ['https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400'],
-    location: '서울 강남구',
-    sellerName: '김골프',
-    sellerImage: 'https://i.pravatar.cc/150?img=12',
-    sellerRating: 4.8,
-    viewCount: 145,
-    likeCount: 18,
-    isLiked: false,
-    createdAt: '2025.01.20',
-    updatedAt: '2025.01.20',
-  },
-  {
-    id: '2',
-    sellerId: 'mock-user-1',
-    title: '오디세이 퍼터',
-    description: '새제품 급입니다.',
-    price: 180000,
-    category: 'putter',
-    condition: 'new',
-    status: 'reserved',
-    images: ['https://images.unsplash.com/photo-1592919505780-303950717480?w=400'],
-    location: '서울 송파구',
-    sellerName: '김골프',
-    sellerImage: 'https://i.pravatar.cc/150?img=12',
-    sellerRating: 4.8,
-    viewCount: 89,
-    likeCount: 12,
-    isLiked: false,
-    createdAt: '2025.01.17',
-    updatedAt: '2025.01.23',
-  },
-  {
-    id: '3',
-    sellerId: 'mock-user-1',
-    title: '골프 거리측정기',
-    description: '부시넬 브랜드 정품입니다.',
-    price: 250000,
-    category: 'accessory',
-    condition: 'good',
-    status: 'sold',
-    images: ['https://images.unsplash.com/photo-1592919505780-303950717480?w=400'],
-    location: '경기 고양시',
-    sellerName: '김골프',
-    sellerImage: 'https://i.pravatar.cc/150?img=12',
-    sellerRating: 4.8,
-    viewCount: 98,
-    likeCount: 18,
-    isLiked: false,
-    createdAt: '2025.01.12',
-    updatedAt: '2025.01.21',
-  },
-];
+import { Product, ProductStatus } from '@/types/marketplace-types';
+import { marketplaceAPI } from '@/services/api/marketplaceAPI';
+import { colors } from '@/styles/theme';
 
 type TabType = 'selling' | 'sold';
 
 export const MyProductsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const [activeTab, setActiveTab] = useState<TabType>('selling');
-  const [products, setProducts] = useState(mockMyProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    // TODO: 실제 데이터 새로고침 API 호출
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
+  const loadProducts = useCallback(async () => {
+    try {
+      const data = await marketplaceAPI.getMyProducts();
+      setProducts(data);
+    } catch (error: any) {
+      console.error('내 상품 로드 실패:', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadProducts();
+    setRefreshing(false);
+  }, [loadProducts]);
 
   const sellingProducts = products.filter(
     p => p.status === 'available' || p.status === 'reserved'
@@ -103,12 +56,10 @@ export const MyProductsScreen: React.FC = () => {
   const displayProducts = activeTab === 'selling' ? sellingProducts : soldProducts;
 
   const handleProductPress = (productId: string) => {
-    console.log('상품 클릭:', productId);
-    // navigation.navigate('ProductDetail', { productId });
+    navigation.navigate('ProductDetail' as any, { productId } as any);
   };
 
   const handleEdit = (productId: string) => {
-    // TODO: 상품 수정 화면으로 이동
     navigation.navigate('CreateProduct' as any, { productId, editMode: true } as any);
   };
 
@@ -121,9 +72,14 @@ export const MyProductsScreen: React.FC = () => {
         {
           text: '삭제',
           style: 'destructive',
-          onPress: () => {
-            setProducts(prev => prev.filter(p => p.id !== productId));
-            Alert.alert('완료', '상품이 삭제되었습니다.');
+          onPress: async () => {
+            try {
+              await marketplaceAPI.deleteProduct(productId);
+              setProducts(prev => prev.filter(p => p.id !== productId));
+              Alert.alert('완료', '상품이 삭제되었습니다.');
+            } catch (error: any) {
+              Alert.alert('오류', error.message || '상품 삭제에 실패했습니다.');
+            }
           },
         },
       ]
@@ -138,29 +94,44 @@ export const MyProductsScreen: React.FC = () => {
         { text: '취소', style: 'cancel' },
         {
           text: '판매중',
-          onPress: () => {
-            setProducts(prev => prev.map(p =>
-              p.id === productId ? { ...p, status: 'available' as const } : p
-            ));
-            Alert.alert('완료', '판매중으로 변경되었습니다.');
+          onPress: async () => {
+            try {
+              await marketplaceAPI.updateProductStatus(productId, 'available' as ProductStatus);
+              setProducts(prev => prev.map(p =>
+                p.id === productId ? { ...p, status: 'available' as const } : p
+              ));
+              Alert.alert('완료', '판매중으로 변경되었습니다.');
+            } catch (error: any) {
+              Alert.alert('오류', error.message || '상태 변경에 실패했습니다.');
+            }
           },
         },
         {
           text: '예약중',
-          onPress: () => {
-            setProducts(prev => prev.map(p =>
-              p.id === productId ? { ...p, status: 'reserved' as const } : p
-            ));
-            Alert.alert('완료', '예약중으로 변경되었습니다.');
+          onPress: async () => {
+            try {
+              await marketplaceAPI.updateProductStatus(productId, 'reserved' as ProductStatus);
+              setProducts(prev => prev.map(p =>
+                p.id === productId ? { ...p, status: 'reserved' as const } : p
+              ));
+              Alert.alert('완료', '예약중으로 변경되었습니다.');
+            } catch (error: any) {
+              Alert.alert('오류', error.message || '상태 변경에 실패했습니다.');
+            }
           },
         },
         {
           text: '판매완료',
-          onPress: () => {
-            setProducts(prev => prev.map(p =>
-              p.id === productId ? { ...p, status: 'sold' as const } : p
-            ));
-            Alert.alert('완료', '판매완료로 변경되었습니다.');
+          onPress: async () => {
+            try {
+              await marketplaceAPI.updateProductStatus(productId, 'sold' as ProductStatus);
+              setProducts(prev => prev.map(p =>
+                p.id === productId ? { ...p, status: 'sold' as const } : p
+              ));
+              Alert.alert('완료', '판매완료로 변경되었습니다.');
+            } catch (error: any) {
+              Alert.alert('오류', error.message || '상태 변경에 실패했습니다.');
+            }
           },
         },
       ]
@@ -169,13 +140,24 @@ export const MyProductsScreen: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     if (status === 'available') {
-      return { text: '판매중', color: '#10b981', bgColor: '#E8F5E9' };
+      return { text: '판매중', color: colors.primary, bgColor: '#E8F5E9' };
     } else if (status === 'reserved') {
       return { text: '예약중', color: '#FF9800', bgColor: '#FFF3E0' };
     } else {
-      return { text: '판매완료', color: '#999', bgColor: '#F5F5F5' };
+      return { text: '판매완료', color: colors.textTertiary, bgColor: '#F5F5F5' };
     }
   };
+
+  // 로딩 상태
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -235,8 +217,8 @@ export const MyProductsScreen: React.FC = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor="#10b981"
-              colors={['#10b981']}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
             />
           }
         >
@@ -251,7 +233,13 @@ export const MyProductsScreen: React.FC = () => {
                       style={styles.productMain}
                       onPress={() => handleProductPress(product.id)}
                     >
-                      <Image source={{ uri: product.images[0] }} style={styles.productImage} />
+                      {product.images[0] ? (
+                        <Image source={{ uri: product.images[0] }} style={styles.productImage} />
+                      ) : (
+                        <View style={[styles.productImage, { justifyContent: 'center', alignItems: 'center' }]}>
+                          <Text style={{ fontSize: 24 }}>📷</Text>
+                        </View>
+                      )}
 
                       <View style={styles.productInfo}>
                         <Text style={styles.productTitle} numberOfLines={2}>
@@ -326,6 +314,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5F5',
   },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -334,20 +327,20 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    borderBottomColor: colors.border,
   },
   backButton: {
     padding: 4,
   },
   backIcon: {
     fontSize: 32,
-    color: '#1A1A1A',
+    color: colors.textPrimary,
     fontWeight: '300',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: colors.textPrimary,
   },
   headerRight: {
     width: 40,
@@ -373,16 +366,16 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#10b981',
+    color: colors.primary,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 13,
-    color: '#666',
+    color: colors.textSecondary,
   },
   statDivider: {
     width: 1,
-    backgroundColor: '#E5E5E5',
+    backgroundColor: colors.border,
     marginHorizontal: 20,
   },
   tabContainer: {
@@ -399,15 +392,15 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   activeTab: {
-    borderBottomColor: '#10b981',
+    borderBottomColor: colors.primary,
   },
   tabText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#999',
+    color: colors.textTertiary,
   },
   activeTabText: {
-    color: '#10b981',
+    color: colors.primary,
   },
   scrollView: {
     flex: 1,
@@ -444,14 +437,14 @@ const styles = StyleSheet.create({
   productTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: colors.textPrimary,
     marginBottom: 6,
     lineHeight: 22,
   },
   productPrice: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: colors.textPrimary,
     marginBottom: 6,
   },
   productMeta: {
@@ -461,11 +454,11 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 12,
-    color: '#999',
+    color: colors.textTertiary,
   },
   metaDot: {
     fontSize: 12,
-    color: '#999',
+    color: colors.textTertiary,
     marginHorizontal: 6,
   },
   statusBadge: {
@@ -495,7 +488,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#666',
+    color: colors.textSecondary,
   },
   deleteButton: {
     backgroundColor: '#FFE5E5',
@@ -503,7 +496,7 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#FF3B30',
+    color: colors.danger,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -518,7 +511,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 16,
-    color: '#666',
+    color: colors.textSecondary,
   },
   bottomSpacing: {
     height: 40,
