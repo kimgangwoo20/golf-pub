@@ -1,31 +1,49 @@
-// RequestStatusScreen.tsx - 신청 상태 확인
-import React from 'react';
+// RequestStatusScreen.tsx - 신청 상태 확인 (Firestore 연동)
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { getRequestStatus } from '@/services/firebase/firebaseBooking';
 
-const MOCK_REQUEST = {
-  id: '1',
-  course: '스카이72 골프클럽',
-  date: '2024-02-01',
-  time: '08:00',
-  organizer: '김골프',
-  status: 'pending' as 'pending' | 'approved' | 'rejected',
-  appliedAt: '2024-01-25',
-};
+export const RequestStatusScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+  const requestId = route.params?.requestId as string;
 
-export const RequestStatusScreen: React.FC<{ route?: any; navigation?: any }> = ({
-  route,
-  navigation,
-}) => {
-  const request = route?.params?.request || MOCK_REQUEST;
+  const [request, setRequest] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const loadRequest = useCallback(async () => {
+    if (!requestId) return;
+    try {
+      setLoading(true);
+      const result = await getRequestStatus(requestId);
+      setRequest(result);
+    } catch (error) {
+      console.error('신청 상태 로드 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [requestId]);
+
+  useEffect(() => {
+    loadRequest();
+  }, [loadRequest]);
+
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return '';
+    const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString('ko-KR');
+  };
 
   const getStatusConfig = () => {
-    switch (request.status) {
+    switch (request?.status) {
       case 'approved':
         return {
           icon: '✅',
@@ -49,6 +67,34 @@ export const RequestStatusScreen: React.FC<{ route?: any; navigation?: any }> = 
         };
     }
   };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#10b981" />
+          <Text style={styles.loadingText}>신청 상태를 확인하는 중...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (!request) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.emptyIcon}>📋</Text>
+          <Text style={styles.emptyText}>신청 정보를 찾을 수 없습니다</Text>
+          <TouchableOpacity
+            style={styles.goBackButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.goBackButtonText}>돌아가기</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   const statusConfig = getStatusConfig();
 
@@ -84,7 +130,7 @@ export const RequestStatusScreen: React.FC<{ route?: any; navigation?: any }> = 
         </View>
         <View style={styles.infoRow}>
           <Text style={styles.label}>신청일</Text>
-          <Text style={styles.value}>{request.appliedAt}</Text>
+          <Text style={styles.value}>{formatDate(request.appliedAt)}</Text>
         </View>
       </View>
 
@@ -94,7 +140,7 @@ export const RequestStatusScreen: React.FC<{ route?: any; navigation?: any }> = 
           <TouchableOpacity
             style={styles.detailButton}
             onPress={() =>
-              navigation?.navigate('BookingDetail', { bookingId: request.id })
+              navigation.navigate('BookingDetail', { bookingId: request.bookingId })
             }
           >
             <Text style={styles.detailButtonText}>부킹 상세보기</Text>
@@ -106,7 +152,7 @@ export const RequestStatusScreen: React.FC<{ route?: any; navigation?: any }> = 
         <View style={styles.actions}>
           <TouchableOpacity
             style={styles.searchButton}
-            onPress={() => navigation?.navigate('BookingList')}
+            onPress={() => navigation.navigate('BookingList')}
           >
             <Text style={styles.searchButtonText}>다른 부킹 찾기</Text>
           </TouchableOpacity>
@@ -121,6 +167,36 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 20,
+  },
+  goBackButton: {
+    backgroundColor: '#10b981',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  goBackButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
   statusSection: {
     padding: 32,
     alignItems: 'center',
@@ -133,7 +209,7 @@ const styles = StyleSheet.create({
   },
   statusTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginBottom: 8,
   },
   statusMessage: {
@@ -151,7 +227,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#1a1a1a',
     marginBottom: 16,
   },
