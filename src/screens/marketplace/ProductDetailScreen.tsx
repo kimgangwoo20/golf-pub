@@ -125,23 +125,23 @@ export const ProductDetailScreen: React.FC = () => {
   };
 
   const handleChat = () => {
-    navigation.navigate('Chat' as never, {
+    navigation.navigate('Chat' as any, {
       screen: 'ChatRoom',
       params: {
         chatId: `product_${mockProduct.id}`,
         chatName: mockProduct.sellerName,
       },
-    } as never);
+    } as any);
   };
 
   const handleSellerPress = () => {
-    navigation.navigate('MyHome' as never, {
+    navigation.navigate('MyHome' as any, {
       screen: 'FriendProfile',
       params: {
         friendId: 'seller_001',
         friendName: mockProduct.sellerName,
       },
-    } as never);
+    } as any);
   };
 
   return (
@@ -220,7 +220,7 @@ export const ProductDetailScreen: React.FC = () => {
             <View style={styles.infoRow}>
               <View style={styles.infoTag}>
                 <Text style={styles.infoTagText}>
-                  {CONDITION_LABELS[mockProduct.condition]}
+                  {CONDITION_LABELS[mockProduct.condition as keyof typeof CONDITION_LABELS]}
                 </Text>
               </View>
               <View style={styles.infoTag}>

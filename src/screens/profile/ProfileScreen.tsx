@@ -77,7 +77,7 @@ export const ProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) =>
 
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{(user?.points || 0).toLocaleString()}</Text>
+          <Text style={styles.statValue}>{((user as any)?.pointBalance || 0).toLocaleString()}</Text>
           <Text style={styles.statLabel}>포인트</Text>
         </View>
         <View style={styles.divider} />

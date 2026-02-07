@@ -200,18 +200,18 @@ const generateMockGuestbook = (currentUserName: string): GuestbookItem[] => [
 ];
 
 export const MyHomeScreen: React.FC = () => {
-  const navigation = useNavigation();
-  const { user } = useAuthStore();
+  const navigation = useNavigation<any>();
+  const { user, userProfile } = useAuthStore();
 
   // 사용자 데이터
   const userData = {
-    name: user?.name || '골퍼',
+    name: user?.displayName || '골퍼',
     email: user?.email || '',
-    profileImage: user?.avatar || 'https://i.pravatar.cc/150?img=12',
+    profileImage: user?.photoURL || 'https://i.pravatar.cc/150?img=12',
     backgroundImage: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=800',
-    phone: user?.phone || '',
-    points: user?.points || 0,
-    membership: user?.membership || 'FREE',
+    phone: user?.phoneNumber || '',
+    points: (userProfile as any)?.points || 0,
+    membership: (userProfile as any)?.membership || 'FREE',
     handicap: '18',
     todayVisits: 15,
     totalVisits: 1234,
@@ -465,24 +465,24 @@ export const MyHomeScreen: React.FC = () => {
     setDrawerVisible(false);
 
     if (screen === 'Settings') {
-      navigation.navigate('Settings' as never);
+      navigation.navigate('Settings' as any);
     } else if (screen === 'Notifications') {
-      navigation.navigate('Notifications' as never);
+      navigation.navigate('Notifications' as any);
     } else if (screen === 'PointHistory') {
-      navigation.navigate('PointHistory' as never);
+      navigation.navigate('PointHistory' as any);
     } else if (screen === 'Coupons') {
-      navigation.navigate('Coupons' as never);
+      navigation.navigate('Coupons' as any);
     } else if (screen === 'Support') {
-      navigation.navigate('Support' as never);
+      navigation.navigate('Support' as any);
     } else if (screen === 'Profile') {
-      navigation.navigate('Profile' as never);
+      navigation.navigate('Profile' as any);
     } else {
       Alert.alert(screen, `${screen} 화면은 개발 예정입니다.`);
     }
   };
 
   const handleEditProfile = () => {
-    navigation.navigate('EditProfile' as never);
+    navigation.navigate('EditProfile' as any);
   };
 
   // 공개 범위 아이콘
@@ -628,7 +628,7 @@ export const MyHomeScreen: React.FC = () => {
           <View style={styles.statDivider} />
           <TouchableOpacity
             style={styles.statItem}
-            onPress={() => navigation.navigate('Friends' as never)}
+            onPress={() => navigation.navigate('Friends' as any)}
             activeOpacity={0.7}
           >
             <Text style={styles.statIcon}>👥</Text>

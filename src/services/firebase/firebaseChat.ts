@@ -80,7 +80,7 @@ class FirebaseChatService {
 
       if (!snapshot.exists()) {
         // 새 채팅방 생성
-        const now = RealtimeTimestamp.now();
+        const now = Date.now();
 
         const chatRoom: ChatRoom = {
           roomId,
@@ -142,7 +142,7 @@ class FirebaseChatService {
       const messageRef = database.ref(`messages/${roomId}`).push();
       const messageId = messageRef.key!;
 
-      const now = RealtimeTimestamp.now();
+      const now = Date.now();
 
       // 메시지 데이터
       const message: ChatMessage = {
@@ -319,6 +319,7 @@ class FirebaseChatService {
       if (snapshot.exists()) {
         snapshot.forEach((child) => {
           messages.push(child.val() as ChatMessage);
+          return undefined;
         });
       }
 
@@ -523,6 +524,7 @@ class FirebaseChatService {
 
         snapshot.forEach((child) => {
           updates[child.key!] = null;
+          return undefined;
         });
 
         await database.ref(`messages/${roomId}`).update(updates);

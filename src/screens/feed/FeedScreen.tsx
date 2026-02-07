@@ -135,7 +135,7 @@ const mockFeeds = [
 ];
 
 export const FeedScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const { user } = useAuthStore();
   const {
     notifications,
@@ -168,15 +168,15 @@ export const FeedScreen: React.FC = () => {
   // 알림 구독
   useFocusEffect(
     useCallback(() => {
-      if (user?.id) {
-        subscribeToNotifications(user.id);
-        subscribeToUnreadCount(user.id);
+      if (user?.uid) {
+        subscribeToNotifications(user.uid);
+        subscribeToUnreadCount(user.uid);
       }
       return () => {
         unsubscribeFromNotifications();
         unsubscribeFromUnreadCount();
       };
-    }, [user?.id])
+    }, [user?.uid])
   );
 
   useEffect(() => {
@@ -383,7 +383,7 @@ export const FeedScreen: React.FC = () => {
   };
 
   const handleAddFriend = (userId: number, userName: string) => {
-    if (!user?.id) {
+    if (!user?.uid) {
       Alert.alert('알림', '로그인이 필요합니다.');
       return;
     }
@@ -398,7 +398,7 @@ export const FeedScreen: React.FC = () => {
           { text: '취소', style: 'cancel' },
           {
             text: '구독하기',
-            onPress: () => navigation.navigate('Home' as never, { screen: 'Membership' } as never),
+            onPress: () => (navigation as any).navigate('Home', { screen: 'Membership' }),
           },
         ]
       );
@@ -419,7 +419,7 @@ export const FeedScreen: React.FC = () => {
   };
 
   const handleCreatePost = () => {
-    navigation.navigate('CreatePost' as never);
+    navigation.navigate('CreatePost' as any);
   };
 
   return (
@@ -443,7 +443,7 @@ export const FeedScreen: React.FC = () => {
             )}
             <TouchableOpacity
               style={styles.iconButton}
-              onPress={() => navigation.navigate('NotificationList' as never)}
+              onPress={() => navigation.navigate('NotificationList' as any)}
             >
               <Text style={styles.iconText}>🔔</Text>
               {/* 알림 뱃지 - 읽지 않은 알림이 있을 때만 표시 */}
@@ -457,7 +457,7 @@ export const FeedScreen: React.FC = () => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.iconButton}
-              onPress={() => navigation.navigate('Chat' as never, { screen: 'ChatList' } as never)}
+              onPress={() => (navigation as any).navigate('Chat', { screen: 'ChatList' })}
             >
               <Text style={styles.iconText}>✉️</Text>
               {/* 메시지 뱃지 - 읽지 않은 메시지가 있을 때만 표시 */}

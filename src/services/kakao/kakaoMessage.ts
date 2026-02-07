@@ -1,7 +1,43 @@
 // 💬 kakaoMessage.ts
 // 카카오톡 메시지 서비스 - 공유 및 초대
 
-import { shareMessage, shareFeed, sendFeed, sendLink, LinkObject, FeedObject, ContentObject, ButtonObject } from '@react-native-seoul/kakao-login';
+// @react-native-seoul/kakao-login v5.x에서 제거된 타입을 로컬 정의
+// 카카오톡 공유 API는 Kakao SDK JS 또는 REST API로 별도 구현 필요
+
+interface KakaoLink {
+  mobileWebUrl: string;
+  webUrl: string;
+}
+
+interface ContentObject {
+  title: string;
+  description: string;
+  imageUrl: string;
+  link: KakaoLink;
+}
+
+interface ButtonObject {
+  title: string;
+  link: KakaoLink;
+}
+
+interface FeedObject {
+  content: ContentObject;
+  buttons?: ButtonObject[];
+}
+
+interface LinkObject {
+  link: KakaoLink;
+}
+
+// 카카오 공유 기능 stub (실제 구현 시 Kakao SDK REST API 사용)
+const shareFeed = async (_feed: FeedObject): Promise<void> => {
+  console.warn('카카오 공유 기능은 REST API 연동이 필요합니다.');
+};
+
+const sendLink = async (_link: LinkObject): Promise<void> => {
+  console.warn('카카오 링크 공유 기능은 REST API 연동이 필요합니다.');
+};
 
 /**
  * 카카오톡 메시지 서비스

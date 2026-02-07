@@ -226,7 +226,7 @@ export const GolfCourseReviewScreen: React.FC = () => {
             },
             {
               text: '삭제',
-              style: 'destructive',
+              style: 'destructive' as const,
               onPress: () => {
                 setReviews(reviews.filter(r => r.id !== review.id));
                 Alert.alert('완료', '리뷰가 삭제되었습니다.');
@@ -239,7 +239,7 @@ export const GolfCourseReviewScreen: React.FC = () => {
               onPress: () => Alert.alert('알림', '신고 기능은 개발 예정입니다.'),
             },
           ]),
-      { text: '취소', style: 'cancel' },
+      { text: '취소', style: 'cancel' as const },
     ]);
   };
 

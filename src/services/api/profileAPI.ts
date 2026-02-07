@@ -57,11 +57,11 @@ export const profileAPI = {
           points: newData?.points || 0,
           coupons: newData?.coupons || 0,
           bio: newData?.bio || '',
-        } as UserProfile;
+        } as unknown as UserProfile;
       }
 
       const data = userDoc.data();
-      const profile: UserProfile = {
+      const profile = {
         id: currentUser.uid,
         name: data?.name || data?.displayName || currentUser.displayName || '익명',
         profileImage: data?.photoURL || data?.profileImage || currentUser.photoURL || '',
@@ -72,7 +72,7 @@ export const profileAPI = {
         points: data?.points || 0,
         coupons: data?.coupons || 0,
         bio: data?.bio || '',
-      } as UserProfile;
+      } as unknown as UserProfile;
 
       // 프로필 조회 성공
       return profile;
@@ -230,7 +230,7 @@ export const profileAPI = {
         id: doc.id,
         ...doc.data(),
         date: doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
-      })) as Point[];
+      })) as unknown as Point[];
 
       // 포인트 내역 조회 성공
       return points;
@@ -366,7 +366,7 @@ export const profileAPI = {
         id: doc.id,
         ...doc.data(),
         expiryDate: doc.data().expiryDate?.toDate?.()?.toISOString?.() || new Date().toISOString(),
-      })) as Coupon[];
+      })) as unknown as Coupon[];
 
       // 쿠폰 목록 조회 성공
       return coupons;
@@ -395,7 +395,7 @@ export const profileAPI = {
       }
 
       const data = userDoc.data();
-      const profile: UserProfile = {
+      const profile = {
         id: userId,
         name: data?.name || data?.displayName || '익명',
         profileImage: data?.photoURL || data?.profileImage || '',
@@ -406,7 +406,7 @@ export const profileAPI = {
         points: 0, // 다른 사용자 포인트는 숨김
         coupons: 0,
         bio: data?.bio || '',
-      } as UserProfile;
+      } as unknown as UserProfile;
 
       // 사용자 프로필 조회 성공
       return profile;

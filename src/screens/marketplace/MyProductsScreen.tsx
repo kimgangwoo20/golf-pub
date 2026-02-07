@@ -79,7 +79,7 @@ const mockMyProducts: Product[] = [
 type TabType = 'selling' | 'sold';
 
 export const MyProductsScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [activeTab, setActiveTab] = useState<TabType>('selling');
   const [products, setProducts] = useState(mockMyProducts);
   const [refreshing, setRefreshing] = useState(false);
@@ -106,7 +106,7 @@ export const MyProductsScreen: React.FC = () => {
 
   const handleEdit = (productId: string) => {
     // TODO: 상품 수정 화면으로 이동
-    navigation.navigate('CreateProduct' as never, { productId, editMode: true } as never);
+    navigation.navigate('CreateProduct' as any, { productId, editMode: true } as any);
   };
 
   const handleDelete = (productId: string) => {

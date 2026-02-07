@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { ComparisonTable } from '../../components/membership/ComparisonTable';
 
 export const PlanComparisonScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
 
   return (
     <View style={styles.container}>
@@ -34,7 +34,7 @@ export const PlanComparisonScreen: React.FC = () => {
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate('MembershipPlan' as never)}
+          onPress={() => navigation.navigate('MembershipPlan' as any)}
         >
           <Text style={styles.buttonText}>플랜 선택하기</Text>
         </TouchableOpacity>

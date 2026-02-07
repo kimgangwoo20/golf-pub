@@ -1,7 +1,7 @@
 // BookingListItem.tsx
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { Booking } from '../../types/booking-types';
+import { Booking, BookingStatus } from '../../types/booking-types';
 import { ParticipantAvatar } from './ParticipantAvatar';
 import { colors } from '../../styles/theme';
 
@@ -9,8 +9,8 @@ interface Props { booking: Booking; onPress: () => void; }
 
 export const BookingListItem: React.FC<Props> = ({ booking, onPress }) => {
   const getLevelText = (level: string): string => ({ beginner: '초보', intermediate: '중급', advanced: '고급', any: '누구나' }[level] || level);
-  const getStatusColor = (status: string): string => ({ open: colors.primary, full: colors.danger, closed: colors.textTertiary }[status] || colors.textTertiary);
-  const getStatusText = (status: string): string => ({ open: '모집중', full: '마감', closed: '종료' }[status] || status);
+  const getStatusColor = (status: BookingStatus): string => ({ OPEN: colors.primary, CLOSED: colors.textTertiary, COMPLETED: colors.textTertiary, CANCELLED: colors.danger }[status] || colors.textTertiary);
+  const getStatusText = (status: BookingStatus): string => ({ OPEN: '모집중', CLOSED: '마감', COMPLETED: '종료', CANCELLED: '취소' }[status] || status);
   const formatDate = (dateStr: string): string => { const date = new Date(dateStr); return `${date.getMonth() + 1}월 ${date.getDate()}일`; };
   const formatPrice = (price: number): string => `${price.toLocaleString()}원`;
 
@@ -28,19 +28,19 @@ export const BookingListItem: React.FC<Props> = ({ booking, onPress }) => {
       <View style={styles.body}>
         <Text style={styles.title} numberOfLines={1}>{booking.title}</Text>
         <View style={styles.locationRow}>
-          <Text style={styles.golfCourse}>{booking.golfCourse}</Text>
+          <Text style={styles.golfCourse}>{booking.course}</Text>
           <Text style={styles.location}>📍 {booking.location}</Text>
         </View>
         <View style={styles.metaRow}>
           <View style={styles.metaItem}><Text style={styles.metaLabel}>날짜</Text><Text style={styles.metaValue}>{formatDate(booking.date)}</Text></View>
           <View style={styles.metaItem}><Text style={styles.metaLabel}>시간</Text><Text style={styles.metaValue}>{booking.time}</Text></View>
-          <View style={styles.metaItem}><Text style={styles.metaLabel}>실력</Text><Text style={styles.metaValue}>{getLevelText(booking.level)}</Text></View>
+          <View style={styles.metaItem}><Text style={styles.metaLabel}>실력</Text><Text style={styles.metaValue}>{getLevelText(booking.level || 'any')}</Text></View>
         </View>
         <View style={styles.footer}>
-          <View><Text style={styles.priceLabel}>1인당</Text><Text style={styles.price}>{formatPrice(booking.price)}</Text></View>
+          <View><Text style={styles.priceLabel}>1인당</Text><Text style={styles.price}>{formatPrice(booking.price.perPerson ? booking.price.discount || booking.price.original : booking.price.original)}</Text></View>
           <View style={styles.participantsContainer}>
-            <ParticipantAvatar participants={booking.participants} maxPlayers={booking.maxPlayers} />
-            <Text style={styles.participantsCount}>{booking.currentPlayers}/{booking.maxPlayers}명</Text>
+            <ParticipantAvatar members={booking.participants.members} maxPlayers={booking.participants.max} />
+            <Text style={styles.participantsCount}>{booking.participants.current}/{booking.participants.max}명</Text>
           </View>
         </View>
       </View>

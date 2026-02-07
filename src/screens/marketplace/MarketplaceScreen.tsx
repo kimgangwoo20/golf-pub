@@ -134,7 +134,7 @@ const mockProducts: Product[] = [
 ];
 
 export const MarketplaceScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
 
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | 'all'>('all');
   const [searchText, setSearchText] = useState('');
@@ -159,7 +159,7 @@ export const MarketplaceScreen: React.FC = () => {
   };
 
   const handleProductPress = (productId: string) => {
-    navigation.navigate('ProductDetail' as never, { productId } as never);
+    navigation.navigate('ProductDetail' as any, { productId } as any);
   };
 
   const handleLike = (productId: string) => {
@@ -183,7 +183,7 @@ export const MarketplaceScreen: React.FC = () => {
         {/* 헤더 */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>중고거래</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('MyProducts' as never)}>
+          <TouchableOpacity onPress={() => navigation.navigate('MyProducts' as any)}>
             <Text style={styles.myProductsButton}>내 판매</Text>
           </TouchableOpacity>
         </View>
@@ -299,7 +299,7 @@ export const MarketplaceScreen: React.FC = () => {
         {/* 등록 버튼 */}
         <TouchableOpacity
           style={styles.createButton}
-          onPress={() => navigation.navigate('CreateProduct' as never)}
+          onPress={() => navigation.navigate('CreateProduct' as any)}
         >
           <Text style={styles.createButtonText}>+ 상품 등록</Text>
         </TouchableOpacity>

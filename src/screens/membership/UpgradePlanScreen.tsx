@@ -6,11 +6,11 @@ import { MEMBERSHIP_PLANS } from '../../constants/membershipPlans';
 import { MembershipType } from '../../types/membership';
 
 export const UpgradePlanScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const currentType = MembershipType.FREE;
   
-  const upgradePlans = MEMBERSHIP_PLANS.filter(plan => 
-    plan.type !== MembershipType.FREE && plan.type !== currentType
+  const upgradePlans = MEMBERSHIP_PLANS.filter(plan =>
+    plan.type !== MembershipType.FREE && (plan.type as string) !== (currentType as string)
   );
 
   return (
@@ -26,7 +26,7 @@ export const UpgradePlanScreen: React.FC = () => {
             <PlanCard
               key={plan.id}
               plan={plan}
-              onSelect={() => navigation.navigate('Home' as never, { screen: 'MembershipPayment', params: { plan: plan.type } } as never)}
+              onSelect={() => navigation.navigate('Home' as any, { screen: 'MembershipPayment', params: { plan: plan.type } } as any)}
             />
           ))}
         </View>

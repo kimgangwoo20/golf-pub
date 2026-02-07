@@ -1,6 +1,30 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import { MembershipType } from '../../types/membership';
+
+interface SizeStyle {
+  container: ViewStyle;
+  emoji: TextStyle;
+  text: TextStyle;
+}
+
+const sizeMap: Record<string, SizeStyle> = {
+  small: {
+    container: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
+    emoji: { fontSize: 12 },
+    text: { fontSize: 11 },
+  },
+  medium: {
+    container: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
+    emoji: { fontSize: 16 },
+    text: { fontSize: 14 },
+  },
+  large: {
+    container: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
+    emoji: { fontSize: 20 },
+    text: { fontSize: 16 },
+  },
+};
 
 interface MembershipBadgeProps {
   type: MembershipType;
@@ -21,15 +45,15 @@ export const MembershipBadge: React.FC<MembershipBadgeProps> = ({ type, size = '
   };
 
   const config = getBadgeConfig();
-  const sizeStyles = styles[size];
+  const sizeStyle = sizeMap[size];
 
   return (
-    <View style={[styles.badge, { backgroundColor: config.color }, sizeStyles.container]}>
-      <Text style={[styles.emoji, sizeStyles.emoji]}>{config.emoji}</Text>
-      <Text style={[styles.text, sizeStyles.text]}>{config.text}</Text>
+    <View style={[styles.badge, { backgroundColor: config.color }, sizeStyle.container]}>
+      <Text style={[styles.emoji, sizeStyle.emoji]}>{config.emoji}</Text>
+      <Text style={[styles.text, sizeStyle.text]}>{config.text}</Text>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   badge: {
@@ -45,44 +69,5 @@ const styles = StyleSheet.create({
   text: {
     color: '#fff',
     fontWeight: '600',
-  },
-  small: {
-    container: {
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: 12,
-    },
-    emoji: {
-      fontSize: 12,
-    },
-    text: {
-      fontSize: 11,
-    },
-  },
-  medium: {
-    container: {
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 16,
-    },
-    emoji: {
-      fontSize: 16,
-    },
-    text: {
-      fontSize: 14,
-    },
-  },
-  large: {
-    container: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 20,
-    },
-    emoji: {
-      fontSize: 20,
-    },
-    text: {
-      fontSize: 16,
-    },
   },
 });

@@ -1,44 +1,6 @@
 import { create } from 'zustand';
 import { firestore as firebaseFirestore } from '../services/firebase/firebaseConfig';
-import { useAuthStore } from './useAuthStore';
-
-export interface Booking {
-  id: string;
-  hostId: string;
-  title: string;
-  course: string;
-  date: string;
-  time: string;
-  host: {
-    name: string;
-    avatar: string;
-    rating: number;
-    handicap: number;
-    level: 'beginner' | 'intermediate' | 'advanced';
-  };
-  price: {
-    original: number;
-    discount: number;
-    perPerson: boolean;
-  };
-  participants: {
-    current: number;
-    max: number;
-    members: Array<{
-      uid: string;
-      name: string;
-      role: 'host' | 'member';
-    }>;
-  };
-  conditions: {
-    level: string;
-    pace: string;
-    drinking: string;
-  };
-  status: 'OPEN' | 'CLOSED' | 'COMPLETED' | 'CANCELLED';
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { Booking } from '../types/booking-types';
 
 interface BookingState {
   bookings: Booking[];

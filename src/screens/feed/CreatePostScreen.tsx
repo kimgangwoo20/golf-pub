@@ -62,14 +62,14 @@ export const CreatePostScreen: React.FC = () => {
   };
 
   const handleAddHashtag = () => {
-    Alert.prompt(
+    (Alert.prompt as any)(
       '해시태그 추가',
       '해시태그를 입력하세요 (# 제외)',
       [
         { text: '취소', style: 'cancel' },
         {
           text: '추가',
-          onPress: (text) => {
+          onPress: (text: string) => {
             if (text && text.trim()) {
               const tag = text.trim().replace('#', '');
               if (!hashtags.includes(tag)) {

@@ -251,13 +251,13 @@ export const PostDetailScreen: React.FC = () => {
       ...(isMyPost
         ? [
             { text: '수정', onPress: handleEditPost },
-            { text: '삭제', onPress: handleDeletePost, style: 'destructive' },
+            { text: '삭제', onPress: handleDeletePost, style: 'destructive' as const },
           ]
         : [
             { text: '신고', onPress: () => Alert.alert('신고', '신고 기능은 개발 예정입니다.') },
             { text: '차단', onPress: () => Alert.alert('차단', '차단 기능은 개발 예정입니다.') },
           ]),
-      { text: '취소', style: 'cancel' },
+      { text: '취소', style: 'cancel' as const },
     ]);
   };
 
@@ -268,13 +268,13 @@ export const PostDetailScreen: React.FC = () => {
       ...(isMyComment
         ? [
             { text: '수정', onPress: () => handleEditComment(comment.id) },
-            { text: '삭제', onPress: () => handleDeleteComment(comment.id), style: 'destructive' },
+            { text: '삭제', onPress: () => handleDeleteComment(comment.id), style: 'destructive' as const },
           ]
         : [
             { text: '답글', onPress: () => handleReply(comment.id) },
             { text: '신고', onPress: () => Alert.alert('신고', '신고 기능은 개발 예정입니다.') },
           ]),
-      { text: '취소', style: 'cancel' },
+      { text: '취소', style: 'cancel' as const },
     ]);
   };
 

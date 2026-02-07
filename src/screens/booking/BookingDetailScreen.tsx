@@ -24,34 +24,44 @@ export const BookingDetailScreen: React.FC = () => {
   const route = useRoute();
   const { bookingId } = route.params as { bookingId: number };
 
-  // Mock 데이터 (실제로는 API에서 가져옴)
   const booking: Booking = {
-    id: bookingId,
+    id: String(bookingId),
     title: '주말 라운딩 같이 치실 분!',
-    golfCourse: '세라지오CC',
+    course: '세라지오CC',
     location: '경기 광주',
     date: '2025-01-18',
     time: '08:00',
-    maxPlayers: 4,
-    currentPlayers: 2,
-    price: 120000,
+    host: {
+      name: '김골프',
+      avatar: 'https://i.pravatar.cc/150?img=12',
+      rating: 4.8,
+      handicap: 18,
+      level: 'intermediate',
+    },
+    price: { original: 150000, discount: 120000, perPerson: true },
+    participants: {
+      current: 2,
+      max: 4,
+      members: [
+        { uid: '1', name: '김골프', role: 'host' },
+        { uid: '2', name: '박버디', role: 'member' },
+      ],
+    },
     level: 'intermediate',
-    status: 'open',
+    status: 'OPEN',
     description: '주말 아침 상쾌하게 라운딩하실 분 찾습니다!\n\n⛳ 코스: 세라지오CC 정규 18홀\n🕐 시간: 오전 8시 티오프\n💰 비용: 1인당 12만원 (그린피 포함)\n\n초중급자 환영합니다. 편하게 즐기실 분들만 신청해주세요!\n\n라운딩 후 근처 맛집에서 식사 예정입니다.',
     image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800',
-    participants: [
-      { id: 1, avatar: 'https://i.pravatar.cc/150?img=12', name: '김골프' },
-      { id: 2, avatar: 'https://i.pravatar.cc/150?img=25', name: '박버디' },
-    ],
     hasPub: false,
-    hostId: 1,
+    hostId: '1',
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   const host = {
-    id: 1,
-    name: '김골프',
-    avatar: 'https://i.pravatar.cc/150?img=12',
-    rating: 4.8,
+    id: '1',
+    name: booking.host.name,
+    avatar: booking.host.avatar,
+    rating: booking.host.rating,
     reviewCount: 23,
     bio: '골프 경력 3년차입니다. 즐겁게 치실 분들 환영해요!',
   };
@@ -68,21 +78,20 @@ export const BookingDetailScreen: React.FC = () => {
   };
 
   const handleJoinBooking = () => {
-    if (booking.status === 'full') {
+    if (booking.status === 'CLOSED') {
       Alert.alert('마감된 모임', '이미 정원이 마감되었습니다.');
       return;
     }
 
     Alert.alert(
       '참가 신청',
-      `${booking.golfCourse} 라운딩에 참가하시겠습니까?\n\n금액: ${booking.price.toLocaleString()}원`,
+      `${booking.course} 라운딩에 참가하시겠습니까?\n\n금액: ${booking.price.discount.toLocaleString()}원`,
       [
-        { text: '취소', style: 'cancel' },
+        { text: '취소', style: 'cancel' as const },
         {
           text: '확인',
           onPress: () => {
-            // 결제 화면으로 이동
-            navigation.navigate('Payment' as never, { bookingId: booking.id } as never);
+            navigation.navigate('Payment' as any, { bookingId: booking.id } as any);
           },
         },
       ]
@@ -90,13 +99,13 @@ export const BookingDetailScreen: React.FC = () => {
   };
 
   const handleChat = () => {
-    navigation.navigate('Chat' as never, {
+    navigation.navigate('Chat' as any, {
       screen: 'ChatRoom',
       params: {
         chatId: `booking_${booking.id}`,
         chatName: booking.title,
       },
-    } as never);
+    } as any);
   };
 
   // 새로고침
@@ -135,15 +144,15 @@ export const BookingDetailScreen: React.FC = () => {
         <View style={styles.mainInfo}>
           <View style={styles.titleRow}>
             <Text style={styles.title}>{booking.title}</Text>
-            <View style={[styles.statusBadge, booking.status === 'full' && styles.statusBadgeFull]}>
+            <View style={[styles.statusBadge, booking.status === 'CLOSED' && styles.statusBadgeFull]}>
               <Text style={styles.statusBadgeText}>
-                {booking.status === 'open' ? '모집중' : '마감'}
+                {booking.status === 'OPEN' ? '모집중' : '마감'}
               </Text>
             </View>
           </View>
 
           <View style={styles.infoRow}>
-            <Text style={styles.golfCourse}>⛳ {booking.golfCourse}</Text>
+            <Text style={styles.golfCourse}>⛳ {booking.course}</Text>
             <Text style={styles.location}>📍 {booking.location}</Text>
           </View>
         </View>
@@ -162,12 +171,12 @@ export const BookingDetailScreen: React.FC = () => {
             </View>
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>실력</Text>
-              <Text style={styles.infoValue}>{getLevelText(booking.level)}</Text>
+              <Text style={styles.infoValue}>{getLevelText(booking.level ?? 'any')}</Text>
             </View>
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>인원</Text>
               <Text style={styles.infoValue}>
-                {booking.currentPlayers}/{booking.maxPlayers}명
+                {booking.participants.current}/{booking.participants.max}명
               </Text>
             </View>
           </View>
@@ -191,15 +200,17 @@ export const BookingDetailScreen: React.FC = () => {
 
         {/* 참가자 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>참가자 ({booking.currentPlayers}명)</Text>
+          <Text style={styles.sectionTitle}>참가자 ({booking.participants.current}명)</Text>
           <View style={styles.participantsList}>
-            {booking.participants.map((participant) => (
-              <View key={participant.id} style={styles.participantItem}>
-                <Image source={{ uri: participant.avatar }} style={styles.participantAvatar} />
-                <Text style={styles.participantName}>{participant.name}</Text>
+            {booking.participants.members.map((member) => (
+              <View key={member.uid} style={styles.participantItem}>
+                <View style={styles.participantAvatar}>
+                  <Text style={styles.emptySlotText}>{member.name.charAt(0)}</Text>
+                </View>
+                <Text style={styles.participantName}>{member.name}</Text>
               </View>
             ))}
-            {Array.from({ length: booking.maxPlayers - booking.currentPlayers }).map((_, index) => (
+            {Array.from({ length: booking.participants.max - booking.participants.current }).map((_, index) => (
               <View key={`empty-${index}`} style={styles.participantItem}>
                 <View style={styles.emptySlot}>
                   <Text style={styles.emptySlotText}>?</Text>
@@ -235,19 +246,19 @@ export const BookingDetailScreen: React.FC = () => {
       <View style={styles.bottomBar}>
         <View style={styles.priceContainer}>
           <Text style={styles.priceLabel}>1인당</Text>
-          <Text style={styles.price}>{booking.price.toLocaleString()}원</Text>
+          <Text style={styles.price}>{booking.price.discount.toLocaleString()}원</Text>
         </View>
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.chatButton} onPress={handleChat}>
             <Text style={styles.chatButtonText}>💬</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.joinButton, booking.status === 'full' && styles.joinButtonDisabled]}
+            style={[styles.joinButton, booking.status === 'CLOSED' && styles.joinButtonDisabled]}
             onPress={handleJoinBooking}
-            disabled={booking.status === 'full'}
+            disabled={booking.status === 'CLOSED'}
           >
             <Text style={styles.joinButtonText}>
-              {booking.status === 'full' ? '마감되었습니다' : '참가 신청'}
+              {booking.status === 'CLOSED' ? '마감되었습니다' : '참가 신청'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -424,6 +435,9 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     marginBottom: 8,
+    backgroundColor: colors.bgTertiary,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
   },
   participantName: {
     fontSize: 12,

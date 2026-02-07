@@ -47,7 +47,7 @@ export const useRequireAuth = (options: UseRequireAuthOptions = {}) => {
   return {
     user,
     isAuthenticated,
-    userId: user?.id || null,
+    userId: user?.uid || null,
   };
 };
 
