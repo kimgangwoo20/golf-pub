@@ -120,6 +120,15 @@
 - [x] ~~5개 화면 상대 경로(../../) → @/ 경로 별칭 변경~~ (2026.02.07 완료)
 - [x] ~~5개 화면 로딩/빈 상태 UI + Pull-to-refresh 추가~~ (2026.02.07 완료)
 
+### 2026.02.07 펍 화면 Mock→Firestore 전환 (6차 배치)
+
+- [x] ~~BestPubsScreen - MOCK_PUBS 3건 + 로컬 Pub 인터페이스 제거 → pubAPI.getPopularPubs 연결~~ (2026.02.07 완료)
+- [x] ~~PubDetailScreen - MOCK_PUB 객체 제거 → pubAPI.getPubById 연결, prop→hook 전환 (useNavigation/useRoute)~~ (2026.02.07 완료)
+- [x] ~~PubReviewsScreen - MOCK_REVIEWS 3건 + 로컬 Review 인터페이스 제거 → pubAPI.getPubReviews 연결, prop→hook 전환~~ (2026.02.07 완료)
+- [x] ~~pubAPI.ts - console.log 8개 제거 (getPubs/getPubById/getPopularPubs/getPubReviews/createPubReview/updatePubRating/getNearbyPubs)~~ (2026.02.07 완료)
+- [x] ~~3개 화면 Mock 필드 → Pub/PubReview 타입 매핑 (image→images[0], tags→features, hours→openTime-closeTime, userAvatar→userImage, content→comment, date→createdAt)~~ (2026.02.07 완료)
+- [x] ~~3개 화면 로딩/빈 상태 UI + Pull-to-refresh 추가~~ (2026.02.07 완료)
+
 ### 2026.02.07 친구 관리 Mock→Firestore 전환 (4차 배치)
 
 - [x] ~~FriendsScreen - mockFriends 5건 제거 → getFriendsList + getPendingRequests 연결, console.log 제거, 통계 실제 데이터 연결~~ (2026.02.07 완료)
@@ -195,6 +204,9 @@
   - [x] ~~PopularBookingsScreen - Mock 제거 → getPopularBookings 연결~~ (2026.02.07 완료)
   - [x] ~~RecommendedBookingsScreen - Mock 제거 → getRecommendedBookings 연결~~ (2026.02.07 완료)
   - [x] ~~RequestStatusScreen - Mock 제거 → getRequestStatus 연결~~ (2026.02.07 완료)
+  - [x] ~~BestPubsScreen - Mock 제거 → pubAPI.getPopularPubs 연결~~ (2026.02.07 완료)
+  - [x] ~~PubDetailScreen - Mock 제거 → pubAPI.getPubById 연결~~ (2026.02.07 완료)
+  - [x] ~~PubReviewsScreen - Mock 제거 → pubAPI.getPubReviews 연결~~ (2026.02.07 완료)
 
 - [ ] **푸시 알림 완성** - Firebase Cloud Messaging
   - [ ] FCM 토큰 등록 & 서버 전송
@@ -289,7 +301,7 @@
 | 피드/소셜 | 5 | 5 | 0 | 100% |
 | 친구 관리 | 5 | 5 | 0 | 100% |
 | 중고마켓 | 9 | 8 | 1 | 89% |
-| 골프장/펍 | 8 | 6 | 2 | 75% |
+| 골프장/펍 | 8 | 8 | 0 | 100% |
 | 멤버십/결제 | 8 | 4 | 4 | 50% |
 | 알림 | 5 | 1 | 4 | 20% |
 | 포인트/쿠폰 | 4 | 2 | 2 | 50% |
@@ -299,7 +311,8 @@
 | 코드 품질 | 4 | 4 | 0 | 100% |
 | 친구 Mock→API 전환 | 4 | 4 | 0 | 100% |
 | 예약 Mock→API 전환 (5차) | 5 | 5 | 0 | 100% |
-| **전체** | **107** | **82** | **25** | **77%** |
+| 펍 Mock→API 전환 (6차) | 3 | 3 | 0 | 100% |
+| **전체** | **110** | **88** | **22** | **80%** |
 
 ---
 
@@ -307,6 +320,13 @@
 
 ### 2026.02.07
 
+> **펍 화면 Mock→Firestore 전환 6차 배치 (3개 화면 + pubAPI 정리)**
+> - BestPubsScreen: MOCK_PUBS 3건 + 로컬 Pub 인터페이스 제거 → pubAPI.getPopularPubs(20) 연결, useNavigation 훅 사용, 로딩/새로고침/빈 상태 UI 추가
+> - PubDetailScreen: MOCK_PUB 객체 제거 → pubAPI.getPubById(pubId) 연결, prop기반 ({ route, navigation }) → useNavigation/useRoute 훅 전환, Mock 필드 매핑 (image→images[0], tags→features, hours→openTime-closeTime, isPartner→features.includes('제휴')), 로딩/빈 상태 UI 추가
+> - PubReviewsScreen: MOCK_REVIEWS 3건 + 로컬 Review 인터페이스 제거 → pubAPI.getPubReviews(pubId) + PubReview 타입 사용, prop→hook 전환, 필드 매핑 (userAvatar→userImage, content→comment, date→createdAt), RefreshControl + 로딩/빈 상태 UI 추가, averageRating 빈 배열 처리
+> - pubAPI.ts: console.log 8개 제거 (7개 함수에서 성공/정보 로그 제거)
+> - typecheck 0 에러 유지
+>
 > **예약 화면 Mock→Firestore 전환 5차 배치 (5개 화면 + firebase 함수 4개)**
 > - ApplicantProfileScreen: MOCK_APPLICANT 제거 → getApplicantProfile로 Firestore users 컬렉션 조회, approveBookingRequest/rejectBookingRequest 실제 API 연결, 로딩/빈 상태 UI 추가
 > - PaymentScreen: 하드코딩 booking 객체 제거 → getBookingDetail + users 컬렉션 호스트 이름 조인, console.log 제거, setTimeout 제거, 상대 경로 → @/ 수정, bookingId 타입 number→string
