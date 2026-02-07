@@ -21,9 +21,11 @@ import { BookingCard } from '@/components/booking/BookingCard';
 import { WeatherWidget } from '@/components/weather/WeatherWidget';
 import { useBookingStore } from '@/store/useBookingStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useNotificationStore } from '@/store/useNotificationStore';
 import { Booking } from '@/types';
 import { markAttendance, checkTodayAttendance } from '@/services/firebase/firebaseAttendance';
 import { joinBooking } from '@/services/firebase/firebaseBooking';
+import { MEMBERSHIP_PLANS } from '@/constants/membershipPlans';
 
 type FilterType = 'all' | 'today' | 'week' | 'beginner';
 
@@ -37,12 +39,18 @@ export const HomeScreen: React.FC = () => {
 
   const { bookings, loadBookings } = useBookingStore();
   const { user } = useAuthStore();
+  const { unreadCount, subscribeToUnreadCount, unsubscribeFromUnreadCount } = useNotificationStore();
+  const premiumPlan = MEMBERSHIP_PLANS.find(p => p.id === 'premium')!;
 
   useEffect(() => {
     loadData();
     if (user?.uid) {
       checkAttendance();
+      subscribeToUnreadCount(user.uid);
     }
+    return () => {
+      unsubscribeFromUnreadCount();
+    };
   }, [user?.uid]);
 
   const checkAttendance = async () => {
@@ -220,9 +228,13 @@ export const HomeScreen: React.FC = () => {
               }}
             >
               <Text style={styles.iconBtnText}>🔔</Text>
-              <View style={styles.notificationBadge}>
-                <Text style={styles.badgeText}>3</Text>
-              </View>
+              {unreadCount > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.badgeText}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -274,9 +286,11 @@ export const HomeScreen: React.FC = () => {
                         >
                           <View style={styles.membershipContent}>
                             <View style={styles.membershipLeft}>
-                              <Text style={styles.membershipBadge}>👑 프리미엄</Text>
-                              <Text style={styles.membershipTitle}>멤버십 혜택을 누려보세요</Text>
-                              <Text style={styles.membershipSubtitle}>무제한 부킹 참가 • 매월 5,000P 적립</Text>
+                              <Text style={styles.membershipBadge}>{premiumPlan.badge} {premiumPlan.name}</Text>
+                              <Text style={styles.membershipTitle}>{premiumPlan.description}</Text>
+                              <Text style={styles.membershipSubtitle}>
+                                {premiumPlan.features[0]} • 매월 {premiumPlan.monthlyPoints.toLocaleString()}P 적립
+                              </Text>
                             </View>
                             <View style={styles.membershipRight}>
                               <View style={styles.membershipButton}>
