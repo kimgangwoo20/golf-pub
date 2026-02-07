@@ -8,7 +8,7 @@ import {
   ProductCategory,
   ProductCondition,
   ProductStatus,
-} from '../../types/marketplace-types';
+} from '@/types/marketplace-types';
 
 /**
  * Firestore 컬렉션

@@ -1,8 +1,8 @@
 // ParticipantAvatar.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { BookingMember } from '../../types/booking-types';
-import { colors } from '../../styles/theme';
+import { BookingMember } from '@/types/booking-types';
+import { colors } from '@/styles/theme';
 
 interface Props { members: BookingMember[]; maxPlayers: number; size?: number; }
 

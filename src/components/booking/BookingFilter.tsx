@@ -9,8 +9,8 @@ import {
   StyleSheet,
   Modal,
 } from 'react-native';
-import { BookingFilter as BookingFilterType, BookingSortType, SkillLevel } from '../../types/booking-types';
-import { colors } from '../../styles/theme';
+import { BookingFilter as BookingFilterType, BookingSortType, SkillLevel } from '@/types/booking-types';
+import { colors } from '@/styles/theme';
 
 interface Props {
   activeFilter: BookingFilterType;

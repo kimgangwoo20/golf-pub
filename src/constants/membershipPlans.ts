@@ -1,4 +1,4 @@
-import { MembershipType, BillingCycle, MembershipPlan, MembershipPermissions } from '../types/membership';
+import { MembershipType, BillingCycle, MembershipPlan, MembershipPermissions } from '@/types/membership';
 
 // 멤버십 플랜 정의
 export const MEMBERSHIP_PLANS: MembershipPlan[] = [

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { MEMBERSHIP_COMPARISON } from '../../constants/membershipPlans';
+import { MEMBERSHIP_COMPARISON } from '@/constants/membershipPlans';
 
 export const ComparisonTable: React.FC = () => {
   return (
