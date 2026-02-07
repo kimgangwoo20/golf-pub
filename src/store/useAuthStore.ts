@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 import authService, { UserProfile } from '@/services/authService';
 import { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
@@ -29,14 +31,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   /**
    * 카카오 로그인 (간편 로그인)
+   * Firebase Anonymous Auth로 실제 인증 세션 생성 후 카카오 프로필 저장
    */
   login: async (kakaoId: string, profile: any) => {
     try {
       set({ loading: true, error: null });
 
+      // Firebase Anonymous Auth로 실제 인증 세션 생성
+      const credential = await auth().signInAnonymously();
+      const firebaseUser = credential.user;
+
       // 카카오 프로필 정보를 UserProfile 형태로 변환
       const userProfile: UserProfile = {
-        uid: kakaoId,
+        uid: firebaseUser.uid,
         email: profile.email || '',
         nickname: profile.nickname || '골프러',
         profileImage: profile.profileImageUrl || profile.thumbnailImageUrl || '',
@@ -45,14 +52,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         provider: 'kakao',
       };
 
+      // Firestore에 프로필 저장 (merge로 기존 데이터 보존)
+      await firestore().collection('users').doc(firebaseUser.uid).set(
+        { ...userProfile, kakaoId },
+        { merge: true }
+      );
+
       set({
-        user: { uid: kakaoId } as any,
+        user: firebaseUser,
         userProfile,
         isAuthenticated: true,
         loading: false,
       });
-
-      // 카카오 로그인 상태 저장 완료
     } catch (error: any) {
       console.error('로그인 실패');
       set({
