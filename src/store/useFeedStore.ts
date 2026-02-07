@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { firestore as firebaseFirestore } from '@/services/firebase/firebaseConfig';
-import { FeedPost, FeedStory } from '@/types/feed-types';
+import { FeedPost, FeedStory, Post, Comment } from '@/types/feed-types';
 
 // 상대 시간 포맷팅
 const formatRelativeTime = (date: Date): string => {
@@ -26,6 +26,8 @@ interface FeedState {
 
   loadPosts: () => Promise<void>;
   loadMyPosts: (userId: string) => Promise<void>;
+  getPostById: (postId: string) => Promise<Post | null>;
+  getPostComments: (postId: string) => Promise<Comment[]>;
   loadStories: () => Promise<void>;
 }
 
@@ -120,6 +122,61 @@ export const useFeedStore = create<FeedState>((set) => ({
         error: error.message || '내 게시글을 불러올 수 없습니다',
         loading: false,
       });
+    }
+  },
+
+  getPostById: async (postId: string): Promise<Post | null> => {
+    try {
+      const doc = await firebaseFirestore.collection('posts').doc(postId).get();
+      if (!doc.exists) return null;
+      const data = doc.data()!;
+      const createdAt = data.createdAt?.toDate?.() || new Date();
+      return {
+        id: doc.id,
+        author: data.author || { id: '', name: '', image: '' },
+        images: data.images || [],
+        content: data.content || '',
+        hashtags: data.hashtags || [],
+        location: data.location,
+        likes: data.likes || 0,
+        comments: data.comments || 0,
+        isLiked: false,
+        createdAt: formatRelativeTime(createdAt),
+        visibility: data.visibility || 'public',
+        status: data.status || 'published',
+      } as Post;
+    } catch (error: any) {
+      console.error('게시글 상세 로드 실패:', error);
+      return null;
+    }
+  },
+
+  getPostComments: async (postId: string): Promise<Comment[]> => {
+    try {
+      const snapshot = await firebaseFirestore
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .orderBy('createdAt', 'asc')
+        .limit(50)
+        .get();
+
+      return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          postId,
+          author: data.author || { id: '', name: '', image: '' },
+          content: data.content || '',
+          likes: data.likes || 0,
+          isLiked: false,
+          replies: data.replies || [],
+          createdAt: formatRelativeTime(data.createdAt?.toDate?.() || new Date()),
+        } as Comment;
+      });
+    } catch (error: any) {
+      console.error('댓글 로드 실패:', error);
+      return [];
     }
   },
 

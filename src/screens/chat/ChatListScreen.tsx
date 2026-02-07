@@ -1,5 +1,5 @@
-// ChatListScreen.tsx - 채팅 목록 (카카오톡 스타일)
-import React, { useState, useCallback } from 'react';
+// ChatListScreen.tsx - 채팅 목록 (Firestore 연동)
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,87 +9,124 @@ import {
   Image,
   TextInput,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useChatStore, ChatRoom } from '@/store/useChatStore';
 
-interface Chat {
-  id: string;
-  name: string;
-  avatar: string;
-  lastMessage: string;
-  timestamp: string;
-  unread: number;
-}
+// 채팅 시간 포맷팅
+const formatChatTime = (date: Date | undefined) => {
+  if (!date) return '';
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / 86400000);
 
-const MOCK_CHATS: Chat[] = [
-  {
-    id: '1',
-    name: '김골프',
-    avatar: 'https://i.pravatar.cc/150?img=12',
-    lastMessage: '내일 라운딩 가시나요?',
-    timestamp: '오전 10:23',
-    unread: 2,
-  },
-  {
-    id: '2',
-    name: '이영희',
-    avatar: 'https://i.pravatar.cc/150?img=25',
-    lastMessage: '저도 참가할게요!',
-    timestamp: '어제',
-    unread: 5,
-  },
-  {
-    id: '3',
-    name: '박민수',
-    avatar: 'https://i.pravatar.cc/150?img=33',
-    lastMessage: '드라이버 중고로 팔아요',
-    timestamp: '2일 전',
-    unread: 0,
-  },
-];
+  if (diffDays === 0) {
+    return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+  }
+  if (diffDays === 1) return '어제';
+  if (diffDays < 7) return `${diffDays}일 전`;
+  return date.toLocaleDateString('ko-KR');
+};
 
-export const ChatListScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
-  const [chats] = useState<Chat[]>(MOCK_CHATS);
+export const ChatListScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  const { user } = useAuthStore();
+  const { chatRooms, loading, loadChatRooms } = useChatStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
-  // 새로고침
-  const handleRefresh = useCallback(() => {
+  useEffect(() => {
+    if (user?.uid) {
+      loadChatRooms(user.uid);
+    }
+  }, [user?.uid, loadChatRooms]);
+
+  const handleRefresh = useCallback(async () => {
+    if (!user?.uid) return;
     setRefreshing(true);
-    setTimeout(() => {
+    try {
+      await loadChatRooms(user.uid);
+    } catch (error) {
+      console.error('채팅 목록 새로고침 실패:', error);
+    } finally {
       setRefreshing(false);
-    }, 1000);
-  }, []);
+    }
+  }, [user?.uid, loadChatRooms]);
 
-  const filteredChats = chats.filter(chat =>
-    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // 다른 참가자 정보 가져오기
+  const getOtherParticipant = (room: ChatRoom) => {
+    const other = room.participants.find(p => p.uid !== user?.uid);
+    return other || { uid: '', name: '알 수 없음', avatar: '' };
+  };
 
-  const renderChatItem = ({ item }: { item: Chat }) => (
-    <TouchableOpacity
-      style={styles.chatItem}
-      onPress={() => {
-        navigation?.navigate('ChatRoom', { chatId: item.id, chatName: item.name });
-      }}
-    >
-      <Image source={{ uri: item.avatar }} style={styles.avatar} />
-      <View style={styles.chatInfo}>
-        <View style={styles.chatHeader}>
-          <Text style={styles.chatName}>{item.name}</Text>
-          <Text style={styles.timestamp}>{item.timestamp}</Text>
+  const filteredRooms = chatRooms.filter(room => {
+    const other = getOtherParticipant(room);
+    return other.name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  const renderChatItem = ({ item }: { item: ChatRoom }) => {
+    const other = getOtherParticipant(item);
+    const unreadCount = user?.uid ? (item.unreadCount?.[user.uid] || 0) : 0;
+
+    return (
+      <TouchableOpacity
+        style={styles.chatItem}
+        onPress={() => {
+          navigation.navigate('ChatRoom', {
+            chatId: item.id,
+            chatName: other.name,
+          });
+        }}
+      >
+        <Image
+          source={{ uri: other.avatar || 'https://i.pravatar.cc/150' }}
+          style={styles.avatar}
+        />
+        <View style={styles.chatInfo}>
+          <View style={styles.chatHeader}>
+            <Text style={styles.chatName}>{other.name}</Text>
+            <Text style={styles.timestamp}>
+              {formatChatTime(item.lastMessage?.createdAt)}
+            </Text>
+          </View>
+          <View style={styles.chatFooter}>
+            <Text style={styles.lastMessage} numberOfLines={1}>
+              {item.lastMessage?.message || '새로운 채팅'}
+            </Text>
+            {unreadCount > 0 && (
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadText}>{unreadCount}</Text>
+              </View>
+            )}
+          </View>
         </View>
-        <View style={styles.chatFooter}>
-          <Text style={styles.lastMessage} numberOfLines={1}>
-            {item.lastMessage}
-          </Text>
-          {item.unread > 0 && (
-            <View style={styles.unreadBadge}>
-              <Text style={styles.unreadText}>{item.unread}</Text>
-            </View>
-          )}
+      </TouchableOpacity>
+    );
+  };
+
+  if (loading && chatRooms.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>채팅</Text>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={() => navigation.navigate('CreateChat')}
+            >
+              <Text style={styles.headerButtonText}>💬</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#10b981" />
+          <Text style={styles.loadingText}>채팅 목록을 불러오는 중...</Text>
         </View>
       </View>
-    </TouchableOpacity>
-  );
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -99,15 +136,9 @@ export const ChatListScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
         <View style={styles.headerButtons}>
           <TouchableOpacity
             style={styles.headerButton}
-            onPress={() => navigation?.navigate('CreateChat')}
+            onPress={() => navigation.navigate('CreateChat')}
           >
             <Text style={styles.headerButtonText}>💬</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={() => navigation?.navigate('ChatSettings')}
-          >
-            <Text style={styles.headerButtonText}>⚙️</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -126,7 +157,7 @@ export const ChatListScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
 
       {/* 채팅 목록 */}
       <FlatList
-        data={filteredChats}
+        data={filteredRooms}
         renderItem={renderChatItem}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
@@ -141,6 +172,7 @@ export const ChatListScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>💬</Text>
             <Text style={styles.emptyText}>채팅이 없습니다</Text>
             <Text style={styles.emptySubtext}>새 채팅을 시작해보세요!</Text>
           </View>
@@ -154,6 +186,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
   },
   header: {
     flexDirection: 'row',
@@ -267,6 +309,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 60,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 12,
   },
   emptyText: {
     fontSize: 18,
