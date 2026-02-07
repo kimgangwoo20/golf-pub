@@ -1,6 +1,6 @@
-// FriendRequestsScreen.tsx - 친구 요청 화면
+// FriendRequestsScreen.tsx - 친구 요청 화면 (Firestore 연동)
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,85 +9,111 @@ import {
   Image,
   StyleSheet,
   Alert,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { FriendRequest } from '../../types/friend-types';
-
-// Mock 받은 요청 데이터
-const mockReceivedRequests: FriendRequest[] = [
-  {
-    id: 1,
-    userId: 101,
-    userName: '박지성',
-    userImage: 'https://i.pravatar.cc/150?img=11',
-    userHandicap: 17,
-    userLocation: '서울 마포구',
-    mutualFriends: 7,
-    message: '같이 라운딩 하고 싶어요!',
-    createdAt: '2025.01.23',
-    type: 'received',
-  },
-  {
-    id: 2,
-    userId: 102,
-    userName: '손흥민',
-    userImage: 'https://i.pravatar.cc/150?img=13',
-    userHandicap: 14,
-    userLocation: '경기 용인시',
-    mutualFriends: 12,
-    createdAt: '2025.01.22',
-    type: 'received',
-  },
-  {
-    id: 3,
-    userId: 103,
-    userName: '김연아',
-    userImage: 'https://i.pravatar.cc/150?img=24',
-    userHandicap: 19,
-    userLocation: '서울 강남구',
-    mutualFriends: 5,
-    message: '친구 추가 부탁드립니다~',
-    createdAt: '2025.01.21',
-    type: 'received',
-  },
-];
-
-// Mock 보낸 요청 데이터
-const mockSentRequests: FriendRequest[] = [
-  {
-    id: 4,
-    userId: 104,
-    userName: '이강인',
-    userImage: 'https://i.pravatar.cc/150?img=52',
-    userHandicap: 16,
-    userLocation: '서울 송파구',
-    mutualFriends: 4,
-    createdAt: '2025.01.20',
-    type: 'sent',
-  },
-  {
-    id: 5,
-    userId: 105,
-    userName: '황희찬',
-    userImage: 'https://i.pravatar.cc/150?img=33',
-    userHandicap: 18,
-    userLocation: '경기 성남시',
-    mutualFriends: 9,
-    createdAt: '2025.01.18',
-    type: 'sent',
-  },
-];
+import { useAuthStore } from '@/store/useAuthStore';
+import {
+  getPendingRequests,
+  getSentRequests,
+  acceptFriendRequest,
+  rejectFriendRequest,
+  cancelFriendRequest,
+} from '@/services/firebase/firebaseFriends';
+import { FriendRequest } from '@/services/firebase/firebaseFriends';
+import firestore from '@react-native-firebase/firestore';
 
 type TabType = 'received' | 'sent';
 
+// FriendRequest에 사용자 정보를 포함한 확장 타입
+interface RequestWithUserInfo extends FriendRequest {
+  userName: string;
+  userImage: string;
+  userHandicap: number;
+  userLocation: string;
+}
+
 export const FriendRequestsScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<TabType>('received');
-  const [receivedRequests, setReceivedRequests] = useState(mockReceivedRequests);
-  const [sentRequests, setSentRequests] = useState(mockSentRequests);
+  const [receivedRequests, setReceivedRequests] = useState<RequestWithUserInfo[]>([]);
+  const [sentRequests, setSentRequests] = useState<RequestWithUserInfo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const handleAccept = (requestId: number, userName: string) => {
+  // 요청 목록에 사용자 정보 추가
+  const enrichRequests = async (
+    requests: FriendRequest[],
+    type: 'received' | 'sent',
+  ): Promise<RequestWithUserInfo[]> => {
+    const enriched: RequestWithUserInfo[] = [];
+
+    for (const req of requests) {
+      const targetUserId = type === 'received' ? req.fromUserId : req.toUserId;
+      try {
+        const userDoc = await firestore()
+          .collection('users')
+          .doc(targetUserId)
+          .get();
+
+        const userData = userDoc.data();
+        enriched.push({
+          ...req,
+          userName: userData?.name || userData?.displayName || '사용자',
+          userImage: userData?.avatar || userData?.photoURL || '',
+          userHandicap: userData?.handicap || 0,
+          userLocation: userData?.location || '미등록',
+        });
+      } catch {
+        enriched.push({
+          ...req,
+          userName: '사용자',
+          userImage: '',
+          userHandicap: 0,
+          userLocation: '미등록',
+        });
+      }
+    }
+
+    return enriched;
+  };
+
+  const loadRequests = useCallback(async () => {
+    if (!user?.uid) return;
+    try {
+      setLoading(true);
+      const [received, sent] = await Promise.all([
+        getPendingRequests(user.uid),
+        getSentRequests(user.uid),
+      ]);
+      const [enrichedReceived, enrichedSent] = await Promise.all([
+        enrichRequests(received, 'received'),
+        enrichRequests(sent, 'sent'),
+      ]);
+      setReceivedRequests(enrichedReceived);
+      setSentRequests(enrichedSent);
+    } catch (error) {
+      console.error('친구 요청 로드 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.uid]);
+
+  useEffect(() => {
+    loadRequests();
+  }, [loadRequests]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadRequests();
+    setRefreshing(false);
+  }, [loadRequests]);
+
+  const handleAccept = (requestId: string, userName: string, fromUserId: string) => {
+    if (!user?.uid) return;
     Alert.alert(
       '친구 요청 승인',
       `${userName}님의 친구 요청을 승인하시겠습니까?`,
@@ -95,17 +121,26 @@ export const FriendRequestsScreen: React.FC = () => {
         { text: '취소', style: 'cancel' },
         {
           text: '승인',
-          onPress: () => {
-            // TODO: Firebase API 호출
-            setReceivedRequests(prev => prev.filter(r => r.id !== requestId));
-            Alert.alert('완료', `${userName}님과 친구가 되었습니다!`);
+          onPress: async () => {
+            try {
+              const result = await acceptFriendRequest(requestId, fromUserId, user.uid);
+              if (result.success) {
+                setReceivedRequests(prev => prev.filter(r => r.id !== requestId));
+                Alert.alert('완료', `${userName}님과 친구가 되었습니다!`);
+              } else {
+                Alert.alert('오류', result.message);
+              }
+            } catch (error) {
+              console.error('친구 수락 실패:', error);
+              Alert.alert('오류', '친구 요청 승인에 실패했습니다.');
+            }
           },
         },
       ]
     );
   };
 
-  const handleReject = (requestId: number, userName: string) => {
+  const handleReject = (requestId: string, userName: string) => {
     Alert.alert(
       '친구 요청 거절',
       `${userName}님의 친구 요청을 거절하시겠습니까?`,
@@ -114,17 +149,26 @@ export const FriendRequestsScreen: React.FC = () => {
         {
           text: '거절',
           style: 'destructive',
-          onPress: () => {
-            // TODO: Firebase API 호출
-            setReceivedRequests(prev => prev.filter(r => r.id !== requestId));
-            Alert.alert('완료', '요청을 거절했습니다.');
+          onPress: async () => {
+            try {
+              const result = await rejectFriendRequest(requestId);
+              if (result.success) {
+                setReceivedRequests(prev => prev.filter(r => r.id !== requestId));
+                Alert.alert('완료', '요청을 거절했습니다.');
+              } else {
+                Alert.alert('오류', result.message);
+              }
+            } catch (error) {
+              console.error('친구 거절 실패:', error);
+              Alert.alert('오류', '요청 거절에 실패했습니다.');
+            }
           },
         },
       ]
     );
   };
 
-  const handleCancel = (requestId: number, userName: string) => {
+  const handleCancel = (requestId: string, userName: string) => {
     Alert.alert(
       '요청 취소',
       `${userName}님에게 보낸 친구 요청을 취소하시겠습니까?`,
@@ -133,10 +177,19 @@ export const FriendRequestsScreen: React.FC = () => {
         {
           text: '취소하기',
           style: 'destructive',
-          onPress: () => {
-            // TODO: Firebase API 호출
-            setSentRequests(prev => prev.filter(r => r.id !== requestId));
-            Alert.alert('완료', '요청을 취소했습니다.');
+          onPress: async () => {
+            try {
+              const result = await cancelFriendRequest(requestId);
+              if (result.success) {
+                setSentRequests(prev => prev.filter(r => r.id !== requestId));
+                Alert.alert('완료', '요청을 취소했습니다.');
+              } else {
+                Alert.alert('오류', result.message);
+              }
+            } catch (error) {
+              console.error('친구 요청 취소 실패:', error);
+              Alert.alert('오류', '요청 취소에 실패했습니다.');
+            }
           },
         },
       ]
@@ -144,6 +197,32 @@ export const FriendRequestsScreen: React.FC = () => {
   };
 
   const displayRequests = activeTab === 'received' ? receivedRequests : sentRequests;
+
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return '';
+    const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString('ko-KR');
+  };
+
+  if (loading && receivedRequests.length === 0 && sentRequests.length === 0) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Text style={styles.backIcon}>‹</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>친구 요청</Text>
+            <View style={styles.headerRight} />
+          </View>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#10b981" />
+            <Text style={styles.loadingText}>요청 목록을 불러오는 중...</Text>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -178,31 +257,33 @@ export const FriendRequestsScreen: React.FC = () => {
         </View>
 
         {/* 요청 목록 */}
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#10b981"
+              colors={['#10b981']}
+            />
+          }
+        >
           <View style={styles.requestsList}>
             {displayRequests.length > 0 ? (
               displayRequests.map((request) => (
                 <View key={request.id} style={styles.requestCard}>
-                  <Image source={{ uri: request.userImage }} style={styles.userImage} />
+                  <Image
+                    source={{ uri: request.userImage || 'https://i.pravatar.cc/150' }}
+                    style={styles.userImage}
+                  />
 
                   <View style={styles.requestInfo}>
                     <Text style={styles.userName}>{request.userName}</Text>
                     <Text style={styles.userHandicap}>⛳ {request.userHandicap}</Text>
                     <Text style={styles.userLocation}>📍 {request.userLocation}</Text>
 
-                    {request.mutualFriends > 0 && (
-                      <Text style={styles.mutualText}>
-                        공통 친구 {request.mutualFriends}명
-                      </Text>
-                    )}
-
-                    {request.message && (
-                      <View style={styles.messageBox}>
-                        <Text style={styles.messageText}>{request.message}</Text>
-                      </View>
-                    )}
-
-                    <Text style={styles.dateText}>{request.createdAt}</Text>
+                    <Text style={styles.dateText}>{formatDate(request.createdAt)}</Text>
                   </View>
 
                   {/* 버튼 */}
@@ -210,7 +291,7 @@ export const FriendRequestsScreen: React.FC = () => {
                     <View style={styles.actionButtons}>
                       <TouchableOpacity
                         style={styles.acceptButton}
-                        onPress={() => handleAccept(request.id, request.userName)}
+                        onPress={() => handleAccept(request.id, request.userName, request.fromUserId)}
                       >
                         <Text style={styles.acceptButtonText}>승인</Text>
                       </TouchableOpacity>
@@ -261,6 +342,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
   },
   header: {
     flexDirection: 'row',
@@ -355,23 +446,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#999',
     marginBottom: 6,
-  },
-  mutualText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#10b981',
-    marginBottom: 8,
-  },
-  messageBox: {
-    backgroundColor: '#F5F5F5',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  messageText: {
-    fontSize: 13,
-    color: '#666',
-    lineHeight: 18,
   },
   dateText: {
     fontSize: 12,

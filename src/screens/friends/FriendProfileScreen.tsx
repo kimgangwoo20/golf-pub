@@ -1,6 +1,6 @@
-// FriendProfileScreen.tsx - 친구 프로필 화면
+// FriendProfileScreen.tsx - 친구 프로필 화면 (Firestore 연동)
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,58 +9,53 @@ import {
   Image,
   StyleSheet,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-
-// Mock 친구 상세 데이터
-const mockFriendProfile = {
-  id: 1,
-  name: '김철수',
-  image: 'https://i.pravatar.cc/150?img=12',
-  handicap: 18,
-  location: '서울 강남구',
-  bio: '주말 골퍼입니다. 평균 스코어 90대 초반이고, 편하게 라운딩하는 걸 좋아합니다!',
-  joinedDate: '2024.06.15',
-  friendsSince: '2025.01.15',
-  mutualFriends: 5,
-  stats: {
-    totalMeetups: 12,
-    totalRounds: 28,
-    averageScore: 92,
-  },
-  recentMeetups: [
-    {
-      id: 1,
-      title: '주말 오전 라운딩',
-      course: '남서울CC',
-      date: '2025.01.20',
-    },
-    {
-      id: 2,
-      title: '평일 조인',
-      course: '레이크우드CC',
-      date: '2025.01.10',
-    },
-    {
-      id: 3,
-      title: '신년 라운딩',
-      course: '안양CC',
-      date: '2025.01.02',
-    },
-  ],
-};
+import { useAuthStore } from '@/store/useAuthStore';
+import { getFriendProfile, removeFriend } from '@/services/firebase/firebaseFriends';
 
 export const FriendProfileScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const route = useRoute<any>();
+  const { user } = useAuthStore();
+  const friendId = route.params?.friendId;
+
+  const [profile, setProfile] = useState<any>(null);
+  const [friendshipInfo, setFriendshipInfo] = useState<any>(null);
+  const [recentMeetups, setRecentMeetups] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadProfile = useCallback(async () => {
+    if (!user?.uid || !friendId) return;
+    try {
+      setLoading(true);
+      const result = await getFriendProfile(user.uid, friendId);
+      if (result) {
+        setProfile(result.profile);
+        setFriendshipInfo(result.friendshipInfo);
+        setRecentMeetups(result.recentMeetups);
+      }
+    } catch (error) {
+      console.error('친구 프로필 로드 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.uid, friendId]);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
   const handleChat = () => {
+    if (!profile) return;
     navigation.navigate('Chat' as any, {
       screen: 'ChatRoom',
       params: {
-        chatId: `friend_${mockFriendProfile.id}`,
-        chatName: mockFriendProfile.name,
+        chatId: `friend_${friendId}`,
+        chatName: profile.name,
       },
     } as any);
   };
@@ -70,22 +65,79 @@ export const FriendProfileScreen: React.FC = () => {
   };
 
   const handleUnfriend = () => {
+    if (!user?.uid || !friendId || !profile) return;
     Alert.alert(
       '친구 삭제',
-      `${mockFriendProfile.name}님을 친구 목록에서 삭제하시겠습니까?`,
+      `${profile.name}님을 친구 목록에서 삭제하시겠습니까?`,
       [
         { text: '취소', style: 'cancel' },
         {
           text: '삭제',
           style: 'destructive',
-          onPress: () => {
-            console.log('친구 삭제');
-            navigation.goBack();
+          onPress: async () => {
+            try {
+              const result = await removeFriend(user.uid, friendId);
+              if (result.success) {
+                Alert.alert('완료', result.message);
+                navigation.goBack();
+              } else {
+                Alert.alert('오류', result.message);
+              }
+            } catch (error) {
+              console.error('친구 삭제 실패:', error);
+              Alert.alert('오류', '친구 삭제에 실패했습니다.');
+            }
           },
         },
       ]
     );
   };
+
+  const formatDate = (date: any) => {
+    if (!date) return '';
+    const d = date instanceof Date ? date : new Date(date);
+    return d.toLocaleDateString('ko-KR');
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Text style={styles.backIcon}>‹</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>친구 프로필</Text>
+            <View style={{ width: 40 }} />
+          </View>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#10b981" />
+            <Text style={styles.loadingText}>프로필을 불러오는 중...</Text>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Text style={styles.backIcon}>‹</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>친구 프로필</Text>
+            <View style={{ width: 40 }} />
+          </View>
+          <View style={styles.loadingContainer}>
+            <Text style={styles.emptyIcon}>👤</Text>
+            <Text style={styles.emptyText}>프로필을 찾을 수 없습니다</Text>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -104,35 +156,38 @@ export const FriendProfileScreen: React.FC = () => {
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {/* 프로필 정보 */}
           <View style={styles.profileSection}>
-            <Image source={{ uri: mockFriendProfile.image }} style={styles.profileImage} />
+            <Image
+              source={{ uri: profile.avatar || 'https://i.pravatar.cc/150' }}
+              style={styles.profileImage}
+            />
 
-            <Text style={styles.profileName}>{mockFriendProfile.name}</Text>
+            <Text style={styles.profileName}>{profile.name}</Text>
 
             <View style={styles.handicapContainer}>
               <Text style={styles.handicapLabel}>핸디캡</Text>
-              <Text style={styles.handicapValue}>⛳ {mockFriendProfile.handicap}</Text>
+              <Text style={styles.handicapValue}>⛳ {profile.handicap}</Text>
             </View>
 
-            <Text style={styles.profileLocation}>📍 {mockFriendProfile.location}</Text>
-            <Text style={styles.profileBio}>{mockFriendProfile.bio}</Text>
+            <Text style={styles.profileLocation}>📍 {profile.location}</Text>
+            {profile.bio ? (
+              <Text style={styles.profileBio}>{profile.bio}</Text>
+            ) : null}
 
             <View style={styles.metaInfo}>
-              <Text style={styles.metaText}>
-                가입일: {mockFriendProfile.joinedDate}
-              </Text>
-              <Text style={styles.metaDot}>•</Text>
-              <Text style={styles.metaText}>
-                친구된 날: {mockFriendProfile.friendsSince}
-              </Text>
-            </View>
-
-            {mockFriendProfile.mutualFriends > 0 && (
-              <View style={styles.mutualBadge}>
-                <Text style={styles.mutualText}>
-                  공통 친구 {mockFriendProfile.mutualFriends}명
+              {profile.joinedDate && (
+                <Text style={styles.metaText}>
+                  가입일: {formatDate(profile.joinedDate)}
                 </Text>
-              </View>
-            )}
+              )}
+              {friendshipInfo?.friendsSince && (
+                <>
+                  <Text style={styles.metaDot}>•</Text>
+                  <Text style={styles.metaText}>
+                    친구된 날: {formatDate(friendshipInfo.friendsSince)}
+                  </Text>
+                </>
+              )}
+            </View>
           </View>
 
           {/* 통계 */}
@@ -140,36 +195,47 @@ export const FriendProfileScreen: React.FC = () => {
             <Text style={styles.sectionTitle}>활동 통계</Text>
             <View style={styles.statsGrid}>
               <View style={styles.statBox}>
-                <Text style={styles.statValue}>{mockFriendProfile.stats.totalMeetups}</Text>
+                <Text style={styles.statValue}>{profile.stats?.totalMeetups || 0}</Text>
                 <Text style={styles.statLabel}>함께한 모임</Text>
               </View>
               <View style={styles.statBox}>
-                <Text style={styles.statValue}>{mockFriendProfile.stats.totalRounds}</Text>
+                <Text style={styles.statValue}>{profile.stats?.totalRounds || 0}</Text>
                 <Text style={styles.statLabel}>라운딩 횟수</Text>
               </View>
               <View style={styles.statBox}>
-                <Text style={styles.statValue}>{mockFriendProfile.stats.averageScore}</Text>
+                <Text style={styles.statValue}>{profile.stats?.averageScore || '-'}</Text>
                 <Text style={styles.statLabel}>평균 스코어</Text>
               </View>
             </View>
           </View>
 
           {/* 최근 함께한 모임 */}
-          <View style={styles.meetupsSection}>
-            <Text style={styles.sectionTitle}>최근 함께한 모임</Text>
-            {mockFriendProfile.recentMeetups.map((meetup) => (
-              <View key={meetup.id} style={styles.meetupCard}>
-                <View style={styles.meetupIcon}>
-                  <Text style={styles.meetupIconText}>⛳</Text>
+          {recentMeetups.length > 0 && (
+            <View style={styles.meetupsSection}>
+              <Text style={styles.sectionTitle}>최근 함께한 모임</Text>
+              {recentMeetups.map((meetup) => (
+                <View key={meetup.id} style={styles.meetupCard}>
+                  <View style={styles.meetupIcon}>
+                    <Text style={styles.meetupIconText}>⛳</Text>
+                  </View>
+                  <View style={styles.meetupInfo}>
+                    <Text style={styles.meetupTitle}>{meetup.title}</Text>
+                    <Text style={styles.meetupCourse}>{meetup.course}</Text>
+                    <Text style={styles.meetupDate}>{formatDate(meetup.date)}</Text>
+                  </View>
                 </View>
-                <View style={styles.meetupInfo}>
-                  <Text style={styles.meetupTitle}>{meetup.title}</Text>
-                  <Text style={styles.meetupCourse}>{meetup.course}</Text>
-                  <Text style={styles.meetupDate}>{meetup.date}</Text>
-                </View>
+              ))}
+            </View>
+          )}
+
+          {recentMeetups.length === 0 && (
+            <View style={styles.meetupsSection}>
+              <Text style={styles.sectionTitle}>최근 함께한 모임</Text>
+              <View style={styles.emptyMeetups}>
+                <Text style={styles.emptyMeetupText}>함께한 모임이 없습니다</Text>
               </View>
-            ))}
-          </View>
+            </View>
+          )}
 
           {/* 하단 여백 */}
           <View style={styles.bottomSpacing} />
@@ -197,6 +263,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
   },
   header: {
     flexDirection: 'row',
@@ -294,17 +378,6 @@ const styles = StyleSheet.create({
     color: '#999',
     marginHorizontal: 8,
   },
-  mutualBadge: {
-    backgroundColor: '#F0F8FF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  mutualText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#10b981',
-  },
   statsSection: {
     backgroundColor: '#fff',
     padding: 20,
@@ -378,6 +451,14 @@ const styles = StyleSheet.create({
   },
   meetupDate: {
     fontSize: 12,
+    color: '#999',
+  },
+  emptyMeetups: {
+    alignItems: 'center',
+    paddingVertical: 24,
+  },
+  emptyMeetupText: {
+    fontSize: 14,
     color: '#999',
   },
   bottomSpacing: {

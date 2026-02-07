@@ -1,6 +1,6 @@
-// FriendsScreen.tsx - 친구 목록 화면
+// FriendsScreen.tsx - 친구 목록 화면 (Firestore 연동)
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,87 +10,56 @@ import {
   TextInput,
   StyleSheet,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { Friend } from '../../types/friend-types';
-
-// Mock 친구 데이터
-const mockFriends: Friend[] = [
-  {
-    id: 1,
-    name: '김철수',
-    image: 'https://i.pravatar.cc/150?img=12',
-    handicap: 18,
-    location: '서울 강남구',
-    bio: '주말 골퍼입니다',
-    mutualFriends: 5,
-    status: 'accepted',
-    createdAt: '2025.01.15',
-  },
-  {
-    id: 2,
-    name: '이영희',
-    image: 'https://i.pravatar.cc/150?img=45',
-    handicap: 22,
-    location: '경기 성남시',
-    bio: '골프 초보 환영!',
-    mutualFriends: 3,
-    status: 'accepted',
-    createdAt: '2025.01.10',
-  },
-  {
-    id: 3,
-    name: '박민수',
-    image: 'https://i.pravatar.cc/150?img=33',
-    handicap: 15,
-    location: '서울 송파구',
-    bio: '평일 라운딩 선호',
-    mutualFriends: 8,
-    status: 'accepted',
-    createdAt: '2025.01.05',
-  },
-  {
-    id: 4,
-    name: '최지원',
-    image: 'https://i.pravatar.cc/150?img=20',
-    handicap: 20,
-    location: '인천 남동구',
-    bio: '골프 사랑해요',
-    mutualFriends: 2,
-    status: 'accepted',
-    createdAt: '2024.12.28',
-  },
-  {
-    id: 5,
-    name: '정대호',
-    image: 'https://i.pravatar.cc/150?img=15',
-    handicap: 12,
-    location: '서울 강서구',
-    bio: '매주 라운딩',
-    mutualFriends: 6,
-    status: 'accepted',
-    createdAt: '2024.12.20',
-  },
-];
+import { useAuthStore } from '@/store/useAuthStore';
+import { getFriendsList, getPendingRequests } from '@/services/firebase/firebaseFriends';
+import { Friend } from '@/services/firebase/firebaseFriends';
 
 export const FriendsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const { user } = useAuthStore();
 
   const [searchText, setSearchText] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [pendingCount, setPendingCount] = useState(0);
 
-  const filteredFriends = mockFriends.filter(friend =>
+  const loadFriends = useCallback(async () => {
+    if (!user?.uid) return;
+    try {
+      setLoading(true);
+      const [friendsList, pendingRequests] = await Promise.all([
+        getFriendsList(user.uid),
+        getPendingRequests(user.uid),
+      ]);
+      setFriends(friendsList);
+      setPendingCount(pendingRequests.length);
+    } catch (error) {
+      console.error('친구 목록 로드 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.uid]);
+
+  useEffect(() => {
+    loadFriends();
+  }, [loadFriends]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadFriends();
+    setRefreshing(false);
+  }, [loadFriends]);
+
+  const filteredFriends = friends.filter(friend =>
     friend.name.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  const handleRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  };
-
-  const handleFriendPress = (friendId: number) => {
-    console.log('친구 클릭:', friendId);
+  const handleFriendPress = (friendId: string) => {
     navigation.navigate('FriendProfile' as any, { friendId } as any);
   };
 
@@ -102,6 +71,25 @@ export const FriendsScreen: React.FC = () => {
     navigation.navigate('FriendRequests' as any);
   };
 
+  if (loading && friends.length === 0) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>친구</Text>
+            <TouchableOpacity onPress={handleRequests}>
+              <Text style={styles.requestIcon}>👥</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#10b981" />
+            <Text style={styles.loadingText}>친구 목록을 불러오는 중...</Text>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.container}>
@@ -111,9 +99,11 @@ export const FriendsScreen: React.FC = () => {
           <TouchableOpacity onPress={handleRequests}>
             <View style={styles.requestBadge}>
               <Text style={styles.requestIcon}>👥</Text>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>3</Text>
-              </View>
+              {pendingCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{pendingCount}</Text>
+                </View>
+              )}
             </View>
           </TouchableOpacity>
         </View>
@@ -121,17 +111,17 @@ export const FriendsScreen: React.FC = () => {
         {/* 통계 */}
         <View style={styles.statsCard}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{mockFriends.length}</Text>
+            <Text style={styles.statValue}>{friends.length}</Text>
             <Text style={styles.statLabel}>친구</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>24</Text>
+            <Text style={styles.statValue}>{(user as any)?.stats?.gamesPlayed || 0}</Text>
             <Text style={styles.statLabel}>함께한 모임</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>48</Text>
+            <Text style={styles.statValue}>{(user as any)?.stats?.totalRounds || 0}</Text>
             <Text style={styles.statLabel}>라운딩 횟수</Text>
           </View>
         </View>
@@ -157,7 +147,12 @@ export const FriendsScreen: React.FC = () => {
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#10b981"
+              colors={['#10b981']}
+            />
           }
         >
           <View style={styles.friendsList}>
@@ -168,7 +163,10 @@ export const FriendsScreen: React.FC = () => {
                   style={styles.friendCard}
                   onPress={() => handleFriendPress(friend.id)}
                 >
-                  <Image source={{ uri: friend.image }} style={styles.friendImage} />
+                  <Image
+                    source={{ uri: friend.avatar || 'https://i.pravatar.cc/150' }}
+                    style={styles.friendImage}
+                  />
 
                   <View style={styles.friendInfo}>
                     <View style={styles.friendHeader}>
@@ -177,9 +175,6 @@ export const FriendsScreen: React.FC = () => {
                         <Text style={styles.handicapText}>⛳ {friend.handicap}</Text>
                       </View>
                     </View>
-                    <Text style={styles.friendBio} numberOfLines={1}>
-                      {friend.bio}
-                    </Text>
                     <Text style={styles.friendLocation}>📍 {friend.location}</Text>
                     {friend.mutualFriends > 0 && (
                       <Text style={styles.mutualFriends}>
@@ -193,8 +188,12 @@ export const FriendsScreen: React.FC = () => {
               ))
             ) : (
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>🔍</Text>
-                <Text style={styles.emptyTitle}>검색 결과가 없습니다</Text>
+                <Text style={styles.emptyText}>
+                  {searchText ? '🔍' : '👥'}
+                </Text>
+                <Text style={styles.emptyTitle}>
+                  {searchText ? '검색 결과가 없습니다' : '아직 친구가 없습니다'}
+                </Text>
               </View>
             )}
           </View>
@@ -220,6 +219,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
   },
   header: {
     flexDirection: 'row',
@@ -367,11 +376,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     color: '#10b981',
-  },
-  friendBio: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
   },
   friendLocation: {
     fontSize: 13,
