@@ -1,64 +1,97 @@
-// PointHistoryScreen.tsx - 포인트 내역
-import React, { useState } from 'react';
+// PointHistoryScreen.tsx - 포인트 내역 (Firestore 연동)
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-
-interface PointItem {
-  id: string;
-  type: 'earn' | 'use';
-  title: string;
-  description: string;
-  amount: number;
-  date: string;
-  balance: number;
-}
-
-const MOCK_POINTS: PointItem[] = [
-  { id: '1', type: 'earn', title: '라운딩 완료 보상', description: '남서울CC 라운딩', amount: 500, date: '2025-01-15', balance: 3500 },
-  { id: '2', type: 'use', title: '쿠폰 교환', description: '골프공 1더즌 쿠폰', amount: -2000, date: '2025-01-14', balance: 3000 },
-  { id: '3', type: 'earn', title: '출석 체크', description: '7일 연속 출석', amount: 100, date: '2025-01-13', balance: 5000 },
-  { id: '4', type: 'earn', title: '리뷰 작성 보상', description: '블루원CC 리뷰', amount: 200, date: '2025-01-12', balance: 4900 },
-  { id: '5', type: 'use', title: '부킹 할인 사용', description: '주말 부킹 할인', amount: -1000, date: '2025-01-11', balance: 4700 },
-  { id: '6', type: 'earn', title: '친구 초대 보상', description: '이민지님 초대', amount: 1000, date: '2025-01-10', balance: 5700 },
-  { id: '7', type: 'earn', title: '라운딩 완료 보상', description: '파주CC 라운딩', amount: 500, date: '2025-01-09', balance: 4700 },
-  { id: '8', type: 'use', title: '포인트 결제', description: '중고 퍼터 구매', amount: -3000, date: '2025-01-08', balance: 4200 },
-];
+import { useAuthStore } from '@/store/useAuthStore';
+import { profileAPI } from '@/services/api/profileAPI';
+import { Point } from '@/types/profile-types';
 
 export const PointHistoryScreen: React.FC = () => {
   const navigation = useNavigation();
-  const [filter, setFilter] = useState<'all' | 'earn' | 'use'>('all');
+  const { user } = useAuthStore();
+  const [filter, setFilter] = useState<'all' | 'earn' | 'spend'>('all');
+  const [points, setPoints] = useState<Point[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const totalPoints = 3500;
+  const totalPoints = (user as any)?.pointBalance || 0;
+
+  const loadPoints = useCallback(async () => {
+    try {
+      setLoading(true);
+      const result = await profileAPI.getPointHistory(50);
+      setPoints(result);
+    } catch (error) {
+      console.error('포인트 내역 로드 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPoints();
+  }, [loadPoints]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadPoints();
+    setRefreshing(false);
+  }, [loadPoints]);
 
   const filteredPoints = filter === 'all'
-    ? MOCK_POINTS
-    : MOCK_POINTS.filter(p => p.type === filter);
+    ? points
+    : points.filter(p => p.type === filter);
 
-  const renderItem = ({ item }: { item: PointItem }) => (
-    <View style={styles.pointItem}>
-      <View style={styles.pointLeft}>
-        <View style={[styles.typeIndicator, item.type === 'earn' ? styles.earnIndicator : styles.useIndicator]} />
-        <View>
-          <Text style={styles.pointTitle}>{item.title}</Text>
-          <Text style={styles.pointDesc}>{item.description}</Text>
-          <Text style={styles.pointDate}>{item.date}</Text>
+  const renderItem = ({ item }: { item: Point }) => {
+    const isEarn = item.type === 'earn';
+    return (
+      <View style={styles.pointItem}>
+        <View style={styles.pointLeft}>
+          <View style={[styles.typeIndicator, isEarn ? styles.earnIndicator : styles.useIndicator]} />
+          <View>
+            <Text style={styles.pointTitle}>{item.description || (isEarn ? '포인트 적립' : '포인트 사용')}</Text>
+            <Text style={styles.pointDate}>
+              {item.date ? new Date(item.date).toLocaleDateString('ko-KR') : ''}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.pointRight}>
+          <Text style={[styles.pointAmount, isEarn ? styles.earnAmount : styles.useAmount]}>
+            {isEarn ? '+' : ''}{item.amount.toLocaleString()}P
+          </Text>
         </View>
       </View>
-      <View style={styles.pointRight}>
-        <Text style={[styles.pointAmount, item.type === 'earn' ? styles.earnAmount : styles.useAmount]}>
-          {item.type === 'earn' ? '+' : ''}{item.amount.toLocaleString()}P
-        </Text>
-        <Text style={styles.pointBalance}>잔액 {item.balance.toLocaleString()}P</Text>
-      </View>
-    </View>
-  );
+    );
+  };
+
+  if (loading && points.length === 0) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Text style={styles.backIcon}>‹</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>포인트 내역</Text>
+            <View style={{ width: 40 }} />
+          </View>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#10b981" />
+            <Text style={styles.loadingText}>포인트 내역을 불러오는 중...</Text>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -77,7 +110,7 @@ export const PointHistoryScreen: React.FC = () => {
         </View>
 
         <View style={styles.filterRow}>
-          {(['all', 'earn', 'use'] as const).map(f => (
+          {(['all', 'earn', 'spend'] as const).map(f => (
             <TouchableOpacity
               key={f}
               style={[styles.filterButton, filter === f && styles.filterButtonActive]}
@@ -92,10 +125,18 @@ export const PointHistoryScreen: React.FC = () => {
 
         <FlatList
           data={filteredPoints}
-          keyExtractor={item => item.id}
+          keyExtractor={item => String(item.id)}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#10b981"
+              colors={['#10b981']}
+            />
+          }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>포인트 내역이 없습니다</Text>
@@ -110,6 +151,8 @@ export const PointHistoryScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#fff' },
   container: { flex: 1, backgroundColor: '#F5F5F5' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 12, fontSize: 14, color: '#666' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingVertical: 16, backgroundColor: '#fff',
@@ -143,13 +186,11 @@ const styles = StyleSheet.create({
   earnIndicator: { backgroundColor: '#4CAF50' },
   useIndicator: { backgroundColor: '#FF5722' },
   pointTitle: { fontSize: 15, fontWeight: '600', color: '#1A1A1A', marginBottom: 2 },
-  pointDesc: { fontSize: 13, color: '#666', marginBottom: 2 },
   pointDate: { fontSize: 12, color: '#999' },
   pointRight: { alignItems: 'flex-end' },
   pointAmount: { fontSize: 16, fontWeight: '700', marginBottom: 2 },
   earnAmount: { color: '#4CAF50' },
   useAmount: { color: '#FF5722' },
-  pointBalance: { fontSize: 12, color: '#999' },
   separator: { height: 8 },
   emptyContainer: { alignItems: 'center', paddingVertical: 60 },
   emptyText: { fontSize: 16, color: '#666' },

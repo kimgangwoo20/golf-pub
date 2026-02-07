@@ -1,6 +1,6 @@
-// MyPostsScreen.tsx - 내가 쓴 모집글 화면
+// MyPostsScreen.tsx - 내가 쓴 모집글 화면 (Firestore 연동)
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,74 +9,35 @@ import {
   Image,
   StyleSheet,
   Alert,
+  ActivityIndicator,
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { useAuthStore } from '../../../store/useAuthStore';
-
-// Mock 내가 쓴 모집글 데이터
-const mockMyPosts = [
-  {
-    id: 1,
-    title: '주말 라운딩 같이 치실 분!',
-    golfCourse: '세라지오CC',
-    location: '경기 광주',
-    date: '2025.01.17',
-    time: '10:00',
-    price: 120000,
-    currentPlayers: 4,
-    maxPlayers: 4,
-    status: 'completed', // recruiting, completed, cancelled
-    image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400',
-    createdAt: '2025.01.10',
-  },
-  {
-    id: 2,
-    title: '평일 오후 라운딩',
-    golfCourse: '남서울CC',
-    location: '서울 강남',
-    date: '2025.01.30',
-    time: '14:00',
-    price: 150000,
-    currentPlayers: 2,
-    maxPlayers: 4,
-    status: 'recruiting',
-    image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400',
-    createdAt: '2025.01.15',
-  },
-  {
-    id: 3,
-    title: '초보 환영 라운딩',
-    golfCourse: '대관령CC',
-    location: '강원 평창',
-    date: '2025.02.05',
-    time: '09:00',
-    price: 100000,
-    currentPlayers: 1,
-    maxPlayers: 4,
-    status: 'recruiting',
-    image: 'https://images.unsplash.com/photo-1592919505780-303950717480?w=400',
-    createdAt: '2025.01.20',
-  },
-];
+import { useAuthStore } from '@/store/useAuthStore';
+import { useFeedStore } from '@/store/useFeedStore';
 
 export const MyPostsScreen: React.FC = () => {
   const navigation = useNavigation();
   const { user } = useAuthStore();
-  const [posts, setPosts] = useState(mockMyPosts);
+  const { myPosts, loading: storeLoading, loadMyPosts } = useFeedStore();
   const [refreshing, setRefreshing] = useState(false);
 
-  // 새로고침
-  const handleRefresh = useCallback(() => {
+  useEffect(() => {
+    if (user?.uid) {
+      loadMyPosts(user.uid);
+    }
+  }, [user?.uid, loadMyPosts]);
+
+  const handleRefresh = useCallback(async () => {
+    if (!user?.uid) return;
     setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
-  }, []);
+    await loadMyPosts(user.uid);
+    setRefreshing(false);
+  }, [user?.uid, loadMyPosts]);
 
   const getStatusBadge = (status: string) => {
-    if (status === 'recruiting') {
+    if (status === 'recruiting' || status === 'published') {
       return { text: '모집중', color: '#10b981', bgColor: '#E8F5E9' };
     } else if (status === 'completed') {
       return { text: '완료', color: '#666', bgColor: '#F5F5F5' };
@@ -85,12 +46,11 @@ export const MyPostsScreen: React.FC = () => {
     }
   };
 
-  const handleEditPost = (id: number) => {
+  const handleEditPost = (id: string) => {
     Alert.alert('모집글 수정', '수정 기능은 개발 예정입니다.');
-    // TODO: 수정 화면으로 이동
   };
 
-  const handleDeletePost = (id: number) => {
+  const handleDeletePost = (id: string) => {
     Alert.alert(
       '모집글 삭제',
       '이 모집글을 삭제하시겠습니까?\n삭제된 글은 복구할 수 없습니다.',
@@ -99,14 +59,39 @@ export const MyPostsScreen: React.FC = () => {
         {
           text: '삭제',
           style: 'destructive',
-          onPress: () => {
-            setPosts(posts.filter(p => p.id !== id));
+          onPress: async () => {
+            // TODO: 실제 삭제 API 호출
             Alert.alert('완료', '모집글이 삭제되었습니다.');
+            if (user?.uid) {
+              loadMyPosts(user.uid);
+            }
           },
         },
       ]
     );
   };
+
+  const posts = myPosts as any[];
+
+  if (storeLoading && posts.length === 0) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <Text style={styles.backIcon}>‹</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>내가 쓴 모집글</Text>
+            <View style={styles.headerRight} />
+          </View>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#10b981" />
+            <Text style={styles.loadingText}>게시글을 불러오는 중...</Text>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -129,14 +114,14 @@ export const MyPostsScreen: React.FC = () => {
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>
-              {posts.filter(p => p.status === 'recruiting').length}
+              {posts.filter((p: any) => p.status === 'recruiting' || p.status === 'published').length}
             </Text>
             <Text style={styles.statLabel}>모집중</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>
-              {posts.filter(p => p.status === 'completed').length}
+              {posts.filter((p: any) => p.status === 'completed').length}
             </Text>
             <Text style={styles.statLabel}>완료</Text>
           </View>
@@ -154,61 +139,78 @@ export const MyPostsScreen: React.FC = () => {
             />
           }
         >
-          <View style={styles.postList}>
-            {posts.map((post) => {
-              const statusBadge = getStatusBadge(post.status);
+          {posts.length > 0 ? (
+            <View style={styles.postList}>
+              {posts.map((post: any) => {
+                const statusBadge = getStatusBadge(post.status);
 
-              return (
-                <View key={post.id} style={styles.postCard}>
-                  {/* 이미지 */}
-                  <Image source={{ uri: post.image }} style={styles.postImage} />
+                return (
+                  <View key={post.id} style={styles.postCard}>
+                    {/* 이미지 */}
+                    {post.image && (
+                      <Image source={{ uri: post.image }} style={styles.postImage} />
+                    )}
 
-                  {/* 상태 배지 */}
-                  <View style={[styles.statusBadge, { backgroundColor: statusBadge.bgColor }]}>
-                    <Text style={[styles.statusText, { color: statusBadge.color }]}>
-                      {statusBadge.text}
-                    </Text>
-                  </View>
-
-                  {/* 내용 */}
-                  <View style={styles.postContent}>
-                    <Text style={styles.postTitle}>{post.title}</Text>
-                    <Text style={styles.postInfo}>⛳ {post.golfCourse} · {post.location}</Text>
-                    <Text style={styles.postInfo}>📅 {post.date} {post.time}</Text>
-
-                    <View style={styles.postFooter}>
-                      <Text style={styles.postPrice}>
-                        {post.price.toLocaleString()}원/인
-                      </Text>
-                      <Text style={styles.postPlayers}>
-                        {post.currentPlayers}/{post.maxPlayers}명
+                    {/* 상태 배지 */}
+                    <View style={[styles.statusBadge, { backgroundColor: statusBadge.bgColor }]}>
+                      <Text style={[styles.statusText, { color: statusBadge.color }]}>
+                        {statusBadge.text}
                       </Text>
                     </View>
 
-                    <Text style={styles.postDate}>작성일: {post.createdAt}</Text>
+                    {/* 내용 */}
+                    <View style={styles.postContent}>
+                      <Text style={styles.postTitle}>{post.title || post.content}</Text>
+                      {post.golfCourse && (
+                        <Text style={styles.postInfo}>⛳ {post.golfCourse} · {post.location}</Text>
+                      )}
+                      {post.date && <Text style={styles.postInfo}>📅 {post.date}</Text>}
 
-                    {/* 버튼 */}
-                    {post.status === 'recruiting' && (
-                      <View style={styles.buttonContainer}>
-                        <TouchableOpacity
-                          style={[styles.actionButton, styles.editButton]}
-                          onPress={() => handleEditPost(post.id)}
-                        >
-                          <Text style={styles.editButtonText}>수정</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionButton, styles.deleteButton]}
-                          onPress={() => handleDeletePost(post.id)}
-                        >
-                          <Text style={styles.deleteButtonText}>삭제</Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
+                      {post.price > 0 && (
+                        <View style={styles.postFooter}>
+                          <Text style={styles.postPrice}>
+                            {post.price.toLocaleString()}원/인
+                          </Text>
+                          {post.maxPlayers > 0 && (
+                            <Text style={styles.postPlayers}>
+                              {post.currentPlayers}/{post.maxPlayers}명
+                            </Text>
+                          )}
+                        </View>
+                      )}
+
+                      {post.createdAt && (
+                        <Text style={styles.postDate}>작성일: {new Date(post.createdAt).toLocaleDateString('ko-KR')}</Text>
+                      )}
+
+                      {/* 버튼 */}
+                      {(post.status === 'recruiting' || post.status === 'published') && (
+                        <View style={styles.buttonContainer}>
+                          <TouchableOpacity
+                            style={[styles.actionButton, styles.editButton]}
+                            onPress={() => handleEditPost(post.id)}
+                          >
+                            <Text style={styles.editButtonText}>수정</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.actionButton, styles.deleteButton]}
+                            onPress={() => handleDeletePost(post.id)}
+                          >
+                            <Text style={styles.deleteButtonText}>삭제</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </View>
                   </View>
-                </View>
-              );
-            })}
-          </View>
+                );
+              })}
+            </View>
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyIcon}>📝</Text>
+              <Text style={styles.emptyText}>작성한 모집글이 없습니다</Text>
+            </View>
+          )}
 
           {/* 하단 여백 */}
           <View style={styles.bottomSpacing} />
@@ -226,6 +228,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
   },
   header: {
     flexDirection: 'row',
@@ -385,6 +397,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#FF3B30',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 80,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
   },
   bottomSpacing: {
     height: 40,

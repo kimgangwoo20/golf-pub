@@ -19,16 +19,19 @@ const formatRelativeTime = (date: Date): string => {
 
 interface FeedState {
   posts: FeedPost[];
+  myPosts: FeedPost[];
   stories: FeedStory[];
   loading: boolean;
   error: string | null;
 
   loadPosts: () => Promise<void>;
+  loadMyPosts: (userId: string) => Promise<void>;
   loadStories: () => Promise<void>;
 }
 
 export const useFeedStore = create<FeedState>((set) => ({
   posts: [],
+  myPosts: [],
   stories: [],
   loading: false,
   error: null,
@@ -67,6 +70,54 @@ export const useFeedStore = create<FeedState>((set) => ({
       console.error('피드 로드 실패:', error);
       set({
         error: error.message || '피드를 불러올 수 없습니다',
+        loading: false,
+      });
+    }
+  },
+
+  loadMyPosts: async (userId: string) => {
+    try {
+      set({ loading: true, error: null });
+
+      const snapshot = await firebaseFirestore
+        .collection('posts')
+        .where('author.id', '==', userId)
+        .orderBy('createdAt', 'desc')
+        .limit(50)
+        .get();
+
+      const myPosts = snapshot.docs.map(doc => {
+        const data = doc.data();
+        const createdAt = data.createdAt?.toDate?.() || new Date();
+        return {
+          id: doc.id,
+          userId: data.author?.id || data.userId || '',
+          userName: data.author?.name || data.userName || '',
+          userImage: data.author?.image || data.userImage || '',
+          time: formatRelativeTime(createdAt),
+          content: data.content || '',
+          image: data.images?.[0] || data.image || undefined,
+          likes: data.likes || 0,
+          comments: data.comments || 0,
+          location: data.location || undefined,
+          tags: data.hashtags?.map((tag: string) => `#${tag}`) || data.tags || [],
+          // 추가 필드 (MyPostsScreen에서 사용)
+          status: data.status || 'published',
+          title: data.title || '',
+          golfCourse: data.golfCourse || '',
+          date: data.date || '',
+          price: data.price || 0,
+          currentPlayers: data.currentPlayers || 0,
+          maxPlayers: data.maxPlayers || 0,
+          createdAt: createdAt.toISOString(),
+        } as FeedPost & Record<string, any>;
+      });
+
+      set({ myPosts: myPosts as FeedPost[], loading: false });
+    } catch (error: any) {
+      console.error('내 게시글 로드 실패:', error);
+      set({
+        error: error.message || '내 게시글을 불러올 수 없습니다',
         loading: false,
       });
     }

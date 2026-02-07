@@ -1,4 +1,4 @@
-// HostedMeetupsScreen.tsx - 작성한 모임 (내가 호스트) 화면 (수정됨 - 실제 API 연동)
+// HostedMeetupsScreen.tsx - 작성한 모임 (내가 호스트) 화면 (Firestore 연동)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -15,116 +15,61 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useAuthStore } from '../../../store/useAuthStore'; // ✅ 추가
-// import { bookingAPI } from '../../../services/api/bookingAPI'; // ✅ 추가 (API 준비 시)
+import { useAuthStore } from '@/store/useAuthStore';
+import { getMyHostedBookings, cancelBooking } from '@/services/firebase/firebaseBooking';
 
 type TabType = 'recruiting' | 'completed';
 
 export const HostedMeetupsScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
-  const { user } = useAuthStore(); // ✅ useAuthStore 사용
-  
+  const { user } = useAuthStore();
+
   const [activeTab, setActiveTab] = useState<TabType>('recruiting');
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await loadMyHostedBookings();
-    setRefreshing(false);
-  }, []);
-
-  useEffect(() => {
-    loadMyHostedBookings();
-  }, []);
-
-  const loadMyHostedBookings = async () => {
+  const loadMyHostedBookingsData = useCallback(async () => {
+    if (!user?.uid) return;
     try {
       setLoading(true);
-      
-      // TODO: 실제 API 호출로 변경
-      // const allBookings = await bookingAPI.getBookings();
-      // const myHostedBookings = allBookings.filter(booking => 
-      //   booking.hostId === user?.id
-      // );
-      // setBookings(myHostedBookings);
-      
-      // 임시 Mock 데이터 (API 준비 전까지)
-      const mockHostedMeetups = [
-        {
-          id: 1,
-          title: '평일 오후 라운딩',
-          golfCourse: '남서울CC',
-          location: '서울 강남',
-          date: '2025.01.30',
-          time: '14:00',
-          price: 150000,
-          currentPlayers: 2,
-          maxPlayers: 4,
-          status: 'recruiting',
-          image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400',
-          hasPub: true,
-          createdAt: '2025.01.15',
-        },
-        {
-          id: 2,
-          title: '초보 환영 라운딩',
-          golfCourse: '대관령CC',
-          location: '강원 평창',
-          date: '2025.02.05',
-          time: '09:00',
-          price: 100000,
-          currentPlayers: 1,
-          maxPlayers: 4,
-          status: 'recruiting',
-          image: 'https://images.unsplash.com/photo-1592919505780-303950717480?w=400',
-          hasPub: false,
-          createdAt: '2025.01.20',
-        },
-        {
-          id: 3,
-          title: '주말 라운딩 같이 치실 분!',
-          golfCourse: '세라지오CC',
-          location: '경기 광주',
-          date: '2025.01.17',
-          time: '10:00',
-          price: 120000,
-          currentPlayers: 4,
-          maxPlayers: 4,
-          status: 'completed',
-          image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400',
-          hasPub: true,
-          createdAt: '2025.01.10',
-        },
-      ];
-      
-      setBookings(mockHostedMeetups);
+      const result = await getMyHostedBookings(user.uid);
+      setBookings(result);
     } catch (error) {
       console.error('주최한 모임 로드 실패:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.uid]);
 
-  const recruitingMeetups = bookings.filter(m => m.status === 'recruiting');
-  const completedMeetups = bookings.filter(m => m.status === 'completed');
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadMyHostedBookingsData();
+    setRefreshing(false);
+  }, [loadMyHostedBookingsData]);
+
+  useEffect(() => {
+    loadMyHostedBookingsData();
+  }, [loadMyHostedBookingsData]);
+
+  // status 매핑: Firestore에서는 OPEN/CLOSED/COMPLETED/CANCELLED
+  const recruitingMeetups = bookings.filter(m => m.status === 'OPEN' || m.status === 'recruiting');
+  const completedMeetups = bookings.filter(m => m.status === 'COMPLETED' || m.status === 'CLOSED' || m.status === 'completed');
 
   const displayMeetups = activeTab === 'recruiting' ? recruitingMeetups : completedMeetups;
 
-  const handleCardPress = (id: number) => {
+  const handleCardPress = (id: string) => {
     navigation.navigate('Bookings', {
       screen: 'BookingDetail',
       params: { bookingId: id },
     });
   };
 
-  const handleManageParticipants = (id: number) => {
+  const handleManageParticipants = (id: string) => {
     Alert.alert('참가자 관리', '참가자 관리 기능은 개발 예정입니다.');
-    console.log('참가자 관리:', id);
   };
 
-  const handleCancelMeetup = (id: number) => {
+  const handleCancelMeetup = (id: string) => {
     Alert.alert(
       '모임 취소',
       '정말 이 모임을 취소하시겠습니까?',
@@ -135,11 +80,14 @@ export const HostedMeetupsScreen: React.FC = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              // TODO: 실제 API 호출
-              // await bookingAPI.cancelBooking(id);
-              console.log('모임 취소:', id);
-              Alert.alert('완료', '모임이 취소되었습니다.');
-              loadMyHostedBookings(); // 새로고침
+              if (!user?.uid) return;
+              const result = await cancelBooking(id, user.uid);
+              if (result.success) {
+                Alert.alert('완료', '모임이 취소되었습니다.');
+                loadMyHostedBookingsData();
+              } else {
+                Alert.alert('에러', result.message);
+              }
             } catch (error) {
               Alert.alert('에러', '모임 취소에 실패했습니다.');
             }
@@ -149,9 +97,8 @@ export const HostedMeetupsScreen: React.FC = () => {
     );
   };
 
-  const handleEditMeetup = (id: number) => {
+  const handleEditMeetup = (id: string) => {
     Alert.alert('모임 수정', '모임 수정 기능은 개발 예정입니다.');
-    console.log('모임 수정:', id);
   };
 
   if (loading) {
@@ -216,10 +163,12 @@ export const HostedMeetupsScreen: React.FC = () => {
                   onPress={() => handleCardPress(meetup.id)}
                 >
                   {/* 이미지 */}
-                  <Image source={{ uri: meetup.image }} style={styles.meetupImage} />
+                  {meetup.image && (
+                    <Image source={{ uri: meetup.image }} style={styles.meetupImage} />
+                  )}
 
                   {/* 모집 중 배지 */}
-                  {meetup.status === 'recruiting' && (
+                  {(meetup.status === 'OPEN' || meetup.status === 'recruiting') && (
                     <View style={styles.recruitingBadge}>
                       <Text style={styles.recruitingBadgeText}>모집 중</Text>
                     </View>
@@ -235,22 +184,22 @@ export const HostedMeetupsScreen: React.FC = () => {
                   {/* 내용 */}
                   <View style={styles.meetupContent}>
                     <Text style={styles.meetupTitle}>{meetup.title}</Text>
-                    <Text style={styles.meetupInfo}>⛳ {meetup.golfCourse}</Text>
-                    <Text style={styles.meetupInfo}>📍 {meetup.location}</Text>
+                    <Text style={styles.meetupInfo}>⛳ {meetup.course}</Text>
+                    {meetup.location && <Text style={styles.meetupInfo}>📍 {meetup.location}</Text>}
                     <Text style={styles.meetupInfo}>📅 {meetup.date} {meetup.time}</Text>
 
                     <View style={styles.meetupFooter}>
                       <View>
                         <Text style={styles.meetupPrice}>
-                          {meetup.price.toLocaleString()}원/인
+                          {(meetup.price?.original || 0).toLocaleString()}원/인
                         </Text>
                         <Text style={styles.meetupPlayers}>
-                          {meetup.currentPlayers}/{meetup.maxPlayers}명 참가
+                          {meetup.participants?.current || 0}/{meetup.participants?.max || 4}명 참가
                         </Text>
                       </View>
 
                       {/* 모집 중일 때만 관리 버튼 표시 */}
-                      {meetup.status === 'recruiting' && (
+                      {(meetup.status === 'OPEN' || meetup.status === 'recruiting') && (
                         <View style={styles.actionButtons}>
                           <TouchableOpacity
                             style={styles.manageButton}

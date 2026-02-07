@@ -377,8 +377,40 @@ export const profileAPI = {
   },
 
   /**
+   * 내 리뷰 목록 조회
+   *
+   * @returns 리뷰 목록
+   */
+  getMyReviews: async (): Promise<any[]> => {
+    try {
+      const currentUser = auth().currentUser;
+      if (!currentUser) {
+        throw new Error('로그인이 필요합니다.');
+      }
+
+      const snapshot = await firestore()
+        .collection(USERS_COLLECTION)
+        .doc(currentUser.uid)
+        .collection('reviews')
+        .orderBy('createdAt', 'desc')
+        .get();
+
+      const reviews = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        date: doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+      }));
+
+      return reviews;
+    } catch (error: any) {
+      console.error('리뷰 목록 조회 실패');
+      throw new Error(error.message || '리뷰 목록을 불러오는데 실패했습니다.');
+    }
+  },
+
+  /**
    * 다른 사용자 프로필 조회
-   * 
+   *
    * @param userId 사용자 ID
    * @returns 프로필 정보
    */
