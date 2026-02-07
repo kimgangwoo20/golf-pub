@@ -53,7 +53,8 @@
       "Bash(npm uninstall:*)",
       "Bash(if not exist \"C:\\\\Projects\\\\golf-pub-app\\\\plugins\" mkdir \"C:\\\\Projects\\\\golf-pub-app\\\\plugins\")",
       "Bash(git tag:*)",
-      "Bash(npx expo start:*)"
+      "Bash(npx expo start:*)",
+      "Bash(find:*)"
     ]
   }
 }
