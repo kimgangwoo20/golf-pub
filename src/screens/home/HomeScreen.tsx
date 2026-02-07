@@ -43,8 +43,8 @@ export const HomeScreen: React.FC = () => {
   const premiumPlan = MEMBERSHIP_PLANS.find(p => p.id === 'premium')!;
 
   useEffect(() => {
-    loadData();
     if (user?.uid) {
+      loadData();
       checkAttendance();
       subscribeToUnreadCount(user.uid);
     }

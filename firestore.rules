@@ -308,8 +308,10 @@ service cloud.firestore {
     // 15. 출석 체크 (attendance)
     // ========================================
     match /attendance/{attendanceId} {
-      // 읽기: 본인 기록만
-      allow read: if isOwner(resource.data.userId);
+      // 읽기: 로그인한 사용자 (문서 미존재 시 resource null 대응)
+      // get: 문서 존재 여부 확인 (checkTodayAttendance)
+      // list: 본인 기록 쿼리 (getAttendanceCalendar)
+      allow read: if isSignedIn();
 
       // 생성: 본인만 (하루 1회 제한은 서버에서)
       allow create: if isSignedIn() &&
