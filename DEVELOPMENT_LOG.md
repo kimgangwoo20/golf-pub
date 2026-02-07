@@ -120,6 +120,19 @@
 - [x] ~~5개 화면 상대 경로(../../) → @/ 경로 별칭 변경~~ (2026.02.07 완료)
 - [x] ~~5개 화면 로딩/빈 상태 UI + Pull-to-refresh 추가~~ (2026.02.07 완료)
 
+### 2026.02.07 채팅/골프장/피드 Mock→Firestore 전환 (7차 배치)
+
+- [x] ~~ChatListScreen - Mock 3건 + 로컬 Chat 인터페이스 제거 → useChatStore.loadChatRooms 연결~~ (2026.02.07 완료)
+- [x] ~~ChatRoomScreen - Mock 4건 + 로컬 Message 인터페이스 제거 → useChatStore.listenToMessages 실시간 연결~~ (2026.02.07 완료)
+- [x] ~~GolfCourseDetailScreen - mockReviews 2건 제거 → golfCourseAPI.getGolfCourseReviews 연결, 상대경로 3개 수정~~ (2026.02.07 완료)
+- [x] ~~GolfCourseReviewScreen - mockReviews 3건 제거 → golfCourseAPI 조회/작성 연결, 상대경로 2개 수정~~ (2026.02.07 완료)
+- [x] ~~PostDetailScreen - mockPost+mockComments 제거 → useFeedStore.getPostById/getPostComments 연결, console.log 제거, 상대경로 2개 수정~~ (2026.02.07 완료)
+- [x] ~~golfCourseAPI.ts 신규 생성 (getGolfCourseReviews, createGolfCourseReview)~~ (2026.02.07 완료)
+- [x] ~~useFeedStore.ts - getPostById, getPostComments 액션 추가~~ (2026.02.07 완료)
+- [x] ~~golfcourse-types.ts - GolfCourseReview.id/courseId 타입 number → number|string~~ (2026.02.07 완료)
+- [x] ~~useChatStore.ts - 상대 경로 → @/ 수정~~ (2026.02.07 완료)
+- [x] ~~5개 화면 로딩/빈 상태 UI 추가~~ (2026.02.07 완료)
+
 ### 2026.02.07 펍 화면 Mock→Firestore 전환 (6차 배치)
 
 - [x] ~~BestPubsScreen - MOCK_PUBS 3건 + 로컬 Pub 인터페이스 제거 → pubAPI.getPopularPubs 연결~~ (2026.02.07 완료)
@@ -207,6 +220,11 @@
   - [x] ~~BestPubsScreen - Mock 제거 → pubAPI.getPopularPubs 연결~~ (2026.02.07 완료)
   - [x] ~~PubDetailScreen - Mock 제거 → pubAPI.getPubById 연결~~ (2026.02.07 완료)
   - [x] ~~PubReviewsScreen - Mock 제거 → pubAPI.getPubReviews 연결~~ (2026.02.07 완료)
+  - [x] ~~ChatListScreen - Mock 제거 → useChatStore.loadChatRooms 연결~~ (2026.02.07 완료)
+  - [x] ~~ChatRoomScreen - Mock 제거 → useChatStore.listenToMessages 연결~~ (2026.02.07 완료)
+  - [x] ~~GolfCourseDetailScreen - Mock 리뷰 제거 → golfCourseAPI 연결~~ (2026.02.07 완료)
+  - [x] ~~GolfCourseReviewScreen - Mock 리뷰 제거 → golfCourseAPI 조회/작성 연결~~ (2026.02.07 완료)
+  - [x] ~~PostDetailScreen - Mock 게시글+댓글 제거 → useFeedStore 연결~~ (2026.02.07 완료)
 
 - [ ] **푸시 알림 완성** - Firebase Cloud Messaging
   - [ ] FCM 토큰 등록 & 서버 전송
@@ -224,8 +242,9 @@
   - [ ] 예약 상태 변경 알림
 
 - [ ] **리뷰 시스템 완성**
-  - [ ] 골프장 리뷰 작성 → Firestore 저장
-  - [ ] 펍 리뷰 작성 → Firestore 저장
+  - [x] ~~골프장 리뷰 작성 → Firestore 저장 (golfCourseAPI.createGolfCourseReview)~~ (2026.02.07 완료)
+  - [x] ~~골프장 리뷰 조회 → Firestore 연동 (golfCourseAPI.getGolfCourseReviews)~~ (2026.02.07 완료)
+  - [x] ~~펍 리뷰 작성 → Firestore 저장 (pubAPI.createPubReview)~~ (2026.02.07 완료)
   - [ ] 리뷰 별점 집계 & 표시
   - [ ] 리뷰 수정/삭제
 
@@ -306,13 +325,15 @@
 | 알림 | 5 | 1 | 4 | 20% |
 | 포인트/쿠폰 | 4 | 2 | 2 | 50% |
 | 내 정보/프로필 화면 | 7 | 7 | 0 | 100% |
+| 리뷰 시스템 | 5 | 3 | 2 | 60% |
 | 음악 | 4 | 0 | 4 | 0% |
 | 테스트/배포 | 10 | 0 | 10 | 0% |
 | 코드 품질 | 4 | 4 | 0 | 100% |
 | 친구 Mock→API 전환 | 4 | 4 | 0 | 100% |
 | 예약 Mock→API 전환 (5차) | 5 | 5 | 0 | 100% |
 | 펍 Mock→API 전환 (6차) | 3 | 3 | 0 | 100% |
-| **전체** | **110** | **88** | **22** | **80%** |
+| 채팅/골프장/피드 Mock→API (7차) | 5 | 5 | 0 | 100% |
+| **전체** | **120** | **96** | **24** | **80%** |
 
 ---
 
@@ -320,6 +341,18 @@
 
 ### 2026.02.07
 
+> **채팅/골프장/피드 Mock→Firestore 전환 7차 배치 (5개 화면 + 서비스 2개)**
+> - ChatListScreen: Mock 3건 + 로컬 Chat 인터페이스 제거 → useChatStore.loadChatRooms 연결, formatChatTime 헬퍼 + getOtherParticipant 헬퍼 구현, 로딩/새로고침/빈 상태 UI 추가
+> - ChatRoomScreen: Mock 4건 + 로컬 Message 인터페이스 제거 → useChatStore.listenToMessages 실시간 연결, sendMessage/sendImage/markAsRead 연결, ImagePicker 카메라/앨범, 키보드 애니메이션 유지
+> - GolfCourseDetailScreen: mockReviews 2건 제거 → golfCourseAPI.getGolfCourseReviews(courseId, 2) 연결, 상대경로 3개 → @/ 수정
+> - GolfCourseReviewScreen: mockReviews 3건 제거 → golfCourseAPI.getGolfCourseReviews 조회 + createGolfCourseReview 작성 연결, 상대경로 2개 수정, averageRating 빈 배열 처리, 로딩/빈 상태 UI 추가
+> - PostDetailScreen: mockPost + mockComments 제거 → useFeedStore.getPostById/getPostComments 연결, console.log 제거, 상대경로 2개 수정, 로딩 early return 패턴 적용
+> - golfCourseAPI.ts 신규 생성: getGolfCourseReviews(courseId, limit), createGolfCourseReview(courseId, reviewData)
+> - useFeedStore.ts: getPostById(postId), getPostComments(postId) 액션 추가
+> - golfcourse-types.ts: GolfCourseReview.id/courseId 타입 number → number|string (Firestore doc ID 호환)
+> - useChatStore.ts: 상대 경로 → @/ 수정
+> - typecheck 0 에러 유지
+>
 > **펍 화면 Mock→Firestore 전환 6차 배치 (3개 화면 + pubAPI 정리)**
 > - BestPubsScreen: MOCK_PUBS 3건 + 로컬 Pub 인터페이스 제거 → pubAPI.getPopularPubs(20) 연결, useNavigation 훅 사용, 로딩/새로고침/빈 상태 UI 추가
 > - PubDetailScreen: MOCK_PUB 객체 제거 → pubAPI.getPubById(pubId) 연결, prop기반 ({ route, navigation }) → useNavigation/useRoute 훅 전환, Mock 필드 매핑 (image→images[0], tags→features, hours→openTime-closeTime, isPartner→features.includes('제휴')), 로딩/빈 상태 UI 추가
