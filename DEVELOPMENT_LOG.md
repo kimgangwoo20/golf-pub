@@ -109,6 +109,20 @@
 - [x] ~~HomeScreen - 알림 뱃지 하드코딩 "3" → useNotificationStore 실시간 연결~~ (2026.02.07 완료)
 - [x] ~~HomeScreen - 멤버십 배너 하드코딩 텍스트 → MEMBERSHIP_PLANS 상수 연결~~ (2026.02.07 완료)
 
+### 2026.02.07 내 정보/프로필 Mock→Firestore 전환 (3차 배치)
+
+- [x] ~~HostedMeetupsScreen - Mock 3건 제거 → getMyHostedBookings + cancelBooking 연결, console.log 3곳 제거~~ (2026.02.07 완료)
+- [x] ~~JoinedMeetupsScreen - Mock 4건 제거 → getMyJoinedBookings 연결~~ (2026.02.07 완료)
+- [x] ~~MyPostsScreen - Mock 3건 제거 → useFeedStore.loadMyPosts 신규 함수 연결, setTimeout 제거~~ (2026.02.07 완료)
+- [x] ~~MyReviewsScreen - Mock 3건 제거 → profileAPI.getMyReviews 신규 함수 연결, setTimeout 제거~~ (2026.02.07 완료)
+- [x] ~~PointHistoryScreen - Mock 8건 + 하드코딩 totalPoints 제거 → profileAPI.getPointHistory 연결, user.pointBalance 사용~~ (2026.02.07 완료)
+- [x] ~~CouponsScreen - Mock 5건 제거 → profileAPI.getCoupons 연결, Coupon 타입 사용, isUsed/expiryDate 기반 상태 판별~~ (2026.02.07 완료)
+- [x] ~~ProfileScreen - 하드코딩 통계(24, 4.8★) 제거 → useProfileStore.loadProfile 연결, setTimeout 제거~~ (2026.02.07 완료)
+- [x] ~~useFeedStore.ts - loadMyPosts(userId) 함수 추가 (posts 컬렉션 author.id 쿼리)~~ (2026.02.07 완료)
+- [x] ~~profileAPI.ts - getMyReviews() 함수 추가 (users/{uid}/reviews 서브컬렉션 조회)~~ (2026.02.07 완료)
+- [x] ~~7개 화면 상대 경로(../../) → @/ 경로 별칭 변경~~ (2026.02.07 완료)
+- [x] ~~7개 화면 로딩/빈 상태 UI + Pull-to-refresh 추가~~ (2026.02.07 완료)
+
 ### 2026.02.07 예약 상세 보완 + 중고마켓 완성
 
 - [x] ~~BookingDetailScreen - Mock booking/host 객체 제거 → useBookingStore.getBooking 연결~~ (2026.02.07 완료)
@@ -144,6 +158,13 @@
   - [x] ~~ProductDetailScreen - Mock 제거 → marketplaceAPI 연결~~ (2026.02.07 완료)
   - [x] ~~CreateProductScreen - 실제 등록 API 연결~~ (2026.02.07 완료)
   - [x] ~~MyProductsScreen - Mock 제거 → marketplaceAPI 연결~~ (2026.02.07 완료)
+  - [x] ~~HostedMeetupsScreen - Mock 제거 → firebaseBooking 연결~~ (2026.02.07 완료)
+  - [x] ~~JoinedMeetupsScreen - Mock 제거 → firebaseBooking 연결~~ (2026.02.07 완료)
+  - [x] ~~MyPostsScreen - Mock 제거 → useFeedStore.loadMyPosts 연결~~ (2026.02.07 완료)
+  - [x] ~~MyReviewsScreen - Mock 제거 → profileAPI.getMyReviews 연결~~ (2026.02.07 완료)
+  - [x] ~~PointHistoryScreen - Mock 제거 → profileAPI.getPointHistory 연결~~ (2026.02.07 완료)
+  - [x] ~~CouponsScreen - Mock 제거 → profileAPI.getCoupons 연결~~ (2026.02.07 완료)
+  - [x] ~~ProfileScreen - 하드코딩 제거 → useProfileStore.loadProfile 연결~~ (2026.02.07 완료)
 
 - [ ] **푸시 알림 완성** - Firebase Cloud Messaging
   - [ ] FCM 토큰 등록 & 서버 전송
@@ -177,7 +198,7 @@
 - [ ] **포인트 & 쿠폰 시스템**
   - [ ] 포인트 적립/사용 로직 (출석, 예약, 리뷰 작성)
   - [ ] 쿠폰 발급/사용 로직
-  - [ ] 포인트/쿠폰 내역 Firestore 연동
+  - [x] ~~포인트/쿠폰 내역 Firestore 연동~~ (2026.02.07 완료)
 
 ### 🟢 우선순위 낮음 (P2 - 개선)
 
@@ -241,11 +262,12 @@
 | 골프장/펍 | 8 | 6 | 2 | 75% |
 | 멤버십/결제 | 8 | 4 | 4 | 50% |
 | 알림 | 5 | 1 | 4 | 20% |
-| 포인트/쿠폰 | 4 | 1 | 3 | 25% |
+| 포인트/쿠폰 | 4 | 2 | 2 | 50% |
+| 내 정보/프로필 화면 | 7 | 7 | 0 | 100% |
 | 음악 | 4 | 0 | 4 | 0% |
 | 테스트/배포 | 10 | 0 | 10 | 0% |
 | 코드 품질 | 4 | 4 | 0 | 100% |
-| **전체** | **91** | **65** | **26** | **71%** |
+| **전체** | **98** | **73** | **25** | **74%** |
 
 ---
 
@@ -253,6 +275,19 @@
 
 ### 2026.02.07
 
+> **내 정보/프로필 Mock→Firestore 전환 3차 배치 (7개 화면 + 서비스 2개)**
+> - HostedMeetupsScreen: Mock 3건 제거 → getMyHostedBookings + cancelBooking 연결, console.log 3곳 제거
+> - JoinedMeetupsScreen: Mock 4건 제거 → getMyJoinedBookings 연결
+> - MyPostsScreen: Mock 3건 제거 → useFeedStore.loadMyPosts 신규 함수 연결, setTimeout 제거
+> - MyReviewsScreen: Mock 3건 제거 → profileAPI.getMyReviews 신규 함수 연결, setTimeout 제거
+> - PointHistoryScreen: Mock 8건 + 하드코딩 totalPoints 제거 → profileAPI.getPointHistory 연결, user.pointBalance 사용
+> - CouponsScreen: Mock 5건 제거 → profileAPI.getCoupons 연결, Coupon 타입 사용, isUsed/expiryDate 기반 상태 판별
+> - ProfileScreen: 하드코딩 통계(24, 4.8★) 제거 → useProfileStore.loadProfile 연결, setTimeout 제거
+> - useFeedStore.ts: loadMyPosts(userId) 함수 추가 (posts 컬렉션 author.id 쿼리)
+> - profileAPI.ts: getMyReviews() 함수 추가 (users/{uid}/reviews 서브컬렉션 조회)
+> - 전체 7개 화면: 상대 경로 → @/ 경로 변경, 로딩/빈 상태 UI + Pull-to-refresh 추가
+> - typecheck 0 에러 유지
+>
 > **예약 상세 보완 + 중고마켓 완성 (5개 화면 + firebase 함수 3개)**
 > - BookingDetailScreen: Mock booking/host 객체 제거 → useBookingStore.getBooking 연결, bookingId 타입 number→string, joinBooking 실제 호출
 > - firebaseBooking.ts: getBookingRequests(호스트용 신청 목록 조회), approveBookingRequest(승인), rejectBookingRequest(거절) 3개 함수 신규 추가
