@@ -135,6 +135,37 @@
   - my/: MyHomeScreen, AccountManagementScreen
 - [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.07 완료)
 
+### 2026.02.07 Firebase 전체 배포 + Permission 에러 수정 + 코드베이스 감사 (10차 배치)
+
+- [x] ~~Firestore permission-denied 에러 2건 수정~~ (2026.02.07 완료)
+  - 출석 확인 실패: `allow read: if isOwner(resource.data.userId)` → `allow read: if isSignedIn()` (문서 미존재 시 resource null 대응)
+  - 부킹 로드 실패: HomeScreen `loadData()` 호출을 `if (user?.uid)` 블록 내부로 이동
+  - 카카오 로그인: 가짜 user 객체 → `auth().signInAnonymously()` 실제 Firebase Auth 세션 생성
+- [x] ~~Firebase Console Anonymous Auth 활성화~~ (2026.02.07 완료)
+- [x] ~~Realtime Database 보안 규칙 생성 및 배포 (database.rules.json)~~ (2026.02.07 완료)
+  - chatRooms, messages, typing, presence, readReceipts 규칙 설정
+- [x] ~~Storage 보안 규칙 배포 (storage.rules)~~ (2026.02.07 완료)
+- [x] ~~Firestore 복합 인덱스 누락분 추가 및 배포~~ (2026.02.07 완료)
+  - 기존 5개 + 신규 12개 = 총 17개 인덱스
+  - posts: status+createdAt, author.id+createdAt (Feed 화면 에러 수정)
+  - bookings: status+createdAt, participants.list+date
+  - products: sellerId+createdAt
+  - chatRooms: participantIds+updatedAt
+  - friendRequests: toUserId+status+createdAt, fromUserId+status+createdAt
+  - attendance: userId+date
+  - pubs: rating+reviewCount
+  - friendships: userId1+userId2+status
+  - notifications: isRead+createdAt (COLLECTION_GROUP)
+- [x] ~~firebase.json에 database 설정 추가~~ (2026.02.07 완료)
+- [x] ~~firebase deploy 한 번에 전체 배포 (firestore:rules, firestore:indexes, storage, database)~~ (2026.02.07 완료)
+- [x] ~~Gradle JVM 메모리 2048m → 4096m 증가 (Android 빌드 OOM 방지)~~ (2026.02.07 완료)
+- [x] ~~오래된 typescript-errors.txt 삭제 (현재 tsc 에러 0개)~~ (2026.02.07 완료)
+- [x] ~~전체 코드베이스 감사 (4개 병렬 에이전트)~~ (2026.02.07 완료)
+  - Firebase 설정 감사: 서비스 7개 구현 완료, Realtime DB 규칙 누락 발견 → 수정
+  - 서드파티 서비스 감사: Toss Payments/Spotify 스텁, 카카오 메시지 스텁 확인
+  - 빌드 설정 감사: JVM OOM, iOS Podfile 미존재 확인
+  - 코드 완성도 감사: TODO 31개, console.log 위반 2개, musicAPI 빈 스텁 확인
+
 ### 2026.02.07 Firestore 보안 규칙 + Seed 데이터 + 경로 정리 (9차 배치)
 
 - [x] ~~firestore.rules 코드-규칙 불일치 7곳 수정~~ (2026.02.07 완료)
@@ -380,7 +411,8 @@
 | 채팅/골프장/피드 Mock→API (7차) | 5 | 5 | 0 | 100% |
 | 코드 품질 정리 (8차) | 3 | 3 | 0 | 100% |
 | Firestore 규칙 + Seed + 경로 (9차) | 5 | 5 | 0 | 100% |
-| **전체** | **128** | **104** | **24** | **81%** |
+| Firebase 배포 + 감사 (10차) | 10 | 10 | 0 | 100% |
+| **전체** | **138** | **114** | **24** | **83%** |
 
 ---
 
@@ -388,6 +420,18 @@
 
 ### 2026.02.07
 
+> **Firebase 전체 배포 + Permission 에러 수정 + 코드베이스 감사 10차 배치**
+> - Firestore permission-denied 에러 2건 수정: 출석(resource null 대응), 부킹(auth 타이밍), 카카오 로그인(Anonymous Auth 세션)
+> - Firebase Console에서 Anonymous Auth 활성화 (카카오 로그인 필수)
+> - Realtime Database 보안 규칙 신규 생성 (database.rules.json): chatRooms, messages, typing, presence, readReceipts
+> - firebase.json에 database 설정 추가, firebase deploy로 전체 배포 (firestore:rules, indexes, storage, database)
+> - Firestore 복합 인덱스 총 17개 배포: 기존 잘못된 posts authorId→author.id 수정, 누락 인덱스 12개 추가
+> - Feed 화면 failed-precondition 에러 수정 (posts status+createdAt 인덱스 추가)
+> - Gradle JVM 메모리 -Xmx2048m → -Xmx4096m (Android 빌드 OOM 방지)
+> - 오래된 typescript-errors.txt 삭제 (현재 tsc 에러 0개 확인)
+> - 전체 코드베이스 감사 4개 병렬 에이전트 실행: Firebase/서드파티/빌드/코드완성도
+> - 앱 빌드 및 SM_S901N 디바이스 설치 + 테스트 완료, 추가 에러 없음
+>
 > **Firestore 보안 규칙 수정 + 배포 + Seed 데이터 + 상대 경로 정리 9차 배치 (20개 파일)**
 > - firestore.rules 전면 개편: 코드와 불일치 7곳 수정 + 누락 컬렉션 규칙 12개 추가 (19개 규칙 → 306줄 → 399줄)
 > - 불일치 수정: marketplace→products, booking_participants→bookingParticipants, point_history→pointHistory, notifications/comments 서브컬렉션화, posts author.id 필드 구조, friends 양방향 문서
