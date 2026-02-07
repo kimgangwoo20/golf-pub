@@ -106,6 +106,8 @@
 - [x] ~~feed-types.ts ID 타입 number → string 변경 (Firestore doc ID 호환)~~ (2026.02.07 완료)
 - [x] ~~useFeedStore.ts 신규 생성 (Zustand 스토어 7개 → 8개)~~ (2026.02.07 완료)
 - [x] ~~PostDetailScreen 타입 호환성 수정~~ (2026.02.07 완료)
+- [x] ~~HomeScreen - 알림 뱃지 하드코딩 "3" → useNotificationStore 실시간 연결~~ (2026.02.07 완료)
+- [x] ~~HomeScreen - 멤버십 배너 하드코딩 텍스트 → MEMBERSHIP_PLANS 상수 연결~~ (2026.02.07 완료)
 
 ---
 
@@ -123,7 +125,7 @@
   - [x] ~~BookingListScreen - Mock 예약 데이터 제거 → Firestore 연동~~ (2026.02.07 완료)
   - [x] ~~MarketplaceScreen - Mock 상품 데이터 제거 → Firestore 연동~~ (2026.02.07 완료)
   - [x] ~~FeedScreen - Mock 스토리/게시글 제거 → Firestore 연동~~ (2026.02.07 완료)
-  - [ ] HomeScreen - Mock 데이터 정리
+  - [x] ~~HomeScreen - Mock 데이터 정리 (알림뱃지, 멤버십배너)~~ (2026.02.07 완료)
 
 - [ ] **푸시 알림 완성** - Firebase Cloud Messaging
   - [ ] FCM 토큰 등록 & 서버 전송
@@ -223,7 +225,7 @@
 | 음악 | 4 | 0 | 4 | 0% |
 | 테스트/배포 | 10 | 0 | 10 | 0% |
 | 코드 품질 | 4 | 4 | 0 | 100% |
-| **전체** | **90** | **57** | **33** | **63%** |
+| **전체** | **90** | **58** | **32** | **64%** |
 
 ---
 
@@ -231,10 +233,11 @@
 
 ### 2026.02.07
 
-> **Mock → Firestore API 교체 (3개 화면)**
+> **Mock → Firestore API 교체 (4개 화면)**
 > - BookingListScreen: 인라인 Mock 3건 제거 → useBookingStore 연결, 에러 상태 UI 추가
 > - MarketplaceScreen: mockProducts 6건 제거 → useMarketplaceStore 연결, 로딩/에러/빈 상태 UI 추가
 > - FeedScreen: mockUser/mockStories/mockCommentsData/mockFeeds 전부 제거 → useFeedStore 신규 생성
+> - HomeScreen: 알림 뱃지 "3" → useNotificationStore 실시간 unreadCount 연결, 멤버십 배너 → MEMBERSHIP_PLANS 상수 연결
 > - MarketItem 타입 제거 → Product 타입으로 통일 (sellerId 추가, 컬렉션명 products로 통일)
 > - feed-types.ts ID number→string 변경, FeedPost/FeedStory 인터페이스 추가
 > - useFeedStore.ts 신규 생성 (Zustand 스토어 8개로 확장)
