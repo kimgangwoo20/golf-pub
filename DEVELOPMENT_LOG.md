@@ -109,6 +109,16 @@
 - [x] ~~HomeScreen - 알림 뱃지 하드코딩 "3" → useNotificationStore 실시간 연결~~ (2026.02.07 완료)
 - [x] ~~HomeScreen - 멤버십 배너 하드코딩 텍스트 → MEMBERSHIP_PLANS 상수 연결~~ (2026.02.07 완료)
 
+### 2026.02.07 친구 관리 Mock→Firestore 전환 (4차 배치)
+
+- [x] ~~FriendsScreen - mockFriends 5건 제거 → getFriendsList + getPendingRequests 연결, console.log 제거, 통계 실제 데이터 연결~~ (2026.02.07 완료)
+- [x] ~~FriendRequestsScreen - mockReceivedRequests 3건 + mockSentRequests 2건 제거 → getPendingRequests/getSentRequests/acceptFriendRequest/rejectFriendRequest/cancelFriendRequest 연결~~ (2026.02.07 완료)
+- [x] ~~FriendProfileScreen - mockFriendProfile 제거 → route params friendId로 getFriendProfile 조회, removeFriend 실제 API 연결~~ (2026.02.07 완료)
+- [x] ~~AddFriendScreen - mockSuggestions 3건 + mockSearchResults 2건 제거 → getSuggestedFriends 연결, Mock fallback 제거~~ (2026.02.07 완료)
+- [x] ~~firebaseFriends.ts - getSentRequests, cancelFriendRequest, getFriendProfile, getSuggestedFriends 4개 함수 추가~~ (2026.02.07 완료)
+- [x] ~~4개 화면 상대 경로(../../) → @/ 경로 별칭 변경~~ (2026.02.07 완료)
+- [x] ~~4개 화면 로딩/빈 상태 UI + Pull-to-refresh 추가~~ (2026.02.07 완료)
+
 ### 2026.02.07 내 정보/프로필 Mock→Firestore 전환 (3차 배치)
 
 - [x] ~~HostedMeetupsScreen - Mock 3건 제거 → getMyHostedBookings + cancelBooking 연결, console.log 3곳 제거~~ (2026.02.07 완료)
@@ -165,6 +175,10 @@
   - [x] ~~PointHistoryScreen - Mock 제거 → profileAPI.getPointHistory 연결~~ (2026.02.07 완료)
   - [x] ~~CouponsScreen - Mock 제거 → profileAPI.getCoupons 연결~~ (2026.02.07 완료)
   - [x] ~~ProfileScreen - 하드코딩 제거 → useProfileStore.loadProfile 연결~~ (2026.02.07 완료)
+  - [x] ~~FriendsScreen - mockFriends 제거 → getFriendsList 연결~~ (2026.02.07 완료)
+  - [x] ~~FriendRequestsScreen - Mock 제거 → Firebase accept/reject/cancel 연결~~ (2026.02.07 완료)
+  - [x] ~~FriendProfileScreen - Mock 제거 → getFriendProfile 연결~~ (2026.02.07 완료)
+  - [x] ~~AddFriendScreen - Mock 제거 → getSuggestedFriends 연결, fallback 제거~~ (2026.02.07 완료)
 
 - [ ] **푸시 알림 완성** - Firebase Cloud Messaging
   - [ ] FCM 토큰 등록 & 서버 전송
@@ -267,7 +281,8 @@
 | 음악 | 4 | 0 | 4 | 0% |
 | 테스트/배포 | 10 | 0 | 10 | 0% |
 | 코드 품질 | 4 | 4 | 0 | 100% |
-| **전체** | **98** | **73** | **25** | **74%** |
+| 친구 Mock→API 전환 | 4 | 4 | 0 | 100% |
+| **전체** | **102** | **77** | **25** | **75%** |
 
 ---
 
@@ -275,6 +290,15 @@
 
 ### 2026.02.07
 
+> **친구 관리 Mock→Firestore 전환 4차 배치 (4개 화면 + firebase 함수 4개)**
+> - FriendsScreen: mockFriends 5건 제거 → getFriendsList + getPendingRequests 연결, console.log 제거, 하드코딩 통계(24, 48) → user.stats 연결, 뱃지 "3" → pendingCount 동적 표시
+> - FriendRequestsScreen: mockReceivedRequests 3건 + mockSentRequests 2건 제거 → getPendingRequests/getSentRequests 연결, accept/reject/cancel 실제 Firebase API 호출, 사용자 정보 enrichment(users 컬렉션 조회)
+> - FriendProfileScreen: mockFriendProfile 제거 → route params friendId로 getFriendProfile 조회 (프로필 + 친구관계 + 최근 함께한 모임), removeFriend 실제 API 연결, console.log 제거
+> - AddFriendScreen: mockSuggestions 3건 + mockSearchResults 2건 제거 → getSuggestedFriends 연결, Firebase 에러 시 Mock fallback 제거 → 에러 Alert 표시, 검색 로딩 스피너 추가
+> - firebaseFriends.ts: getSentRequests(보낸 요청 조회), cancelFriendRequest(요청 취소), getFriendProfile(프로필+관계+모임 조회), getSuggestedFriends(추천 친구) 4개 함수 추가
+> - 전체 4개 화면: 상대 경로 → @/ 경로 변경, console.log 제거, 로딩/빈 상태 UI + Pull-to-refresh 추가
+> - typecheck 0 에러 유지
+>
 > **내 정보/프로필 Mock→Firestore 전환 3차 배치 (7개 화면 + 서비스 2개)**
 > - HostedMeetupsScreen: Mock 3건 제거 → getMyHostedBookings + cancelBooking 연결, console.log 3곳 제거
 > - JoinedMeetupsScreen: Mock 4건 제거 → getMyJoinedBookings 연결
