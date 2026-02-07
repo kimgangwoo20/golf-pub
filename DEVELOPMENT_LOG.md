@@ -109,6 +109,19 @@
 - [x] ~~HomeScreen - 알림 뱃지 하드코딩 "3" → useNotificationStore 실시간 연결~~ (2026.02.07 완료)
 - [x] ~~HomeScreen - 멤버십 배너 하드코딩 텍스트 → MEMBERSHIP_PLANS 상수 연결~~ (2026.02.07 완료)
 
+### 2026.02.07 예약 상세 보완 + 중고마켓 완성
+
+- [x] ~~BookingDetailScreen - Mock booking/host 객체 제거 → useBookingStore.getBooking 연결~~ (2026.02.07 완료)
+- [x] ~~BookingDetailScreen - bookingId 타입 number→string 변경, joinBooking 실제 호출~~ (2026.02.07 완료)
+- [x] ~~firebaseBooking.ts - getBookingRequests/approveBookingRequest/rejectBookingRequest 3개 함수 추가~~ (2026.02.07 완료)
+- [x] ~~BookingRequestsScreen - MOCK_REQUESTS 제거 → firebaseBooking 실제 API 연결~~ (2026.02.07 완료)
+- [x] ~~ProductDetailScreen - mockProduct 제거 → marketplaceAPI.getProductById 연결~~ (2026.02.07 완료)
+- [x] ~~ProductDetailScreen - 조회수 증가(increaseViewCount), 찜하기/취소(likeProduct/unlikeProduct) 연결~~ (2026.02.07 완료)
+- [x] ~~CreateProductScreen - console.log 제거 → marketplaceAPI.createProduct 실제 호출~~ (2026.02.07 완료)
+- [x] ~~MyProductsScreen - mockMyProducts 제거 → marketplaceAPI.getMyProducts/deleteProduct/updateProductStatus 연결~~ (2026.02.07 완료)
+- [x] ~~5개 화면 상대 경로(../../) → @/ 경로 별칭 변경~~ (2026.02.07 완료)
+- [x] ~~5개 화면 로딩/에러/빈 상태 UI 추가~~ (2026.02.07 완료)
+
 ---
 
 ## 🔨 개발해야 할 부분 (미완료)
@@ -126,6 +139,11 @@
   - [x] ~~MarketplaceScreen - Mock 상품 데이터 제거 → Firestore 연동~~ (2026.02.07 완료)
   - [x] ~~FeedScreen - Mock 스토리/게시글 제거 → Firestore 연동~~ (2026.02.07 완료)
   - [x] ~~HomeScreen - Mock 데이터 정리 (알림뱃지, 멤버십배너)~~ (2026.02.07 완료)
+  - [x] ~~BookingDetailScreen - Mock 제거 → useBookingStore 연결~~ (2026.02.07 완료)
+  - [x] ~~BookingRequestsScreen - Mock 제거 → firebaseBooking 연결~~ (2026.02.07 완료)
+  - [x] ~~ProductDetailScreen - Mock 제거 → marketplaceAPI 연결~~ (2026.02.07 완료)
+  - [x] ~~CreateProductScreen - 실제 등록 API 연결~~ (2026.02.07 완료)
+  - [x] ~~MyProductsScreen - Mock 제거 → marketplaceAPI 연결~~ (2026.02.07 완료)
 
 - [ ] **푸시 알림 완성** - Firebase Cloud Messaging
   - [ ] FCM 토큰 등록 & 서버 전송
@@ -137,8 +155,8 @@
 ### 🟡 우선순위 중간 (P1 - 중요)
 
 - [ ] **예약 상세 기능 보완**
-  - [ ] BookingDetailScreen - 실제 데이터 새로고침 API 연동
-  - [ ] BookingRequestsScreen - 실제 API 호출로 교체
+  - [x] ~~BookingDetailScreen - Mock 제거 → useBookingStore.getBooking 연결~~ (2026.02.07 완료)
+  - [x] ~~BookingRequestsScreen - Mock 제거 → firebaseBooking 실제 API 연결~~ (2026.02.07 완료)
   - [ ] 예약 취소/환불 프로세스
   - [ ] 예약 상태 변경 알림
 
@@ -149,8 +167,10 @@
   - [ ] 리뷰 수정/삭제
 
 - [ ] **중고마켓 기능 완성**
-  - [ ] 상품 등록 → Firestore 저장
-  - [ ] 거래 상태 관리 (판매중, 예약중, 판매완료)
+  - [x] ~~ProductDetailScreen - Mock 제거 → marketplaceAPI 연결 (조회수, 찜, 상세조회)~~ (2026.02.07 완료)
+  - [x] ~~CreateProductScreen - console.log 제거 → marketplaceAPI.createProduct 연결~~ (2026.02.07 완료)
+  - [x] ~~MyProductsScreen - Mock 제거 → marketplaceAPI 연결 (삭제, 상태변경)~~ (2026.02.07 완료)
+  - [ ] 이미지 업로드 → Firebase Storage 연동
   - [ ] 판매자-구매자 채팅 연결
   - [ ] 가격 제안 기능
 
@@ -214,10 +234,10 @@
 | 인증 & 프로필 | 6 | 6 | 0 | 100% |
 | 네비게이션 & UI | 8 | 8 | 0 | 100% |
 | 채팅 | 5 | 5 | 0 | 100% |
-| 예약/모임 | 10 | 7 | 3 | 70% |
+| 예약/모임 | 10 | 9 | 1 | 90% |
 | 피드/소셜 | 5 | 5 | 0 | 100% |
 | 친구 관리 | 5 | 5 | 0 | 100% |
-| 중고마켓 | 8 | 5 | 3 | 63% |
+| 중고마켓 | 9 | 8 | 1 | 89% |
 | 골프장/펍 | 8 | 6 | 2 | 75% |
 | 멤버십/결제 | 8 | 4 | 4 | 50% |
 | 알림 | 5 | 1 | 4 | 20% |
@@ -225,7 +245,7 @@
 | 음악 | 4 | 0 | 4 | 0% |
 | 테스트/배포 | 10 | 0 | 10 | 0% |
 | 코드 품질 | 4 | 4 | 0 | 100% |
-| **전체** | **90** | **58** | **32** | **64%** |
+| **전체** | **91** | **65** | **26** | **71%** |
 
 ---
 
@@ -233,6 +253,16 @@
 
 ### 2026.02.07
 
+> **예약 상세 보완 + 중고마켓 완성 (5개 화면 + firebase 함수 3개)**
+> - BookingDetailScreen: Mock booking/host 객체 제거 → useBookingStore.getBooking 연결, bookingId 타입 number→string, joinBooking 실제 호출
+> - firebaseBooking.ts: getBookingRequests(호스트용 신청 목록 조회), approveBookingRequest(승인), rejectBookingRequest(거절) 3개 함수 신규 추가
+> - BookingRequestsScreen: MOCK_REQUESTS 3건 제거 → firebaseBooking 실제 API로 승인/거절 처리
+> - ProductDetailScreen: mockProduct 제거 → marketplaceAPI.getProductById 연결, increaseViewCount 조회수 증가, likeProduct/unlikeProduct 찜 연동 (optimistic update)
+> - CreateProductScreen: console.log 제거 → marketplaceAPI.createProduct 실제 호출, 등록 중 로딩 상태 추가 (이미지 업로드는 Firebase Storage 연동 TODO)
+> - MyProductsScreen: mockMyProducts 3건 제거 → marketplaceAPI.getMyProducts/deleteProduct/updateProductStatus 연결
+> - 전체 5개 화면: 상대 경로 → @/ 경로 변경, console.log 제거, 로딩/에러/빈 상태 UI 추가
+> - typecheck 0 에러 유지
+>
 > **Mock → Firestore API 교체 (4개 화면)**
 > - BookingListScreen: 인라인 Mock 3건 제거 → useBookingStore 연결, 에러 상태 UI 추가
 > - MarketplaceScreen: mockProducts 6건 제거 → useMarketplaceStore 연결, 로딩/에러/빈 상태 UI 추가
