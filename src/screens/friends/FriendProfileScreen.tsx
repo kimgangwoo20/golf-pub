@@ -56,13 +56,13 @@ export const FriendProfileScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
   const handleChat = () => {
-    navigation.navigate('Chat' as never, {
+    navigation.navigate('Chat' as any, {
       screen: 'ChatRoom',
       params: {
         chatId: `friend_${mockFriendProfile.id}`,
         chatName: mockFriendProfile.name,
       },
-    } as never);
+    } as any);
   };
 
   const handleInvite = () => {

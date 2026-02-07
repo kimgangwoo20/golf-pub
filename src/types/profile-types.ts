@@ -1,7 +1,7 @@
 // profile-types.ts - 프로필 관련 타입 정의
 
 export interface UserProfile {
-  id: number;
+  id: string;
   name: string;
   profileImage: string;
   email?: string;

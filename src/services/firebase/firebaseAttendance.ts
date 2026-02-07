@@ -7,7 +7,7 @@ import { FirestoreTimestamp } from './firebaseConfig';
 interface AttendanceRecord {
   userId: string;
   date: string; // YYYY-MM-DD 형식
-  timestamp: number;
+  timestamp: ReturnType<typeof FirestoreTimestamp.now>;
   points: number;
   consecutiveDays: number;
 }

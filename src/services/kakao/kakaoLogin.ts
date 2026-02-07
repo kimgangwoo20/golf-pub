@@ -33,7 +33,7 @@ export const kakaoLogin = async (): Promise<KakaoLoginResult> => {
     return {
       success: true,
       profile: {
-        id: profile.id,
+        id: String(profile.id),
         email: profile.email || undefined,
         nickname: profile.nickname || undefined,
         profileImageUrl: profile.profileImageUrl || undefined,
@@ -99,7 +99,7 @@ export const getKakaoProfile = async (): Promise<{
     return {
       success: true,
       profile: {
-        id: profile.id,
+        id: String(profile.id),
         email: profile.email || undefined,
         nickname: profile.nickname || undefined,
         profileImageUrl: profile.profileImageUrl || undefined,

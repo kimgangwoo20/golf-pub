@@ -243,7 +243,7 @@ export const friendAPI = {
             mutualFriends: 0, // TODO: 계산
             status: 'accepted',
             createdAt: data.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
-          } as Friend);
+          } as unknown as Friend);
         });
       }
 
@@ -317,7 +317,8 @@ export const friendAPI = {
           message: data.message || '',
           createdAt: data.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
           type: 'received',
-        });
+        } as unknown as FriendRequest);
+
       });
 
       console.log(`✅ 받은 친구 요청 조회 성공: ${requests.length}개`);
@@ -389,7 +390,8 @@ export const friendAPI = {
           message: data.message || '',
           createdAt: data.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
           type: 'sent',
-        });
+        } as unknown as FriendRequest);
+
       });
 
       console.log(`✅ 보낸 친구 요청 조회 성공: ${requests.length}개`);
@@ -578,7 +580,7 @@ export const friendAPI = {
           mutualFriends: 0,
           status: 'pending', // 검색 결과는 상태 확인 필요
           createdAt: data.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
-        } as Friend);
+        } as unknown as Friend);
       });
 
       console.log(`✅ 사용자 검색 성공: ${users.length}명`);

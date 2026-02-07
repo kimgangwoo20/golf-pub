@@ -25,11 +25,11 @@ export const MembershipPlanScreen: React.FC = () => {
       ? plan?.monthlyPrice 
       : plan?.yearlyPrice;
 
-    navigation.navigate('MembershipPayment' as never, {
+    (navigation as any).navigate('MembershipPayment', {
       plan: selectedPlan,
       billingCycle,
       price,
-    } as never);
+    });
   };
 
   const getPrice = () => {

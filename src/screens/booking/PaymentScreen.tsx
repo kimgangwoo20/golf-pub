@@ -15,7 +15,7 @@ import { colors } from '../../styles/theme';
 type PaymentMethod = 'card' | 'account' | 'kakao' | 'naver';
 
 export const PaymentScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const route = useRoute();
   const { bookingId } = route.params as { bookingId: number };
 
@@ -76,7 +76,7 @@ export const PaymentScreen: React.FC = () => {
                     text: '확인',
                     onPress: () => {
                       // 부킹 목록으로 이동
-                      navigation.navigate('BookingList' as never);
+                      navigation.navigate('BookingList' as any);
                     },
                   },
                 ]

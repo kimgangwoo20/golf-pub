@@ -122,21 +122,21 @@ export const GolfCourseDetailScreen: React.FC = () => {
   };
 
   const handleBooking = () => {
-    navigation.navigate('Bookings' as never, {
+    (navigation as any).navigate('Bookings', {
       screen: 'CreateBooking',
       params: {
         courseId: course.id,
         courseName: course.name,
       },
-    } as never);
+    });
   };
 
   const handleViewAllReviews = () => {
-    navigation.navigate('GolfCourseReview' as never, { course } as never);
+    (navigation as any).navigate('GolfCourseReview', { course });
   };
 
   const handleWriteReview = () => {
-    navigation.navigate('GolfCourseReview' as never, { course, writeReview: true } as never);
+    (navigation as any).navigate('GolfCourseReview', { course, writeReview: true });
   };
 
   return (

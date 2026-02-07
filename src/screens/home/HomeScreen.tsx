@@ -40,16 +40,16 @@ export const HomeScreen: React.FC = () => {
 
   useEffect(() => {
     loadData();
-    if (user?.id) {
+    if (user?.uid) {
       checkAttendance();
     }
-  }, [user?.id]);
+  }, [user?.uid]);
 
   const checkAttendance = async () => {
-    if (!user?.id) return;
+    if (!user?.uid) return;
 
     try {
-      const checked = await checkTodayAttendance(user.id);
+      const checked = await checkTodayAttendance(user.uid);
       setAttendanceChecked(checked);
     } catch (error) {
       console.error('출석 확인 실패:', error);
@@ -122,7 +122,7 @@ export const HomeScreen: React.FC = () => {
   };
 
   const handleJoinPress = async (booking: Booking) => {
-    if (!user?.id) {
+    if (!user?.uid) {
       Alert.alert('알림', '로그인이 필요합니다.');
       return;
     }
@@ -132,12 +132,12 @@ export const HomeScreen: React.FC = () => {
       '부킹 참가',
       `${booking.title}에 참가하시겠습니까?\n\n가격: ${booking.price.discount.toLocaleString()}원/인`,
       [
-        { text: '취소', style: 'cancel' },
+        { text: '취소', style: 'cancel' as const },
         {
           text: '참가하기',
           onPress: async () => {
             try {
-              const result = await joinBooking(booking.id, user.id);
+              const result = await joinBooking(booking.id, user.uid);
 
               if (result.success) {
                 Alert.alert('참가 완료!', result.message, [
@@ -168,18 +168,18 @@ export const HomeScreen: React.FC = () => {
       return;
     }
 
-    if (!user?.id) {
+    if (!user?.uid) {
       Alert.alert('알림', '로그인이 필요합니다.');
       return;
     }
 
     try {
-      const result = await markAttendance(user.id);
+      const result = await markAttendance(user.uid);
 
       if (result.success) {
         setAttendanceChecked(true);
         Alert.alert('출석 완료! 🎉', result.message, [
-          { text: '확인', style: 'default' }
+          { text: '확인', style: 'default' as const }
         ]);
       } else {
         Alert.alert('알림', result.message);
@@ -696,7 +696,7 @@ const styles = StyleSheet.create({
       marginBottom: spacing.sm,
       borderRadius: borderRadius.lg,
       overflow: 'hidden',
-      ...shadows.medium,
+      ...shadows.md,
     },
     membershipGradient: {
       padding: spacing.lg,

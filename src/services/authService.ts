@@ -140,12 +140,12 @@ class AuthService {
           
           // 다시 조회
           const newDoc = await firestore().collection('users').doc(uid).get();
-          return newDoc.data() as UserProfile;
+          return newDoc.data() as unknown as UserProfile;
         }
         return null;
       }
 
-      return doc.data() as UserProfile;
+      return doc.data() as unknown as UserProfile;
     } catch (error) {
       // 에러 무시
       return null;
@@ -170,10 +170,10 @@ class AuthService {
         const authUpdateData: { displayName?: string; photoURL?: string } = {};
         
         if (data.displayName !== undefined) {
-          authUpdateData.displayName = data.displayName;
+          authUpdateData.displayName = data.displayName ?? undefined;
         }
         if (data.photoURL !== undefined) {
-          authUpdateData.photoURL = data.photoURL;
+          authUpdateData.photoURL = data.photoURL ?? undefined;
         }
 
         if (Object.keys(authUpdateData).length > 0) {

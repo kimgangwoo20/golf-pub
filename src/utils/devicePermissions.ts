@@ -84,7 +84,7 @@ export const requestStoragePermission = async (): Promise<boolean> => {
   }
 
   // Android 13+ (API 33+)는 READ_MEDIA_IMAGES 사용
-  if (Platform.Version >= 33) {
+  if (Number(Platform.Version) >= 33) {
     try {
       const granted = await PermissionsAndroid.request(
         'android.permission.READ_MEDIA_IMAGES' as any,
@@ -149,7 +149,7 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
   }
 
   // Android 13+ (API 33+)만 런타임 권한 필요
-  if (Platform.Version >= 33) {
+  if (Number(Platform.Version) >= 33) {
     try {
       const granted = await PermissionsAndroid.request(
         'android.permission.POST_NOTIFICATIONS' as any,
@@ -226,7 +226,7 @@ export const checkAllPermissions = async (): Promise<{
   );
 
   let storage = false;
-  if (Platform.Version >= 33) {
+  if (Number(Platform.Version) >= 33) {
     storage = await PermissionsAndroid.check(
       'android.permission.READ_MEDIA_IMAGES' as any
     );
@@ -237,7 +237,7 @@ export const checkAllPermissions = async (): Promise<{
   }
 
   let notification = true;
-  if (Platform.Version >= 33) {
+  if (Number(Platform.Version) >= 33) {
     notification = await PermissionsAndroid.check(
       'android.permission.POST_NOTIFICATIONS' as any
     );

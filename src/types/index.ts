@@ -5,19 +5,24 @@
 // User Types
 export interface User {
   uid: string;
+  id: string; // uid alias (Firebase Auth 호환)
   email: string | null;
   displayName: string | null;
+  name: string | null; // displayName alias
   photoURL: string | null;
+  avatar: string | null; // photoURL alias
   phoneNumber: string | null;
+  phone: string | null; // phoneNumber alias
   role: 'GENERAL' | 'COACH' | 'ADMIN';
   handicap: number;
   pointBalance: number;
+  points: number; // pointBalance alias
+  membership?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-// Booking Types
-export type BookingStatus = 'OPEN' | 'CLOSED' | 'COMPLETED' | 'CANCELLED';
+// Booking Types (re-exported from booking-types.ts)
 export type UserLevel = 'beginner' | 'intermediate' | 'advanced';
 
 // Marketplace Types
@@ -102,4 +107,4 @@ export interface GolfCourse {
 
 // Re-exports from sub-type files
 export type { Weather, WeatherForecast } from './weather-types';
-export type { Booking, BookingFilter, BookingPayment, SkillLevel } from './booking-types';
+export type { Booking, BookingFilter, BookingPayment, BookingStatus, SkillLevel, BookingHost, BookingPrice, BookingParticipants, BookingConditions, BookingWeather, BookingMember } from './booking-types';

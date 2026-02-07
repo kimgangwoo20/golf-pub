@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 export const MembershipPaymentScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const route = useRoute();
   const [paymentMethod, setPaymentMethod] = useState('card');
 
@@ -22,7 +22,7 @@ export const MembershipPaymentScreen: React.FC = () => {
           onPress: () => {
             // TODO: 실제 결제 API 호출
             setTimeout(() => {
-              navigation.navigate('MembershipSuccess' as never);
+              navigation.navigate('MembershipSuccess' as any);
             }, 1000);
           },
         },

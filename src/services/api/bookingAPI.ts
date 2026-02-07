@@ -50,14 +50,18 @@ export const bookingAPI = {
         ...data,
         hostId: currentUser.uid,
         currentPlayers: 1, // 호스트 포함
-        status: 'open' as BookingStatus,
-        participants: [
-          {
-            id: currentUser.uid,
-            avatar: currentUser.photoURL || '',
-            name: currentUser.displayName || '익명',
-          },
-        ],
+        status: 'OPEN' as BookingStatus,
+        participants: {
+          current: 1,
+          max: data.maxPlayers,
+          members: [
+            {
+              uid: currentUser.uid,
+              name: currentUser.displayName || '익명',
+              role: 'host' as const,
+            },
+          ],
+        },
         createdAt: firestore.FieldValue.serverTimestamp(),
         updatedAt: firestore.FieldValue.serverTimestamp(),
       };
@@ -182,7 +186,7 @@ export const bookingAPI = {
       let filteredBookings = bookings;
       if (filter?.priceRange) {
         filteredBookings = bookings.filter(
-          (b) => b.price >= filter.priceRange!.min && b.price <= filter.priceRange!.max
+          (b) => b.price.original >= filter.priceRange!.min && b.price.original <= filter.priceRange!.max
         );
       }
 

@@ -8,15 +8,61 @@ export type SkillLevel = 'beginner' | 'intermediate' | 'advanced' | 'any';
 /**
  * 부킹 상태
  */
-export type BookingStatus = 'open' | 'full' | 'closed' | 'cancelled' | 'completed';
+export type BookingStatus = 'OPEN' | 'CLOSED' | 'COMPLETED' | 'CANCELLED';
+
+/**
+ * 참가 멤버 정보
+ */
+export interface BookingMember {
+  uid: string;
+  name: string;
+  role: 'host' | 'member';
+}
+
+/**
+ * 호스트 정보
+ */
+export interface BookingHost {
+  name: string;
+  avatar: string;
+  rating: number;
+  handicap: number;
+  level: 'beginner' | 'intermediate' | 'advanced';
+}
+
+/**
+ * 가격 정보
+ */
+export interface BookingPrice {
+  original: number;
+  discount: number;
+  perPerson: boolean;
+}
 
 /**
  * 참가자 정보
  */
-export interface Participant {
-  id: string;
-  avatar: string;
-  name?: string;
+export interface BookingParticipants {
+  current: number;
+  max: number;
+  members: BookingMember[];
+}
+
+/**
+ * 조건 정보
+ */
+export interface BookingConditions {
+  level: string;
+  pace: string;
+  drinking: string;
+}
+
+/**
+ * 날씨 정보 (선택)
+ */
+export interface BookingWeather {
+  condition: string;
+  temp: string;
 }
 
 /**
@@ -24,24 +70,26 @@ export interface Participant {
  */
 export interface Booking {
   id: string;
+  hostId: string;
   title: string;
-  golfCourse: string;
-  location: string;
-  date: string; // YYYY-MM-DD 형식
-  time: string; // HH:mm 형식
-  maxPlayers: number;
-  currentPlayers: number;
-  price: number;
-  level: SkillLevel;
+  course: string;
+  date: string;
+  time: string;
+  host: BookingHost;
+  price: BookingPrice;
+  participants: BookingParticipants;
+  conditions?: BookingConditions;
+  weather?: BookingWeather;
   status: BookingStatus;
-  description: string;
-  image: string;
-  participants: Participant[];
-  hasPub: boolean;
+  description?: string;
+  image?: string;
+  level?: SkillLevel;
+  location?: string;
+  hasPub?: boolean;
   pubName?: string;
   pubTime?: string;
-  hostId?: string;
-  createdAt?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 /**

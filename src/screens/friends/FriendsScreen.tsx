@@ -75,7 +75,7 @@ const mockFriends: Friend[] = [
 ];
 
 export const FriendsScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
 
   const [searchText, setSearchText] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -91,15 +91,15 @@ export const FriendsScreen: React.FC = () => {
 
   const handleFriendPress = (friendId: number) => {
     console.log('친구 클릭:', friendId);
-    navigation.navigate('FriendProfile' as never, { friendId } as never);
+    navigation.navigate('FriendProfile' as any, { friendId } as any);
   };
 
   const handleAddFriend = () => {
-    navigation.navigate('AddFriend' as never);
+    navigation.navigate('AddFriend' as any);
   };
 
   const handleRequests = () => {
-    navigation.navigate('FriendRequests' as never);
+    navigation.navigate('FriendRequests' as any);
   };
 
   return (

@@ -284,7 +284,7 @@ export const HostedMeetupsScreen: React.FC = () => {
                 </Text>
                 <TouchableOpacity
                   style={styles.createButton}
-                  onPress={() => navigation.navigate('Bookings' as never, { screen: 'CreateBooking' } as never)}
+                  onPress={() => navigation.navigate('Bookings' as any, { screen: 'CreateBooking' } as any)}
                 >
                   <Text style={styles.createButtonText}>+ 모임 만들기</Text>
                 </TouchableOpacity>

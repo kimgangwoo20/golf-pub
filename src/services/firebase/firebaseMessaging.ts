@@ -49,12 +49,13 @@ class FirebaseMessagingService {
    *
    * @returns 권한 상태
    */
-  async requestPermission(): Promise<FirebaseMessagingTypes.AuthorizationStatus> {
+  async requestPermission(): Promise<number> {
     try {
       const authStatus = await messaging.requestPermission();
       return authStatus;
     } catch (error) {
-      return messaging.AuthorizationStatus.DENIED;
+      // Return DENIED status (0)
+      return 0;
     }
   }
 
