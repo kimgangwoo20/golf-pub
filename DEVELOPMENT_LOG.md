@@ -96,6 +96,17 @@
 - [x] ~~Navigation 타입 안정화 (useNavigation<any>, as any 패턴)~~ (2026.02.07 완료)
 - [x] ~~홈 멤버십 배너 그라데이션 보라색 계열로 변경~~ (2026.02.07 완료)
 
+### 2026.02.07 Mock 데이터 → Firestore 실제 API 교체
+
+- [x] ~~BookingListScreen - Mock 예약 데이터 제거 → useBookingStore 연결~~ (2026.02.07 완료)
+- [x] ~~MarketplaceScreen - Mock 상품 데이터 제거 → useMarketplaceStore 연결~~ (2026.02.07 완료)
+- [x] ~~FeedScreen - Mock 스토리/게시글 제거 → useFeedStore 신규 생성 및 연결~~ (2026.02.07 완료)
+- [x] ~~MarketItem → Product 타입 통일 (marketplace-types.ts 기준)~~ (2026.02.07 완료)
+- [x] ~~Firestore 컬렉션명 통일 (marketplace → products)~~ (2026.02.07 완료)
+- [x] ~~feed-types.ts ID 타입 number → string 변경 (Firestore doc ID 호환)~~ (2026.02.07 완료)
+- [x] ~~useFeedStore.ts 신규 생성 (Zustand 스토어 7개 → 8개)~~ (2026.02.07 완료)
+- [x] ~~PostDetailScreen 타입 호환성 수정~~ (2026.02.07 완료)
+
 ---
 
 ## 🔨 개발해야 할 부분 (미완료)
@@ -109,9 +120,9 @@
   - [ ] 결제 내역 조회
 
 - [ ] **Mock 데이터 → 실제 API 교체**
-  - [ ] BookingListScreen - Mock 예약 데이터 제거 → Firestore 연동
-  - [ ] MarketplaceScreen - Mock 상품 데이터 제거 → Firestore 연동
-  - [ ] FeedScreen - Mock 스토리/게시글 제거 → Firestore 연동
+  - [x] ~~BookingListScreen - Mock 예약 데이터 제거 → Firestore 연동~~ (2026.02.07 완료)
+  - [x] ~~MarketplaceScreen - Mock 상품 데이터 제거 → Firestore 연동~~ (2026.02.07 완료)
+  - [x] ~~FeedScreen - Mock 스토리/게시글 제거 → Firestore 연동~~ (2026.02.07 완료)
   - [ ] HomeScreen - Mock 데이터 정리
 
 - [ ] **푸시 알림 완성** - Firebase Cloud Messaging
@@ -201,18 +212,18 @@
 | 인증 & 프로필 | 6 | 6 | 0 | 100% |
 | 네비게이션 & UI | 8 | 8 | 0 | 100% |
 | 채팅 | 5 | 5 | 0 | 100% |
-| 예약/모임 | 10 | 6 | 4 | 60% |
-| 피드/소셜 | 5 | 4 | 1 | 80% |
+| 예약/모임 | 10 | 7 | 3 | 70% |
+| 피드/소셜 | 5 | 5 | 0 | 100% |
 | 친구 관리 | 5 | 5 | 0 | 100% |
-| 중고마켓 | 8 | 4 | 4 | 50% |
+| 중고마켓 | 8 | 5 | 3 | 63% |
 | 골프장/펍 | 8 | 6 | 2 | 75% |
 | 멤버십/결제 | 8 | 4 | 4 | 50% |
 | 알림 | 5 | 1 | 4 | 20% |
 | 포인트/쿠폰 | 4 | 1 | 3 | 25% |
 | 음악 | 4 | 0 | 4 | 0% |
 | 테스트/배포 | 10 | 0 | 10 | 0% |
-| 코드 품질 | 4 | 3 | 1 | 75% |
-| **전체** | **90** | **53** | **37** | **59%** |
+| 코드 품질 | 4 | 4 | 0 | 100% |
+| **전체** | **90** | **57** | **33** | **63%** |
 
 ---
 
@@ -220,6 +231,17 @@
 
 ### 2026.02.07
 
+> **Mock → Firestore API 교체 (3개 화면)**
+> - BookingListScreen: 인라인 Mock 3건 제거 → useBookingStore 연결, 에러 상태 UI 추가
+> - MarketplaceScreen: mockProducts 6건 제거 → useMarketplaceStore 연결, 로딩/에러/빈 상태 UI 추가
+> - FeedScreen: mockUser/mockStories/mockCommentsData/mockFeeds 전부 제거 → useFeedStore 신규 생성
+> - MarketItem 타입 제거 → Product 타입으로 통일 (sellerId 추가, 컬렉션명 products로 통일)
+> - feed-types.ts ID number→string 변경, FeedPost/FeedStory 인터페이스 추가
+> - useFeedStore.ts 신규 생성 (Zustand 스토어 8개로 확장)
+> - PostDetailScreen, MyProductsScreen 타입 호환성 수정
+> - typecheck 0 에러 유지
+>
+> **개발 환경 개선 & 타입 안정화**
 > - CLAUDE.md 프로젝트 가이드 생성 (매 대화 자동 컨텍스트 제공)
 > - package.json에 lint, typecheck, check 스크립트 추가
 > - TypeScript 타입 에러 168개 전체 수정 (41개 파일, typecheck 0 에러 달성)

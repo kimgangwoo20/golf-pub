@@ -49,10 +49,11 @@ src/
 │   ├── kakao/        # 카카오 로그인/맵/메시지
 │   ├── payment/      # tossPayments
 │   └── music/        # spotifyService
-├── store/            # Zustand 스토어 7개
+├── store/            # Zustand 스토어 8개
 │   ├── useAuthStore.ts
 │   ├── useBookingStore.ts
 │   ├── useChatStore.ts
+│   ├── useFeedStore.ts
 │   ├── useFriendStore.ts
 │   ├── useMarketplaceStore.ts
 │   ├── useNotificationStore.ts
