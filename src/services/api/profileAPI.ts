@@ -4,7 +4,7 @@
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import storage from '@react-native-firebase/storage';
-import { UserProfile, Point, Coupon } from '../../types/profile-types';
+import { UserProfile, Point, Coupon } from '@/types/profile-types';
 
 /**
  * Firestore 컬렉션

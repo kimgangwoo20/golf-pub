@@ -3,7 +3,7 @@
 
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-import { Friend, FriendRequest, FriendshipStatus } from '../../types/friend-types';
+import { Friend, FriendRequest, FriendshipStatus } from '@/types/friend-types';
 
 /**
  * Firestore 컬렉션

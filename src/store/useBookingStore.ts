@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { firestore as firebaseFirestore } from '../services/firebase/firebaseConfig';
-import { Booking } from '../types/booking-types';
+import { firestore as firebaseFirestore } from '@/services/firebase/firebaseConfig';
+import { Booking } from '@/types/booking-types';
 
 interface BookingState {
   bookings: Booking[];

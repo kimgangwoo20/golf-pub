@@ -2,299 +2,392 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // ========================================
     // 헬퍼 함수
     // ========================================
-    
+
     // 로그인 확인
     function isSignedIn() {
       return request.auth != null;
     }
-    
+
     // 본인 확인
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-    
+
     // 코치 인증 확인
     function isCoach() {
-      return isSignedIn() && 
+      return isSignedIn() &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'COACH';
     }
-    
+
     // 관리자 확인
     function isAdmin() {
-      return isSignedIn() && 
+      return isSignedIn() &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
     }
-    
+
     // ========================================
-    // 1. 사용자 (users)
+    // 1. 사용자 (users) + 서브컬렉션
     // ========================================
     match /users/{userId} {
       // 읽기: 로그인한 모든 사용자
       allow read: if isSignedIn();
-      
+
       // 생성: 본인 계정만
       allow create: if isOwner(userId);
-      
+
       // 수정: 본인만 (단, role과 point는 서버에서만)
-      allow update: if isOwner(userId) && 
+      allow update: if isOwner(userId) &&
                        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'pointBalance']);
-      
+
       // 삭제: 본인만
       allow delete: if isOwner(userId);
+
+      // 알림 서브컬렉션 (users/{userId}/notifications)
+      match /notifications/{notificationId} {
+        allow read: if isOwner(userId);
+        allow create: if isSignedIn();
+        allow update: if isOwner(userId) &&
+                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'isRead']);
+        allow delete: if isOwner(userId);
+      }
+
+      // 포인트 내역 서브컬렉션 (users/{userId}/pointHistory)
+      match /pointHistory/{historyId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if false;
+        allow delete: if false;
+      }
+
+      // 포인트 서브컬렉션 (users/{userId}/points)
+      match /points/{pointId} {
+        allow read: if isOwner(userId);
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
+      }
+
+      // 쿠폰 서브컬렉션 (users/{userId}/coupons)
+      match /coupons/{couponId} {
+        allow read: if isOwner(userId);
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
+      }
+
+      // 리뷰 서브컬렉션 (users/{userId}/reviews)
+      match /reviews/{reviewId} {
+        allow read: if isSignedIn();
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
     }
-    
+
     // ========================================
-    // 2. 부킹 (bookings)
+    // 2. 부킹 (bookings) + 서브컬렉션
     // ========================================
     match /bookings/{bookingId} {
       // 읽기: 로그인한 모든 사용자
       allow read: if isSignedIn();
-      
+
       // 생성: 로그인한 사용자만
-      allow create: if isSignedIn() && 
+      allow create: if isSignedIn() &&
                        request.resource.data.hostId == request.auth.uid;
-      
+
       // 수정: 주최자만 (또는 관리자)
       allow update: if isOwner(resource.data.hostId) || isAdmin();
-      
+
       // 삭제: 주최자만 (또는 관리자)
       allow delete: if isOwner(resource.data.hostId) || isAdmin();
+
+      // 참가 신청 서브컬렉션 (bookings/{bookingId}/applications)
+      match /applications/{applicationId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() &&
+                         request.resource.data.userId == request.auth.uid;
+        allow update: if isSignedIn();
+        allow delete: if isSignedIn();
+      }
     }
-    
+
     // ========================================
-    // 3. 부킹 참가자 (booking_participants)
+    // 3. 부킹 참가자 (bookingParticipants)
     // ========================================
-    match /booking_participants/{participantId} {
+    match /bookingParticipants/{participantId} {
       // 읽기: 로그인한 모든 사용자
       allow read: if isSignedIn();
-      
+
       // 생성: 본인만 참가 신청 가능
-      allow create: if isSignedIn() && 
+      allow create: if isSignedIn() &&
                        request.resource.data.userId == request.auth.uid;
-      
-      // 수정: 불가 (상태 변경은 서버에서)
-      allow update: if false;
-      
+
+      // 수정: 로그인한 사용자 (상태 변경)
+      allow update: if isSignedIn();
+
       // 삭제: 본인만
       allow delete: if isOwner(resource.data.userId);
     }
-    
+
     // ========================================
-    // 4. 중고거래 (marketplace)
+    // 4. 중고거래 (products)
     // ========================================
-    match /marketplace/{itemId} {
+    match /products/{itemId} {
       // 읽기: 로그인한 모든 사용자
       allow read: if isSignedIn();
-      
+
       // 생성: 로그인한 사용자만
-      allow create: if isSignedIn() && 
+      allow create: if isSignedIn() &&
                        request.resource.data.sellerId == request.auth.uid;
-      
+
       // 수정: 판매자만
       allow update: if isOwner(resource.data.sellerId);
-      
+
       // 삭제: 판매자만
       allow delete: if isOwner(resource.data.sellerId);
     }
-    
+
     // ========================================
-    // 5. 리뷰 (reviews)
+    // 5. 상품 좋아요 (product_likes)
+    // ========================================
+    match /product_likes/{likeId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() &&
+                       request.resource.data.userId == request.auth.uid;
+      allow update: if false;
+      allow delete: if isOwner(resource.data.userId);
+    }
+
+    // ========================================
+    // 6. 채팅방 (chatRooms) + 메시지 서브컬렉션
+    // ========================================
+    match /chatRooms/{roomId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
+
+      // 메시지 서브컬렉션 (chatRooms/{roomId}/messages)
+      match /messages/{messageId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
+        allow update: if false;
+        allow delete: if false;
+      }
+    }
+
+    // ========================================
+    // 7. 리뷰 (reviews) - 최상위
     // ========================================
     match /reviews/{reviewId} {
       // 읽기: 로그인한 모든 사용자
       allow read: if isSignedIn();
-      
+
       // 생성: 로그인한 사용자 + 실제 거래 완료 후 (서버 검증)
-      allow create: if isSignedIn() && 
+      allow create: if isSignedIn() &&
                        request.resource.data.reviewerId == request.auth.uid &&
-                       request.resource.data.rating >= 1 && 
+                       request.resource.data.rating >= 1 &&
                        request.resource.data.rating <= 5;
-      
+
       // 수정: 본인만 (30일 이내)
-      allow update: if isOwner(resource.data.reviewerId) && 
+      allow update: if isOwner(resource.data.reviewerId) &&
                        request.time < resource.data.createdAt + duration.value(30, 'd');
-      
+
       // 삭제: 본인만
       allow delete: if isOwner(resource.data.reviewerId);
     }
-    
+
     // ========================================
-    // 6. 리뷰 답글 (review_replies)
+    // 8. 리뷰 답글 (review_replies)
     // ========================================
     match /review_replies/{replyId} {
       // 읽기: 로그인한 모든 사용자
       allow read: if isSignedIn();
-      
+
       // 생성: 리뷰 대상자만
       allow create: if isSignedIn();
-      
+
       // 수정: 작성자만
       allow update: if isOwner(resource.data.userId);
-      
+
       // 삭제: 작성자만
       allow delete: if isOwner(resource.data.userId);
     }
-    
+
     // ========================================
-    // 7. 친구 (friends)
+    // 9. 친구 (friends)
     // ========================================
     match /friends/{friendshipId} {
       // 읽기: 로그인한 모든 사용자
       allow read: if isSignedIn();
-      
-      // 생성: 본인이 요청하는 경우만
-      allow create: if isSignedIn() && 
-                       request.resource.data.fromUserId == request.auth.uid;
-      
-      // 수정: 수신자만 (상태 변경)
-      allow update: if isOwner(resource.data.toUserId);
-      
-      // 삭제: 양쪽 모두 가능
-      allow delete: if isOwner(resource.data.fromUserId) || 
-                       isOwner(resource.data.toUserId);
+
+      // 생성: 로그인한 사용자
+      allow create: if isSignedIn();
+
+      // 수정: 로그인한 사용자
+      allow update: if isSignedIn();
+
+      // 삭제: 로그인한 사용자
+      allow delete: if isSignedIn();
     }
-    
+
     // ========================================
-    // 8. 피드 게시글 (posts)
+    // 10. 친구 요청 (friendRequests)
+    // ========================================
+    match /friendRequests/{requestId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() &&
+                       request.resource.data.fromUserId == request.auth.uid;
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
+    }
+
+    // ========================================
+    // 11. 피드 게시글 (posts) + 댓글 서브컬렉션
     // ========================================
     match /posts/{postId} {
       // 읽기: 로그인한 모든 사용자
       allow read: if isSignedIn();
-      
-      // 생성: 로그인한 사용자만
-      allow create: if isSignedIn() && 
-                       request.resource.data.authorId == request.auth.uid;
-      
+
+      // 생성: 로그인한 사용자만 (author.id 확인)
+      allow create: if isSignedIn() &&
+                       request.resource.data.author.id == request.auth.uid;
+
       // 수정: 작성자만
-      allow update: if isOwner(resource.data.authorId);
-      
+      allow update: if isSignedIn() && resource.data.author.id == request.auth.uid;
+
       // 삭제: 작성자 또는 관리자
-      allow delete: if isOwner(resource.data.authorId) || isAdmin();
+      allow delete: if (isSignedIn() && resource.data.author.id == request.auth.uid) || isAdmin();
+
+      // 댓글 서브컬렉션 (posts/{postId}/comments)
+      match /comments/{commentId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
+        allow update: if isSignedIn() && resource.data.author.id == request.auth.uid;
+        allow delete: if isSignedIn() && resource.data.author.id == request.auth.uid;
+      }
     }
-    
+
     // ========================================
-    // 9. 댓글 (comments)
+    // 12. 펍/레스토랑 (pubs)
     // ========================================
-    match /comments/{commentId} {
-      // 읽기: 로그인한 모든 사용자
+    match /pubs/{pubId} {
       allow read: if isSignedIn();
-      
-      // 생성: 로그인한 사용자만
-      allow create: if isSignedIn() && 
-                       request.resource.data.authorId == request.auth.uid;
-      
-      // 수정: 작성자만
-      allow update: if isOwner(resource.data.authorId);
-      
-      // 삭제: 작성자 또는 관리자
-      allow delete: if isOwner(resource.data.authorId) || isAdmin();
+      allow create: if isSignedIn() || isAdmin();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
     }
-    
+
     // ========================================
-    // 10. 출석 체크 (attendance)
+    // 13. 펍 리뷰 (pub_reviews)
+    // ========================================
+    match /pub_reviews/{reviewId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() &&
+                       request.resource.data.userId == request.auth.uid;
+      allow update: if isOwner(resource.data.userId);
+      allow delete: if isOwner(resource.data.userId);
+    }
+
+    // ========================================
+    // 14. 골프장 리뷰 (golf_course_reviews)
+    // ========================================
+    match /golf_course_reviews/{reviewId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() &&
+                       request.resource.data.userId == request.auth.uid;
+      allow update: if isOwner(resource.data.userId);
+      allow delete: if isOwner(resource.data.userId);
+    }
+
+    // ========================================
+    // 15. 출석 체크 (attendance)
     // ========================================
     match /attendance/{attendanceId} {
       // 읽기: 본인 기록만
       allow read: if isOwner(resource.data.userId);
-      
+
       // 생성: 본인만 (하루 1회 제한은 서버에서)
-      allow create: if isSignedIn() && 
+      allow create: if isSignedIn() &&
                        request.resource.data.userId == request.auth.uid;
-      
+
       // 수정/삭제: 불가 (변조 방지)
       allow update: if false;
       allow delete: if false;
     }
-    
+
     // ========================================
-    // 11. 포인트 내역 (point_history)
+    // 16. 포인트 내역 (pointHistory) - 최상위
     // ========================================
-    match /point_history/{historyId} {
+    match /pointHistory/{historyId} {
       // 읽기: 본인 내역만
       allow read: if isOwner(resource.data.userId);
-      
-      // 생성: 서버에서만 (클라이언트 생성 불가)
-      allow create: if false;
-      
+
+      // 생성: 로그인한 사용자 (앱 내 트랜잭션에서 사용)
+      allow create: if isSignedIn() &&
+                       request.resource.data.userId == request.auth.uid;
+
       // 수정/삭제: 불가
       allow update: if false;
       allow delete: if false;
     }
-    
+
     // ========================================
-    // 12. 결제 내역 (payments)
+    // 17. 결제 내역 (payments)
     // ========================================
     match /payments/{paymentId} {
       // 읽기: 본인 또는 관리자
       allow read: if isOwner(resource.data.userId) || isAdmin();
-      
+
       // 생성: 서버에서만
       allow create: if false;
-      
+
       // 수정: 서버에서만
       allow update: if false;
-      
+
       // 삭제: 불가 (5년 보관 의무)
       allow delete: if false;
     }
-    
+
     // ========================================
-    // 13. 쿠폰 (coupons)
+    // 18. 쿠폰 (coupons) - 최상위
     // ========================================
     match /coupons/{couponId} {
       // 읽기: 본인 쿠폰만
       allow read: if isOwner(resource.data.userId);
-      
+
       // 생성: 서버에서만
       allow create: if false;
-      
+
       // 수정: 서버에서만 (사용 처리)
       allow update: if false;
-      
+
       // 삭제: 불가
       allow delete: if false;
     }
-    
+
     // ========================================
-    // 14. 신고 (reports)
+    // 19. 신고 (reports)
     // ========================================
     match /reports/{reportId} {
       // 읽기: 관리자만
       allow read: if isAdmin();
-      
+
       // 생성: 로그인한 사용자만
-      allow create: if isSignedIn() && 
+      allow create: if isSignedIn() &&
                        request.resource.data.reporterId == request.auth.uid;
-      
+
       // 수정: 관리자만
       allow update: if isAdmin();
-      
+
       // 삭제: 불가
       allow delete: if false;
     }
-    
-    // ========================================
-    // 15. 알림 (notifications)
-    // ========================================
-    match /notifications/{notificationId} {
-      // 읽기: 수신자만
-      allow read: if isOwner(resource.data.userId);
-      
-      // 생성: 서버에서만
-      allow create: if false;
-      
-      // 수정: 수신자만 (읽음 처리)
-      allow update: if isOwner(resource.data.userId) && 
-                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
-      
-      // 삭제: 수신자만
-      allow delete: if isOwner(resource.data.userId);
-    }
-    
+
     // ========================================
     // 기타: 모든 다른 컬렉션 차단
     // ========================================

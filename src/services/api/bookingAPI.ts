@@ -11,7 +11,7 @@ import {
   CreateBookingRequest,
   JoinBookingRequest,
   SkillLevel,
-} from '../../types/booking-types';
+} from '@/types/booking-types';
 
 /**
  * Firestore 컬렉션

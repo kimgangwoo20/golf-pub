@@ -1,5 +1,5 @@
-import { MembershipType, MembershipPermissions } from '../types/membership';
-import { MEMBERSHIP_PERMISSIONS } from '../constants/membershipPlans';
+import { MembershipType, MembershipPermissions } from '@/types/membership';
+import { MEMBERSHIP_PERMISSIONS } from '@/constants/membershipPlans';
 
 // 멤버십 타입에 따른 권한 가져오기
 export const getMembershipPermissions = (type: MembershipType): MembershipPermissions => {

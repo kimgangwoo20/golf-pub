@@ -1,9 +1,9 @@
 // BookingListItem.tsx
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { Booking, BookingStatus } from '../../types/booking-types';
+import { Booking, BookingStatus } from '@/types/booking-types';
 import { ParticipantAvatar } from './ParticipantAvatar';
-import { colors } from '../../styles/theme';
+import { colors } from '@/styles/theme';
 
 interface Props { booking: Booking; onPress: () => void; }
 

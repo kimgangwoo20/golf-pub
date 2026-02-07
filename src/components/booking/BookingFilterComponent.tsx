@@ -1,8 +1,8 @@
 // BookingFilterComponent.tsx
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal } from 'react-native';
-import { BookingFilter as FilterType, BookingSortType, SkillLevel } from '../../types/booking-types';
-import { colors } from '../../styles/theme';
+import { BookingFilter as FilterType, BookingSortType, SkillLevel } from '@/types/booking-types';
+import { colors } from '@/styles/theme';
 
 interface Props { activeFilter: FilterType; onFilterChange: (filter: FilterType) => void; sortType: BookingSortType; onSortChange: (sort: BookingSortType) => void; }
 
