@@ -1,6 +1,6 @@
 // ProductDetailScreen.tsx - 상품 상세 화면
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,69 +12,77 @@ import {
   Alert,
   Share,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { CONDITION_LABELS, STATUS_LABELS } from '../../types/marketplace-types';
+import { CONDITION_LABELS } from '@/types/marketplace-types';
+import { marketplaceAPI } from '@/services/api/marketplaceAPI';
+import { colors } from '@/styles/theme';
+import type { Product } from '@/types/marketplace-types';
 
 const { width } = Dimensions.get('window');
 
-// Mock 상품 상세 데이터
-const mockProduct = {
-  id: '1',
-  title: '타이틀리스트 TS3 드라이버',
-  description: `거의 안 쓴 드라이버입니다. 상태 아주 좋아요!
-
-구입한 지 6개월 정도 됐고, 실제로 필드에서는 5번 정도만 사용했습니다.
-흠집 하나 없고 새 제품 같아요.
-
-- 로프트: 9.5도
-- 샤프트: Diamana DF 60 S
-- 정품 헤드커버 포함
-
-직거래 환영하며, 택배도 가능합니다.
-궁금한 점 있으시면 채팅 주세요!`,
-  price: 350000,
-  category: 'driver',
-  condition: 'like-new',
-  status: 'available',
-  images: [
-    'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=800',
-    'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800',
-    'https://images.unsplash.com/photo-1592919505780-303950717480?w=800',
-  ],
-  location: '서울 강남구',
-  sellerName: '김골프',
-  sellerImage: 'https://i.pravatar.cc/150?img=12',
-  sellerRating: 4.8,
-  sellerReviewCount: 23,
-  viewCount: 145,
-  likeCount: 18,
-  isLiked: false,
-  createdAt: '2025.01.20',
-  updatedAt: '2025.01.20',
-};
-
 export const ProductDetailScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const route = useRoute();
+  const { productId } = route.params as { productId: string };
 
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isLiked, setIsLiked] = useState(mockProduct.isLiked);
+  const [isLiked, setIsLiked] = useState(false);
   const [moreMenuVisible, setMoreMenuVisible] = useState(false);
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    console.log('찜하기 토글');
+  const loadProduct = useCallback(async () => {
+    try {
+      setError(null);
+      const data = await marketplaceAPI.getProductById(productId);
+      if (data) {
+        setProduct(data);
+        setIsLiked(data.isLiked);
+      } else {
+        setError('상품을 찾을 수 없습니다');
+      }
+    } catch (err: any) {
+      setError(err.message || '상품을 불러올 수 없습니다');
+    } finally {
+      setLoading(false);
+    }
+  }, [productId]);
+
+  useEffect(() => {
+    loadProduct();
+    // 조회수 증가 (에러 무시)
+    marketplaceAPI.increaseViewCount(productId);
+  }, [loadProduct, productId]);
+
+  const handleLike = async () => {
+    if (!product) return;
+    const newLiked = !isLiked;
+    setIsLiked(newLiked);
+    try {
+      if (newLiked) {
+        await marketplaceAPI.likeProduct(product.id);
+      } else {
+        await marketplaceAPI.unlikeProduct(product.id);
+      }
+    } catch {
+      // 실패 시 원래 상태로 롤백
+      setIsLiked(!newLiked);
+    }
   };
 
   const handleShare = async () => {
+    if (!product) return;
     try {
       await Share.share({
-        message: `[골프 Pub] ${mockProduct.title}\n${mockProduct.price.toLocaleString()}원\n${mockProduct.description.slice(0, 50)}...`,
+        message: `[골프 Pub] ${product.title}\n${product.price.toLocaleString()}원\n${product.description.slice(0, 50)}...`,
       });
-    } catch (error) {
-      console.error('공유 실패:', error);
+    } catch (err) {
+      console.error('공유 실패:', err);
     }
   };
 
@@ -106,17 +114,18 @@ export const ProductDetailScreen: React.FC = () => {
   };
 
   const handleBlockSeller = () => {
+    if (!product) return;
     setMoreMenuVisible(false);
     Alert.alert(
       '판매자 차단',
-      `${mockProduct.sellerName}님을 차단하시겠습니까?\n차단하면 이 판매자의 상품이 더 이상 표시되지 않습니다.`,
+      `${product.sellerName}님을 차단하시겠습니까?\n차단하면 이 판매자의 상품이 더 이상 표시되지 않습니다.`,
       [
         { text: '취소', style: 'cancel' },
         {
           text: '차단',
           style: 'destructive',
           onPress: () => {
-            Alert.alert('차단 완료', `${mockProduct.sellerName}님이 차단되었습니다.`);
+            Alert.alert('차단 완료', `${product.sellerName}님이 차단되었습니다.`);
             navigation.goBack();
           },
         },
@@ -125,24 +134,54 @@ export const ProductDetailScreen: React.FC = () => {
   };
 
   const handleChat = () => {
+    if (!product) return;
     navigation.navigate('Chat' as any, {
       screen: 'ChatRoom',
       params: {
-        chatId: `product_${mockProduct.id}`,
-        chatName: mockProduct.sellerName,
+        chatId: `product_${product.id}`,
+        chatName: product.sellerName,
       },
     } as any);
   };
 
   const handleSellerPress = () => {
+    if (!product) return;
     navigation.navigate('MyHome' as any, {
       screen: 'FriendProfile',
       params: {
-        friendId: 'seller_001',
-        friendName: mockProduct.sellerName,
+        friendId: product.sellerId,
+        friendName: product.sellerName,
       },
     } as any);
   };
+
+  // 로딩 상태
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // 에러/없음 상태
+  if (error || !product) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>{error || '상품을 찾을 수 없습니다'}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadProduct}>
+            <Text style={styles.retryButtonText}>다시 시도</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.goBackButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.goBackButtonText}>돌아가기</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -175,31 +214,45 @@ export const ProductDetailScreen: React.FC = () => {
               }}
               scrollEventThrottle={16}
             >
-              {mockProduct.images.map((image, index) => (
-                <Image
-                  key={index}
-                  source={{ uri: image }}
-                  style={styles.galleryImage}
-                />
-              ))}
+              {product.images.length > 0 ? (
+                product.images.map((image, index) => (
+                  <Image
+                    key={index}
+                    source={{ uri: image }}
+                    style={styles.galleryImage}
+                  />
+                ))
+              ) : (
+                <View style={[styles.galleryImage, { justifyContent: 'center', alignItems: 'center' }]}>
+                  <Text style={{ fontSize: 48 }}>📷</Text>
+                  <Text style={{ color: colors.textTertiary, marginTop: 8 }}>이미지 없음</Text>
+                </View>
+              )}
             </ScrollView>
 
             {/* 이미지 인디케이터 */}
-            <View style={styles.imageIndicator}>
-              <Text style={styles.indicatorText}>
-                {currentImageIndex + 1} / {mockProduct.images.length}
-              </Text>
-            </View>
+            {product.images.length > 0 && (
+              <View style={styles.imageIndicator}>
+                <Text style={styles.indicatorText}>
+                  {currentImageIndex + 1} / {product.images.length}
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* 판매자 정보 */}
           <TouchableOpacity style={styles.sellerSection} onPress={handleSellerPress}>
-            <Image source={{ uri: mockProduct.sellerImage }} style={styles.sellerImage} />
+            {product.sellerImage ? (
+              <Image source={{ uri: product.sellerImage }} style={styles.sellerImage} />
+            ) : (
+              <View style={[styles.sellerImage, { backgroundColor: '#E5E5E5', justifyContent: 'center', alignItems: 'center' }]}>
+                <Text style={{ fontSize: 20, color: colors.textTertiary }}>{product.sellerName?.charAt(0)}</Text>
+              </View>
+            )}
             <View style={styles.sellerInfo}>
-              <Text style={styles.sellerName}>{mockProduct.sellerName}</Text>
+              <Text style={styles.sellerName}>{product.sellerName}</Text>
               <View style={styles.sellerRating}>
-                <Text style={styles.ratingText}>⭐ {mockProduct.sellerRating}</Text>
-                <Text style={styles.reviewCount}>후기 {mockProduct.sellerReviewCount}개</Text>
+                <Text style={styles.ratingText}>⭐ {product.sellerRating}</Text>
               </View>
             </View>
             <Text style={styles.sellerArrow}>›</Text>
@@ -207,38 +260,40 @@ export const ProductDetailScreen: React.FC = () => {
 
           {/* 상품 정보 */}
           <View style={styles.productSection}>
-            <Text style={styles.productTitle}>{mockProduct.title}</Text>
+            <Text style={styles.productTitle}>{product.title}</Text>
 
             <View style={styles.productMeta}>
-              <Text style={styles.metaItem}>카테고리 • 드라이버</Text>
+              <Text style={styles.metaItem}>카테고리 • {product.category}</Text>
               <Text style={styles.metaDot}>•</Text>
-              <Text style={styles.metaItem}>{mockProduct.createdAt}</Text>
+              <Text style={styles.metaItem}>{typeof product.createdAt === 'string' ? product.createdAt : ''}</Text>
             </View>
 
-            <Text style={styles.productPrice}>{mockProduct.price.toLocaleString()}원</Text>
+            <Text style={styles.productPrice}>{product.price.toLocaleString()}원</Text>
 
             <View style={styles.infoRow}>
               <View style={styles.infoTag}>
                 <Text style={styles.infoTagText}>
-                  {CONDITION_LABELS[mockProduct.condition as keyof typeof CONDITION_LABELS]}
+                  {CONDITION_LABELS[product.condition as keyof typeof CONDITION_LABELS]}
                 </Text>
               </View>
-              <View style={styles.infoTag}>
-                <Text style={styles.infoTagText}>📍 {mockProduct.location}</Text>
-              </View>
+              {product.location && (
+                <View style={styles.infoTag}>
+                  <Text style={styles.infoTagText}>📍 {product.location}</Text>
+                </View>
+              )}
             </View>
 
             <View style={styles.statsRow}>
-              <Text style={styles.statsText}>관심 {mockProduct.likeCount}</Text>
+              <Text style={styles.statsText}>관심 {product.likeCount}</Text>
               <Text style={styles.statsDot}>•</Text>
-              <Text style={styles.statsText}>조회 {mockProduct.viewCount}</Text>
+              <Text style={styles.statsText}>조회 {product.viewCount}</Text>
             </View>
           </View>
 
           {/* 상품 설명 */}
           <View style={styles.descriptionSection}>
             <Text style={styles.sectionTitle}>상품 설명</Text>
-            <Text style={styles.descriptionText}>{mockProduct.description}</Text>
+            <Text style={styles.descriptionText}>{product.description}</Text>
           </View>
 
           {/* 하단 여백 */}
@@ -305,6 +360,38 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  retryButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  goBackButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+  },
+  goBackButtonText: {
+    color: colors.textSecondary,
+    fontSize: 15,
   },
   header: {
     flexDirection: 'row',
@@ -389,10 +476,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#666',
     marginRight: 8,
-  },
-  reviewCount: {
-    fontSize: 13,
-    color: '#999',
   },
   sellerArrow: {
     fontSize: 20,
@@ -499,7 +582,7 @@ const styles = StyleSheet.create({
   chatButton: {
     flex: 1,
     height: 56,
-    backgroundColor: '#10b981',
+    backgroundColor: colors.primary,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',

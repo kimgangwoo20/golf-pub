@@ -1,5 +1,5 @@
 // BookingDetailScreen.tsx - 부킹 상세 화면
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,60 +11,49 @@ import {
   Dimensions,
   Alert,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors } from '../../styles/theme';
-import { Booking } from '../../types/booking-types';
+import { colors } from '@/styles/theme';
+import { Booking } from '@/types/booking-types';
+import { useBookingStore } from '@/store/useBookingStore';
+import { useAuthStore } from '@/store/useAuthStore';
 
 const { width } = Dimensions.get('window');
 
 export const BookingDetailScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const route = useRoute();
-  const { bookingId } = route.params as { bookingId: number };
+  const { bookingId } = route.params as { bookingId: string };
 
-  const booking: Booking = {
-    id: String(bookingId),
-    title: '주말 라운딩 같이 치실 분!',
-    course: '세라지오CC',
-    location: '경기 광주',
-    date: '2025-01-18',
-    time: '08:00',
-    host: {
-      name: '김골프',
-      avatar: 'https://i.pravatar.cc/150?img=12',
-      rating: 4.8,
-      handicap: 18,
-      level: 'intermediate',
-    },
-    price: { original: 150000, discount: 120000, perPerson: true },
-    participants: {
-      current: 2,
-      max: 4,
-      members: [
-        { uid: '1', name: '김골프', role: 'host' },
-        { uid: '2', name: '박버디', role: 'member' },
-      ],
-    },
-    level: 'intermediate',
-    status: 'OPEN',
-    description: '주말 아침 상쾌하게 라운딩하실 분 찾습니다!\n\n⛳ 코스: 세라지오CC 정규 18홀\n🕐 시간: 오전 8시 티오프\n💰 비용: 1인당 12만원 (그린피 포함)\n\n초중급자 환영합니다. 편하게 즐기실 분들만 신청해주세요!\n\n라운딩 후 근처 맛집에서 식사 예정입니다.',
-    image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800',
-    hasPub: false,
-    hostId: '1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
+  const { getBooking, joinBooking } = useBookingStore();
+  const { user } = useAuthStore();
 
-  const host = {
-    id: '1',
-    name: booking.host.name,
-    avatar: booking.host.avatar,
-    rating: booking.host.rating,
-    reviewCount: 23,
-    bio: '골프 경력 3년차입니다. 즐겁게 치실 분들 환영해요!',
-  };
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [joining, setJoining] = useState(false);
+
+  const loadBooking = useCallback(async () => {
+    try {
+      setError(null);
+      const data = await getBooking(bookingId);
+      if (data) {
+        setBooking(data);
+      } else {
+        setError('부킹을 찾을 수 없습니다');
+      }
+    } catch (err: any) {
+      setError(err.message || '부킹을 불러올 수 없습니다');
+    } finally {
+      setLoading(false);
+    }
+  }, [bookingId, getBooking]);
+
+  useEffect(() => {
+    loadBooking();
+  }, [loadBooking]);
 
   const getLevelText = (level: string): string => {
     const levels = { beginner: '초보', intermediate: '중급', advanced: '고급', any: '누구나' };
@@ -78,8 +67,15 @@ export const BookingDetailScreen: React.FC = () => {
   };
 
   const handleJoinBooking = () => {
+    if (!booking) return;
+
     if (booking.status === 'CLOSED') {
       Alert.alert('마감된 모임', '이미 정원이 마감되었습니다.');
+      return;
+    }
+
+    if (!user) {
+      Alert.alert('로그인 필요', '참가 신청을 하려면 로그인해 주세요.');
       return;
     }
 
@@ -90,8 +86,18 @@ export const BookingDetailScreen: React.FC = () => {
         { text: '취소', style: 'cancel' as const },
         {
           text: '확인',
-          onPress: () => {
-            navigation.navigate('Payment' as any, { bookingId: booking.id } as any);
+          onPress: async () => {
+            try {
+              setJoining(true);
+              await joinBooking(booking.id, user.uid, user.displayName || '익명');
+              Alert.alert('완료', '참가 신청이 완료되었습니다.');
+              // 데이터 새로고침
+              await loadBooking();
+            } catch (err: any) {
+              Alert.alert('오류', err.message || '참가 신청에 실패했습니다.');
+            } finally {
+              setJoining(false);
+            }
           },
         },
       ]
@@ -99,6 +105,7 @@ export const BookingDetailScreen: React.FC = () => {
   };
 
   const handleChat = () => {
+    if (!booking) return;
     navigation.navigate('Chat' as any, {
       screen: 'ChatRoom',
       params: {
@@ -110,13 +117,36 @@ export const BookingDetailScreen: React.FC = () => {
 
   // 새로고침
   const [refreshing, setRefreshing] = useState(false);
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    // TODO: 실제 데이터 새로고침 API 호출
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
-  }, []);
+    await loadBooking();
+    setRefreshing(false);
+  }, [loadBooking]);
+
+  // 로딩 상태
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // 에러 상태
+  if (error || !booking) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>{error || '부킹을 찾을 수 없습니다'}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadBooking}>
+            <Text style={styles.retryButtonText}>다시 시도</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -134,7 +164,11 @@ export const BookingDetailScreen: React.FC = () => {
       >
         {/* 헤더 이미지 */}
         <View style={styles.imageContainer}>
-          <Image source={{ uri: booking.image }} style={styles.image} resizeMode="cover" />
+          {booking.image ? (
+            <Image source={{ uri: booking.image }} style={styles.image} resizeMode="cover" />
+          ) : (
+            <View style={[styles.image, { backgroundColor: colors.bgTertiary }]} />
+          )}
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
@@ -153,7 +187,7 @@ export const BookingDetailScreen: React.FC = () => {
 
           <View style={styles.infoRow}>
             <Text style={styles.golfCourse}>⛳ {booking.course}</Text>
-            <Text style={styles.location}>📍 {booking.location}</Text>
+            {booking.location && <Text style={styles.location}>📍 {booking.location}</Text>}
           </View>
         </View>
 
@@ -186,14 +220,18 @@ export const BookingDetailScreen: React.FC = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>호스트</Text>
           <View style={styles.hostCard}>
-            <Image source={{ uri: host.avatar }} style={styles.hostAvatar} />
-            <View style={styles.hostInfo}>
-              <Text style={styles.hostName}>{host.name}</Text>
-              <View style={styles.ratingRow}>
-                <Text style={styles.rating}>⭐ {host.rating}</Text>
-                <Text style={styles.reviewCount}>후기 {host.reviewCount}개</Text>
+            {booking.host.avatar ? (
+              <Image source={{ uri: booking.host.avatar }} style={styles.hostAvatar} />
+            ) : (
+              <View style={[styles.hostAvatar, { backgroundColor: colors.bgTertiary, justifyContent: 'center', alignItems: 'center' }]}>
+                <Text style={{ fontSize: 24, color: colors.textTertiary }}>{booking.host.name?.charAt(0)}</Text>
               </View>
-              <Text style={styles.hostBio}>{host.bio}</Text>
+            )}
+            <View style={styles.hostInfo}>
+              <Text style={styles.hostName}>{booking.host.name}</Text>
+              <View style={styles.ratingRow}>
+                <Text style={styles.rating}>⭐ {booking.host.rating}</Text>
+              </View>
             </View>
           </View>
         </View>
@@ -233,10 +271,12 @@ export const BookingDetailScreen: React.FC = () => {
         )}
 
         {/* 상세 설명 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>상세 설명</Text>
-          <Text style={styles.description}>{booking.description}</Text>
-        </View>
+        {booking.description && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>상세 설명</Text>
+            <Text style={styles.description}>{booking.description}</Text>
+          </View>
+        )}
 
         {/* 하단 여백 */}
         <View style={{ height: 100 }} />
@@ -253,13 +293,17 @@ export const BookingDetailScreen: React.FC = () => {
             <Text style={styles.chatButtonText}>💬</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.joinButton, booking.status === 'CLOSED' && styles.joinButtonDisabled]}
+            style={[styles.joinButton, (booking.status === 'CLOSED' || joining) && styles.joinButtonDisabled]}
             onPress={handleJoinBooking}
-            disabled={booking.status === 'CLOSED'}
+            disabled={booking.status === 'CLOSED' || joining}
           >
-            <Text style={styles.joinButtonText}>
-              {booking.status === 'CLOSED' ? '마감되었습니다' : '참가 신청'}
-            </Text>
+            {joining ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Text style={styles.joinButtonText}>
+                {booking.status === 'CLOSED' ? '마감되었습니다' : '참가 신청'}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -271,6 +315,29 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  retryButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: '600',
   },
   scrollView: {
     flex: 1,
@@ -409,15 +476,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textPrimary,
     marginRight: 8,
-  },
-  reviewCount: {
-    fontSize: 12,
-    color: colors.textTertiary,
-  },
-  hostBio: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    lineHeight: 18,
   },
   participantsList: {
     flexDirection: 'row',

@@ -10,10 +10,13 @@ import {
   StyleSheet,
   Alert,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { CATEGORIES, CONDITION_LABELS, ProductCategory, ProductCondition } from '../../types/marketplace-types';
+import { CATEGORIES, CONDITION_LABELS, ProductCategory, ProductCondition } from '@/types/marketplace-types';
+import { marketplaceAPI } from '@/services/api/marketplaceAPI';
+import { colors } from '@/styles/theme';
 import * as ImagePicker from 'expo-image-picker';
 
 export const CreateProductScreen: React.FC = () => {
@@ -26,6 +29,7 @@ export const CreateProductScreen: React.FC = () => {
   const [condition, setCondition] = useState<ProductCondition | null>(null);
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const handleAddImage = () => {
     if (images.length >= 10) {
@@ -118,11 +122,28 @@ export const CreateProductScreen: React.FC = () => {
         { text: '취소', style: 'cancel' },
         {
           text: '등록',
-          onPress: () => {
-            console.log('상품 등록:', { title, category, price, condition, location, description });
-            Alert.alert('완료', '상품이 등록되었습니다.', [
-              { text: '확인', onPress: () => navigation.goBack() },
-            ]);
+          onPress: async () => {
+            try {
+              setSubmitting(true);
+              // TODO: 이미지 업로드 후 URL 배열로 변환 (Firebase Storage 연동 필요)
+              // 현재는 로컬 URI를 빈 배열로 처리
+              await marketplaceAPI.createProduct({
+                title: title.trim(),
+                description: description.trim(),
+                price: Number(price),
+                category,
+                condition,
+                images: [], // TODO: Firebase Storage 업로드 후 URL 배열
+                location: location.trim(),
+              });
+              Alert.alert('완료', '상품이 등록되었습니다.', [
+                { text: '확인', onPress: () => navigation.goBack() },
+              ]);
+            } catch (error: any) {
+              Alert.alert('오류', error.message || '상품 등록에 실패했습니다.');
+            } finally {
+              setSubmitting(false);
+            }
           },
         },
       ]
@@ -286,8 +307,16 @@ export const CreateProductScreen: React.FC = () => {
 
         {/* 등록 버튼 */}
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>등록하기</Text>
+          <TouchableOpacity
+            style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+            onPress={handleSubmit}
+            disabled={submitting}
+          >
+            {submitting ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.submitButtonText}>등록하기</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -312,19 +341,19 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    borderBottomColor: colors.border,
   },
   backButton: {
     padding: 4,
   },
   backIcon: {
     fontSize: 24,
-    color: '#1A1A1A',
+    color: colors.textPrimary,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: colors.textPrimary,
   },
   headerRight: {
     width: 40,
@@ -340,11 +369,11 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: colors.textPrimary,
     marginBottom: 12,
   },
   required: {
-    color: '#FF3B30',
+    color: colors.danger,
   },
   imageScroll: {
     flexDirection: 'row',
@@ -353,7 +382,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
+    borderColor: colors.border,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -365,7 +394,7 @@ const styles = StyleSheet.create({
   },
   addImageText: {
     fontSize: 13,
-    color: '#666',
+    color: colors.textSecondary,
   },
   imageContainer: {
     marginLeft: 12,
@@ -384,7 +413,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#FF3B30',
+    backgroundColor: colors.danger,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -395,16 +424,16 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E5E5E5',
+    borderColor: colors.border,
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#1A1A1A',
+    color: colors.textPrimary,
   },
   charCount: {
     fontSize: 12,
-    color: '#999',
+    color: colors.textTertiary,
     textAlign: 'right',
     marginTop: 4,
   },
@@ -417,14 +446,14 @@ const styles = StyleSheet.create({
     width: '23%',
     aspectRatio: 1,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
+    borderColor: colors.border,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#F5F5F5',
   },
   categoryButtonActive: {
-    borderColor: '#10b981',
+    borderColor: colors.primary,
     backgroundColor: '#E8F5E9',
   },
   categoryIcon: {
@@ -434,16 +463,16 @@ const styles = StyleSheet.create({
   categoryButtonText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#666',
+    color: colors.textSecondary,
   },
   categoryButtonTextActive: {
-    color: '#10b981',
+    color: colors.primary,
   },
   priceInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E5E5E5',
+    borderColor: colors.border,
     borderRadius: 8,
     paddingRight: 16,
   },
@@ -452,12 +481,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#1A1A1A',
+    color: colors.textPrimary,
   },
   priceUnit: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#666',
+    color: colors.textSecondary,
   },
   conditionGrid: {
     flexDirection: 'row',
@@ -468,21 +497,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
+    borderColor: colors.border,
     borderRadius: 8,
     backgroundColor: '#F5F5F5',
   },
   conditionButtonActive: {
-    borderColor: '#10b981',
+    borderColor: colors.primary,
     backgroundColor: '#E8F5E9',
   },
   conditionButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: colors.textSecondary,
   },
   conditionButtonTextActive: {
-    color: '#10b981',
+    color: colors.primary,
   },
   descriptionInput: {
     height: 150,
@@ -495,13 +524,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E5E5E5',
+    borderTopColor: colors.border,
   },
   submitButton: {
-    backgroundColor: '#10b981',
+    backgroundColor: colors.primary,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
+  },
+  submitButtonDisabled: {
+    backgroundColor: colors.textTertiary,
   },
   submitButtonText: {
     fontSize: 16,
