@@ -223,7 +223,6 @@ export const uploadImageToStorage = async (
 
     // 다운로드 URL 반환
     const downloadURL = await reference.getDownloadURL();
-    console.log('✅ 이미지 업로드 완료:', downloadURL);
     return downloadURL;
   } catch (error) {
     console.error('❌ 이미지 업로드 실패:', error);
@@ -260,7 +259,6 @@ export const deleteImageFromStorage = async (imageUrl: string): Promise<void> =>
   try {
     const reference = storage().refFromURL(imageUrl);
     await reference.delete();
-    console.log('✅ 이미지 삭제 완료');
   } catch (error) {
     console.error('❌ 이미지 삭제 실패:', error);
     // 이미지가 이미 삭제된 경우 무시

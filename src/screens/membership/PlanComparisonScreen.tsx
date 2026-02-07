@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ComparisonTable } from '../../components/membership/ComparisonTable';
+import { ComparisonTable } from '@/components/membership/ComparisonTable';
 
 export const PlanComparisonScreen: React.FC = () => {
   const navigation = useNavigation<any>();

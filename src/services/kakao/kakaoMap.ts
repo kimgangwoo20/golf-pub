@@ -85,8 +85,6 @@ class KakaoMapServiceClass {
     size: number = 15
   ): Promise<KakaoPlace[]> {
     try {
-      console.log(`🔍 골프장 검색: "${query}"`);
-
       const searchQuery = `${query} 골프장`;
       const url = `${this.baseUrl}/search/keyword.json?query=${encodeURIComponent(searchQuery)}&page=${page}&size=${size}`;
 
@@ -101,7 +99,6 @@ class KakaoMapServiceClass {
       }
 
       const data: KakaoSearchResponse = await response.json();
-      console.log(`✅ 검색 결과: ${data.documents.length}개`);
 
       return data.documents;
     } catch (error: any) {
@@ -135,8 +132,6 @@ class KakaoMapServiceClass {
     size: number = 15
   ): Promise<KakaoPlace[]> {
     try {
-      console.log(`📍 주변 골프장 검색: (${latitude}, ${longitude}), 반경 ${radius}m`);
-
       const url = `${this.baseUrl}/search/keyword.json?query=골프장&x=${longitude}&y=${latitude}&radius=${radius}&page=${page}&size=${size}`;
 
       const response = await fetch(url, {
@@ -150,7 +145,6 @@ class KakaoMapServiceClass {
       }
 
       const data: KakaoSearchResponse = await response.json();
-      console.log(`✅ 주변 골프장: ${data.documents.length}개`);
 
       // 거리순 정렬 (가까운 순)
       const sorted = data.documents.sort((a, b) => {
@@ -174,8 +168,6 @@ class KakaoMapServiceClass {
    */
   async getCoordinatesFromAddress(address: string): Promise<Coordinates | null> {
     try {
-      console.log(`📍 주소 → 좌표 변환: "${address}"`);
-
       const url = `${this.baseUrl}/search/address.json?query=${encodeURIComponent(address)}`;
 
       const response = await fetch(url, {
@@ -191,7 +183,6 @@ class KakaoMapServiceClass {
       const data = await response.json();
 
       if (data.documents.length === 0) {
-        console.log('ℹ️ 주소를 찾을 수 없습니다.');
         return null;
       }
 
@@ -201,7 +192,6 @@ class KakaoMapServiceClass {
         longitude: parseFloat(doc.x),
       };
 
-      console.log(`✅ 좌표: (${coordinates.latitude}, ${coordinates.longitude})`);
       return coordinates;
     } catch (error) {
       console.error('❌ 주소 → 좌표 변환 실패:', error);
@@ -218,8 +208,6 @@ class KakaoMapServiceClass {
    */
   async getAddressFromCoordinates(latitude: number, longitude: number): Promise<string | null> {
     try {
-      console.log(`📍 좌표 → 주소 변환: (${latitude}, ${longitude})`);
-
       const url = `${this.baseUrl}/geo/coord2address.json?x=${longitude}&y=${latitude}`;
 
       const response = await fetch(url, {
@@ -235,14 +223,12 @@ class KakaoMapServiceClass {
       const data = await response.json();
 
       if (data.documents.length === 0) {
-        console.log('ℹ️ 주소를 찾을 수 없습니다.');
         return null;
       }
 
       const doc = data.documents[0];
       const address = doc.road_address?.address_name || doc.address?.address_name || '';
 
-      console.log(`✅ 주소: ${address}`);
       return address;
     } catch (error) {
       console.error('❌ 좌표 → 주소 변환 실패:', error);
@@ -347,7 +333,6 @@ class KakaoMapServiceClass {
         }
       }
 
-      console.log(`✅ 길찾기 시작: ${place_name}`);
     } catch (error) {
       console.error('❌ 길찾기 실패:', error);
       throw new Error('길찾기를 실행할 수 없습니다. 카카오맵 앱을 설치해주세요.');

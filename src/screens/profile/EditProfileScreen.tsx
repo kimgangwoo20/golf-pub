@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image } from 'react-native';
-import { profileAPI } from '../../services/api/profileAPI';
-import { showImagePickerOptions } from '../../utils/imageUtils';
+import { profileAPI } from '@/services/api/profileAPI';
+import { showImagePickerOptions } from '@/utils/imageUtils';
 
 export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const [name, setName] = useState('');

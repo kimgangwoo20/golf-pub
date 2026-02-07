@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { MEMBERSHIP_PLANS } from '../../constants/membershipPlans';
-import { MembershipType, BillingCycle } from '../../types/membership';
-import { PlanCard } from '../../components/membership/PlanCard';
+import { MEMBERSHIP_PLANS } from '@/constants/membershipPlans';
+import { MembershipType, BillingCycle } from '@/types/membership';
+import { PlanCard } from '@/components/membership/PlanCard';
 
 export const MembershipPlanScreen: React.FC = () => {
   const navigation = useNavigation();

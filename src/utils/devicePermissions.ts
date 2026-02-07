@@ -26,10 +26,8 @@ export const requestLocationPermission = async (): Promise<boolean> => {
     );
 
     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-      console.log('✅ 위치 권한 허용됨');
       return true;
     } else {
-      console.log('❌ 위치 권한 거부됨');
       showPermissionAlert('위치');
       return false;
     }
@@ -61,10 +59,8 @@ export const requestCameraPermission = async (): Promise<boolean> => {
     );
 
     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-      console.log('✅ 카메라 권한 허용됨');
       return true;
     } else {
-      console.log('❌ 카메라 권한 거부됨');
       showPermissionAlert('카메라');
       return false;
     }
@@ -98,10 +94,8 @@ export const requestStoragePermission = async (): Promise<boolean> => {
       );
 
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('✅ 갤러리 권한 허용됨 (Android 13+)');
         return true;
       } else {
-        console.log('❌ 갤러리 권한 거부됨');
         showPermissionAlert('갤러리');
         return false;
       }
@@ -125,10 +119,8 @@ export const requestStoragePermission = async (): Promise<boolean> => {
     );
 
     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-      console.log('✅ 저장소 권한 허용됨 (Android 12-)');
       return true;
     } else {
-      console.log('❌ 저장소 권한 거부됨');
       showPermissionAlert('저장소');
       return false;
     }
@@ -163,10 +155,8 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
       );
 
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('✅ 알림 권한 허용됨');
         return true;
       } else {
-        console.log('❌ 알림 권한 거부됨');
         showPermissionAlert('알림');
         return false;
       }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { BenefitItem } from '../../components/membership/BenefitItem';
+import { BenefitItem } from '@/components/membership/BenefitItem';
 
 export const MembershipBenefitsScreen: React.FC = () => {
   const benefits = [

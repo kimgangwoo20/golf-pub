@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { colors } from '../../styles/theme';
-import { SkillLevel } from '../../types/booking-types';
+import { colors } from '@/styles/theme';
+import { SkillLevel } from '@/types/booking-types';
 
 export const CreateBookingScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -85,22 +85,7 @@ export const CreateBookingScreen: React.FC = () => {
         {
           text: '등록',
           onPress: () => {
-            // API 호출하여 모집글 등록
-            console.log('모집글 등록:', {
-              title,
-              golfCourse,
-              location,
-              date,
-              time,
-              maxPlayers,
-              price,
-              level,
-              description,
-              hasPub,
-              pubName,
-              pubTime,
-            });
-
+            // TODO: API 호출하여 모집글 등록
             Alert.alert('등록 완료', '모집글이 등록되었습니다!', [
               {
                 text: '확인',

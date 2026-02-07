@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
-import { useAuthStore } from '../../../store/useAuthStore';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export const AccountManagementScreen: React.FC = () => {
   const navigation = useNavigation();
