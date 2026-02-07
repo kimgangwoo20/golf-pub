@@ -17,8 +17,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { useAuthStore } from '../../store/useAuthStore';
-import { FeedViewer, FeedItem } from '../../components/media';
+import { useAuthStore } from '@/store/useAuthStore';
+import { FeedViewer, FeedItem } from '@/components/media';
 
 const { width } = Dimensions.get('window');
 const ITEMS_PER_PAGE = 6;
@@ -324,12 +324,10 @@ export const MyHomeScreen: React.FC = () => {
   };
 
   const handleLike = (itemId: number) => {
-    console.log('좋아요:', itemId);
     // TODO: 실제 좋아요 API 연동
   };
 
   const handleComment = (itemId: number, comment: string) => {
-    console.log('댓글:', itemId, comment);
     // TODO: 실제 댓글 API 연동
   };
 

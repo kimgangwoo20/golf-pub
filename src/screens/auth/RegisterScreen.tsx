@@ -12,7 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuthStore } from '../../store/useAuthStore';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export const RegisterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const [name, setName] = useState('');

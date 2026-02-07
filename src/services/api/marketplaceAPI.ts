@@ -91,7 +91,6 @@ export const marketplaceAPI = {
         updatedAt: now.toISOString(),
       } as any;
 
-      console.log('✅ 상품 등록 성공:', docRef.id);
       return newProduct;
     } catch (error: any) {
       console.error('❌ 상품 등록 실패:', error);
@@ -194,7 +193,6 @@ export const marketplaceAPI = {
         }));
       }
 
-      console.log(`✅ 상품 목록 조회 성공: ${products.length}개`);
       return products;
     } catch (error: any) {
       console.error('❌ 상품 목록 조회 실패:', error);
@@ -218,7 +216,6 @@ export const marketplaceAPI = {
         .get();
 
       if (!doc.exists) {
-        console.log('ℹ️ 상품을 찾을 수 없습니다:', productId);
         return null;
       }
 
@@ -244,7 +241,6 @@ export const marketplaceAPI = {
         updatedAt: data?.updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
       } as Product;
 
-      console.log('✅ 상품 상세 조회 성공:', productId);
       return product;
     } catch (error: any) {
       console.error('❌ 상품 상세 조회 실패:', error);
@@ -298,7 +294,6 @@ export const marketplaceAPI = {
           updatedAt: firestore.FieldValue.serverTimestamp(),
         });
 
-      console.log('✅ 상품 수정 성공:', productId);
     } catch (error: any) {
       console.error('❌ 상품 수정 실패:', error);
       throw new Error(error.message || '상품 수정에 실패했습니다.');
@@ -336,7 +331,6 @@ export const marketplaceAPI = {
         .doc(productId)
         .delete();
 
-      console.log('✅ 상품 삭제 성공:', productId);
     } catch (error: any) {
       console.error('❌ 상품 삭제 실패:', error);
       throw new Error(error.message || '상품 삭제에 실패했습니다.');
@@ -369,7 +363,6 @@ export const marketplaceAPI = {
         updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
       })) as Product[];
 
-      console.log(`✅ 내 상품 목록 조회 성공: ${products.length}개`);
       return products;
     } catch (error: any) {
       console.error('❌ 내 상품 목록 조회 실패:', error);
@@ -397,7 +390,6 @@ export const marketplaceAPI = {
         .get();
 
       if (!existingLike.empty) {
-        console.log('ℹ️ 이미 찜한 상품입니다');
         return;
       }
 
@@ -419,7 +411,6 @@ export const marketplaceAPI = {
       });
 
       await batch.commit();
-      console.log('✅ 상품 찜하기 성공:', productId);
     } catch (error: any) {
       console.error('❌ 상품 찜하기 실패:', error);
       throw new Error(error.message || '상품 찜하기에 실패했습니다.');
@@ -445,7 +436,6 @@ export const marketplaceAPI = {
         .get();
 
       if (likeSnapshot.empty) {
-        console.log('ℹ️ 찜하지 않은 상품입니다');
         return;
       }
 
@@ -465,7 +455,6 @@ export const marketplaceAPI = {
       });
 
       await batch.commit();
-      console.log('✅ 상품 찜 취소 성공:', productId);
     } catch (error: any) {
       console.error('❌ 상품 찜 취소 실패:', error);
       throw new Error(error.message || '상품 찜 취소에 실패했습니다.');
@@ -491,7 +480,6 @@ export const marketplaceAPI = {
         .get();
 
       if (likesSnapshot.empty) {
-        console.log('ℹ️ 찜한 상품이 없습니다');
         return [];
       }
 
@@ -521,7 +509,6 @@ export const marketplaceAPI = {
         });
       }
 
-      console.log(`✅ 찜한 상품 목록 조회 성공: ${products.length}개`);
       return products;
     } catch (error: any) {
       console.error('❌ 찜한 상품 목록 조회 실패:', error);
@@ -543,7 +530,6 @@ export const marketplaceAPI = {
           viewCount: firestore.FieldValue.increment(1),
         });
 
-      console.log('✅ 조회수 증가 성공:', productId);
     } catch (error: any) {
       console.error('❌ 조회수 증가 실패:', error);
       // 조회수는 실패해도 무시
@@ -588,7 +574,6 @@ export const marketplaceAPI = {
           updatedAt: firestore.FieldValue.serverTimestamp(),
         });
 
-      console.log('✅ 상품 상태 변경 성공:', productId, status);
     } catch (error: any) {
       console.error('❌ 상품 상태 변경 실패:', error);
       throw new Error(error.message || '상품 상태 변경에 실패했습니다.');

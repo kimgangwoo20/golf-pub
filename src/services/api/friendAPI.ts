@@ -77,7 +77,6 @@ export const friendAPI = {
         .collection(FRIENDSHIPS_COLLECTION)
         .add(friendshipData);
 
-      console.log('✅ 친구 요청 전송 성공:', docRef.id);
       return docRef.id;
     } catch (error: any) {
       console.error('❌ 친구 요청 전송 실패:', error);
@@ -126,7 +125,6 @@ export const friendAPI = {
           acceptedAt: firestore.FieldValue.serverTimestamp(),
         });
 
-      console.log('✅ 친구 요청 승인 성공:', friendshipId);
     } catch (error: any) {
       console.error('❌ 친구 요청 승인 실패:', error);
       throw new Error(error.message || '친구 요청 승인에 실패했습니다.');
@@ -167,7 +165,6 @@ export const friendAPI = {
         .doc(friendshipId)
         .delete();
 
-      console.log('✅ 친구 요청 거절 성공:', friendshipId);
     } catch (error: any) {
       console.error('❌ 친구 요청 거절 실패:', error);
       throw new Error(error.message || '친구 요청 거절에 실패했습니다.');
@@ -214,7 +211,6 @@ export const friendAPI = {
       });
 
       if (friendIds.length === 0) {
-        console.log('ℹ️ 친구가 없습니다');
         return [];
       }
 
@@ -247,7 +243,6 @@ export const friendAPI = {
         });
       }
 
-      console.log(`✅ 친구 목록 조회 성공: ${friends.length}명`);
       return friends;
     } catch (error: any) {
       console.error('❌ 친구 목록 조회 실패:', error);
@@ -275,7 +270,6 @@ export const friendAPI = {
         .get();
 
       if (snapshot.empty) {
-        console.log('ℹ️ 받은 친구 요청이 없습니다');
         return [];
       }
 
@@ -321,7 +315,6 @@ export const friendAPI = {
 
       });
 
-      console.log(`✅ 받은 친구 요청 조회 성공: ${requests.length}개`);
       return requests;
     } catch (error: any) {
       console.error('❌ 받은 친구 요청 조회 실패:', error);
@@ -349,7 +342,6 @@ export const friendAPI = {
         .get();
 
       if (snapshot.empty) {
-        console.log('ℹ️ 보낸 친구 요청이 없습니다');
         return [];
       }
 
@@ -394,7 +386,6 @@ export const friendAPI = {
 
       });
 
-      console.log(`✅ 보낸 친구 요청 조회 성공: ${requests.length}개`);
       return requests;
     } catch (error: any) {
       console.error('❌ 보낸 친구 요청 조회 실패:', error);
@@ -432,7 +423,6 @@ export const friendAPI = {
         .doc(friendships.docs[0].id)
         .delete();
 
-      console.log('✅ 친구 삭제 성공:', friendId);
     } catch (error: any) {
       console.error('❌ 친구 삭제 실패:', error);
       throw new Error(error.message || '친구 삭제에 실패했습니다.');
@@ -485,7 +475,6 @@ export const friendAPI = {
           });
       }
 
-      console.log('✅ 사용자 차단 성공:', userId);
     } catch (error: any) {
       console.error('❌ 사용자 차단 실패:', error);
       throw new Error(error.message || '사용자 차단에 실패했습니다.');
@@ -529,7 +518,6 @@ export const friendAPI = {
         .doc(blockRelation.docs[0].id)
         .delete();
 
-      console.log('✅ 차단 해제 성공:', userId);
     } catch (error: any) {
       console.error('❌ 차단 해제 실패:', error);
       throw new Error(error.message || '차단 해제에 실패했습니다.');
@@ -583,7 +571,6 @@ export const friendAPI = {
         } as unknown as Friend);
       });
 
-      console.log(`✅ 사용자 검색 성공: ${users.length}명`);
       return users;
     } catch (error: any) {
       console.error('❌ 사용자 검색 실패:', error);

@@ -119,8 +119,6 @@ export async function fetchWeather(
   lon: number = 126.978
 ): Promise<Weather> {
   try {
-    console.log(`📍 날씨 조회: (${lat}, ${lon})`);
-
     const response = await axios.get(BASE_URL, {
       params: {
         latitude: lat,
@@ -189,8 +187,6 @@ export async function fetch10DayForecast(
   lon: number = 126.978
 ): Promise<WeatherForecast[]> {
   try {
-    console.log(`📅 10일 예보 조회: (${lat}, ${lon})`);
-
     const response = await axios.get(BASE_URL, {
       params: {
         latitude: lat,

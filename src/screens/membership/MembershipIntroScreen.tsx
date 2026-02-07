@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { BenefitItem } from '../../components/membership/BenefitItem';
+import { BenefitItem } from '@/components/membership/BenefitItem';
 
 export const MembershipIntroScreen: React.FC = () => {
   const navigation = useNavigation<any>();

@@ -89,7 +89,6 @@ export const CreatePostScreen: React.FC = () => {
 
   const handleSaveDraft = () => {
     Alert.alert('임시저장', '게시물이 임시저장되었습니다.');
-    console.log('임시저장:', { content, images, location, visibility, hashtags });
   };
 
   const handlePublish = () => {
@@ -112,7 +111,6 @@ export const CreatePostScreen: React.FC = () => {
         {
           text: '등록',
           onPress: () => {
-            console.log('게시물 등록:', { content, images, location, visibility, hashtags });
             Alert.alert('완료', '게시물이 등록되었습니다.', [
               { text: '확인', onPress: () => navigation.goBack() },
             ]);

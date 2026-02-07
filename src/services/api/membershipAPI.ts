@@ -78,7 +78,6 @@ export const membershipAPI = {
         paymentMethod: data?.paymentMethod,
       };
 
-      console.log('✅ 멤버십 조회 성공:', membership.tier);
       return membership;
     } catch (error: any) {
       console.error('❌ 멤버십 조회 실패:', error);
@@ -129,7 +128,6 @@ export const membershipAPI = {
           membership: tier,
         });
 
-      console.log('✅ 멤버십 업그레이드 성공:', tier);
     } catch (error: any) {
       console.error('❌ 멤버십 업그레이드 실패:', error);
       throw new Error(error.message || '멤버십 업그레이드에 실패했습니다.');
@@ -154,7 +152,6 @@ export const membershipAPI = {
           updatedAt: firestore.FieldValue.serverTimestamp(),
         });
 
-      console.log('✅ 멤버십 취소 성공');
     } catch (error: any) {
       console.error('❌ 멤버십 취소 실패:', error);
       throw new Error(error.message || '멤버십 취소에 실패했습니다.');

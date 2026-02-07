@@ -77,7 +77,6 @@ export const bookingAPI = {
         updatedAt: now.toISOString(),
       } as any;
 
-      console.log('✅ 부킹 생성 성공:', docRef.id);
       return newBooking;
     } catch (error: any) {
       console.error('❌ 부킹 생성 실패:', error);
@@ -190,7 +189,6 @@ export const bookingAPI = {
         );
       }
 
-      console.log(`✅ 부킹 목록 조회 성공: ${filteredBookings.length}개`);
       return filteredBookings;
     } catch (error: any) {
       console.error('❌ 부킹 목록 조회 실패:', error);
@@ -212,7 +210,6 @@ export const bookingAPI = {
         .get();
 
       if (!doc.exists) {
-        console.log('ℹ️ 부킹을 찾을 수 없습니다:', bookingId);
         return null;
       }
 
@@ -223,7 +220,6 @@ export const bookingAPI = {
         updatedAt: doc.data()?.updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
       } as Booking;
 
-      console.log('✅ 부킹 상세 조회 성공:', bookingId);
       return booking;
     } catch (error: any) {
       console.error('❌ 부킹 상세 조회 실패:', error);
@@ -274,8 +270,7 @@ export const bookingAPI = {
 
       // 수정된 부킹 가져오기
       const updatedBooking = await bookingAPI.getBookingById(bookingId);
-      console.log('✅ 부킹 수정 성공:', bookingId);
-      
+
       return updatedBooking!;
     } catch (error: any) {
       console.error('❌ 부킹 수정 실패:', error);
@@ -316,7 +311,6 @@ export const bookingAPI = {
         .doc(bookingId)
         .delete();
 
-      console.log('✅ 부킹 삭제 성공:', bookingId);
     } catch (error: any) {
       console.error('❌ 부킹 삭제 실패:', error);
       throw new Error(error.message || '부킹 삭제에 실패했습니다.');
@@ -387,7 +381,6 @@ export const bookingAPI = {
         .collection(APPLICATIONS_COLLECTION)
         .add(applicationData);
 
-      console.log('✅ 부킹 신청 성공:', applicationRef.id);
       return applicationRef.id;
     } catch (error: any) {
       console.error('❌ 부킹 신청 실패:', error);
@@ -472,7 +465,6 @@ export const bookingAPI = {
       });
 
       await batch.commit();
-      console.log('✅ 신청자 승인 성공:', applicationId);
     } catch (error: any) {
       console.error('❌ 신청자 승인 실패:', error);
       throw new Error(error.message || '신청자 승인에 실패했습니다.');
@@ -518,7 +510,6 @@ export const bookingAPI = {
           rejectedAt: firestore.FieldValue.serverTimestamp(),
         });
 
-      console.log('✅ 신청자 거절 성공:', applicationId);
     } catch (error: any) {
       console.error('❌ 신청자 거절 실패:', error);
       throw new Error(error.message || '신청자 거절에 실패했습니다.');
@@ -550,7 +541,6 @@ export const bookingAPI = {
         updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
       })) as Booking[];
 
-      console.log(`✅ 내 부킹 목록 조회 성공: ${bookings.length}개`);
       return bookings;
     } catch (error: any) {
       console.error('❌ 내 부킹 목록 조회 실패:', error);
@@ -608,7 +598,6 @@ export const bookingAPI = {
         applicationStatus: app.applicationStatus,
       }));
 
-      console.log(`✅ 신청한 부킹 목록 조회 성공: ${result.length}개`);
       return result;
     } catch (error: any) {
       console.error('❌ 신청한 부킹 목록 조회 실패:', error);

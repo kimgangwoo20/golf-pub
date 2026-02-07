@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { MembershipBadge } from '../../components/membership/MembershipBadge';
-import { MembershipType } from '../../types/membership';
+import { MembershipBadge } from '@/components/membership/MembershipBadge';
+import { MembershipType } from '@/types/membership';
 
 export const MembershipManageScreen: React.FC = () => {
   const currentMembership = {

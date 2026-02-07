@@ -101,8 +101,6 @@ class KakaoMessageServiceClass {
    */
   async shareBooking(booking: BookingInfo): Promise<void> {
     try {
-      console.log('📤 부킹 공유 시작:', booking.title);
-
       const content: ContentObject = {
         title: `⛳ ${booking.title}`,
         description: `${booking.golfCourse}\n📅 ${booking.date} ${booking.time}\n👥 ${booking.currentMembers}/${booking.maxMembers}명\n💰 ${this.formatPrice(booking.price)}`,
@@ -129,12 +127,10 @@ class KakaoMessageServiceClass {
       };
 
       await shareFeed(feedObject);
-      console.log('✅ 부킹 공유 완료');
     } catch (error: any) {
       console.error('❌ 부킹 공유 실패:', error);
-      
+
       if (error.code === 'E_CANCELLED_OPERATION') {
-        console.log('ℹ️ 사용자가 공유를 취소했습니다.');
       } else {
         throw new Error('부킹 공유에 실패했습니다. 카카오톡이 설치되어 있는지 확인해주세요.');
       }
@@ -148,8 +144,6 @@ class KakaoMessageServiceClass {
    */
   async shareProduct(product: ProductInfo): Promise<void> {
     try {
-      console.log('📤 상품 공유 시작:', product.title);
-
       const priceText = product.originalPrice
         ? `💰 ${this.formatPrice(product.price)} (${Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% 할인)`
         : `💰 ${this.formatPrice(product.price)}`;
@@ -180,12 +174,10 @@ class KakaoMessageServiceClass {
       };
 
       await shareFeed(feedObject);
-      console.log('✅ 상품 공유 완료');
     } catch (error: any) {
       console.error('❌ 상품 공유 실패:', error);
-      
+
       if (error.code === 'E_CANCELLED_OPERATION') {
-        console.log('ℹ️ 사용자가 공유를 취소했습니다.');
       } else {
         throw new Error('상품 공유에 실패했습니다.');
       }
@@ -199,8 +191,6 @@ class KakaoMessageServiceClass {
    */
   async inviteFriend(inviterName?: string): Promise<void> {
     try {
-      console.log('📤 친구 초대 시작');
-
       const inviteText = inviterName
         ? `${inviterName}님이 Golf Pub에 초대했습니다! 🎉`
         : '골프 모임을 쉽게! Golf Pub에 초대합니다 🎉';
@@ -231,12 +221,10 @@ class KakaoMessageServiceClass {
       };
 
       await shareFeed(feedObject);
-      console.log('✅ 친구 초대 완료');
     } catch (error: any) {
       console.error('❌ 친구 초대 실패:', error);
-      
+
       if (error.code === 'E_CANCELLED_OPERATION') {
-        console.log('ℹ️ 사용자가 초대를 취소했습니다.');
       } else {
         throw new Error('친구 초대에 실패했습니다.');
       }
@@ -258,8 +246,6 @@ class KakaoMessageServiceClass {
     imageUrl?: string
   ): Promise<void> {
     try {
-      console.log('📤 골프장 정보 공유 시작:', golfCourseName);
-
       const description = phone
         ? `📍 ${address}\n📞 ${phone}`
         : `📍 ${address}`;
@@ -290,7 +276,6 @@ class KakaoMessageServiceClass {
       };
 
       await shareFeed(feedObject);
-      console.log('✅ 골프장 정보 공유 완료');
     } catch (error: any) {
       console.error('❌ 골프장 정보 공유 실패:', error);
       throw new Error('골프장 정보 공유에 실패했습니다.');
@@ -314,8 +299,6 @@ class KakaoMessageServiceClass {
     link?: string
   ): Promise<void> {
     try {
-      console.log('📤 커스텀 메시지 공유 시작');
-
       const targetUrl = link || this.webUrl;
 
       const content: ContentObject = {
@@ -344,7 +327,6 @@ class KakaoMessageServiceClass {
       };
 
       await shareFeed(feedObject);
-      console.log('✅ 커스텀 메시지 공유 완료');
     } catch (error: any) {
       console.error('❌ 커스텀 메시지 공유 실패:', error);
       throw new Error('메시지 공유에 실패했습니다.');
@@ -383,8 +365,6 @@ class KakaoMessageServiceClass {
    */
   async shareLink(url: string, title?: string): Promise<void> {
     try {
-      console.log('📤 링크 공유 시작:', url);
-
       const linkObject: LinkObject = {
         link: {
           mobileWebUrl: url,
@@ -393,12 +373,10 @@ class KakaoMessageServiceClass {
       };
 
       await sendLink(linkObject);
-      console.log('✅ 링크 공유 완료');
     } catch (error: any) {
       console.error('❌ 링크 공유 실패:', error);
-      
+
       if (error.code === 'E_CANCELLED_OPERATION') {
-        console.log('ℹ️ 사용자가 공유를 취소했습니다.');
       } else {
         throw new Error('링크 공유에 실패했습니다.');
       }

@@ -124,7 +124,6 @@ export const HomeScreen: React.FC = () => {
         params: { booking }
       });
     } else {
-      console.log('부킹 클릭:', booking.id);
       Alert.alert('알림', '부킹 상세 화면으로 이동합니다.');
     }
   };
