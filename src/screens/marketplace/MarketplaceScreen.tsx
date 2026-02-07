@@ -1,6 +1,6 @@
 // MarketplaceScreen.tsx - 중고거래 상품 목록 화면
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,139 +10,33 @@ import {
   TextInput,
   StyleSheet,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { ProductCategory, CATEGORIES, Product } from '../../types/marketplace-types';
-
-// Mock 상품 데이터
-const mockProducts: Product[] = [
-  {
-    id: '1',
-    title: '타이틀리스트 TS3 드라이버',
-    description: '거의 안 쓴 드라이버입니다. 상태 아주 좋아요!',
-    price: 350000,
-    category: 'driver',
-    condition: 'like-new',
-    status: 'available',
-    images: ['https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400'],
-    location: '서울 강남구',
-    sellerName: '김골프',
-    sellerImage: 'https://i.pravatar.cc/150?img=12',
-    sellerRating: 4.8,
-    viewCount: 45,
-    likeCount: 8,
-    isLiked: false,
-    createdAt: '2025.01.20',
-    updatedAt: '2025.01.20',
-  },
-  {
-    id: '2',
-    title: '캘러웨이 아이언 세트 (5-9번)',
-    description: '중고이지만 관리 잘 했습니다.',
-    price: 450000,
-    category: 'iron',
-    condition: 'good',
-    status: 'available',
-    images: ['https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400'],
-    location: '경기 성남시',
-    sellerName: '이철수',
-    sellerImage: 'https://i.pravatar.cc/150?img=33',
-    sellerRating: 4.5,
-    viewCount: 120,
-    likeCount: 15,
-    isLiked: true,
-    createdAt: '2025.01.18',
-    updatedAt: '2025.01.18',
-  },
-  {
-    id: '3',
-    title: '오디세이 퍼터',
-    description: '새제품 급입니다. 한 번도 필드에서 안 써봤어요.',
-    price: 180000,
-    category: 'putter',
-    condition: 'new',
-    status: 'available',
-    images: ['https://images.unsplash.com/photo-1592919505780-303950717480?w=400'],
-    location: '서울 송파구',
-    sellerName: '박민수',
-    sellerImage: 'https://i.pravatar.cc/150?img=15',
-    sellerRating: 4.9,
-    viewCount: 89,
-    likeCount: 12,
-    isLiked: false,
-    createdAt: '2025.01.17',
-    updatedAt: '2025.01.17',
-  },
-  {
-    id: '4',
-    title: '타이틀리스트 볼보이 웨지 52도',
-    description: '사용감 좀 있지만 성능은 문제없습니다.',
-    price: 80000,
-    category: 'wedge',
-    condition: 'fair',
-    status: 'reserved',
-    images: ['https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400'],
-    location: '인천 남동구',
-    sellerName: '최웨지',
-    sellerImage: 'https://i.pravatar.cc/150?img=44',
-    sellerRating: 4.3,
-    viewCount: 56,
-    likeCount: 5,
-    isLiked: false,
-    createdAt: '2025.01.15',
-    updatedAt: '2025.01.22',
-  },
-  {
-    id: '5',
-    title: '나이키 골프 의류 세트',
-    description: '사이즈 L입니다. 깨끗합니다.',
-    price: 120000,
-    category: 'apparel',
-    condition: 'like-new',
-    status: 'available',
-    images: ['https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400'],
-    location: '서울 마포구',
-    sellerName: '정패션',
-    sellerImage: 'https://i.pravatar.cc/150?img=22',
-    sellerRating: 4.7,
-    viewCount: 34,
-    likeCount: 7,
-    isLiked: true,
-    createdAt: '2025.01.14',
-    updatedAt: '2025.01.14',
-  },
-  {
-    id: '6',
-    title: '골프 거리측정기',
-    description: '부시넬 브랜드 정품입니다.',
-    price: 250000,
-    category: 'accessory',
-    condition: 'good',
-    status: 'sold',
-    images: ['https://images.unsplash.com/photo-1592919505780-303950717480?w=400'],
-    location: '경기 고양시',
-    sellerName: '강측정',
-    sellerImage: 'https://i.pravatar.cc/150?img=8',
-    sellerRating: 4.6,
-    viewCount: 98,
-    likeCount: 18,
-    isLiked: false,
-    createdAt: '2025.01.12',
-    updatedAt: '2025.01.21',
-  },
-];
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { ProductCategory, CATEGORIES } from '@/types/marketplace-types';
+import { useMarketplaceStore } from '@/store/useMarketplaceStore';
+import { colors } from '@/styles/theme';
 
 export const MarketplaceScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const { items, loading, error, loadItems } = useMarketplaceStore();
 
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | 'all'>('all');
   const [searchText, setSearchText] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const [products, setProducts] = useState(mockProducts);
+  // 좋아요는 로컬 상태로 관리 (추후 Firestore 연동)
+  const [likedProducts, setLikedProducts] = useState<Set<string>>(new Set());
+
+  // 화면 포커스 시 데이터 로드
+  useFocusEffect(
+    useCallback(() => {
+      loadItems();
+    }, [])
+  );
 
   // 카테고리 필터링
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = items.filter(product => {
     if (selectedCategory !== 'all' && product.category !== selectedCategory) {
       return false;
     }
@@ -152,10 +46,10 @@ export const MarketplaceScreen: React.FC = () => {
     return true;
   });
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
-    // TODO: 실제 API 호출
-    setTimeout(() => setRefreshing(false), 1000);
+    await loadItems();
+    setRefreshing(false);
   };
 
   const handleProductPress = (productId: string) => {
@@ -163,9 +57,15 @@ export const MarketplaceScreen: React.FC = () => {
   };
 
   const handleLike = (productId: string) => {
-    setProducts(prev => prev.map(p =>
-      p.id === productId ? { ...p, isLiked: !p.isLiked, likeCount: p.isLiked ? p.likeCount - 1 : p.likeCount + 1 } : p
-    ));
+    setLikedProducts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(productId)) {
+        newSet.delete(productId);
+      } else {
+        newSet.add(productId);
+      }
+      return newSet;
+    });
   };
 
   const getStatusBadge = (status: string) => {
@@ -239,9 +139,27 @@ export const MarketplaceScreen: React.FC = () => {
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
           }
         >
+          {loading && items.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={styles.emptyDescription}>상품을 불러오는 중...</Text>
+            </View>
+          ) : error && items.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyIcon}>😢</Text>
+              <Text style={styles.emptyTitle}>불러오기 실패</Text>
+              <Text style={styles.emptyDescription}>{error}</Text>
+            </View>
+          ) : filteredProducts.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyIcon}>📦</Text>
+              <Text style={styles.emptyTitle}>등록된 상품이 없습니다</Text>
+              <Text style={styles.emptyDescription}>첫 번째 상품을 등록해보세요!</Text>
+            </View>
+          ) : null}
           <View style={styles.productGrid}>
             {filteredProducts.map((product) => {
               const statusBadge = getStatusBadge(product.status);
@@ -268,7 +186,7 @@ export const MarketplaceScreen: React.FC = () => {
                       style={styles.likeButton}
                       onPress={() => handleLike(product.id)}
                     >
-                      <Text style={styles.likeIcon}>{product.isLiked ? '❤️' : '🤍'}</Text>
+                      <Text style={styles.likeIcon}>{likedProducts.has(product.id) ? '❤️' : '🤍'}</Text>
                     </TouchableOpacity>
                   </View>
 
@@ -282,7 +200,7 @@ export const MarketplaceScreen: React.FC = () => {
                     </Text>
                     <Text style={styles.productLocation}>{product.location}</Text>
                     <View style={styles.productMeta}>
-                      <Text style={styles.metaText}>관심 {product.likeCount}</Text>
+                      <Text style={styles.metaText}>관심 {product.likeCount + (likedProducts.has(product.id) ? 1 : 0)}</Text>
                       <Text style={styles.metaDot}>•</Text>
                       <Text style={styles.metaText}>조회 {product.viewCount}</Text>
                     </View>
@@ -507,5 +425,24 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 80,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  emptyDescription: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 12,
   },
 });

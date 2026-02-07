@@ -16,6 +16,7 @@ export type ProductStatus = 'available' | 'reserved' | 'sold';
 
 export interface Product {
   id: string;
+  sellerId: string;
   title: string;
   description: string;
   price: number;
@@ -30,8 +31,8 @@ export interface Product {
   viewCount: number;
   likeCount: number;
   isLiked: boolean;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
 
 export interface CategoryInfo {

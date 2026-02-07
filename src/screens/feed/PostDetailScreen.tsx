@@ -23,9 +23,9 @@ const { width } = Dimensions.get('window');
 
 // Mock 게시물 데이터
 const mockPost: Post = {
-  id: 1,
+  id: '1',
   author: {
-    id: 2,
+    id: '2',
     name: '김철수',
     image: 'https://i.pravatar.cc/150?img=12',
     handicap: 18,
@@ -48,10 +48,10 @@ const mockPost: Post = {
 // Mock 댓글 데이터
 const mockComments: Comment[] = [
   {
-    id: 1,
-    postId: 1,
+    id: '1',
+    postId: '1',
     author: {
-      id: 3,
+      id: '3',
       name: '이영희',
       image: 'https://i.pravatar.cc/150?img=45',
     },
@@ -60,10 +60,10 @@ const mockComments: Comment[] = [
     isLiked: false,
     replies: [
       {
-        id: 101,
-        commentId: 1,
+        id: '101',
+        commentId: '1',
         author: {
-          id: 2,
+          id: '2',
           name: '김철수',
           image: 'https://i.pravatar.cc/150?img=12',
         },
@@ -74,10 +74,10 @@ const mockComments: Comment[] = [
     createdAt: '2시간 전',
   },
   {
-    id: 2,
-    postId: 1,
+    id: '2',
+    postId: '1',
     author: {
-      id: 4,
+      id: '4',
       name: '박민수',
       image: 'https://i.pravatar.cc/150?img=33',
     },
@@ -88,10 +88,10 @@ const mockComments: Comment[] = [
     createdAt: '1시간 전',
   },
   {
-    id: 3,
-    postId: 1,
+    id: '3',
+    postId: '1',
     author: {
-      id: 'mock-current-user', // 실제로는 useAuthStore의 user.uid 사용
+      id: 'mock-current-user',
       name: '나',
       image: 'https://i.pravatar.cc/150?img=1',
     },
@@ -114,7 +114,7 @@ export const PostDetailScreen: React.FC = () => {
   const [post, setPost] = useState<Post>(mockPost);
   const [comments, setComments] = useState<Comment[]>(mockComments);
   const [commentText, setCommentText] = useState('');
-  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
 
   const handleLike = () => {
     setPost({
@@ -124,7 +124,7 @@ export const PostDetailScreen: React.FC = () => {
     });
   };
 
-  const handleCommentLike = (commentId: number) => {
+  const handleCommentLike = (commentId: string) => {
     setComments(comments.map(comment => {
       if (comment.id === commentId) {
         return {
@@ -145,7 +145,7 @@ export const PostDetailScreen: React.FC = () => {
     if (replyingTo) {
       // 대댓글 추가
       const newReply = {
-        id: Date.now(),
+        id: String(Date.now()),
         commentId: replyingTo,
         author: {
           id: currentUserId,
@@ -170,7 +170,7 @@ export const PostDetailScreen: React.FC = () => {
     } else {
       // 댓글 추가
       const newComment: Comment = {
-        id: Date.now(),
+        id: String(Date.now()),
         postId: post.id,
         author: {
           id: currentUserId,
@@ -190,11 +190,11 @@ export const PostDetailScreen: React.FC = () => {
     }
   };
 
-  const handleEditComment = (commentId: number) => {
+  const handleEditComment = (commentId: string) => {
     Alert.alert('댓글 수정', '댓글 수정 기능은 개발 예정입니다.');
   };
 
-  const handleDeleteComment = (commentId: number) => {
+  const handleDeleteComment = (commentId: string) => {
     Alert.alert(
       '댓글 삭제',
       '댓글을 삭제하시겠습니까?',
@@ -212,7 +212,7 @@ export const PostDetailScreen: React.FC = () => {
     );
   };
 
-  const handleReply = (commentId: number) => {
+  const handleReply = (commentId: string) => {
     setReplyingTo(commentId);
   };
 
@@ -309,7 +309,7 @@ export const PostDetailScreen: React.FC = () => {
                     <Text style={styles.handicapText}>⛳ {post.author.handicap}</Text>
                   </View>
                 </View>
-                <Text style={styles.postTime}>{post.createdAt}</Text>
+                <Text style={styles.postTime}>{String(post.createdAt)}</Text>
               </View>
             </View>
 
@@ -379,7 +379,7 @@ export const PostDetailScreen: React.FC = () => {
                 <View style={styles.commentContent}>
                   <View style={styles.commentHeader}>
                     <Text style={styles.commentAuthorName}>{comment.author.name}</Text>
-                    <Text style={styles.commentTime}>{comment.createdAt}</Text>
+                    <Text style={styles.commentTime}>{String(comment.createdAt)}</Text>
                   </View>
 
                   <Text style={styles.commentText}>{comment.content}</Text>
@@ -411,7 +411,7 @@ export const PostDetailScreen: React.FC = () => {
                           <View style={styles.replyContent}>
                             <Text style={styles.replyAuthorName}>{reply.author.name}</Text>
                             <Text style={styles.replyText}>{reply.content}</Text>
-                            <Text style={styles.replyTime}>{reply.createdAt}</Text>
+                            <Text style={styles.replyTime}>{String(reply.createdAt)}</Text>
                           </View>
                         </View>
                       ))}
