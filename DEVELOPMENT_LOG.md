@@ -120,6 +120,21 @@
 - [x] ~~5개 화면 상대 경로(../../) → @/ 경로 별칭 변경~~ (2026.02.07 완료)
 - [x] ~~5개 화면 로딩/빈 상태 UI + Pull-to-refresh 추가~~ (2026.02.07 완료)
 
+### 2026.02.07 코드 품질 정리 (8차 배치)
+
+- [x] ~~console.log 91곳 제거 (스크린 6 + 서비스 73 + 유틸 12)~~ (2026.02.07 완료)
+  - 스크린 4개: NotificationListScreen, CreateBookingScreen, CreatePostScreen, GolfCourseSearchScreen
+  - 서비스 7개: bookingAPI(11), friendAPI(13), marketplaceAPI(15), membershipAPI(3), weatherAPI(2), kakaoMessage(16), kakaoMap(11)
+  - 유틸 2개: devicePermissions(10), imageUtils(2)
+- [x] ~~상대 경로 29곳 → @/ 별칭 변환 (16개 파일)~~ (2026.02.07 완료)
+  - auth/: ForgotPasswordScreen, RegisterScreen
+  - chat/: CreateChatScreen-Firebase, ChatScreen, ChatListScreen-Firebase
+  - booking/: CreateBookingScreen
+  - membership/: MembershipBenefitsScreen, MembershipIntroScreen, MembershipManageScreen, MembershipPlanScreen, PlanComparisonScreen, UpgradePlanScreen
+  - profile/: EditProfileScreen, MyBookingsScreen
+  - my/: MyHomeScreen, AccountManagementScreen
+- [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.07 완료)
+
 ### 2026.02.07 채팅/골프장/피드 Mock→Firestore 전환 (7차 배치)
 
 - [x] ~~ChatListScreen - Mock 3건 + 로컬 Chat 인터페이스 제거 → useChatStore.loadChatRooms 연결~~ (2026.02.07 완료)
@@ -333,7 +348,8 @@
 | 예약 Mock→API 전환 (5차) | 5 | 5 | 0 | 100% |
 | 펍 Mock→API 전환 (6차) | 3 | 3 | 0 | 100% |
 | 채팅/골프장/피드 Mock→API (7차) | 5 | 5 | 0 | 100% |
-| **전체** | **120** | **96** | **24** | **80%** |
+| 코드 품질 정리 (8차) | 3 | 3 | 0 | 100% |
+| **전체** | **123** | **99** | **24** | **80%** |
 
 ---
 
@@ -341,6 +357,14 @@
 
 ### 2026.02.07
 
+> **코드 품질 정리 8차 배치 (27개 파일, 150줄 삭제)**
+> - console.log 총 91곳 제거: 스크린 4개(6곳) + 서비스 7개(73곳) + 유틸 2개(12곳)
+> - 서비스 파일별: bookingAPI(11), friendAPI(13), marketplaceAPI(15), membershipAPI(3), weatherAPI(2), kakaoMessage(16), kakaoMap(11)
+> - 유틸 파일별: devicePermissions(10), imageUtils(2)
+> - 상대 경로 29곳 → @/ 별칭 변환 (16개 스크린 파일)
+> - 보존: logger.ts의 console.log (로거 구현체), kakaoMap.ts JSDoc 주석 내 예시 2건
+> - typecheck 0 에러 유지
+>
 > **채팅/골프장/피드 Mock→Firestore 전환 7차 배치 (5개 화면 + 서비스 2개)**
 > - ChatListScreen: Mock 3건 + 로컬 Chat 인터페이스 제거 → useChatStore.loadChatRooms 연결, formatChatTime 헬퍼 + getOtherParticipant 헬퍼 구현, 로딩/새로고침/빈 상태 UI 추가
 > - ChatRoomScreen: Mock 4건 + 로컬 Message 인터페이스 제거 → useChatStore.listenToMessages 실시간 연결, sendMessage/sendImage/markAsRead 연결, ImagePicker 카메라/앨범, 키보드 애니메이션 유지
