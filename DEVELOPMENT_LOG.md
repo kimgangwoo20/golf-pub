@@ -37,7 +37,7 @@
 
 - [x] ~~프로젝트 초기 설정 (Expo + React Native + TypeScript)~~
 - [x] ~~Firebase 프로젝트 연동 (Firestore, Auth, Storage, Realtime DB)~~
-- [x] ~~Firebase 보안 규칙 설정 (역할 기반 접근 제어: GENERAL, COACH, ADMIN)~~
+- [x] ~~Firebase 보안 규칙 설정 (역할 기반 접근 제어: GENERAL, COACH, ADMIN)~~ → 9차 배치에서 코드 맞춤 전면 개편 + 배포 완료
 - [x] ~~7개 탭 네비게이션 구조 완성 (홈, 예약, 피드, 채팅, 중고마켓, 골프장, 마이홈)~~
 - [x] ~~카카오 소셜 로그인 연동 (Custom Token 방식)~~
 - [x] ~~이메일/비밀번호 로그인 & 회원가입~~
@@ -133,6 +133,36 @@
   - membership/: MembershipBenefitsScreen, MembershipIntroScreen, MembershipManageScreen, MembershipPlanScreen, PlanComparisonScreen, UpgradePlanScreen
   - profile/: EditProfileScreen, MyBookingsScreen
   - my/: MyHomeScreen, AccountManagementScreen
+- [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.07 완료)
+
+### 2026.02.07 Firestore 보안 규칙 + Seed 데이터 + 경로 정리 (9차 배치)
+
+- [x] ~~firestore.rules 코드-규칙 불일치 7곳 수정~~ (2026.02.07 완료)
+  - marketplace → products (컬렉션명 변경)
+  - booking_participants → bookingParticipants (camelCase)
+  - point_history → pointHistory (camelCase)
+  - notifications → users/{uid}/notifications (서브컬렉션)
+  - comments → posts/{postId}/comments (서브컬렉션)
+  - posts: authorId → author.id (필드 구조)
+  - friends: fromUserId/toUserId 제한 → isSignedIn() 완화 (양방향 문서 생성)
+- [x] ~~누락 컬렉션 규칙 12개 추가~~ (2026.02.07 완료)
+  - chatRooms + messages 서브컬렉션
+  - friendRequests, product_likes, pubs, pub_reviews, golf_course_reviews
+  - bookings/{id}/applications 서브컬렉션
+  - users/{uid}/pointHistory, points, coupons, reviews 서브컬렉션
+- [x] ~~Firebase 규칙 배포 (firebase deploy --only firestore:rules)~~ (2026.02.07 완료)
+- [x] ~~Seed 데이터 유틸리티 생성 (src/utils/seedData.ts)~~ (2026.02.07 완료)
+  - bookings 3건 (OPEN 2건 + COMPLETED 1건)
+  - posts 3건 (라운딩 후기, 장비 추천, 스코어)
+  - products 3건 (드라이버, 골프공, 캐디백)
+  - 중복 방지 (seedId 체크), 삭제 함수 포함
+- [x] ~~상대 경로 → @/ 변환 (17파일, 23곳) - 전체 코드베이스 상대 경로 0건 달성~~ (2026.02.07 완료)
+  - components/booking: BookingFilter, BookingFilterComponent, BookingListItem, ParticipantAvatar
+  - components/membership: ComparisonTable, MembershipBadge, PlanCard
+  - constants: membershipPlans
+  - services/api: bookingAPI, friendAPI, marketplaceAPI, profileAPI
+  - store: useAuthStore, useBookingStore, useFriendStore, useProfileStore
+  - utils: permissions
 - [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.07 완료)
 
 ### 2026.02.07 채팅/골프장/피드 Mock→Firestore 전환 (7차 배치)
@@ -349,7 +379,8 @@
 | 펍 Mock→API 전환 (6차) | 3 | 3 | 0 | 100% |
 | 채팅/골프장/피드 Mock→API (7차) | 5 | 5 | 0 | 100% |
 | 코드 품질 정리 (8차) | 3 | 3 | 0 | 100% |
-| **전체** | **123** | **99** | **24** | **80%** |
+| Firestore 규칙 + Seed + 경로 (9차) | 5 | 5 | 0 | 100% |
+| **전체** | **128** | **104** | **24** | **81%** |
 
 ---
 
@@ -357,6 +388,15 @@
 
 ### 2026.02.07
 
+> **Firestore 보안 규칙 수정 + 배포 + Seed 데이터 + 상대 경로 정리 9차 배치 (20개 파일)**
+> - firestore.rules 전면 개편: 코드와 불일치 7곳 수정 + 누락 컬렉션 규칙 12개 추가 (19개 규칙 → 306줄 → 399줄)
+> - 불일치 수정: marketplace→products, booking_participants→bookingParticipants, point_history→pointHistory, notifications/comments 서브컬렉션화, posts author.id 필드 구조, friends 양방향 문서
+> - 누락 규칙 추가: chatRooms+messages, friendRequests, product_likes, pubs, pub_reviews, golf_course_reviews, bookings/applications, users/pointHistory, users/points, users/coupons, users/reviews
+> - Firebase에 규칙 배포 완료 (firebase deploy --only firestore:rules → permission-denied 에러 해결)
+> - src/utils/seedData.ts 신규 생성: bookings 3건 + posts 3건 + products 3건 Seed 함수, 중복 방지(seedId), 삭제 함수 포함
+> - 상대 경로 23곳 → @/ 변환 (17파일): components 7 + services 4 + stores 4 + utils 1 + constants 1 → 전체 코드베이스 상대 경로 0건 달성
+> - typecheck 0 에러 유지
+>
 > **코드 품질 정리 8차 배치 (27개 파일, 150줄 삭제)**
 > - console.log 총 91곳 제거: 스크린 4개(6곳) + 서비스 7개(73곳) + 유틸 2개(12곳)
 > - 서비스 파일별: bookingAPI(11), friendAPI(13), marketplaceAPI(15), membershipAPI(3), weatherAPI(2), kakaoMessage(16), kakaoMap(11)
