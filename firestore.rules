@@ -39,9 +39,9 @@ service cloud.firestore {
       // 생성: 본인 계정만
       allow create: if isOwner(userId);
 
-      // 수정: 본인만 (단, role과 point는 서버에서만)
+      // 수정: 본인만 (단, role, points, pointBalance는 서버에서만)
       allow update: if isOwner(userId) &&
-                       !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'pointBalance']);
+                       !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'points', 'pointBalance']);
 
       // 삭제: 본인만
       allow delete: if isOwner(userId);
@@ -99,8 +99,11 @@ service cloud.firestore {
       allow create: if isSignedIn() &&
                        request.resource.data.hostId == request.auth.uid;
 
-      // 수정: 주최자만 (또는 관리자)
-      allow update: if isOwner(resource.data.hostId) || isAdmin();
+      // 수정: 주최자 또는 참가자(참가/탈퇴 시 participants 필드만)
+      allow update: if isOwner(resource.data.hostId) || isAdmin() ||
+                       (isSignedIn() &&
+                        request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['participants', 'updatedAt', 'status']));
 
       // 삭제: 주최자만 (또는 관리자)
       allow delete: if isOwner(resource.data.hostId) || isAdmin();
