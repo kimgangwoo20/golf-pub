@@ -156,6 +156,11 @@
 - [x] ~~tossPayments confirmPayment/cancelPayment → paymentConfirm/paymentCancel Cloud Function~~ (2026.02.08 완료)
 - [x] ~~firebaseBooking approve/rejectBookingRequest → bookingApprove/bookingReject Cloud Function~~ (2026.02.08 완료)
 - [x] ~~functions npm run build 0 에러, 클라이언트 typecheck 0 신규 에러~~ (2026.02.08 완료)
+- [x] ~~Secret Manager API 활성화 + KAKAO_REST_API_KEY 시크릿 등록~~ (2026.02.08 완료)
+- [x] ~~Cloud Functions 9개 Firebase 배포 성공 (asia-northeast3, 2nd Gen)~~ (2026.02.08 완료)
+  - 배포 완료: kakaoToken, attendanceCheckIn, pointsEarn, pointsDeduct, bookingApprove, bookingReject, couponIssue, couponRedeem, sendNotification
+  - 미배포: paymentConfirm, paymentCancel (TOSS_SECRET_KEY 실제 키 설정 후 활성화 예정)
+  - 기존 1st Gen 함수 5개 삭제 (kakaoLogin, kakaoUnlink, onBookingJoinRequest, onUserCreate, onUserDelete)
 
 ### 2026.02.08 프로젝트 감사 8개 액션 아이템 전체 구현 + notifee→expo-notifications 전환 (11차 배치)
 
@@ -489,8 +494,8 @@
 | Firestore 규칙 + Seed + 경로 (9차) | 5 | 5 | 0 | 100% |
 | Firebase 배포 + 감사 (10차) | 10 | 10 | 0 | 100% |
 | 감사 액션 아이템 + 알림 (11차) | 12 | 12 | 0 | 100% |
-| Cloud Functions + 연동 (12차) | 14 | 14 | 0 | 100% |
-| **전체** | **167** | **150** | **17** | **90%** |
+| Cloud Functions + 연동 + 배포 (12차) | 16 | 16 | 0 | 100% |
+| **전체** | **169** | **152** | **17** | **90%** |
 
 ---
 
@@ -520,6 +525,10 @@
 > - firebaseBooking: 직접 Firestore update → bookingApprove/Reject CF (호스트 검증+Transaction+알림)
 > - BookingRequestsScreen/ApplicantProfileScreen: rejectBookingRequest 호출에 bookingId, userId 파라미터 추가
 > - functions build 0 에러, 클라이언트 typecheck 0 신규 에러
+> - Secret Manager API 활성화 + KAKAO_REST_API_KEY 시크릿 등록
+> - Cloud Functions 9개 Firebase 배포 성공 (asia-northeast3, 2nd Gen): kakaoToken, attendanceCheckIn, pointsEarn/Deduct, bookingApprove/Reject, couponIssue/Redeem, sendNotification
+> - 기존 1st Gen 함수 5개 삭제 (kakaoLogin, kakaoUnlink, onBookingJoinRequest, onUserCreate, onUserDelete)
+> - paymentConfirm/Cancel은 TOSS_SECRET_KEY 실제 키 설정 후 배포 예정
 > - 전체 진행률: 88% → **90%**
 >
 > **프로젝트 감사 8개 액션 아이템 전체 구현 + notifee→expo-notifications 전환 11차 배치 (174개 파일, +12,066/-5,162줄)**
