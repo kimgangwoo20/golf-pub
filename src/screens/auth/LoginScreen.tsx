@@ -48,7 +48,7 @@ export const LoginScreen: React.FC = () => {
         return;
       }
 
-      await login(result.profile.id, result.profile);
+      await login(result.profile.id, { ...result.profile, accessToken: result.accessToken });
     } catch (error: any) {
       Alert.alert('로그인 오류', error.message || '로그인 중 오류가 발생했습니다.');
     } finally {
