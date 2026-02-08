@@ -66,7 +66,8 @@ export const BookingListScreen: React.FC = () => {
       filtered = filtered.filter((b) => b.location?.includes(activeFilter.location!));
     if (activeFilter.priceRange) {
       const { min, max } = activeFilter.priceRange;
-      filtered = filtered.filter((b) => b.price.discount >= min && b.price.discount <= max);
+      const getPrice = (b: typeof bookings[0]) => b.price.original || b.price.discount || 0;
+      filtered = filtered.filter((b) => getPrice(b) >= min && getPrice(b) <= max);
     }
     if (activeFilter.level && activeFilter.level.length > 0) {
       filtered = filtered.filter(
@@ -79,18 +80,25 @@ export const BookingListScreen: React.FC = () => {
     if (activeFilter.hasPub !== undefined) {
       filtered = filtered.filter((b) => b.hasPub === activeFilter.hasPub);
     }
+    // 가격 헬퍼: original 우선, 없으면 discount
+    const getPrice = (b: typeof bookings[0]) => b.price.original || b.price.discount || 0;
+
     switch (sortType) {
       case 'latest':
-        filtered.sort((a, b) => b.id.localeCompare(a.id));
+        filtered.sort((a, b) => {
+          const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
+          const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
+          return bTime - aTime;
+        });
         break;
       case 'popular':
         filtered.sort((a, b) => b.participants.current - a.participants.current);
         break;
       case 'priceLow':
-        filtered.sort((a, b) => a.price.discount - b.price.discount);
+        filtered.sort((a, b) => getPrice(a) - getPrice(b));
         break;
       case 'priceHigh':
-        filtered.sort((a, b) => b.price.discount - a.price.discount);
+        filtered.sort((a, b) => getPrice(b) - getPrice(a));
         break;
       case 'dateClose':
         filtered.sort((a, b) => a.date.localeCompare(b.date));

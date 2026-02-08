@@ -31,7 +31,13 @@ export const BookingListItem: React.FC<Props> = ({ booking, onPress }) => {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.imageContainer}>
-        <Image source={{ uri: booking.image }} style={styles.image} resizeMode="cover" />
+        {booking.image ? (
+          <Image source={{ uri: booking.image }} style={styles.image} resizeMode="cover" />
+        ) : (
+          <View style={[styles.image, { justifyContent: 'center', alignItems: 'center' }]}>
+            <Text style={{ fontSize: 48, opacity: 0.3 }}>⛳</Text>
+          </View>
+        )}
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(booking.status) }]}>
           <Text style={styles.statusText}>{getStatusText(booking.status)}</Text>
         </View>
