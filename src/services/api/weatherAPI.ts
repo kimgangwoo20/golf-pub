@@ -105,9 +105,23 @@ function calculateGolfScore(
   } else if (score >= 40) {
     recommendation = '☁️ 골프 가능하지만 날씨를 확인하세요.';
   } else if (score >= 20) {
-    recommendation = '🌧️ 실내 연습장을 추천드려요.';
+    if (temp < 5) {
+      recommendation = '🥶 날씨가 많이 추워요. 따뜻하게 준비하세요.';
+    } else if (temp > 33) {
+      recommendation = '🥵 날씨가 많이 더워요. 수분 보충에 유의하세요.';
+    } else if (isPrecipitation(weatherCode)) {
+      recommendation = '🌧️ 비 소식이 있어요. 날씨를 확인하세요.';
+    } else {
+      recommendation = '💨 바람이 강해요. 날씨를 확인하세요.';
+    }
   } else {
-    recommendation = '☔ 오늘은 실내에서 스윙 연습 어떠세요?';
+    if (temp < 0) {
+      recommendation = '🥶 날씨가 매우 추워요. 실내 연습은 어떠세요?';
+    } else if (temp > 35) {
+      recommendation = '🥵 날씨가 매우 더워요. 실내 연습은 어떠세요?';
+    } else {
+      recommendation = '☔ 오늘은 실내에서 스윙 연습 어떠세요?';
+    }
   }
 
   return { score, recommendation };
