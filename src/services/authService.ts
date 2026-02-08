@@ -104,17 +104,27 @@ class AuthService {
   ): Promise<void> {
     try {
       const now = new Date();
-      const userProfile: UserProfile = {
+      const userProfile = {
         uid,
         email: data.email,
         displayName: data.displayName,
         photoURL: data.photoURL,
         phoneNumber: data.phoneNumber,
+        points: 0,
+        pointBalance: 0,
+        role: 'GENERAL',
+        stats: {
+          hostedBookings: 0,
+          joinedBookings: 0,
+          totalAttendance: 0,
+          consecutiveAttendance: 0,
+          longestStreak: 0,
+        },
         createdAt: now,
         updatedAt: now,
       };
 
-      await firestore().collection('users').doc(uid).set(userProfile);
+      await firestore().collection('users').doc(uid).set(userProfile, { merge: true });
     } catch (error) {
       throw error;
     }

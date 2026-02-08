@@ -27,8 +27,13 @@ export async function adjustPoints(
   const result = await db.runTransaction(async (transaction) => {
     const userDoc = await transaction.get(userRef);
 
+    // 사용자 문서가 없으면 기본값으로 생성
     if (!userDoc.exists) {
-      throw new HttpsError("not-found", "사용자를 찾을 수 없습니다.");
+      transaction.set(userRef, {
+        points: 0,
+        stats: {},
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
     }
 
     const currentBalance: number = userDoc.data()?.points || 0;
