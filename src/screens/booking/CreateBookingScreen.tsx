@@ -10,15 +10,18 @@ import {
   Alert,
   Switch,
   Platform,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
 import { colors } from '@/styles/theme';
 import { SkillLevel } from '@/types/booking-types';
 import { useBookingStore } from '@/store/useBookingStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { validators } from '@/utils/validators';
+import { firebaseStorage } from '@/services/firebase/firebaseStorage';
 
 export const CreateBookingScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -48,6 +51,33 @@ export const CreateBookingScreen: React.FC = () => {
     return d;
   });
   const [submitting, setSubmitting] = useState(false);
+  const [images, setImages] = useState<string[]>([]);
+
+  const MAX_IMAGES = 4;
+
+  const pickImages = async () => {
+    const remaining = MAX_IMAGES - images.length;
+    if (remaining <= 0) {
+      Alert.alert('이미지 제한', `최대 ${MAX_IMAGES}장까지 업로드할 수 있습니다.`);
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      selectionLimit: remaining,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      const newUris = result.assets.map((a) => a.uri);
+      setImages((prev) => [...prev, ...newUris].slice(0, MAX_IMAGES));
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const levels: { key: SkillLevel; label: string; desc: string }[] = [
     { key: 'any', label: '누구나', desc: '실력 무관' },
@@ -191,6 +221,19 @@ export const CreateBookingScreen: React.FC = () => {
             if (hasPub && pubName.trim()) {
               bookingData.pubName = pubName.trim();
               bookingData.pubTime = formatTime(selectedPubTime);
+            }
+
+            // 이미지 업로드
+            if (images.length > 0) {
+              const tempId = `booking_${Date.now()}`;
+              const uploadResults = await firebaseStorage.uploadMultipleImages(
+                images,
+                `bookings/${tempId}`,
+              );
+              const imageUrls = uploadResults.map((r) => r.url);
+              bookingData.images = imageUrls;
+              // 첫 번째 이미지를 대표 이미지로
+              bookingData.image = imageUrls[0];
             }
 
             await useBookingStore.getState().createBooking(bookingData as any);
@@ -418,6 +461,31 @@ export const CreateBookingScreen: React.FC = () => {
           )}
         </View>
 
+        {/* 이미지 */}
+        <View style={styles.section}>
+          <Text style={styles.label}>사진 ({images.length}/{MAX_IMAGES})</Text>
+          <View style={styles.imageRow}>
+            {images.map((uri, index) => (
+              <View key={index} style={styles.imageWrapper}>
+                <Image source={{ uri }} style={styles.imagePreview} />
+                <TouchableOpacity
+                  style={styles.imageRemoveButton}
+                  onPress={() => removeImage(index)}
+                >
+                  <Text style={styles.imageRemoveText}>X</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+            {images.length < MAX_IMAGES && (
+              <TouchableOpacity style={styles.imageAddButton} onPress={pickImages}>
+                <Text style={styles.imageAddIcon}>+</Text>
+                <Text style={styles.imageAddText}>사진 추가</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          <Text style={styles.hint}>골프장, 코스 사진 등을 추가하면 참가율이 높아져요</Text>
+        </View>
+
         {/* 상세 설명 */}
         <View style={styles.section}>
           <Text style={styles.label}>상세 설명</Text>
@@ -625,6 +693,58 @@ const styles = StyleSheet.create({
   },
   pubInputs: {
     marginTop: 16,
+  },
+  imageRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  imageWrapper: {
+    position: 'relative',
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+  },
+  imageRemoveButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageRemoveText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  imageAddButton: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.bgSecondary,
+  },
+  imageAddIcon: {
+    fontSize: 24,
+    color: colors.textTertiary,
+    marginBottom: 2,
+  },
+  imageAddText: {
+    fontSize: 11,
+    color: colors.textTertiary,
   },
   textArea: {
     height: 150,

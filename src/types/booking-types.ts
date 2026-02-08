@@ -83,6 +83,7 @@ export interface Booking {
   status: BookingStatus;
   description?: string;
   image?: string;
+  images?: string[];
   level?: SkillLevel;
   location?: string;
   hasPub?: boolean;

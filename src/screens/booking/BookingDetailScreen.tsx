@@ -1,5 +1,5 @@
 // BookingDetailScreen.tsx - 부킹 상세 화면
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,9 @@ import {
   Alert,
   RefreshControl,
   ActivityIndicator,
+  FlatList,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -203,6 +206,16 @@ export const BookingDetailScreen: React.FC = () => {
     );
   };
 
+  // 이미지 갤러리 상태
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const bookingImages: string[] = booking?.images || (booking?.image ? [booking.image] : []);
+
+  const onImageScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const index = Math.round(offsetX / width);
+    setActiveImageIndex(index);
+  }, []);
+
   // 호스트 여부 확인
   const isHost = booking?.hostId === user?.uid;
 
@@ -253,16 +266,50 @@ export const BookingDetailScreen: React.FC = () => {
           />
         }
       >
-        {/* 헤더 이미지 */}
+        {/* 헤더 이미지 갤러리 */}
         <View style={styles.imageContainer}>
-          {booking.image ? (
-            <Image source={{ uri: booking.image }} style={styles.image} resizeMode="cover" />
+          {bookingImages.length > 0 ? (
+            <>
+              <FlatList
+                data={bookingImages}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={onImageScroll}
+                keyExtractor={(_, index) => `img-${index}`}
+                renderItem={({ item }) => (
+                  <Image source={{ uri: item }} style={styles.image} resizeMode="cover" />
+                )}
+              />
+              {bookingImages.length > 1 && (
+                <View style={styles.imageDots}>
+                  {bookingImages.map((_, index) => (
+                    <View
+                      key={index}
+                      style={[
+                        styles.imageDot,
+                        activeImageIndex === index && styles.imageDotActive,
+                      ]}
+                    />
+                  ))}
+                </View>
+              )}
+            </>
           ) : (
-            <View style={[styles.image, { backgroundColor: colors.bgTertiary }]} />
+            <View style={[styles.image, styles.imagePlaceholder]}>
+              <Text style={styles.imagePlaceholderText}>⛳</Text>
+            </View>
           )}
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
+          {bookingImages.length > 1 && (
+            <View style={styles.imageCounter}>
+              <Text style={styles.imageCounterText}>
+                {activeImageIndex + 1}/{bookingImages.length}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* 메인 정보 */}
@@ -503,8 +550,50 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bgTertiary,
   },
   image: {
-    width: '100%',
-    height: '100%',
+    width: width,
+    height: 300,
+  },
+  imagePlaceholder: {
+    backgroundColor: colors.bgTertiary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imagePlaceholderText: {
+    fontSize: 64,
+    opacity: 0.3,
+  },
+  imageDots: {
+    position: 'absolute',
+    bottom: 16,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  imageDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+  },
+  imageDotActive: {
+    backgroundColor: 'white',
+    width: 20,
+  },
+  imageCounter: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  imageCounterText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
   },
   backButton: {
     position: 'absolute',
