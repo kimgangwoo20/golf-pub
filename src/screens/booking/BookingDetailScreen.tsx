@@ -19,6 +19,8 @@ import { colors } from '@/styles/theme';
 import { Booking } from '@/types/booking-types';
 import { useBookingStore } from '@/store/useBookingStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { tossPayments } from '@/services/payment/tossPayments';
+import { withdrawFromBooking, cancelBooking } from '@/services/firebase/firebaseBooking';
 
 const { width } = Dimensions.get('window');
 
@@ -34,6 +36,8 @@ export const BookingDetailScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
+  const [isParticipant, setIsParticipant] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   const loadBooking = useCallback(async () => {
     try {
@@ -41,6 +45,11 @@ export const BookingDetailScreen: React.FC = () => {
       const data = await getBooking(bookingId);
       if (data) {
         setBooking(data);
+        // 현재 사용자가 참가자인지 확인
+        if (user) {
+          const isMember = data.participants?.members?.some((member) => member.uid === user.uid);
+          setIsParticipant(!!isMember);
+        }
       } else {
         setError('부킹을 찾을 수 없습니다');
       }
@@ -49,7 +58,7 @@ export const BookingDetailScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [bookingId, getBooking]);
+  }, [bookingId, getBooking, user]);
 
   useEffect(() => {
     loadBooking();
@@ -118,6 +127,85 @@ export const BookingDetailScreen: React.FC = () => {
     );
   };
 
+  // 참가 취소 (참가자용)
+  const handleWithdraw = () => {
+    if (!booking || !user) return;
+
+    // 환불 금액 계산
+    const { refundAmount, policy } = tossPayments.calculateRefundAmount(
+      booking.price.discount,
+      booking.date,
+    );
+
+    Alert.alert(
+      '참가 취소',
+      `정말 참가를 취소하시겠습니까?\n\n환불 규정: ${policy}\n환불 예정 금액: ${refundAmount.toLocaleString()}원`,
+      [
+        { text: '아니오', style: 'cancel' as const },
+        {
+          text: '참가 취소',
+          style: 'destructive' as const,
+          onPress: async () => {
+            try {
+              setCancelling(true);
+              const result = await withdrawFromBooking(booking.id, user.uid);
+              if (result.success) {
+                Alert.alert(
+                  '완료',
+                  `참가가 취소되었습니다.\n환불 금액: ${refundAmount.toLocaleString()}원`,
+                  [{ text: '확인', onPress: () => navigation.goBack() }],
+                );
+              } else {
+                Alert.alert('오류', result.message);
+              }
+            } catch (err: any) {
+              Alert.alert('오류', err.message || '참가 취소에 실패했습니다.');
+            } finally {
+              setCancelling(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  // 모임 취소 (호스트용)
+  const handleCancelBooking = () => {
+    if (!booking || !user) return;
+
+    Alert.alert(
+      '모임 취소',
+      `정말 "${booking.title}" 모임을 취소하시겠습니까?\n\n모든 참가자에게 취소 알림이 발송됩니다.`,
+      [
+        { text: '아니오', style: 'cancel' as const },
+        {
+          text: '모임 취소',
+          style: 'destructive' as const,
+          onPress: async () => {
+            try {
+              setCancelling(true);
+              const result = await cancelBooking(booking.id, user.uid);
+              if (result.success) {
+                Alert.alert('완료', '모임이 취소되었습니다.', [
+                  { text: '확인', onPress: () => navigation.goBack() },
+                ]);
+              } else {
+                Alert.alert('오류', result.message);
+              }
+            } catch (err: any) {
+              Alert.alert('오류', err.message || '모임 취소에 실패했습니다.');
+            } finally {
+              setCancelling(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  // 호스트 여부 확인
+  const isHost = booking?.hostId === user?.uid;
+
   // 새로고침
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = useCallback(async () => {
@@ -182,10 +270,18 @@ export const BookingDetailScreen: React.FC = () => {
           <View style={styles.titleRow}>
             <Text style={styles.title}>{booking.title}</Text>
             <View
-              style={[styles.statusBadge, booking.status === 'CLOSED' && styles.statusBadgeFull]}
+              style={[
+                styles.statusBadge,
+                (booking.status === 'CLOSED' || booking.status === 'CANCELLED') &&
+                  styles.statusBadgeFull,
+              ]}
             >
               <Text style={styles.statusBadgeText}>
-                {booking.status === 'OPEN' ? '모집중' : '마감'}
+                {booking.status === 'OPEN'
+                  ? '모집중'
+                  : booking.status === 'CANCELLED'
+                    ? '취소됨'
+                    : '마감'}
               </Text>
             </View>
           </View>
@@ -310,22 +406,59 @@ export const BookingDetailScreen: React.FC = () => {
           <TouchableOpacity style={styles.chatButton} onPress={handleChat}>
             <Text style={styles.chatButtonText}>💬</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.joinButton,
-              (booking.status === 'CLOSED' || joining) && styles.joinButtonDisabled,
-            ]}
-            onPress={handleJoinBooking}
-            disabled={booking.status === 'CLOSED' || joining}
-          >
-            {joining ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <Text style={styles.joinButtonText}>
-                {booking.status === 'CLOSED' ? '마감되었습니다' : '참가 신청'}
-              </Text>
-            )}
-          </TouchableOpacity>
+
+          {/* 호스트: 모임 취소 버튼 */}
+          {isHost && (
+            <TouchableOpacity
+              style={[styles.cancelButton, cancelling && styles.joinButtonDisabled]}
+              onPress={handleCancelBooking}
+              disabled={cancelling}
+            >
+              {cancelling ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text style={styles.cancelButtonText}>모임 취소</Text>
+              )}
+            </TouchableOpacity>
+          )}
+
+          {/* 참가자: 참가 취소 버튼 */}
+          {!isHost && isParticipant && (
+            <TouchableOpacity
+              style={[styles.withdrawButton, cancelling && styles.joinButtonDisabled]}
+              onPress={handleWithdraw}
+              disabled={cancelling}
+            >
+              {cancelling ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text style={styles.withdrawButtonText}>참가 취소</Text>
+              )}
+            </TouchableOpacity>
+          )}
+
+          {/* 비참가자: 참가 신청 버튼 */}
+          {!isHost && !isParticipant && (
+            <TouchableOpacity
+              style={[
+                styles.joinButton,
+                (booking.status === 'CLOSED' || booking.status === 'CANCELLED' || joining) &&
+                  styles.joinButtonDisabled,
+              ]}
+              onPress={handleJoinBooking}
+              disabled={booking.status === 'CLOSED' || booking.status === 'CANCELLED' || joining}
+            >
+              {joining ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text style={styles.joinButtonText}>
+                  {booking.status === 'CLOSED' || booking.status === 'CANCELLED'
+                    ? '마감되었습니다'
+                    : '참가 신청'}
+                </Text>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -621,6 +754,34 @@ const styles = StyleSheet.create({
   },
   joinButtonText: {
     color: 'white',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  cancelButton: {
+    flex: 1,
+    height: 48,
+    backgroundColor: colors.danger,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  withdrawButton: {
+    flex: 1,
+    height: 48,
+    backgroundColor: 'white',
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: colors.danger,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  withdrawButtonText: {
+    color: colors.danger,
     fontSize: 16,
     fontWeight: '700',
   },

@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
 import authService, { UserProfile } from '@/services/authService';
 import { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import { callFunction } from '@/services/firebase/firebaseFunctions';
 
 interface AuthState {
   user: FirebaseAuthTypes.User | null;
@@ -34,33 +34,34 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isAuthenticated: false,
 
   /**
-   * 카카오 로그인 (간편 로그인)
-   * Firebase Anonymous Auth로 실제 인증 세션 생성 후 카카오 프로필 저장
+   * 카카오 로그인 (Cloud Functions 경유)
+   * kakaoToken Cloud Function으로 Custom Token 발급 후 Firebase Auth 로그인
    */
-  login: async (kakaoId: string, profile: any) => {
+  login: async (_kakaoId: string, profile: any) => {
     try {
       set({ loading: true, error: null });
 
-      // Firebase Anonymous Auth로 실제 인증 세션 생성
-      const credential = await auth().signInAnonymously();
+      // Cloud Function으로 카카오 토큰 검증 + Custom Token 발급
+      const result = await callFunction<{
+        customToken: string;
+        profile: any;
+      }>('kakaoToken', {
+        kakaoAccessToken: profile.kakaoAccessToken || profile.accessToken,
+      });
+
+      // Custom Token으로 Firebase Auth 로그인
+      const credential = await auth().signInWithCustomToken(result.customToken);
       const firebaseUser = credential.user;
 
-      // 카카오 프로필 정보를 UserProfile 형태로 변환
       const userProfile: UserProfile = {
         uid: firebaseUser.uid,
-        email: profile.email || '',
-        nickname: profile.nickname || '골프러',
-        profileImage: profile.profileImageUrl || profile.thumbnailImageUrl || '',
+        email: result.profile.email || profile.email || '',
+        nickname: result.profile.nickname || profile.nickname || '골프러',
+        profileImage: result.profile.profileImage || profile.profileImageUrl || '',
         createdAt: new Date(),
         lastLoginAt: new Date(),
         provider: 'kakao',
       };
-
-      // Firestore에 프로필 저장 (merge로 기존 데이터 보존)
-      await firestore()
-        .collection('users')
-        .doc(firebaseUser.uid)
-        .set({ ...userProfile, kakaoId }, { merge: true });
 
       set({
         user: firebaseUser,

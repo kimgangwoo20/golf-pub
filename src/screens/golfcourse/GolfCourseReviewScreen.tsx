@@ -49,13 +49,14 @@ export const GolfCourseReviewScreen: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortType>('recent');
   const [showWriteModal, setShowWriteModal] = useState(writeReviewParam || false);
 
-  // 리뷰 작성 상태
+  // 리뷰 작성/수정 상태
   const [rating, setRating] = useState(5);
   const [courseRating, setCourseRating] = useState(5);
   const [facilityRating, setFacilityRating] = useState(5);
   const [serviceRating, setServiceRating] = useState(5);
   const [reviewText, setReviewText] = useState('');
   const [reviewImages, setReviewImages] = useState<string[]>([]);
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
 
   // Firestore에서 리뷰 로드
   const loadReviews = useCallback(async () => {
@@ -137,14 +138,28 @@ export const GolfCourseReviewScreen: React.FC = () => {
     }
 
     try {
-      await golfCourseAPI.createGolfCourseReview(courseParam.id, {
-        rating,
-        courseRating,
-        facilityRating,
-        serviceRating,
-        content: reviewText,
-        images: reviewImages,
-      });
+      if (editingReviewId) {
+        // 리뷰 수정
+        const result = await golfCourseAPI.updateGolfCourseReview(
+          courseParam.id,
+          editingReviewId,
+          { rating, comment: reviewText },
+        );
+        if (!result.success) {
+          Alert.alert('오류', result.message);
+          return;
+        }
+      } else {
+        // 리뷰 신규 작성
+        await golfCourseAPI.createGolfCourseReview(courseParam.id, {
+          rating,
+          courseRating,
+          facilityRating,
+          serviceRating,
+          content: reviewText,
+          images: reviewImages,
+        });
+      }
 
       setShowWriteModal(false);
       setReviewText('');
@@ -153,12 +168,13 @@ export const GolfCourseReviewScreen: React.FC = () => {
       setCourseRating(5);
       setFacilityRating(5);
       setServiceRating(5);
+      setEditingReviewId(null);
 
       // 리뷰 목록 다시 로드
       await loadReviews();
-      Alert.alert('완료', '리뷰가 등록되었습니다.');
+      Alert.alert('완료', editingReviewId ? '리뷰가 수정되었습니다.' : '리뷰가 등록되었습니다.');
     } catch (error: any) {
-      Alert.alert('오류', error.message || '리뷰 등록에 실패했습니다.');
+      Alert.alert('오류', error.message || '리뷰 처리에 실패했습니다.');
     }
   };
 
@@ -199,6 +215,7 @@ export const GolfCourseReviewScreen: React.FC = () => {
               text: '수정',
               onPress: () => {
                 // 리뷰 수정 모달 열기 (기존 값 세팅)
+                setEditingReviewId(String(review.id));
                 setRating(review.rating);
                 setCourseRating(review.courseRating);
                 setFacilityRating(review.facilityRating);
@@ -212,8 +229,26 @@ export const GolfCourseReviewScreen: React.FC = () => {
               text: '삭제',
               style: 'destructive' as const,
               onPress: () => {
-                setReviews(reviews.filter((r) => r.id !== review.id));
-                Alert.alert('완료', '리뷰가 삭제되었습니다.');
+                // 삭제 확인 후 Firestore에서 삭제
+                Alert.alert('리뷰 삭제', '리뷰를 삭제하시겠습니까?', [
+                  { text: '취소', style: 'cancel' as const },
+                  {
+                    text: '삭제',
+                    style: 'destructive' as const,
+                    onPress: async () => {
+                      const result = await golfCourseAPI.deleteGolfCourseReview(
+                        courseParam.id,
+                        String(review.id),
+                      );
+                      if (result.success) {
+                        await loadReviews();
+                        Alert.alert('완료', '리뷰가 삭제되었습니다.');
+                      } else {
+                        Alert.alert('오류', result.message);
+                      }
+                    },
+                  },
+                ]);
               },
             },
           ]
@@ -253,7 +288,16 @@ export const GolfCourseReviewScreen: React.FC = () => {
             <Text style={styles.backIcon}>‹</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>리뷰 ({reviews.length})</Text>
-          <TouchableOpacity onPress={() => setShowWriteModal(true)}>
+          <TouchableOpacity onPress={() => {
+            setEditingReviewId(null);
+            setRating(5);
+            setCourseRating(5);
+            setFacilityRating(5);
+            setServiceRating(5);
+            setReviewText('');
+            setReviewImages([]);
+            setShowWriteModal(true);
+          }}>
             <Text style={styles.writeIcon}>✏️</Text>
           </TouchableOpacity>
         </View>
@@ -447,10 +491,13 @@ export const GolfCourseReviewScreen: React.FC = () => {
             <View style={styles.modalContainer}>
               {/* 모달 헤더 */}
               <View style={styles.modalHeader}>
-                <TouchableOpacity onPress={() => setShowWriteModal(false)}>
+                <TouchableOpacity onPress={() => {
+                  setShowWriteModal(false);
+                  setEditingReviewId(null);
+                }}>
                   <Text style={styles.modalCloseText}>취소</Text>
                 </TouchableOpacity>
-                <Text style={styles.modalTitle}>리뷰 작성</Text>
+                <Text style={styles.modalTitle}>{editingReviewId ? '리뷰 수정' : '리뷰 작성'}</Text>
                 <TouchableOpacity onPress={handleWriteReview}>
                   <Text style={styles.modalSubmitText}>완료</Text>
                 </TouchableOpacity>

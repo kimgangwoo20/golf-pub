@@ -13,10 +13,17 @@ import {
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { pubAPI, PubReview } from '@/services/api/pubAPI';
+import { useAuthStore } from '@/store/useAuthStore';
+import {
+  firestore as firebaseFirestore,
+  FirestoreTimestamp,
+} from '@/services/firebase/firebaseConfig';
 
 export const PubReviewsScreen: React.FC = () => {
   const route = useRoute<any>();
   const pubId = route.params?.pubId as string;
+  const { user } = useAuthStore();
+  const currentUserId = user?.uid || '';
 
   const [reviews, setReviews] = useState<PubReview[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +59,84 @@ export const PubReviewsScreen: React.FC = () => {
     }
   }, [pubId]);
 
+  // 리뷰 메뉴 (수정/삭제/신고)
+  const handleReviewMenu = (review: PubReview) => {
+    const isMyReview = review.userId === currentUserId;
+
+    Alert.alert('리뷰', '', [
+      ...(isMyReview
+        ? [
+            {
+              text: '수정',
+              onPress: () => {
+                // 수정할 내용 입력 받기
+                Alert.prompt(
+                  '리뷰 수정',
+                  '수정할 내용을 입력해주세요.',
+                  async (text: string) => {
+                    if (!text || text.trim().length === 0) return;
+                    const result = await pubAPI.updatePubReview(pubId, review.id, {
+                      rating: review.rating,
+                      comment: text,
+                    });
+                    if (result.success) {
+                      await loadReviews();
+                      Alert.alert('완료', '리뷰가 수정되었습니다.');
+                    } else {
+                      Alert.alert('오류', result.message);
+                    }
+                  },
+                  'plain-text',
+                  review.comment,
+                );
+              },
+            },
+            {
+              text: '삭제',
+              style: 'destructive' as const,
+              onPress: () => {
+                Alert.alert('리뷰 삭제', '리뷰를 삭제하시겠습니까?', [
+                  { text: '취소', style: 'cancel' as const },
+                  {
+                    text: '삭제',
+                    style: 'destructive' as const,
+                    onPress: async () => {
+                      const result = await pubAPI.deletePubReview(pubId, review.id);
+                      if (result.success) {
+                        await loadReviews();
+                        Alert.alert('완료', '리뷰가 삭제되었습니다.');
+                      } else {
+                        Alert.alert('오류', result.message);
+                      }
+                    },
+                  },
+                ]);
+              },
+            },
+          ]
+        : [
+            {
+              text: '신고',
+              onPress: async () => {
+                try {
+                  await firebaseFirestore.collection('reports').add({
+                    reporterId: currentUserId,
+                    targetId: review.id,
+                    type: 'pub_review',
+                    reason: '부적절한 리뷰',
+                    createdAt: FirestoreTimestamp.now(),
+                  });
+                  Alert.alert('완료', '신고가 접수되었습니다.');
+                } catch (error: any) {
+                  Alert.alert('오류', error.message || '신고 접수에 실패했습니다.');
+                }
+              },
+            },
+          ]),
+      { text: '취소', style: 'cancel' as const },
+    ]);
+  };
+
   const renderStars = (rating: number) => {
     return '⭐'.repeat(rating);
   };
@@ -76,6 +161,10 @@ export const PubReviewsScreen: React.FC = () => {
             <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
           </View>
         </View>
+        {/* 메뉴 버튼 (본인 리뷰: 수정/삭제, 타인 리뷰: 신고) */}
+        <TouchableOpacity onPress={() => handleReviewMenu(item)} style={styles.menuButton}>
+          <Text style={styles.menuIcon}>⋮</Text>
+        </TouchableOpacity>
       </View>
       <Text style={styles.content}>{item.comment}</Text>
       {item.images && item.images.length > 0 && (
@@ -249,6 +338,14 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 8,
+  },
+  menuButton: {
+    padding: 4,
+  },
+  menuIcon: {
+    fontSize: 20,
+    color: '#999',
+    fontWeight: '700',
   },
   emptyContainer: {
     alignItems: 'center',

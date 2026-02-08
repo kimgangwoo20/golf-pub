@@ -1,6 +1,7 @@
 // tossPayments.ts - Toss Payments 결제 서비스
-// 현재: 시뮬레이션 모드 (SDK 미연동)
-// 향후: @tosspayments/widget-sdk-react-native 연동
+// Cloud Functions 경유로 결제 확인/취소 처리
+
+import { callFunction } from '@/services/firebase/firebaseFunctions';
 
 /**
  * 결제 수단 타입
@@ -105,57 +106,76 @@ class TossPaymentService {
   }
 
   /**
-   * 결제 확인 (서버사이드에서 처리해야 하지만, 시뮬레이션에서는 클라이언트 처리)
+   * 결제 확인 (Cloud Functions 경유 - Toss API 서버 검증)
    *
    * @param paymentKey 결제 키
    * @param orderId 주문 ID
    * @param amount 금액
+   * @param bookingId 연결된 부킹 ID (선택)
    */
   async confirmPayment(
     paymentKey: string,
     orderId: string,
-    _amount: number,
+    amount: number,
+    bookingId?: string,
   ): Promise<PaymentResult> {
-    if (this.isSimulation) {
+    try {
+      const result = await callFunction<{
+        success: boolean;
+        paymentId: string;
+        approvedAt: string;
+      }>('paymentConfirm', { paymentKey, orderId, amount, bookingId });
+
       return {
         success: true,
         paymentKey,
         orderId,
-        amount: _amount,
+        amount,
         method: 'card',
-        approvedAt: new Date().toISOString(),
+        approvedAt: result.approvedAt,
         message: '결제가 승인되었습니다.',
       };
+    } catch (error: any) {
+      return {
+        success: false,
+        orderId,
+        amount,
+        method: 'card',
+        message: error.message || '결제 확인에 실패했습니다.',
+      };
     }
-
-    // TODO: 실제 구현 시 Firebase Functions 또는 백엔드 서버에서 처리
-    // const response = await fetch('/api/payments/confirm', {
-    //   method: 'POST',
-    //   body: JSON.stringify({ paymentKey, orderId, amount }),
-    // });
-    return {
-      success: true,
-      paymentKey,
-      orderId,
-      amount: _amount,
-      method: 'card',
-      approvedAt: new Date().toISOString(),
-      message: '결제가 승인되었습니다.',
-    };
   }
 
   /**
-   * 결제 취소 (환불)
+   * 결제 취소 (Cloud Functions 경유)
    *
    * @param request 환불 요청 데이터
    */
   async cancelPayment(request: RefundRequest): Promise<RefundResult> {
-    if (this.isSimulation) {
-      return this.simulateRefund(request);
-    }
+    try {
+      const result = await callFunction<{
+        success: boolean;
+        cancelAmount: number;
+        canceledAt: string;
+      }>('paymentCancel', {
+        paymentKey: request.paymentKey,
+        cancelReason: request.cancelReason,
+        cancelAmount: request.cancelAmount,
+      });
 
-    // TODO: 실제 구현 시 Firebase Functions 또는 백엔드 서버에서 처리
-    return this.simulateRefund(request);
+      return {
+        success: true,
+        cancelAmount: result.cancelAmount,
+        canceledAt: result.canceledAt,
+        message: '환불이 완료되었습니다.',
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        cancelAmount: 0,
+        message: error.message || '결제 취소에 실패했습니다.',
+      };
+    }
   }
 
   /**
@@ -221,16 +241,6 @@ class TossPaymentService {
     };
   }
 
-  private async simulateRefund(request: RefundRequest): Promise<RefundResult> {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    return {
-      success: true,
-      cancelAmount: request.cancelAmount || 0,
-      canceledAt: new Date().toISOString(),
-      message: '환불이 완료되었습니다. (시뮬레이션)',
-    };
-  }
 }
 
 // 싱글톤 인스턴스 export

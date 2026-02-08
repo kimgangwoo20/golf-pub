@@ -1,6 +1,7 @@
 // App.tsx - Expo 앱 진입점 (Firebase + Auth 통합)
 import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
+import { navigationRef } from './src/utils/navigationRef';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
@@ -359,7 +360,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
         {user ? <AppContent /> : <AuthNavigator />}
       </NavigationContainer>
       <StatusBar style="dark" />

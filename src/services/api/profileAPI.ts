@@ -5,6 +5,7 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import storage from '@react-native-firebase/storage';
 import { UserProfile, Point, Coupon } from '@/types/profile-types';
+import { callFunction } from '@/services/firebase/firebaseFunctions';
 
 /**
  * Firestore 컬렉션
@@ -234,43 +235,36 @@ export const profileAPI = {
   },
 
   /**
-   * 포인트 적립
+   * 포인트 적립 (Cloud Functions 경유)
    *
-   * @param amount 적립 포인트
-   * @param description 적립 사유
+   * @param userIdOrAmount 사용자 ID 또는 적립 포인트
+   * @param amountOrDescription 적립 포인트 또는 적립 사유
+   * @param descriptionOptional 적립 사유 (userId 지정 시)
    */
-  earnPoints: async (amount: number, description: string): Promise<void> => {
+  earnPoints: async (
+    userIdOrAmount: string | number,
+    amountOrDescription: number | string,
+    descriptionOptional?: string,
+  ): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
-      if (!currentUser) {
-        throw new Error('로그인이 필요합니다.');
+      let amount: number;
+      let description: string;
+      let targetUserId: string | undefined;
+
+      if (typeof userIdOrAmount === 'string' && typeof amountOrDescription === 'number') {
+        targetUserId = userIdOrAmount;
+        amount = amountOrDescription;
+        description = descriptionOptional || '';
+      } else {
+        amount = userIdOrAmount as number;
+        description = amountOrDescription as string;
       }
 
-      const batch = firestore().batch();
-
-      // 포인트 내역 추가
-      const pointRef = firestore()
-        .collection(USERS_COLLECTION)
-        .doc(currentUser.uid)
-        .collection(POINTS_COLLECTION)
-        .doc();
-
-      batch.set(pointRef, {
+      await callFunction('pointsEarn', {
         amount,
         description,
-        type: 'earn',
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        targetUserId,
       });
-
-      // 총 포인트 증가
-      const userRef = firestore().collection(USERS_COLLECTION).doc(currentUser.uid);
-
-      batch.update(userRef, {
-        points: firestore.FieldValue.increment(amount),
-      });
-
-      await batch.commit();
-      // 포인트 적립 성공
     } catch (error: any) {
       console.error('포인트 적립 실패');
       throw new Error(error.message || '포인트 적립에 실패했습니다.');
@@ -278,51 +272,14 @@ export const profileAPI = {
   },
 
   /**
-   * 포인트 사용
+   * 포인트 사용 (Cloud Functions 경유)
    *
    * @param amount 사용 포인트
    * @param description 사용 사유
    */
   spendPoints: async (amount: number, description: string): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
-      if (!currentUser) {
-        throw new Error('로그인이 필요합니다.');
-      }
-
-      // 현재 포인트 확인
-      const userDoc = await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).get();
-
-      const currentPoints = userDoc.data()?.points || 0;
-      if (currentPoints < amount) {
-        throw new Error('포인트가 부족합니다.');
-      }
-
-      const batch = firestore().batch();
-
-      // 포인트 내역 추가
-      const pointRef = firestore()
-        .collection(USERS_COLLECTION)
-        .doc(currentUser.uid)
-        .collection(POINTS_COLLECTION)
-        .doc();
-
-      batch.set(pointRef, {
-        amount: -amount,
-        description,
-        type: 'spend',
-        createdAt: firestore.FieldValue.serverTimestamp(),
-      });
-
-      // 총 포인트 감소
-      const userRef = firestore().collection(USERS_COLLECTION).doc(currentUser.uid);
-
-      batch.update(userRef, {
-        points: firestore.FieldValue.increment(-amount),
-      });
-
-      await batch.commit();
-      // 포인트 사용 성공
+      await callFunction('pointsDeduct', { amount, description });
     } catch (error: any) {
       console.error('포인트 사용 실패');
       throw new Error(error.message || '포인트 사용에 실패했습니다.');
@@ -391,6 +348,88 @@ export const profileAPI = {
     } catch (error: any) {
       console.error('리뷰 목록 조회 실패');
       throw new Error(error.message || '리뷰 목록을 불러오는데 실패했습니다.');
+    }
+  },
+
+  /**
+   * 쿠폰 발급
+   *
+   * @param userId 사용자 ID
+   * @param couponData 쿠폰 정보
+   * @returns 발급 결과
+   */
+  issueCoupon: async (
+    userId: string,
+    couponData: {
+      title: string;
+      discount: number;
+      discountType: 'PERCENT' | 'AMOUNT';
+      minAmount?: number;
+      expiryDays: number;
+    },
+  ): Promise<{ success: boolean; message: string }> => {
+    try {
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + couponData.expiryDays);
+
+      await firestore()
+        .collection(USERS_COLLECTION)
+        .doc(userId)
+        .collection(COUPONS_COLLECTION)
+        .add({
+          title: couponData.title,
+          discount: couponData.discount,
+          discountType: couponData.discountType,
+          minAmount: couponData.minAmount || 0,
+          isUsed: false,
+          expiryDate: firestore.Timestamp.fromDate(expiryDate),
+          createdAt: firestore.FieldValue.serverTimestamp(),
+        });
+
+      return { success: true, message: '쿠폰이 발급되었습니다.' };
+    } catch (error: any) {
+      console.error('쿠폰 발급 실패');
+      return { success: false, message: error.message || '쿠폰 발급에 실패했습니다.' };
+    }
+  },
+
+  /**
+   * 쿠폰 사용
+   *
+   * @param userId 사용자 ID
+   * @param couponId 쿠폰 ID
+   * @returns 사용 결과
+   */
+  useCoupon: async (
+    userId: string,
+    couponId: string,
+  ): Promise<{ success: boolean; message: string }> => {
+    try {
+      const couponRef = firestore()
+        .collection(USERS_COLLECTION)
+        .doc(userId)
+        .collection(COUPONS_COLLECTION)
+        .doc(couponId);
+
+      const couponDoc = await couponRef.get();
+      if (!couponDoc.exists) {
+        return { success: false, message: '쿠폰을 찾을 수 없습니다.' };
+      }
+
+      const couponData = couponDoc.data();
+      if (couponData?.isUsed) {
+        return { success: false, message: '이미 사용된 쿠폰입니다.' };
+      }
+
+      await couponRef.update({
+        isUsed: true,
+        usedAt: firestore.FieldValue.serverTimestamp(),
+      });
+
+      return { success: true, message: '쿠폰이 사용되었습니다.' };
+    } catch (error: any) {
+      console.error('쿠폰 사용 실패');
+      return { success: false, message: error.message || '쿠폰 사용에 실패했습니다.' };
     }
   },
 

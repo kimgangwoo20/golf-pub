@@ -5,6 +5,7 @@ import { messaging, firestore, FirestoreTimestamp, handleFirebaseError } from '.
 import type { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import { navigate } from '@/utils/navigationRef';
 
 /**
  * 알림 타입
@@ -479,6 +480,74 @@ class FirebaseMessagingService {
   }
 
   /**
+   * 알림 데이터 기반 딥링킹 네비게이션 처리
+   *
+   * @param data - 알림 데이터 (type, bookingId, chatId, productId 등)
+   */
+  handleNotificationNavigation(data: Record<string, any>): void {
+    const { type } = data;
+
+    switch (type) {
+      // 부킹 관련 알림 → 부킹 상세
+      case 'booking_join':
+      case 'booking_approved':
+      case 'booking_rejected':
+        if (data.bookingId) {
+          navigate('Bookings', {
+            screen: 'BookingDetail',
+            params: { bookingId: data.bookingId },
+          });
+        }
+        break;
+
+      // 채팅 메시지 알림 → 채팅방
+      case 'chat_message':
+        if (data.chatId) {
+          navigate('Chat', {
+            screen: 'ChatRoom',
+            params: { chatId: data.chatId },
+          });
+        }
+        break;
+
+      // 친구 관련 알림 → 친구 목록
+      case 'friend_request':
+      case 'friend_accepted':
+        navigate('MyHome', {
+          screen: 'Friends',
+        });
+        break;
+
+      // 중고거래 문의 알림 → 상품 상세
+      case 'marketplace_inquiry':
+        if (data.productId) {
+          navigate('Marketplace', {
+            screen: 'ProductDetail',
+            params: { productId: data.productId },
+          });
+        }
+        break;
+
+      // 새 리뷰 알림 → 골프장 리뷰 화면
+      case 'review_new':
+        if (data.courseId) {
+          navigate('GolfCourse', {
+            screen: 'GolfCourseReview',
+            params: { courseId: data.courseId },
+          });
+        }
+        break;
+
+      // 기본: 알림 목록으로 이동
+      default:
+        navigate('Home', {
+          screen: 'NotificationList',
+        });
+        break;
+    }
+  }
+
+  /**
    * FCM 초기화 (앱 시작 시 호출)
    *
    * @param userId - 사용자 ID
@@ -504,6 +573,13 @@ class FirebaseMessagingService {
       // 포그라운드 메시지 수신 시 로컬 알림 표시
       this.onForegroundMessage(async (remoteMessage) => {
         await this.displayLocalNotification(remoteMessage);
+      });
+
+      // 알림 탭 시 딥링킹 네비게이션 처리
+      this.onNotificationOpened((remoteMessage) => {
+        if (remoteMessage.data) {
+          this.handleNotificationNavigation(remoteMessage.data);
+        }
       });
     } catch (error) {
       // FCM 초기화 실패 - 무시
