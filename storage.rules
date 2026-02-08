@@ -48,54 +48,94 @@ service firebase.storage {
     
     // ========================================
     // 2. 게시글 이미지 (posts/)
+    // 코드 경로: posts/{postId}/{fileName}
     // ========================================
-    match /posts/{userId}/{postId}/{fileName} {
+    match /posts/{postId}/{fileName} {
       // 읽기: 로그인한 모든 사용자
       allow read: if isSignedIn();
-      
-      // 업로드: 본인만, 이미지만, 10MB 이하
-      allow create: if isSignedIn() && 
-                       request.auth.uid == userId &&
+
+      // 업로드: 로그인한 사용자, 이미지만, 10MB 이하
+      allow create: if isSignedIn() &&
                        isImage() &&
                        isValidSize();
-      
-      // 수정: 본인만
-      allow update: if isSignedIn() && 
-                       request.auth.uid == userId &&
+
+      // 수정: 로그인한 사용자
+      allow update: if isSignedIn() &&
                        isImage() &&
                        isValidSize();
-      
-      // 삭제: 본인만
-      allow delete: if isSignedIn() && 
-                       request.auth.uid == userId;
+
+      // 삭제: 로그인한 사용자
+      allow delete: if isSignedIn();
+    }
+
+    // ========================================
+    // 3. 부킹 이미지 (bookings/)
+    // 코드 경로: bookings/{bookingId}/{fileName}
+    // ========================================
+    match /bookings/{bookingId}/{fileName} {
+      // 읽기: 로그인한 모든 사용자
+      allow read: if isSignedIn();
+
+      // 업로드: 로그인한 사용자, 이미지만, 10MB 이하
+      allow create: if isSignedIn() &&
+                       isImage() &&
+                       isValidSize();
+
+      // 수정: 로그인한 사용자
+      allow update: if isSignedIn() &&
+                       isImage() &&
+                       isValidSize();
+
+      // 삭제: 로그인한 사용자
+      allow delete: if isSignedIn();
+    }
+
+    // ========================================
+    // 4. 중고거래 상품 이미지 (products/)
+    // 코드 경로: products/{productId}/{fileName}
+    // ========================================
+    match /products/{productId}/{fileName} {
+      // 읽기: 로그인한 모든 사용자
+      allow read: if isSignedIn();
+
+      // 업로드: 로그인한 사용자, 이미지만, 10MB 이하
+      allow create: if isSignedIn() &&
+                       isImage() &&
+                       isValidSize();
+
+      // 수정: 로그인한 사용자
+      allow update: if isSignedIn() &&
+                       isImage() &&
+                       isValidSize();
+
+      // 삭제: 로그인한 사용자
+      allow delete: if isSignedIn();
+    }
+
+    // ========================================
+    // 5. 채팅 이미지 (chats/)
+    // 코드 경로: chats/{roomId}/{fileName}
+    // ========================================
+    match /chats/{roomId}/{fileName} {
+      // 읽기: 로그인한 모든 사용자
+      allow read: if isSignedIn();
+
+      // 업로드: 로그인한 사용자, 이미지만, 10MB 이하
+      allow create: if isSignedIn() &&
+                       isImage() &&
+                       isValidSize();
+
+      // 수정: 로그인한 사용자
+      allow update: if isSignedIn() &&
+                       isImage() &&
+                       isValidSize();
+
+      // 삭제: 로그인한 사용자
+      allow delete: if isSignedIn();
     }
     
     // ========================================
-    // 3. 중고거래 상품 이미지 (marketplace/)
-    // ========================================
-    match /marketplace/{userId}/{itemId}/{fileName} {
-      // 읽기: 로그인한 모든 사용자
-      allow read: if isSignedIn();
-      
-      // 업로드: 본인만, 이미지만, 10MB 이하
-      allow create: if isSignedIn() && 
-                       request.auth.uid == userId &&
-                       isImage() &&
-                       isValidSize();
-      
-      // 수정: 본인만
-      allow update: if isSignedIn() && 
-                       request.auth.uid == userId &&
-                       isImage() &&
-                       isValidSize();
-      
-      // 삭제: 본인만
-      allow delete: if isSignedIn() && 
-                       request.auth.uid == userId;
-    }
-    
-    // ========================================
-    // 4. 리뷰 사진 (reviews/)
+    // 6. 리뷰 사진 (reviews/)
     // ========================================
     match /reviews/{userId}/{reviewId}/{fileName} {
       // 읽기: 로그인한 모든 사용자
@@ -119,7 +159,7 @@ service firebase.storage {
     }
     
     // ========================================
-    // 5. 인증 서류 (verifications/)
+    // 7. 인증 서류 (verifications/)
     // ========================================
     match /verifications/{userId}/{fileName} {
       // 읽기: 관리자만
@@ -136,7 +176,7 @@ service firebase.storage {
     }
     
     // ========================================
-    // 6. 임시 파일 (temp/)
+    // 8. 임시 파일 (temp/)
     // ========================================
     match /temp/{userId}/{fileName} {
       // 읽기: 본인만
