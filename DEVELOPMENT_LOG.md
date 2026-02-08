@@ -135,6 +135,18 @@
   - my/: MyHomeScreen, AccountManagementScreen
 - [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.07 완료)
 
+### 2026.02.08 Storage 보안 규칙 경로 불일치 수정 (18차 핫픽스)
+
+- [x] ~~Storage 보안 규칙 - bookings/ 경로 신규 추가 (storage.rules)~~ (2026.02.08 완료)
+  - 모집글 이미지 업로드 실패 원인: `bookings/{bookingId}/{fileName}` 규칙이 없어 catch-all `allow write: if false`에 차단됨
+- [x] ~~Storage 보안 규칙 - chats/ 경로 신규 추가 (storage.rules)~~ (2026.02.08 완료)
+  - 채팅 이미지 업로드도 동일 원인으로 차단됨
+- [x] ~~Storage 보안 규칙 - products/ 경로 수정 (storage.rules)~~ (2026.02.08 완료)
+  - 규칙 `marketplace/{userId}/{itemId}/{file}` → 코드 경로 `products/{productId}/{file}`로 수정
+- [x] ~~Storage 보안 규칙 - posts/ 경로 세그먼트 수정 (storage.rules)~~ (2026.02.08 완료)
+  - 규칙 `posts/{userId}/{postId}/{file}` (4세그먼트) → 코드 경로 `posts/{postId}/{file}` (3세그먼트)로 수정
+- [x] ~~Firebase Storage 규칙 배포 완료~~ (2026.02.08 완료)
+
 ### 2026.02.08 CRITICAL 감사 이슈 6건 수정 (17차 배치)
 
 - [x] ~~친구 시스템 Firestore 컬렉션 경로 수정 (firebaseFriends.ts + useFriendStore.ts)~~ (2026.02.08 완료)
@@ -634,7 +646,8 @@
 | 가격제안/카카오맵/이미지압축/최적화/테스트 (15차) | 7 | 7 | 0 | 100% |
 | Cloud Functions 전체 감사 핫픽스 (16차) | 5 | 5 | 0 | 100% |
 | CRITICAL 감사 이슈 수정 (17차) | 7 | 7 | 0 | 100% |
-| **전체** | **207** | **204** | **3** | **99%** |
+| Storage 규칙 핫픽스 (18차) | 5 | 5 | 0 | 100% |
+| **전체** | **212** | **209** | **3** | **99%** |
 
 ---
 
@@ -642,6 +655,13 @@
 
 ### 2026.02.08
 
+> **Storage 보안 규칙 경로 불일치 수정 18차 핫픽스 (1개 파일, +71/-31줄)**
+> - 모집글 이미지 업로드 실패 근본 원인: storage.rules에 `bookings/` 경로 규칙이 없어 catch-all `allow write: if false`에 차단
+> - `bookings/{bookingId}/{fileName}`, `chats/{roomId}/{fileName}` 규칙 신규 추가
+> - `marketplace/{userId}/{itemId}/{file}` → `products/{productId}/{file}` 경로 수정 (코드-규칙 불일치)
+> - `posts/{userId}/{postId}/{file}` → `posts/{postId}/{file}` 세그먼트 수 수정 (코드-규칙 불일치)
+> - Firebase Storage 규칙 배포 완료
+>
 > **CRITICAL 감사 이슈 6건 수정 17차 배치 (6개 파일, +235/-85줄)**
 > - 친구 시스템: flat `friends` 컬렉션 → `users/{userId}/friends` 서브컬렉션으로 전면 수정 (firebaseFriends.ts 6곳, useFriendStore.ts 4개 메서드 재작성). 데이터가 서브컬렉션에 저장되는데 flat 컬렉션을 조회하여 친구 목록이 항상 비어있던 근본 원인 해결
 > - 알림 딥링킹: GolfCourseReviewScreen이 `route.params?.course` (전체 객체)만 받아 courseId만 넘기는 딥링킹 시 크래시. courseId 파라미터도 지원하도록 수정
