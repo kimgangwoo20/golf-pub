@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import {
   firestore as firebaseFirestore,
   storage as firebaseStorage,
+  FirestoreTimestamp,
 } from '@/services/firebase/firebaseConfig';
 
 export interface UserProfile {
@@ -79,10 +80,10 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       await firebaseFirestore
         .collection('users')
         .doc(uid)
-        .update({
+        .set({
           ...data,
-          updatedAt: new Date(),
-        });
+          updatedAt: FirestoreTimestamp.now(),
+        }, { merge: true });
 
       const { profile } = get();
       if (profile) {
@@ -114,10 +115,10 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       const url = await reference.getDownloadURL();
 
       // Firestore 업데이트
-      await firebaseFirestore.collection('users').doc(uid).update({
+      await firebaseFirestore.collection('users').doc(uid).set({
         photoURL: url,
-        updatedAt: new Date(),
-      });
+        updatedAt: FirestoreTimestamp.now(),
+      }, { merge: true });
 
       // 로컬 상태 업데이트
       const { profile } = get();
@@ -155,7 +156,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
         transaction.update(userRef, {
           pointBalance: newPoints,
-          updatedAt: new Date(),
+          updatedAt: FirestoreTimestamp.now(),
         });
 
         // 포인트 내역 저장
@@ -166,7 +167,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
           reason,
           balanceBefore: currentPoints,
           balanceAfter: newPoints,
-          createdAt: new Date(),
+          createdAt: FirestoreTimestamp.now(),
         });
       });
 
@@ -205,7 +206,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
         transaction.update(userRef, {
           pointBalance: newPoints,
-          updatedAt: new Date(),
+          updatedAt: FirestoreTimestamp.now(),
         });
 
         // 포인트 내역 저장
@@ -216,7 +217,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
           reason,
           balanceBefore: currentPoints,
           balanceAfter: newPoints,
-          createdAt: new Date(),
+          createdAt: FirestoreTimestamp.now(),
         });
       });
 

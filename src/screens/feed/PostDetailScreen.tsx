@@ -20,6 +20,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Post, Comment } from '@/types/feed-types';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useFeedStore } from '@/store/useFeedStore';
+import firestore from '@react-native-firebase/firestore';
 import {
   firestore as firebaseFirestore,
   FirestoreTimestamp,
@@ -85,45 +86,89 @@ export const PostDetailScreen: React.FC = () => {
     );
   }
 
-  const handleLike = () => {
+  const handleLike = async () => {
+    if (!currentUserId) return;
+    const wasLiked = post.isLiked;
+
+    // 낙관적 UI 업데이트
     setPost({
       ...post,
-      isLiked: !post.isLiked,
-      likes: post.isLiked ? post.likes - 1 : post.likes + 1,
+      isLiked: !wasLiked,
+      likes: wasLiked ? post.likes - 1 : post.likes + 1,
     });
+
+    // Firestore 영속화
+    try {
+      const postRef = firebaseFirestore.collection('posts').doc(postId);
+      const likeRef = postRef.collection('likes').doc(currentUserId);
+      if (wasLiked) {
+        await likeRef.delete();
+        await postRef.set({ likes: firestore.FieldValue.increment(-1) } as any, { merge: true });
+      } else {
+        await likeRef.set({ userId: currentUserId, createdAt: FirestoreTimestamp.now() });
+        await postRef.set({ likes: firestore.FieldValue.increment(1) } as any, { merge: true });
+      }
+    } catch (error: any) {
+      // 실패 시 롤백
+      setPost({
+        ...post,
+        isLiked: wasLiked,
+        likes: wasLiked ? post.likes : post.likes - 1,
+      });
+      console.error('좋아요 처리 실패:', error);
+    }
   };
 
-  const handleCommentLike = (commentId: string) => {
+  const handleCommentLike = async (commentId: string) => {
+    const comment = comments.find((c) => c.id === commentId);
+    if (!comment || !currentUserId) return;
+
+    const wasLiked = comment.isLiked;
+
+    // 낙관적 UI 업데이트
     setComments(
-      comments.map((comment) => {
-        if (comment.id === commentId) {
+      comments.map((c) => {
+        if (c.id === commentId) {
           return {
-            ...comment,
-            isLiked: !comment.isLiked,
-            likes: comment.isLiked ? comment.likes - 1 : comment.likes + 1,
+            ...c,
+            isLiked: !wasLiked,
+            likes: wasLiked ? c.likes - 1 : c.likes + 1,
           };
         }
-        return comment;
+        return c;
       }),
     );
+
+    // Firestore 영속화
+    try {
+      const commentRef = firebaseFirestore.collection('posts').doc(postId).collection('comments').doc(commentId);
+      await commentRef.set({
+        likes: firestore.FieldValue.increment(wasLiked ? -1 : 1),
+      } as any, { merge: true });
+    } catch (error: any) {
+      console.error('댓글 좋아요 실패:', error);
+    }
   };
 
-  const handleSendComment = () => {
-    if (commentText.trim().length === 0) {
+  const handleSendComment = async () => {
+    if (commentText.trim().length === 0 || !currentUserId) {
       return;
     }
+
+    const trimmedText = commentText.trim();
+    const authorData = {
+      id: currentUserId,
+      name: user?.displayName || '사용자',
+      image: user?.photoURL || 'https://i.pravatar.cc/150?img=1',
+    };
 
     if (replyingTo) {
       // 대댓글 추가
       const newReply = {
         id: String(Date.now()),
         commentId: replyingTo,
-        author: {
-          id: currentUserId,
-          name: user?.displayName || '사용자',
-          image: user?.photoURL || 'https://i.pravatar.cc/150?img=1',
-        },
-        content: commentText,
+        author: authorData,
+        content: trimmedText,
         createdAt: '방금',
       };
 
@@ -140,17 +185,31 @@ export const PostDetailScreen: React.FC = () => {
       );
       setCommentText('');
       setReplyingTo(null);
+
+      // Firestore 영속화 (대댓글)
+      try {
+        await firebaseFirestore.collection('posts').doc(postId).collection('comments').add({
+          author: authorData,
+          content: trimmedText,
+          likes: 0,
+          isLiked: false,
+          replies: [],
+          parentId: replyingTo,
+          createdAt: FirestoreTimestamp.now(),
+        });
+        await firebaseFirestore.collection('posts').doc(postId).set({
+          comments: firestore.FieldValue.increment(1),
+        } as any, { merge: true });
+      } catch (error: any) {
+        console.error('대댓글 저장 실패:', error);
+      }
     } else {
       // 댓글 추가
       const newComment: Comment = {
         id: String(Date.now()),
         postId: post.id,
-        author: {
-          id: currentUserId,
-          name: user?.displayName || '사용자',
-          image: user?.photoURL || 'https://i.pravatar.cc/150?img=1',
-        },
-        content: commentText,
+        author: authorData,
+        content: trimmedText,
         likes: 0,
         isLiked: false,
         replies: [],
@@ -160,6 +219,23 @@ export const PostDetailScreen: React.FC = () => {
       setComments([...comments, newComment]);
       setPost({ ...post, comments: post.comments + 1 });
       setCommentText('');
+
+      // Firestore 영속화 (댓글)
+      try {
+        await firebaseFirestore.collection('posts').doc(postId).collection('comments').add({
+          author: authorData,
+          content: trimmedText,
+          likes: 0,
+          isLiked: false,
+          replies: [],
+          createdAt: FirestoreTimestamp.now(),
+        });
+        await firebaseFirestore.collection('posts').doc(postId).set({
+          comments: firestore.FieldValue.increment(1),
+        } as any, { merge: true });
+      } catch (error: any) {
+        console.error('댓글 저장 실패:', error);
+      }
     }
   };
 
@@ -190,9 +266,19 @@ export const PostDetailScreen: React.FC = () => {
       {
         text: '삭제',
         style: 'destructive',
-        onPress: () => {
+        onPress: async () => {
           setComments(comments.filter((c) => c.id !== commentId));
           setPost({ ...post, comments: post.comments - 1 });
+
+          // Firestore 영속화
+          try {
+            await firebaseFirestore.collection('posts').doc(postId).collection('comments').doc(commentId).delete();
+            await firebaseFirestore.collection('posts').doc(postId).set({
+              comments: firestore.FieldValue.increment(-1),
+            } as any, { merge: true });
+          } catch (error: any) {
+            console.error('댓글 삭제 실패:', error);
+          }
         },
       },
     ]);
@@ -213,10 +299,19 @@ export const PostDetailScreen: React.FC = () => {
       {
         text: '삭제',
         style: 'destructive',
-        onPress: () => {
-          Alert.alert('완료', '게시물이 삭제되었습니다.', [
-            { text: '확인', onPress: () => navigation.goBack() },
-          ]);
+        onPress: async () => {
+          try {
+            // Firestore에서 게시물 삭제 (status를 deleted로 변경)
+            await firebaseFirestore.collection('posts').doc(postId).set({
+              status: 'deleted',
+              updatedAt: FirestoreTimestamp.now(),
+            }, { merge: true });
+            Alert.alert('완료', '게시물이 삭제되었습니다.', [
+              { text: '확인', onPress: () => navigation.goBack() },
+            ]);
+          } catch (error: any) {
+            Alert.alert('오류', error.message || '게시물 삭제에 실패했습니다.');
+          }
         },
       },
     ]);

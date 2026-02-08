@@ -136,26 +136,24 @@ service firebase.storage {
     
     // ========================================
     // 6. 리뷰 사진 (reviews/)
+    // 코드 경로: reviews/{reviewId}/{fileName}
     // ========================================
-    match /reviews/{userId}/{reviewId}/{fileName} {
+    match /reviews/{reviewId}/{fileName} {
       // 읽기: 로그인한 모든 사용자
       allow read: if isSignedIn();
-      
-      // 업로드: 본인만, 이미지만, 10MB 이하
-      allow create: if isSignedIn() && 
-                       request.auth.uid == userId &&
+
+      // 업로드: 로그인한 사용자, 이미지만, 10MB 이하
+      allow create: if isSignedIn() &&
                        isImage() &&
                        isValidSize();
-      
-      // 수정: 본인만
-      allow update: if isSignedIn() && 
-                       request.auth.uid == userId &&
+
+      // 수정: 로그인한 사용자
+      allow update: if isSignedIn() &&
                        isImage() &&
                        isValidSize();
-      
-      // 삭제: 본인만
-      allow delete: if isSignedIn() && 
-                       request.auth.uid == userId;
+
+      // 삭제: 로그인한 사용자
+      allow delete: if isSignedIn();
     }
     
     // ========================================

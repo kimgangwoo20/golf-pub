@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { firestore as firebaseFirestore } from '@/services/firebase/firebaseConfig';
+import { firestore as firebaseFirestore, FirestoreTimestamp } from '@/services/firebase/firebaseConfig';
 
 export interface Friend {
   id: string;
@@ -87,7 +87,7 @@ export const useFriendStore = create<FriendState>((set) => ({
         toUserId: friendId,
         friendName,
         status: 'pending',
-        createdAt: new Date(),
+        createdAt: FirestoreTimestamp.now(),
       });
     } catch (error: any) {
       throw error;
@@ -96,10 +96,10 @@ export const useFriendStore = create<FriendState>((set) => ({
 
   acceptFriendRequest: async (requestId) => {
     try {
-      await firebaseFirestore.collection('friendRequests').doc(requestId).update({
+      await firebaseFirestore.collection('friendRequests').doc(requestId).set({
         status: 'accepted',
-        updatedAt: new Date(),
-      });
+        updatedAt: FirestoreTimestamp.now(),
+      }, { merge: true });
     } catch (error: any) {
       throw error;
     }
