@@ -103,9 +103,11 @@ function calculateGolfScore(
   } else if (score >= 60) {
     recommendation = '⛳ 골프하기 좋은 날씨입니다.';
   } else if (score >= 40) {
-    recommendation = '⚠️ 골프 가능하지만 주의하세요.';
+    recommendation = '☁️ 골프 가능하지만 날씨를 확인하세요.';
+  } else if (score >= 20) {
+    recommendation = '🌧️ 실내 연습장을 추천드려요.';
   } else {
-    recommendation = '❌ 골프하기 어려운 날씨입니다.';
+    recommendation = '☔ 오늘은 실내에서 스윙 연습 어떠세요?';
   }
 
   return { score, recommendation };
