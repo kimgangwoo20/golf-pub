@@ -1151,7 +1151,6 @@ const styles = StyleSheet.create({
 
   // 방명록 섹션
   guestbookSection: {
-    paddingHorizontal: 16,
     paddingBottom: 20,
   },
   guestbookCard: {
@@ -1159,6 +1158,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 12,
     marginTop: 12,
+    marginHorizontal: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
