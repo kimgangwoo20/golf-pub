@@ -13,6 +13,9 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors } from '@/styles/theme';
 import { getBookingDetail } from '@/services/firebase/firebaseBooking';
+import { useBookingStore } from '@/store/useBookingStore';
+import { useAuthStore } from '@/store/useAuthStore';
+import { tossPayments } from '@/services/payment/tossPayments';
 import firestore from '@react-native-firebase/firestore';
 
 type PaymentMethod = 'card' | 'account' | 'kakao' | 'naver';
@@ -38,10 +41,7 @@ export const PaymentScreen: React.FC = () => {
         let hostName = '호스트';
         if (bookingData.hostId) {
           try {
-            const hostDoc = await firestore()
-              .collection('users')
-              .doc(bookingData.hostId)
-              .get();
+            const hostDoc = await firestore().collection('users').doc(bookingData.hostId).get();
             const hostData = hostDoc.data();
             hostName = hostData?.name || hostData?.displayName || '호스트';
           } catch {
@@ -93,23 +93,66 @@ export const PaymentScreen: React.FC = () => {
         { text: '취소', style: 'cancel' },
         {
           text: '결제',
-          onPress: () => {
-            // TODO: Toss Payments SDK 연동 예정
-            Alert.alert(
-              '결제 완료! 🎉',
-              '참가 신청이 완료되었습니다.\n호스트의 승인을 기다려주세요.',
-              [
-                {
-                  text: '확인',
-                  onPress: () => {
-                    navigation.navigate('BookingList' as any);
+          onPress: async () => {
+            try {
+              const user = useAuthStore.getState().user;
+              if (!user || !bookingId) {
+                Alert.alert('오류', '로그인 정보를 확인해주세요.');
+                return;
+              }
+
+              // Toss Payments 결제 요청
+              const orderId = tossPayments.generateOrderId('BOOKING');
+              const paymentResult = await tossPayments.requestPayment({
+                orderId,
+                orderName: booking.title || '골프 모임 참가비',
+                amount: totalAmount,
+                method: selectedMethod,
+                customerName: user.displayName || '참가자',
+                customerEmail: user.email || undefined,
+              });
+
+              if (!paymentResult.success) {
+                Alert.alert('결제 실패', paymentResult.message);
+                return;
+              }
+
+              // 결제 성공 → 부킹 참가 처리
+              await useBookingStore
+                .getState()
+                .joinBooking(bookingId, user.uid, user.displayName || '참가자');
+
+              // 결제 정보 Firestore 저장
+              await firestore().collection('payments').add({
+                paymentKey: paymentResult.paymentKey,
+                orderId: paymentResult.orderId,
+                bookingId,
+                userId: user.uid,
+                amount: paymentResult.amount,
+                method: paymentResult.method,
+                status: 'DONE',
+                approvedAt: paymentResult.approvedAt,
+                createdAt: firestore.FieldValue.serverTimestamp(),
+              });
+
+              Alert.alert(
+                '결제 완료!',
+                '참가 신청이 완료되었습니다.\n호스트의 승인을 기다려주세요.',
+                [
+                  {
+                    text: '확인',
+                    onPress: () => {
+                      navigation.navigate('BookingList' as any);
+                    },
                   },
-                },
-              ]
-            );
+                ],
+              );
+            } catch (error: any) {
+              Alert.alert('참가 실패', error.message || '부킹 참가에 실패했습니다.');
+            }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -261,14 +304,11 @@ export const PaymentScreen: React.FC = () => {
             <View style={[styles.checkbox, agreed && styles.checkboxChecked]}>
               {agreed && <Text style={styles.checkboxIcon}>✓</Text>}
             </View>
-            <Text style={styles.agreementText}>
-              결제 진행 및 환불 규정에 동의합니다.
-            </Text>
+            <Text style={styles.agreementText}>결제 진행 및 환불 규정에 동의합니다.</Text>
           </TouchableOpacity>
           <Text style={styles.agreementDetail}>
-            • 라운딩 2일 전까지: 전액 환불{'\n'}
-            • 라운딩 1일 전까지: 50% 환불{'\n'}
-            • 라운딩 당일: 환불 불가
+            • 라운딩 2일 전까지: 전액 환불{'\n'}• 라운딩 1일 전까지: 50% 환불{'\n'}• 라운딩 당일:
+            환불 불가
           </Text>
         </View>
 
@@ -287,9 +327,7 @@ export const PaymentScreen: React.FC = () => {
           onPress={handlePayment}
           disabled={!agreed}
         >
-          <Text style={styles.paymentButtonText}>
-            {totalAmount.toLocaleString()}원 결제하기
-          </Text>
+          <Text style={styles.paymentButtonText}>{totalAmount.toLocaleString()}원 결제하기</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

@@ -35,7 +35,11 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
             </>
           )}
         </View>
-        {bio && <Text style={styles.bio} numberOfLines={2}>{bio}</Text>}
+        {bio && (
+          <Text style={styles.bio} numberOfLines={2}>
+            {bio}
+          </Text>
+        )}
       </View>
     </Component>
   );

@@ -54,10 +54,7 @@ export const FriendRequestsScreen: React.FC = () => {
     for (const req of requests) {
       const targetUserId = type === 'received' ? req.fromUserId : req.toUserId;
       try {
-        const userDoc = await firestore()
-          .collection('users')
-          .doc(targetUserId)
-          .get();
+        const userDoc = await firestore().collection('users').doc(targetUserId).get();
 
         const userData = userDoc.data();
         enriched.push({
@@ -114,86 +111,74 @@ export const FriendRequestsScreen: React.FC = () => {
 
   const handleAccept = (requestId: string, userName: string, fromUserId: string) => {
     if (!user?.uid) return;
-    Alert.alert(
-      '친구 요청 승인',
-      `${userName}님의 친구 요청을 승인하시겠습니까?`,
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '승인',
-          onPress: async () => {
-            try {
-              const result = await acceptFriendRequest(requestId, fromUserId, user.uid);
-              if (result.success) {
-                setReceivedRequests(prev => prev.filter(r => r.id !== requestId));
-                Alert.alert('완료', `${userName}님과 친구가 되었습니다!`);
-              } else {
-                Alert.alert('오류', result.message);
-              }
-            } catch (error) {
-              console.error('친구 수락 실패:', error);
-              Alert.alert('오류', '친구 요청 승인에 실패했습니다.');
+    Alert.alert('친구 요청 승인', `${userName}님의 친구 요청을 승인하시겠습니까?`, [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '승인',
+        onPress: async () => {
+          try {
+            const result = await acceptFriendRequest(requestId, fromUserId, user.uid);
+            if (result.success) {
+              setReceivedRequests((prev) => prev.filter((r) => r.id !== requestId));
+              Alert.alert('완료', `${userName}님과 친구가 되었습니다!`);
+            } else {
+              Alert.alert('오류', result.message);
             }
-          },
+          } catch (error) {
+            console.error('친구 수락 실패:', error);
+            Alert.alert('오류', '친구 요청 승인에 실패했습니다.');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleReject = (requestId: string, userName: string) => {
-    Alert.alert(
-      '친구 요청 거절',
-      `${userName}님의 친구 요청을 거절하시겠습니까?`,
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '거절',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const result = await rejectFriendRequest(requestId);
-              if (result.success) {
-                setReceivedRequests(prev => prev.filter(r => r.id !== requestId));
-                Alert.alert('완료', '요청을 거절했습니다.');
-              } else {
-                Alert.alert('오류', result.message);
-              }
-            } catch (error) {
-              console.error('친구 거절 실패:', error);
-              Alert.alert('오류', '요청 거절에 실패했습니다.');
+    Alert.alert('친구 요청 거절', `${userName}님의 친구 요청을 거절하시겠습니까?`, [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '거절',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const result = await rejectFriendRequest(requestId);
+            if (result.success) {
+              setReceivedRequests((prev) => prev.filter((r) => r.id !== requestId));
+              Alert.alert('완료', '요청을 거절했습니다.');
+            } else {
+              Alert.alert('오류', result.message);
             }
-          },
+          } catch (error) {
+            console.error('친구 거절 실패:', error);
+            Alert.alert('오류', '요청 거절에 실패했습니다.');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleCancel = (requestId: string, userName: string) => {
-    Alert.alert(
-      '요청 취소',
-      `${userName}님에게 보낸 친구 요청을 취소하시겠습니까?`,
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '취소하기',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const result = await cancelFriendRequest(requestId);
-              if (result.success) {
-                setSentRequests(prev => prev.filter(r => r.id !== requestId));
-                Alert.alert('완료', '요청을 취소했습니다.');
-              } else {
-                Alert.alert('오류', result.message);
-              }
-            } catch (error) {
-              console.error('친구 요청 취소 실패:', error);
-              Alert.alert('오류', '요청 취소에 실패했습니다.');
+    Alert.alert('요청 취소', `${userName}님에게 보낸 친구 요청을 취소하시겠습니까?`, [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '취소하기',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const result = await cancelFriendRequest(requestId);
+            if (result.success) {
+              setSentRequests((prev) => prev.filter((r) => r.id !== requestId));
+              Alert.alert('완료', '요청을 취소했습니다.');
+            } else {
+              Alert.alert('오류', result.message);
             }
-          },
+          } catch (error) {
+            console.error('친구 요청 취소 실패:', error);
+            Alert.alert('오류', '요청 취소에 실패했습니다.');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const displayRequests = activeTab === 'received' ? receivedRequests : sentRequests;
@@ -291,7 +276,9 @@ export const FriendRequestsScreen: React.FC = () => {
                     <View style={styles.actionButtons}>
                       <TouchableOpacity
                         style={styles.acceptButton}
-                        onPress={() => handleAccept(request.id, request.userName, request.fromUserId)}
+                        onPress={() =>
+                          handleAccept(request.id, request.userName, request.fromUserId)
+                        }
                       >
                         <Text style={styles.acceptButtonText}>승인</Text>
                       </TouchableOpacity>
@@ -314,9 +301,7 @@ export const FriendRequestsScreen: React.FC = () => {
               ))
             ) : (
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>
-                  {activeTab === 'received' ? '👥' : '📤'}
-                </Text>
+                <Text style={styles.emptyText}>{activeTab === 'received' ? '👥' : '📤'}</Text>
                 <Text style={styles.emptyTitle}>
                   {activeTab === 'received'
                     ? '받은 친구 요청이 없습니다'

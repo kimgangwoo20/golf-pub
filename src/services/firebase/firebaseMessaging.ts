@@ -4,26 +4,27 @@
 import { messaging, firestore, FirestoreTimestamp, handleFirebaseError } from './firebaseConfig';
 import type { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
 import { Platform } from 'react-native';
+import * as Notifications from 'expo-notifications';
 
 /**
  * 알림 타입
  */
 export type NotificationType =
-  | 'booking_new'          // 새 부킹 생성
-  | 'booking_join'         // 부킹 참여 신청
-  | 'booking_approved'     // 부킹 참여 승인
-  | 'booking_rejected'     // 부킹 참여 거절
-  | 'booking_reminder'     // 부킹 리마인더
-  | 'chat_message'         // 새 메시지
-  | 'friend_request'       // 친구 요청
-  | 'friend_accepted'      // 친구 수락
-  | 'marketplace_inquiry'  // 중고거래 문의
-  | 'marketplace_sold'     // 상품 판매 완료
-  | 'review_new'           // 새 리뷰
-  | 'point_earned'         // 포인트 획득
-  | 'coupon_issued'        // 쿠폰 발급
-  | 'membership_upgrade'   // 멤버십 업그레이드
-  | 'system_notice';       // 시스템 공지
+  | 'booking_new' // 새 부킹 생성
+  | 'booking_join' // 부킹 참여 신청
+  | 'booking_approved' // 부킹 참여 승인
+  | 'booking_rejected' // 부킹 참여 거절
+  | 'booking_reminder' // 부킹 리마인더
+  | 'chat_message' // 새 메시지
+  | 'friend_request' // 친구 요청
+  | 'friend_accepted' // 친구 수락
+  | 'marketplace_inquiry' // 중고거래 문의
+  | 'marketplace_sold' // 상품 판매 완료
+  | 'review_new' // 새 리뷰
+  | 'point_earned' // 포인트 획득
+  | 'coupon_issued' // 쿠폰 발급
+  | 'membership_upgrade' // 멤버십 업그레이드
+  | 'system_notice'; // 시스템 공지
 
 /**
  * 알림 데이터 인터페이스
@@ -121,7 +122,7 @@ class FirebaseMessagingService {
    * @returns Unsubscribe function
    */
   onForegroundMessage(
-    callback: (message: FirebaseMessagingTypes.RemoteMessage) => void
+    callback: (message: FirebaseMessagingTypes.RemoteMessage) => void,
   ): () => void {
     const unsubscribe = messaging.onMessage(async (remoteMessage) => {
       callback(remoteMessage);
@@ -147,7 +148,7 @@ class FirebaseMessagingService {
    * @returns Unsubscribe function
    */
   onNotificationOpened(
-    callback: (message: FirebaseMessagingTypes.RemoteMessage) => void
+    callback: (message: FirebaseMessagingTypes.RemoteMessage) => void,
   ): () => void {
     // 앱이 백그라운드에 있을 때 알림 탭
     const unsubscribe = messaging.onNotificationOpenedApp((remoteMessage) => {
@@ -212,7 +213,7 @@ class FirebaseMessagingService {
     title: string,
     body: string,
     data?: Record<string, any>,
-    imageUrl?: string
+    imageUrl?: string,
   ): Promise<string> {
     try {
       const notificationRef = firestore
@@ -248,10 +249,7 @@ class FirebaseMessagingService {
    * @param limit - 개수 제한
    * @returns 알림 목록
    */
-  async getNotifications(
-    userId: string,
-    limit: number = 20
-  ): Promise<NotificationData[]> {
+  async getNotifications(userId: string, limit: number = 20): Promise<NotificationData[]> {
     try {
       const snapshot = await firestore
         .collection('users')
@@ -284,7 +282,7 @@ class FirebaseMessagingService {
   subscribeToNotifications(
     userId: string,
     callback: (notifications: NotificationData[]) => void,
-    limit: number = 20
+    limit: number = 20,
   ): () => void {
     const unsubscribe = firestore
       .collection('users')
@@ -422,10 +420,7 @@ class FirebaseMessagingService {
    * @param callback - 콜백 함수
    * @returns Unsubscribe function
    */
-  subscribeToUnreadCount(
-    userId: string,
-    callback: (count: number) => void
-  ): () => void {
+  subscribeToUnreadCount(userId: string, callback: (count: number) => void): () => void {
     const unsubscribe = firestore
       .collection('users')
       .doc(userId)
@@ -443,32 +438,43 @@ class FirebaseMessagingService {
    *
    * @param count - 배지 개수
    */
-  async updateBadgeCount(_count: number): Promise<void> {
-    // TODO: notifee 라이브러리로 배지 업데이트 구현
-    // import notifee from '@notifee/react-native';
-    // await notifee.setBadgeCount(count);
+  async updateBadgeCount(count: number): Promise<void> {
+    try {
+      await Notifications.setBadgeCountAsync(count);
+    } catch {
+      // 배지 업데이트 실패 시 무시
+    }
   }
 
   /**
-   * 로컬 알림 표시 (선택적)
-   *
-   * @param remoteMessage - FCM 메시지
+   * Android 알림 채널 생성
    */
-  private async displayLocalNotification(
-    _remoteMessage: FirebaseMessagingTypes.RemoteMessage
+  async createAndroidChannel(): Promise<void> {
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'Golf Pub 알림',
+        importance: Notifications.AndroidImportance.HIGH,
+      });
+    }
+  }
+
+  /**
+   * 로컬 알림 표시 (포그라운드 FCM 수신 시)
+   */
+  async displayLocalNotification(
+    remoteMessage: FirebaseMessagingTypes.RemoteMessage,
   ): Promise<void> {
     try {
-      // TODO: 실제 로컬 알림 구현
-      // import notifee from '@notifee/react-native';
-      // await notifee.displayNotification({
-      //   title: remoteMessage.notification?.title,
-      //   body: remoteMessage.notification?.body,
-      //   android: {
-      //     channelId: 'default',
-      //   },
-      // });
-    } catch (error) {
-      // 로컬 알림 표시 실패 - 무시
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: remoteMessage.notification?.title || 'Golf Pub',
+          body: remoteMessage.notification?.body || '',
+          data: remoteMessage.data as Record<string, unknown>,
+        },
+        trigger: null, // 즉시 표시
+      });
+    } catch {
+      // 알림 표시 실패 시 무시
     }
   }
 
@@ -479,6 +485,11 @@ class FirebaseMessagingService {
    */
   async initialize(userId: string): Promise<void> {
     try {
+      // Android 알림 채널 생성
+      if (Platform.OS === 'android') {
+        await this.createAndroidChannel();
+      }
+
       // 토큰 가져오기 및 저장
       const token = await this.getToken();
       if (token) {
@@ -488,6 +499,11 @@ class FirebaseMessagingService {
       // 토큰 갱신 리스너
       messaging.onTokenRefresh(async (newToken) => {
         await this.saveToken(userId, newToken);
+      });
+
+      // 포그라운드 메시지 수신 시 로컬 알림 표시
+      this.onForegroundMessage(async (remoteMessage) => {
+        await this.displayLocalNotification(remoteMessage);
       });
     } catch (error) {
       // FCM 초기화 실패 - 무시

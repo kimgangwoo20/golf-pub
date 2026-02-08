@@ -19,7 +19,7 @@ export const BenefitItem: React.FC<BenefitItemProps> = ({ icon, title, descripti
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {

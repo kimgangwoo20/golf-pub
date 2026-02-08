@@ -9,12 +9,13 @@ import {
   StyleSheet,
   Alert,
   Switch,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '@/styles/theme';
 import { SkillLevel } from '@/types/booking-types';
+import { useBookingStore } from '@/store/useBookingStore';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export const CreateBookingScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -77,25 +78,66 @@ export const CreateBookingScreen: React.FC = () => {
   const handleSubmit = () => {
     if (!validateForm()) return;
 
-    Alert.alert(
-      '모집글 등록',
-      '골프 모집글을 등록하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '등록',
-          onPress: () => {
-            // TODO: API 호출하여 모집글 등록
+    Alert.alert('모집글 등록', '골프 모집글을 등록하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '등록',
+        onPress: async () => {
+          try {
+            const user = useAuthStore.getState().user;
+            if (!user) {
+              Alert.alert('오류', '로그인이 필요합니다.');
+              return;
+            }
+
+            await useBookingStore.getState().createBooking({
+              hostId: user.uid,
+              title: title.trim(),
+              course: golfCourse.trim(),
+              location: location.trim(),
+              date: date.trim(),
+              time: time.trim(),
+              host: {
+                name: user.displayName || '호스트',
+                avatar: user.photoURL || '',
+                rating: 0,
+                handicap: 18,
+                level: 'intermediate',
+              },
+              price: {
+                original: Number(price),
+                discount: 0,
+                perPerson: true,
+              },
+              participants: {
+                current: 1,
+                max: Number(maxPlayers),
+                members: [{ uid: user.uid, name: user.displayName || '호스트', role: 'host' }],
+              },
+              conditions: {
+                level: level,
+                pace: 'normal',
+                drinking: hasPub ? 'yes' : 'no',
+              },
+              status: 'OPEN',
+              description: description.trim(),
+              level,
+              hasPub,
+              pubName: hasPub ? pubName.trim() : undefined,
+            });
+
             Alert.alert('등록 완료', '모집글이 등록되었습니다!', [
               {
                 text: '확인',
                 onPress: () => navigation.goBack(),
               },
             ]);
-          },
+          } catch (error: any) {
+            Alert.alert('등록 실패', error.message || '모집글 등록에 실패했습니다.');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   return (

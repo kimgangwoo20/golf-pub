@@ -1,5 +1,12 @@
 import React from 'react';
-import { FlatList, View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import {
+  FlatList,
+  View,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
 
 interface Course {
   id: string;
@@ -18,12 +25,9 @@ interface Props {
 export const CourseList: React.FC<Props> = ({ courses, loading, onCoursePress }) => (
   <FlatList
     data={courses}
-    keyExtractor={item => item.id}
+    keyExtractor={(item) => item.id}
     renderItem={({ item }) => (
-      <TouchableOpacity 
-        style={styles.card}
-        onPress={() => onCoursePress(item.id)}
-      >
+      <TouchableOpacity style={styles.card} onPress={() => onCoursePress(item.id)}>
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.region}>{item.region}</Text>
         <View style={styles.footer}>

@@ -50,9 +50,10 @@ export const MyReviewsScreen: React.FC = () => {
     return '⭐'.repeat(rating) + '☆'.repeat(5 - rating);
   };
 
-  const averageRating = reviews.length > 0
-    ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1)
-    : '0.0';
+  const averageRating =
+    reviews.length > 0
+      ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1)
+      : '0.0';
 
   if (loading && reviews.length === 0) {
     return (
@@ -144,11 +145,7 @@ export const MyReviewsScreen: React.FC = () => {
                         style={styles.imageScroll}
                       >
                         {review.images.map((img: string, idx: number) => (
-                          <Image
-                            key={idx}
-                            source={{ uri: img }}
-                            style={styles.reviewImage}
-                          />
+                          <Image key={idx} source={{ uri: img }} style={styles.reviewImage} />
                         ))}
                       </ScrollView>
                     )}

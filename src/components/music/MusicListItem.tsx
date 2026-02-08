@@ -25,14 +25,9 @@ export const MusicListItem: React.FC<MusicListItemProps> = ({
       onPress={onPress}
     >
       <View style={styles.leftSection}>
-        <Text style={styles.icon}>
-          {isPlaying ? '🔊' : '🎵'}
-        </Text>
+        <Text style={styles.icon}>{isPlaying ? '🔊' : '🎵'}</Text>
         <View style={styles.info}>
-          <Text
-            style={[styles.title, isPlaying && styles.titlePlaying]}
-            numberOfLines={1}
-          >
+          <Text style={[styles.title, isPlaying && styles.titlePlaying]} numberOfLines={1}>
             {title}
           </Text>
           <Text style={styles.artist} numberOfLines={1}>

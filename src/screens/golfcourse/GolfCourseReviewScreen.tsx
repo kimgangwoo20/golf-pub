@@ -16,11 +16,16 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 import { GolfCourse, GolfCourseReview } from '@/types/golfcourse-types';
 import { useAuthStore } from '@/store/useAuthStore';
 import { golfCourseAPI } from '@/services/api/golfCourseAPI';
+import {
+  firestore as firebaseFirestore,
+  FirestoreTimestamp,
+} from '@/services/firebase/firebaseConfig';
 
-const { width } = Dimensions.get('window');
+const { width: _width } = Dimensions.get('window');
 
 type FilterType = 'all' | '5' | '4' | '3' | '2' | '1';
 type SortType = 'recent' | 'rating_high' | 'rating_low' | 'likes';
@@ -33,9 +38,9 @@ export const GolfCourseReviewScreen: React.FC = () => {
   // 현재 사용자 ID (로그인된 사용자)
   const currentUserId = user?.uid || '';
 
-  // @ts-ignore
+  // @ts-expect-error route.params 타입 미지정
   const courseParam = route.params?.course as GolfCourse;
-  // @ts-ignore
+  // @ts-expect-error route.params 타입 미지정
   const writeReviewParam = route.params?.writeReview as boolean;
 
   const [reviews, setReviews] = useState<GolfCourseReview[]>([]);
@@ -71,28 +76,31 @@ export const GolfCourseReviewScreen: React.FC = () => {
 
   // 평점 분포 계산
   const ratingDistribution = {
-    5: reviews.filter(r => r.rating === 5).length,
-    4: reviews.filter(r => r.rating === 4).length,
-    3: reviews.filter(r => r.rating === 3).length,
-    2: reviews.filter(r => r.rating === 2).length,
-    1: reviews.filter(r => r.rating === 1).length,
+    5: reviews.filter((r) => r.rating === 5).length,
+    4: reviews.filter((r) => r.rating === 4).length,
+    3: reviews.filter((r) => r.rating === 3).length,
+    2: reviews.filter((r) => r.rating === 2).length,
+    1: reviews.filter((r) => r.rating === 1).length,
   };
 
-  const averageRating = reviews.length > 0
-    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
-    : '0.0';
+  const averageRating =
+    reviews.length > 0
+      ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+      : '0.0';
 
   const handleLike = (reviewId: number | string) => {
-    setReviews(reviews.map(review => {
-      if (review.id === reviewId) {
-        return {
-          ...review,
-          isLiked: !review.isLiked,
-          likes: review.isLiked ? review.likes - 1 : review.likes + 1,
-        };
-      }
-      return review;
-    }));
+    setReviews(
+      reviews.map((review) => {
+        if (review.id === reviewId) {
+          return {
+            ...review,
+            isLiked: !review.isLiked,
+            likes: review.isLiked ? review.likes - 1 : review.likes + 1,
+          };
+        }
+        return review;
+      }),
+    );
   };
 
   const handleFilter = (type: FilterType) => {
@@ -102,7 +110,7 @@ export const GolfCourseReviewScreen: React.FC = () => {
 
   const handleSort = (type: SortType) => {
     setSortBy(type);
-    let sorted = [...reviews];
+    const sorted = [...reviews];
 
     switch (type) {
       case 'recent':
@@ -154,17 +162,31 @@ export const GolfCourseReviewScreen: React.FC = () => {
     }
   };
 
-  const handleAddImage = () => {
-    Alert.alert('이미지 추가', '이미지 업로드 기능은 개발 예정입니다.', [
-      {
-        text: 'Mock 이미지 추가',
-        onPress: () => {
-          const newImage = `https://picsum.photos/400/300?random=${Date.now()}`;
-          setReviewImages([...reviewImages, newImage]);
-        },
-      },
-      { text: '취소', style: 'cancel' },
-    ]);
+  const handleAddImage = async () => {
+    if (reviewImages.length >= 5) {
+      Alert.alert('알림', '최대 5장까지 첨부 가능합니다.');
+      return;
+    }
+
+    // 앨범 권한 요청
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('권한 필요', '앨범 접근을 위해 권한이 필요합니다.');
+      return;
+    }
+
+    // 이미지 선택
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      selectionLimit: 5 - reviewImages.length,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      const newImages = result.assets.map((asset) => asset.uri);
+      setReviewImages([...reviewImages, ...newImages].slice(0, 5));
+    }
   };
 
   const handleReviewMenu = (review: GolfCourseReview) => {
@@ -175,13 +197,22 @@ export const GolfCourseReviewScreen: React.FC = () => {
         ? [
             {
               text: '수정',
-              onPress: () => Alert.alert('알림', '리뷰 수정 기능은 개발 예정입니다.'),
+              onPress: () => {
+                // 리뷰 수정 모달 열기 (기존 값 세팅)
+                setRating(review.rating);
+                setCourseRating(review.courseRating);
+                setFacilityRating(review.facilityRating);
+                setServiceRating(review.serviceRating);
+                setReviewText(review.content);
+                setReviewImages(review.images || []);
+                setShowWriteModal(true);
+              },
             },
             {
               text: '삭제',
               style: 'destructive' as const,
               onPress: () => {
-                setReviews(reviews.filter(r => r.id !== review.id));
+                setReviews(reviews.filter((r) => r.id !== review.id));
                 Alert.alert('완료', '리뷰가 삭제되었습니다.');
               },
             },
@@ -189,16 +220,29 @@ export const GolfCourseReviewScreen: React.FC = () => {
         : [
             {
               text: '신고',
-              onPress: () => Alert.alert('알림', '신고 기능은 개발 예정입니다.'),
+              onPress: async () => {
+                // Firestore reports 컬렉션에 신고 추가
+                try {
+                  await firebaseFirestore.collection('reports').add({
+                    reporterId: currentUserId,
+                    targetId: String(review.id),
+                    type: 'review',
+                    reason: '부적절한 리뷰',
+                    createdAt: FirestoreTimestamp.now(),
+                  });
+                  Alert.alert('완료', '신고가 접수되었습니다.');
+                } catch (error: any) {
+                  Alert.alert('오류', error.message || '신고 접수에 실패했습니다.');
+                }
+              },
             },
           ]),
       { text: '취소', style: 'cancel' as const },
     ]);
   };
 
-  const filteredReviews = filter === 'all'
-    ? reviews
-    : reviews.filter(r => r.rating === parseInt(filter));
+  const filteredReviews =
+    filter === 'all' ? reviews : reviews.filter((r) => r.rating === parseInt(filter));
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -220,7 +264,7 @@ export const GolfCourseReviewScreen: React.FC = () => {
             <View style={styles.averageRatingBox}>
               <Text style={styles.averageRatingNumber}>{averageRating}</Text>
               <View style={styles.stars}>
-                {[1, 2, 3, 4, 5].map(star => (
+                {[1, 2, 3, 4, 5].map((star) => (
                   <Text key={star} style={styles.starIcon}>
                     {star <= parseFloat(averageRating) ? '⭐' : '☆'}
                   </Text>
@@ -231,7 +275,7 @@ export const GolfCourseReviewScreen: React.FC = () => {
 
             {/* 평점 분포 */}
             <View style={styles.distributionBox}>
-              {[5, 4, 3, 2, 1].map(star => (
+              {[5, 4, 3, 2, 1].map((star) => (
                 <View key={star} style={styles.distributionRow}>
                   <Text style={styles.distributionStar}>{star}점</Text>
                   <View style={styles.distributionBar}>
@@ -254,7 +298,11 @@ export const GolfCourseReviewScreen: React.FC = () => {
 
           {/* 필터 */}
           <View style={styles.filterSection}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContent}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterContent}
+            >
               <TouchableOpacity
                 style={[styles.filterButton, filter === 'all' && styles.filterButtonActive]}
                 onPress={() => handleFilter('all')}
@@ -263,13 +311,21 @@ export const GolfCourseReviewScreen: React.FC = () => {
                   전체
                 </Text>
               </TouchableOpacity>
-              {[5, 4, 3, 2, 1].map(star => (
+              {[5, 4, 3, 2, 1].map((star) => (
                 <TouchableOpacity
                   key={star}
-                  style={[styles.filterButton, filter === star.toString() && styles.filterButtonActive]}
+                  style={[
+                    styles.filterButton,
+                    filter === star.toString() && styles.filterButtonActive,
+                  ]}
                   onPress={() => handleFilter(star.toString() as FilterType)}
                 >
-                  <Text style={[styles.filterText, filter === star.toString() && styles.filterTextActive]}>
+                  <Text
+                    style={[
+                      styles.filterText,
+                      filter === star.toString() && styles.filterTextActive,
+                    ]}
+                  >
                     {star}점
                   </Text>
                 </TouchableOpacity>
@@ -279,7 +335,11 @@ export const GolfCourseReviewScreen: React.FC = () => {
 
           {/* 정렬 */}
           <View style={styles.sortSection}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sortContent}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.sortContent}
+            >
               <TouchableOpacity
                 style={[styles.sortButton, sortBy === 'recent' && styles.sortButtonActive]}
                 onPress={() => handleSort('recent')}
@@ -318,58 +378,63 @@ export const GolfCourseReviewScreen: React.FC = () => {
                 <Text style={{ fontSize: 15, color: '#999' }}>리뷰가 없습니다</Text>
               </View>
             ) : null}
-            {!loading && filteredReviews.map((review) => (
-              <View key={review.id} style={styles.reviewCard}>
-                <View style={styles.reviewHeader}>
-                  <Image source={{ uri: review.author.image }} style={styles.reviewAuthorImage} />
-                  <View style={styles.reviewAuthorInfo}>
-                    <View style={styles.reviewAuthorRow}>
-                      <Text style={styles.reviewAuthorName}>{review.author.name}</Text>
-                      <View style={styles.handicapBadge}>
-                        <Text style={styles.handicapText}>⛳ {review.author.handicap}</Text>
+            {!loading &&
+              filteredReviews.map((review) => (
+                <View key={review.id} style={styles.reviewCard}>
+                  <View style={styles.reviewHeader}>
+                    <Image source={{ uri: review.author.image }} style={styles.reviewAuthorImage} />
+                    <View style={styles.reviewAuthorInfo}>
+                      <View style={styles.reviewAuthorRow}>
+                        <Text style={styles.reviewAuthorName}>{review.author.name}</Text>
+                        <View style={styles.handicapBadge}>
+                          <Text style={styles.handicapText}>⛳ {review.author.handicap}</Text>
+                        </View>
                       </View>
+                      <Text style={styles.reviewDate}>{review.createdAt}</Text>
                     </View>
-                    <Text style={styles.reviewDate}>{review.createdAt}</Text>
+                    <TouchableOpacity onPress={() => handleReviewMenu(review)}>
+                      <Text style={styles.menuIcon}>⋯</Text>
+                    </TouchableOpacity>
                   </View>
-                  <TouchableOpacity onPress={() => handleReviewMenu(review)}>
-                    <Text style={styles.menuIcon}>⋯</Text>
-                  </TouchableOpacity>
-                </View>
 
-                {/* 평점 */}
-                <View style={styles.ratingRow}>
-                  <Text style={styles.mainRating}>⭐ {review.rating.toFixed(1)}</Text>
-                  <View style={styles.detailRatings}>
-                    <Text style={styles.detailRating}>코스 {review.courseRating}</Text>
-                    <Text style={styles.detailRating}>시설 {review.facilityRating}</Text>
-                    <Text style={styles.detailRating}>서비스 {review.serviceRating}</Text>
+                  {/* 평점 */}
+                  <View style={styles.ratingRow}>
+                    <Text style={styles.mainRating}>⭐ {review.rating.toFixed(1)}</Text>
+                    <View style={styles.detailRatings}>
+                      <Text style={styles.detailRating}>코스 {review.courseRating}</Text>
+                      <Text style={styles.detailRating}>시설 {review.facilityRating}</Text>
+                      <Text style={styles.detailRating}>서비스 {review.serviceRating}</Text>
+                    </View>
+                  </View>
+
+                  {/* 내용 */}
+                  <Text style={styles.reviewContent}>{review.content}</Text>
+
+                  {/* 이미지 */}
+                  {review.images.length > 0 && (
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.reviewImages}
+                    >
+                      {review.images.map((image, index) => (
+                        <Image key={index} source={{ uri: image }} style={styles.reviewImage} />
+                      ))}
+                    </ScrollView>
+                  )}
+
+                  {/* 액션 */}
+                  <View style={styles.reviewActions}>
+                    <TouchableOpacity
+                      style={styles.likeButton}
+                      onPress={() => handleLike(review.id)}
+                    >
+                      <Text style={styles.likeIcon}>{review.isLiked ? '❤️' : '🤍'}</Text>
+                      <Text style={styles.likeText}>{review.likes}</Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
-
-                {/* 내용 */}
-                <Text style={styles.reviewContent}>{review.content}</Text>
-
-                {/* 이미지 */}
-                {review.images.length > 0 && (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reviewImages}>
-                    {review.images.map((image, index) => (
-                      <Image key={index} source={{ uri: image }} style={styles.reviewImage} />
-                    ))}
-                  </ScrollView>
-                )}
-
-                {/* 액션 */}
-                <View style={styles.reviewActions}>
-                  <TouchableOpacity
-                    style={styles.likeButton}
-                    onPress={() => handleLike(review.id)}
-                  >
-                    <Text style={styles.likeIcon}>{review.isLiked ? '❤️' : '🤍'}</Text>
-                    <Text style={styles.likeText}>{review.likes}</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))}
+              ))}
           </View>
 
           {/* 하단 여백 */}
@@ -396,11 +461,9 @@ export const GolfCourseReviewScreen: React.FC = () => {
                 <View style={styles.ratingSection}>
                   <Text style={styles.ratingSectionTitle}>전체 평점</Text>
                   <View style={styles.ratingStars}>
-                    {[1, 2, 3, 4, 5].map(star => (
+                    {[1, 2, 3, 4, 5].map((star) => (
                       <TouchableOpacity key={star} onPress={() => setRating(star)}>
-                        <Text style={styles.ratingStarIcon}>
-                          {star <= rating ? '⭐' : '☆'}
-                        </Text>
+                        <Text style={styles.ratingStarIcon}>{star <= rating ? '⭐' : '☆'}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -411,7 +474,7 @@ export const GolfCourseReviewScreen: React.FC = () => {
                   <View style={styles.detailRatingRow}>
                     <Text style={styles.detailRatingLabel}>코스</Text>
                     <View style={styles.detailRatingStars}>
-                      {[1, 2, 3, 4, 5].map(star => (
+                      {[1, 2, 3, 4, 5].map((star) => (
                         <TouchableOpacity key={star} onPress={() => setCourseRating(star)}>
                           <Text style={styles.detailRatingStarIcon}>
                             {star <= courseRating ? '⭐' : '☆'}
@@ -423,7 +486,7 @@ export const GolfCourseReviewScreen: React.FC = () => {
                   <View style={styles.detailRatingRow}>
                     <Text style={styles.detailRatingLabel}>시설</Text>
                     <View style={styles.detailRatingStars}>
-                      {[1, 2, 3, 4, 5].map(star => (
+                      {[1, 2, 3, 4, 5].map((star) => (
                         <TouchableOpacity key={star} onPress={() => setFacilityRating(star)}>
                           <Text style={styles.detailRatingStarIcon}>
                             {star <= facilityRating ? '⭐' : '☆'}
@@ -435,7 +498,7 @@ export const GolfCourseReviewScreen: React.FC = () => {
                   <View style={styles.detailRatingRow}>
                     <Text style={styles.detailRatingLabel}>서비스</Text>
                     <View style={styles.detailRatingStars}>
-                      {[1, 2, 3, 4, 5].map(star => (
+                      {[1, 2, 3, 4, 5].map((star) => (
                         <TouchableOpacity key={star} onPress={() => setServiceRating(star)}>
                           <Text style={styles.detailRatingStarIcon}>
                             {star <= serviceRating ? '⭐' : '☆'}
@@ -470,7 +533,9 @@ export const GolfCourseReviewScreen: React.FC = () => {
                         <Image source={{ uri: image }} style={styles.previewImage} />
                         <TouchableOpacity
                           style={styles.removeImageButton}
-                          onPress={() => setReviewImages(reviewImages.filter((_, i) => i !== index))}
+                          onPress={() =>
+                            setReviewImages(reviewImages.filter((_, i) => i !== index))
+                          }
                         >
                           <Text style={styles.removeImageText}>✕</Text>
                         </TouchableOpacity>

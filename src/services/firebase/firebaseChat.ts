@@ -2,7 +2,6 @@
 // Firebase Realtime Database 1:1 채팅
 
 import { database, RealtimeTimestamp, handleFirebaseError } from './firebaseConfig';
-import type { FirebaseDatabaseTypes } from '@react-native-firebase/database';
 
 /**
  * 채팅방 인터페이스
@@ -68,7 +67,7 @@ class FirebaseChatService {
     userId1: string,
     userId2: string,
     user1Data: { name: string; photo: string | null },
-    user2Data: { name: string; photo: string | null }
+    user2Data: { name: string; photo: string | null },
   ): Promise<string> {
     try {
       // 채팅방 ID 생성 (항상 같은 순서로)
@@ -103,7 +102,6 @@ class FirebaseChatService {
         };
 
         await roomRef.set(chatRoom);
-
       }
 
       return roomId;
@@ -135,7 +133,7 @@ class FirebaseChatService {
       url: string;
       width: number;
       height: number;
-    }
+    },
   ): Promise<string> {
     try {
       // 새 메시지 참조 생성
@@ -184,11 +182,7 @@ class FirebaseChatService {
    * @param userId - 사용자 ID
    * @param messageId - 메시지 ID
    */
-  async markMessageAsRead(
-    roomId: string,
-    userId: string,
-    messageId: string
-  ): Promise<void> {
+  async markMessageAsRead(roomId: string, userId: string, messageId: string): Promise<void> {
     try {
       const messageRef = database.ref(`messages/${roomId}/${messageId}`);
       const snapshot = await messageRef.once('value');
@@ -217,10 +211,7 @@ class FirebaseChatService {
    * @param roomId - 채팅방 ID
    * @param userId - 사용자 ID
    */
-  async markAllMessagesAsRead(
-    roomId: string,
-    userId: string
-  ): Promise<void> {
+  async markAllMessagesAsRead(roomId: string, userId: string): Promise<void> {
     try {
       // 채팅방의 모든 메시지 가져오기
       const messagesRef = database.ref(`messages/${roomId}`);
@@ -250,7 +241,6 @@ class FirebaseChatService {
 
       // 읽지 않은 메시지 카운트 0으로 설정
       await database.ref(`chatRooms/${roomId}/unreadCount/${userId}`).set(0);
-
     } catch (error) {
       // 에러 무시
     }
@@ -263,12 +253,8 @@ class FirebaseChatService {
    * @param callback - 콜백 함수
    * @returns Unsubscribe function
    */
-  subscribeToChatRooms(
-    userId: string,
-    callback: (rooms: ChatRoom[]) => void
-  ): () => void {
-    const roomsRef = database.ref('chatRooms')
-      .orderByChild('updatedAt');
+  subscribeToChatRooms(userId: string, callback: (rooms: ChatRoom[]) => void): () => void {
+    const roomsRef = database.ref('chatRooms').orderByChild('updatedAt');
 
     const onValueChange = roomsRef.on('value', (snapshot) => {
       const rooms: ChatRoom[] = [];
@@ -307,9 +293,10 @@ class FirebaseChatService {
   subscribeToMessages(
     roomId: string,
     callback: (messages: ChatMessage[]) => void,
-    limit: number = 50
+    limit: number = 50,
   ): () => void {
-    const messagesRef = database.ref(`messages/${roomId}`)
+    const messagesRef = database
+      .ref(`messages/${roomId}`)
       .orderByChild('timestamp')
       .limitToLast(limit);
 
@@ -339,11 +326,7 @@ class FirebaseChatService {
    * @param userId - 사용자 ID
    * @param isTyping - 타이핑 여부
    */
-  async setTypingStatus(
-    roomId: string,
-    userId: string,
-    isTyping: boolean
-  ): Promise<void> {
+  async setTypingStatus(roomId: string, userId: string, isTyping: boolean): Promise<void> {
     try {
       const typingRef = database.ref(`typing/${roomId}/${userId}`);
 
@@ -377,7 +360,7 @@ class FirebaseChatService {
   subscribeToTypingStatus(
     roomId: string,
     currentUserId: string,
-    callback: (isTyping: boolean) => void
+    callback: (isTyping: boolean) => void,
   ): () => void {
     const typingRef = database.ref(`typing/${roomId}`);
 
@@ -387,7 +370,7 @@ class FirebaseChatService {
 
         // 다른 사용자가 타이핑 중인지 확인
         const otherUserTyping = Object.values(typingData).some(
-          (status: any) => status.userId !== currentUserId && status.isTyping
+          (status: any) => status.userId !== currentUserId && status.isTyping,
         );
 
         callback(otherUserTyping);
@@ -417,7 +400,7 @@ class FirebaseChatService {
     senderName: string,
     text: string,
     type: 'text' | 'image',
-    timestamp: number
+    timestamp: number,
   ): Promise<void> {
     try {
       const roomRef = database.ref(`chatRooms/${roomId}`);
@@ -443,10 +426,7 @@ class FirebaseChatService {
    * @param roomId - 채팅방 ID
    * @param senderId - 발신자 ID (제외)
    */
-  private async incrementUnreadCount(
-    roomId: string,
-    senderId: string
-  ): Promise<void> {
+  private async incrementUnreadCount(roomId: string, senderId: string): Promise<void> {
     try {
       const roomRef = database.ref(`chatRooms/${roomId}`);
       const snapshot = await roomRef.once('value');
@@ -489,7 +469,7 @@ class FirebaseChatService {
    * @param roomId - 채팅방 ID
    * @param userId - 사용자 ID
    */
-  async leaveChatRoom(roomId: string, userId: string): Promise<void> {
+  async leaveChatRoom(roomId: string, _userId: string): Promise<void> {
     try {
       // 채팅방 삭제 (2명 모두 나가면 삭제)
       const roomRef = database.ref(`chatRooms/${roomId}`);
@@ -498,7 +478,6 @@ class FirebaseChatService {
       // 메시지도 삭제
       const messagesRef = database.ref(`messages/${roomId}`);
       await messagesRef.remove();
-
     } catch (error) {
       throw new Error(handleFirebaseError(error));
     }
@@ -511,9 +490,10 @@ class FirebaseChatService {
    */
   async deleteOldMessages(roomId: string): Promise<void> {
     try {
-      const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+      const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
 
-      const messagesRef = database.ref(`messages/${roomId}`)
+      const messagesRef = database
+        .ref(`messages/${roomId}`)
         .orderByChild('timestamp')
         .endAt(thirtyDaysAgo);
 
@@ -528,7 +508,6 @@ class FirebaseChatService {
         });
 
         await database.ref(`messages/${roomId}`).update(updates);
-
       }
     } catch (error) {
       // 에러 무시

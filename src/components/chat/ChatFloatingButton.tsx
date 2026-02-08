@@ -7,10 +7,7 @@ interface ChatFloatingButtonProps {
   badge?: number;
 }
 
-export const ChatFloatingButton: React.FC<ChatFloatingButtonProps> = ({
-  onPress,
-  badge,
-}) => {
+export const ChatFloatingButton: React.FC<ChatFloatingButtonProps> = ({ onPress, badge }) => {
   return (
     <TouchableOpacity style={styles.button} onPress={onPress}>
       <Text style={styles.icon}>💬</Text>

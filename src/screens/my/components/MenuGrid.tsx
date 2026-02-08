@@ -19,9 +19,9 @@ const MENUS = [
 export const MenuGrid: React.FC<Props> = ({ onMenuPress }) => (
   <View style={styles.container}>
     <View style={styles.grid}>
-      {MENUS.map(menu => (
-        <TouchableOpacity 
-          key={menu.id} 
+      {MENUS.map((menu) => (
+        <TouchableOpacity
+          key={menu.id}
           style={styles.menuItem}
           onPress={() => onMenuPress(menu.id)}
         >

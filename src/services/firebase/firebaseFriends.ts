@@ -3,6 +3,7 @@
 
 import firestore from '@react-native-firebase/firestore';
 import { FirestoreTimestamp } from './firebaseConfig';
+import { firebaseMessaging } from './firebaseMessaging';
 
 export interface Friend {
   id: string;
@@ -26,14 +27,11 @@ export interface FriendRequest {
 /**
  * 친구 검색 (이름, 위치, 핸디캡)
  */
-export const searchFriends = async (
-  query: string,
-  currentUserId: string,
-): Promise<Friend[]> => {
+export const searchFriends = async (query: string, currentUserId: string): Promise<Friend[]> => {
   try {
     // Firestore는 부분 검색을 직접 지원하지 않으므로
     // 클라이언트 사이드에서 필터링 또는 Algolia 같은 검색 서비스 사용 권장
-    
+
     const snapshot = await firestore()
       .collection('users')
       .where('name', '>=', query)
@@ -42,7 +40,7 @@ export const searchFriends = async (
       .get();
 
     const friends: Friend[] = [];
-    
+
     for (const doc of snapshot.docs) {
       const data = doc.data();
       if (doc.id !== currentUserId) {
@@ -52,7 +50,7 @@ export const searchFriends = async (
           avatar: data.avatar || 'https://i.pravatar.cc/150',
           handicap: data.handicap || 0,
           location: data.location || '미등록',
-          mutualFriends: 0, // TODO: 공통 친구 수 계산
+          mutualFriends: 0, // 공통 친구 수: 성능상 목록 조회에서는 0으로 두고, 프로필 상세에서 개별 계산
           status: 'pending',
           createdAt: data.createdAt || FirestoreTimestamp.now(),
         });
@@ -89,18 +87,30 @@ export const sendFriendRequest = async (
 
     // 친구 요청 생성
     const requestId = `${fromUserId}_${toUserId}`;
-    await firestore()
-      .collection('friendRequests')
-      .doc(requestId)
-      .set({
-        fromUserId,
-        toUserId,
-        status: 'pending',
-        createdAt: FirestoreTimestamp.now(),
-      });
+    await firestore().collection('friendRequests').doc(requestId).set({
+      fromUserId,
+      toUserId,
+      status: 'pending',
+      createdAt: FirestoreTimestamp.now(),
+    });
 
-    // 상대방에게 알림 발송 (TODO: Firebase Cloud Messaging)
-    
+    // 상대방에게 알림 발송
+    try {
+      // 요청자 이름 조회
+      const fromUserDoc = await firestore().collection('users').doc(fromUserId).get();
+      const fromUserName = fromUserDoc.data()?.name || fromUserDoc.data()?.displayName || '누군가';
+
+      await firebaseMessaging.createNotification(
+        toUserId,
+        'friend_request',
+        '새 친구 요청',
+        `${fromUserName}님이 친구 요청을 보냈습니다.`,
+        { fromUserId },
+      );
+    } catch {
+      // 알림 전송 실패 시 요청 처리에 영향 없음
+    }
+
     return {
       success: true,
       message: '친구 요청을 보냈습니다!',
@@ -124,34 +134,25 @@ export const acceptFriendRequest = async (
 ): Promise<{ success: boolean; message: string }> => {
   try {
     // 친구 요청 상태 업데이트
-    await firestore()
-      .collection('friendRequests')
-      .doc(requestId)
-      .update({
-        status: 'accepted',
-        acceptedAt: FirestoreTimestamp.now(),
-      });
+    await firestore().collection('friendRequests').doc(requestId).update({
+      status: 'accepted',
+      acceptedAt: FirestoreTimestamp.now(),
+    });
 
     // 양방향 친구 관계 생성
     const batch = firestore().batch();
 
-    batch.set(
-      firestore().collection('friends').doc(`${fromUserId}_${toUserId}`),
-      {
-        userId: fromUserId,
-        friendId: toUserId,
-        createdAt: FirestoreTimestamp.now(),
-      },
-    );
+    batch.set(firestore().collection('friends').doc(`${fromUserId}_${toUserId}`), {
+      userId: fromUserId,
+      friendId: toUserId,
+      createdAt: FirestoreTimestamp.now(),
+    });
 
-    batch.set(
-      firestore().collection('friends').doc(`${toUserId}_${fromUserId}`),
-      {
-        userId: toUserId,
-        friendId: fromUserId,
-        createdAt: FirestoreTimestamp.now(),
-      },
-    );
+    batch.set(firestore().collection('friends').doc(`${toUserId}_${fromUserId}`), {
+      userId: toUserId,
+      friendId: fromUserId,
+      createdAt: FirestoreTimestamp.now(),
+    });
 
     await batch.commit();
 
@@ -190,13 +191,10 @@ export const rejectFriendRequest = async (
   requestId: string,
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    await firestore()
-      .collection('friendRequests')
-      .doc(requestId)
-      .update({
-        status: 'rejected',
-        rejectedAt: FirestoreTimestamp.now(),
-      });
+    await firestore().collection('friendRequests').doc(requestId).update({
+      status: 'rejected',
+      rejectedAt: FirestoreTimestamp.now(),
+    });
 
     return {
       success: true,
@@ -216,10 +214,7 @@ export const rejectFriendRequest = async (
  */
 export const getFriendsList = async (userId: string): Promise<Friend[]> => {
   try {
-    const snapshot = await firestore()
-      .collection('friends')
-      .where('userId', '==', userId)
-      .get();
+    const snapshot = await firestore().collection('friends').where('userId', '==', userId).get();
 
     const friendIds = snapshot.docs.map((doc) => doc.data().friendId);
 
@@ -230,7 +225,7 @@ export const getFriendsList = async (userId: string): Promise<Friend[]> => {
     // Firestore의 'in' 쿼리는 최대 10개까지만 지원
     // 10개 이상인 경우 분할 쿼리 필요
     const friends: Friend[] = [];
-    
+
     for (let i = 0; i < friendIds.length; i += 10) {
       const batch = friendIds.slice(i, i + 10);
       const usersSnapshot = await firestore()
@@ -311,10 +306,7 @@ export const cancelFriendRequest = async (
   requestId: string,
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    await firestore()
-      .collection('friendRequests')
-      .doc(requestId)
-      .delete();
+    await firestore().collection('friendRequests').doc(requestId).delete();
 
     return {
       success: true,
@@ -342,10 +334,7 @@ export const getFriendProfile = async (
 } | null> => {
   try {
     // 사용자 프로필 조회
-    const userDoc = await firestore()
-      .collection('users')
-      .doc(friendId)
-      .get();
+    const userDoc = await firestore().collection('users').doc(friendId).get();
 
     if (!userDoc.exists) {
       return null;
@@ -391,9 +380,11 @@ export const getFriendProfile = async (
           averageScore: profileData?.stats?.averageScore || 0,
         },
       },
-      friendshipInfo: friendshipInfo ? {
-        friendsSince: friendshipInfo.createdAt?.toDate?.() || null,
-      } : null,
+      friendshipInfo: friendshipInfo
+        ? {
+            friendsSince: friendshipInfo.createdAt?.toDate?.() || null,
+          }
+        : null,
       recentMeetups: recentMeetups.map((m: any) => ({
         id: m.id,
         title: m.title || '모임',

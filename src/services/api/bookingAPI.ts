@@ -9,8 +9,6 @@ import {
   BookingFilter,
   BookingSortType,
   CreateBookingRequest,
-  JoinBookingRequest,
-  SkillLevel,
 } from '@/types/booking-types';
 
 /**
@@ -21,9 +19,9 @@ const APPLICATIONS_COLLECTION = 'applications';
 
 /**
  * 부킹 API
- * 
+ *
  * Firebase Firestore 구조:
- * 
+ *
  * bookings/
  *   {bookingId}/
  *     - title, golfCourse, date, time, etc.
@@ -34,7 +32,7 @@ const APPLICATIONS_COLLECTION = 'applications';
 export const bookingAPI = {
   /**
    * 부킹 생성
-   * 
+   *
    * @param data 부킹 생성 데이터
    * @returns 생성된 부킹
    */
@@ -66,9 +64,7 @@ export const bookingAPI = {
         updatedAt: firestore.FieldValue.serverTimestamp(),
       };
 
-      const docRef = await firestore()
-        .collection(BOOKINGS_COLLECTION)
-        .add(bookingData);
+      const docRef = await firestore().collection(BOOKINGS_COLLECTION).add(bookingData);
 
       const newBooking = {
         id: docRef.id,
@@ -86,7 +82,7 @@ export const bookingAPI = {
 
   /**
    * 부킹 목록 조회 (필터 + 정렬)
-   * 
+   *
    * @param filter 필터 옵션
    * @param sortBy 정렬 방식
    * @param limit 결과 개수
@@ -95,7 +91,7 @@ export const bookingAPI = {
   getBookings: async (
     filter?: BookingFilter,
     sortBy: BookingSortType = 'latest',
-    limit: number = 20
+    limit: number = 20,
   ): Promise<Booking[]> => {
     try {
       let query = firestore().collection(BOOKINGS_COLLECTION) as any;
@@ -185,7 +181,9 @@ export const bookingAPI = {
       let filteredBookings = bookings;
       if (filter?.priceRange) {
         filteredBookings = bookings.filter(
-          (b) => b.price.original >= filter.priceRange!.min && b.price.original <= filter.priceRange!.max
+          (b) =>
+            b.price.original >= filter.priceRange!.min &&
+            b.price.original <= filter.priceRange!.max,
         );
       }
 
@@ -198,16 +196,13 @@ export const bookingAPI = {
 
   /**
    * 부킹 상세 조회
-   * 
+   *
    * @param bookingId 부킹 ID
    * @returns 부킹 상세
    */
   getBookingById: async (bookingId: string): Promise<Booking | null> => {
     try {
-      const doc = await firestore()
-        .collection(BOOKINGS_COLLECTION)
-        .doc(bookingId)
-        .get();
+      const doc = await firestore().collection(BOOKINGS_COLLECTION).doc(bookingId).get();
 
       if (!doc.exists) {
         return null;
@@ -229,14 +224,14 @@ export const bookingAPI = {
 
   /**
    * 부킹 수정
-   * 
+   *
    * @param bookingId 부킹 ID
    * @param data 수정할 데이터
    * @returns 수정된 부킹
    */
   updateBooking: async (
     bookingId: string,
-    data: Partial<CreateBookingRequest>
+    data: Partial<CreateBookingRequest>,
   ): Promise<Booking> => {
     try {
       const currentUser = auth().currentUser;
@@ -245,10 +240,7 @@ export const bookingAPI = {
       }
 
       // 호스트 확인
-      const bookingDoc = await firestore()
-        .collection(BOOKINGS_COLLECTION)
-        .doc(bookingId)
-        .get();
+      const bookingDoc = await firestore().collection(BOOKINGS_COLLECTION).doc(bookingId).get();
 
       if (!bookingDoc.exists) {
         throw new Error('부킹을 찾을 수 없습니다.');
@@ -280,7 +272,7 @@ export const bookingAPI = {
 
   /**
    * 부킹 삭제
-   * 
+   *
    * @param bookingId 부킹 ID
    */
   deleteBooking: async (bookingId: string): Promise<void> => {
@@ -291,10 +283,7 @@ export const bookingAPI = {
       }
 
       // 호스트 확인
-      const bookingDoc = await firestore()
-        .collection(BOOKINGS_COLLECTION)
-        .doc(bookingId)
-        .get();
+      const bookingDoc = await firestore().collection(BOOKINGS_COLLECTION).doc(bookingId).get();
 
       if (!bookingDoc.exists) {
         throw new Error('부킹을 찾을 수 없습니다.');
@@ -306,11 +295,7 @@ export const bookingAPI = {
       }
 
       // 삭제
-      await firestore()
-        .collection(BOOKINGS_COLLECTION)
-        .doc(bookingId)
-        .delete();
-
+      await firestore().collection(BOOKINGS_COLLECTION).doc(bookingId).delete();
     } catch (error: any) {
       console.error('❌ 부킹 삭제 실패:', error);
       throw new Error(error.message || '부킹 삭제에 실패했습니다.');
@@ -319,7 +304,7 @@ export const bookingAPI = {
 
   /**
    * 부킹 참가 신청
-   * 
+   *
    * @param bookingId 부킹 ID
    * @param message 신청 메시지 (선택)
    * @returns 신청 ID
@@ -332,10 +317,7 @@ export const bookingAPI = {
       }
 
       // 부킹 존재 확인
-      const bookingDoc = await firestore()
-        .collection(BOOKINGS_COLLECTION)
-        .doc(bookingId)
-        .get();
+      const bookingDoc = await firestore().collection(BOOKINGS_COLLECTION).doc(bookingId).get();
 
       if (!bookingDoc.exists) {
         throw new Error('부킹을 찾을 수 없습니다.');
@@ -390,7 +372,7 @@ export const bookingAPI = {
 
   /**
    * 신청자 승인
-   * 
+   *
    * @param bookingId 부킹 ID
    * @param applicationId 신청 ID
    */
@@ -402,10 +384,7 @@ export const bookingAPI = {
       }
 
       // 호스트 확인
-      const bookingDoc = await firestore()
-        .collection(BOOKINGS_COLLECTION)
-        .doc(bookingId)
-        .get();
+      const bookingDoc = await firestore().collection(BOOKINGS_COLLECTION).doc(bookingId).get();
 
       if (!bookingDoc.exists) {
         throw new Error('부킹을 찾을 수 없습니다.');
@@ -448,7 +427,7 @@ export const bookingAPI = {
         {
           status: 'accepted',
           acceptedAt: firestore.FieldValue.serverTimestamp(),
-        }
+        },
       );
 
       // 부킹 참가자 추가
@@ -459,8 +438,7 @@ export const bookingAPI = {
           name: application?.userName,
           avatar: application?.userAvatar,
         }),
-        status:
-          booking.currentPlayers + 1 >= booking.maxPlayers ? 'full' : booking.status,
+        status: booking.currentPlayers + 1 >= booking.maxPlayers ? 'full' : booking.status,
         updatedAt: firestore.FieldValue.serverTimestamp(),
       });
 
@@ -473,7 +451,7 @@ export const bookingAPI = {
 
   /**
    * 신청자 거절
-   * 
+   *
    * @param bookingId 부킹 ID
    * @param applicationId 신청 ID
    */
@@ -485,10 +463,7 @@ export const bookingAPI = {
       }
 
       // 호스트 확인
-      const bookingDoc = await firestore()
-        .collection(BOOKINGS_COLLECTION)
-        .doc(bookingId)
-        .get();
+      const bookingDoc = await firestore().collection(BOOKINGS_COLLECTION).doc(bookingId).get();
 
       if (!bookingDoc.exists) {
         throw new Error('부킹을 찾을 수 없습니다.');
@@ -509,7 +484,6 @@ export const bookingAPI = {
           status: 'rejected',
           rejectedAt: firestore.FieldValue.serverTimestamp(),
         });
-
     } catch (error: any) {
       console.error('❌ 신청자 거절 실패:', error);
       throw new Error(error.message || '신청자 거절에 실패했습니다.');
@@ -518,7 +492,7 @@ export const bookingAPI = {
 
   /**
    * 내가 만든 부킹 목록
-   * 
+   *
    * @returns 내 부킹 목록
    */
   getMyBookings: async (): Promise<Booking[]> => {
@@ -550,10 +524,10 @@ export const bookingAPI = {
 
   /**
    * 내가 신청한 부킹 목록
-   * 
+   *
    * @returns 신청한 부킹 목록 (부킹 정보 + 신청 상태)
    */
-  getMyApplications: async (): Promise<Array<Booking & { applicationStatus: string }>> => {
+  getMyApplications: async (): Promise<(Booking & { applicationStatus: string })[]> => {
     try {
       const currentUser = auth().currentUser;
       if (!currentUser) {
@@ -561,9 +535,7 @@ export const bookingAPI = {
       }
 
       // 모든 부킹의 신청 내역 조회
-      const bookingsSnapshot = await firestore()
-        .collection(BOOKINGS_COLLECTION)
-        .get();
+      const bookingsSnapshot = await firestore().collection(BOOKINGS_COLLECTION).get();
 
       const applicationsPromises = bookingsSnapshot.docs.map(async (bookingDoc) => {
         const applicationSnapshot = await firestore()
@@ -582,16 +554,18 @@ export const bookingAPI = {
           booking: {
             id: bookingDoc.id,
             ...bookingDoc.data(),
-            createdAt: bookingDoc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
-            updatedAt: bookingDoc.data().updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+            createdAt:
+              bookingDoc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+            updatedAt:
+              bookingDoc.data().updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
           } as Booking,
           applicationStatus: application.data().status,
         };
       });
 
       const applications = (await Promise.all(applicationsPromises)).filter(
-        (app) => app !== null
-      ) as Array<{ booking: Booking; applicationStatus: string }>;
+        (app) => app !== null,
+      ) as { booking: Booking; applicationStatus: string }[];
 
       const result = applications.map((app) => ({
         ...app.booking,

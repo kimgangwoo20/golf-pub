@@ -16,7 +16,13 @@ export const HomeHeader: React.FC = () => (
 );
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, backgroundColor: '#fff' },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#fff',
+  },
   logo: { fontSize: 20, fontWeight: 'bold', color: '#10b981' },
   actions: { flexDirection: 'row', gap: 12 },
   iconButton: { padding: 8 },

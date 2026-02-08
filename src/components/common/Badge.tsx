@@ -54,8 +54,8 @@ export const Badge: React.FC<BadgeProps> = ({
     return size === 'small'
       ? { paddingHorizontal: 4, paddingVertical: 2, minWidth: 16 }
       : size === 'large'
-      ? { paddingHorizontal: 10, paddingVertical: 4, minWidth: 28 }
-      : { paddingHorizontal: 6, paddingVertical: 2, minWidth: 20 };
+        ? { paddingHorizontal: 10, paddingVertical: 4, minWidth: 28 }
+        : { paddingHorizontal: 6, paddingVertical: 2, minWidth: 20 };
   };
 
   // 텍스트 크기

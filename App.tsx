@@ -86,6 +86,7 @@ import { NotificationListScreen } from './src/screens/notification/NotificationL
 import { GolfCourseSearchScreen } from './src/screens/golfcourse/GolfCourseSearchScreen';
 import { GolfCourseDetailScreen } from './src/screens/golfcourse/GolfCourseDetailScreen';
 import { GolfCourseReviewScreen } from './src/screens/golfcourse/GolfCourseReviewScreen';
+import { WriteReviewScreen } from './src/screens/golfcourse/WriteReviewScreen';
 
 // 펍 화면들
 import { BestPubsScreen } from './src/screens/pub/BestPubsScreen';
@@ -200,6 +201,7 @@ const GolfCourseStackNavigator = () => (
     <GolfCourseStack.Screen name="GolfCourseSearch" component={GolfCourseSearchScreen} />
     <GolfCourseStack.Screen name="GolfCourseDetail" component={GolfCourseDetailScreen} />
     <GolfCourseStack.Screen name="GolfCourseReview" component={GolfCourseReviewScreen as any} />
+    <GolfCourseStack.Screen name="WriteReview" component={WriteReviewScreen} />
     <GolfCourseStack.Screen name="BestPubs" component={BestPubsScreen} />
     <GolfCourseStack.Screen name="PubDetail" component={PubDetailScreen} />
     <GolfCourseStack.Screen name="PubReviews" component={PubReviewsScreen} />

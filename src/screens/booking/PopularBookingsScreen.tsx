@@ -94,7 +94,7 @@ export const PopularBookingsScreen: React.FC = () => {
       <FlatList
         data={bookings}
         renderItem={renderBooking}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl

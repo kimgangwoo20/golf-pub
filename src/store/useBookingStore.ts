@@ -37,7 +37,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
         .limit(50)
         .get();
 
-      const bookings = snapshot.docs.map(doc => ({
+      const bookings = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate(),
@@ -75,14 +75,14 @@ export const useBookingStore = create<BookingState>((set, get) => ({
         .orderBy('createdAt', 'desc')
         .get();
 
-      const hostBookings = hostSnapshot.docs.map(doc => ({
+      const hostBookings = hostSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate(),
         updatedAt: doc.data().updatedAt?.toDate(),
       })) as Booking[];
 
-      const participantBookings = participantSnapshot.docs.map(doc => ({
+      const participantBookings = participantSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate(),
@@ -91,8 +91,8 @@ export const useBookingStore = create<BookingState>((set, get) => ({
 
       // 중복 제거 (호스트이면서 참여자인 경우)
       const uniqueBookings = [...hostBookings];
-      participantBookings.forEach(booking => {
-        if (!uniqueBookings.find(b => b.id === booking.id)) {
+      participantBookings.forEach((booking) => {
+        if (!uniqueBookings.find((b) => b.id === booking.id)) {
           uniqueBookings.push(booking);
         }
       });
@@ -149,10 +149,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       // 로컬 상태 업데이트
       const { bookings } = get();
       set({
-        bookings: [
-          { id: docRef.id, ...newBooking } as Booking,
-          ...bookings,
-        ],
+        bookings: [{ id: docRef.id, ...newBooking } as Booking, ...bookings],
         loading: false,
       });
     } catch (error: any) {
@@ -172,16 +169,19 @@ export const useBookingStore = create<BookingState>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      await firebaseFirestore.collection('bookings').doc(id).update({
-        ...data,
-        updatedAt: new Date(),
-      });
+      await firebaseFirestore
+        .collection('bookings')
+        .doc(id)
+        .update({
+          ...data,
+          updatedAt: new Date(),
+        });
 
       // 로컬 상태 업데이트
       const { bookings } = get();
       set({
-        bookings: bookings.map(booking =>
-          booking.id === id ? { ...booking, ...data } : booking
+        bookings: bookings.map((booking) =>
+          booking.id === id ? { ...booking, ...data } : booking,
         ),
         loading: false,
       });
@@ -207,7 +207,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       // 로컬 상태 업데이트
       const { bookings } = get();
       set({
-        bookings: bookings.filter(booking => booking.id !== id),
+        bookings: bookings.filter((booking) => booking.id !== id),
         loading: false,
       });
     } catch (error: any) {
@@ -242,7 +242,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       }
 
       // 이미 참가했는지 확인
-      if (bookingData.participants.members.some(m => m.uid === userId)) {
+      if (bookingData.participants.members.some((m) => m.uid === userId)) {
         throw new Error('이미 참가한 부킹입니다');
       }
 
@@ -259,7 +259,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       // 로컬 상태 업데이트
       const { bookings } = get();
       set({
-        bookings: bookings.map(b =>
+        bookings: bookings.map((b) =>
           b.id === bookingId
             ? {
                 ...b,
@@ -272,7 +272,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
                   ],
                 },
               }
-            : b
+            : b,
         ),
         loading: false,
       });
@@ -310,24 +310,24 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       // Firestore 업데이트
       await bookingRef.update({
         'participants.current': Math.max(1, bookingData.participants.current - 1),
-        'participants.members': bookingData.participants.members.filter(m => m.uid !== userId),
+        'participants.members': bookingData.participants.members.filter((m) => m.uid !== userId),
         updatedAt: new Date(),
       });
 
       // 로컬 상태 업데이트
       const { bookings } = get();
       set({
-        bookings: bookings.map(b =>
+        bookings: bookings.map((b) =>
           b.id === bookingId
             ? {
                 ...b,
                 participants: {
                   ...b.participants,
                   current: Math.max(1, b.participants.current - 1),
-                  members: b.participants.members.filter(m => m.uid !== userId),
+                  members: b.participants.members.filter((m) => m.uid !== userId),
                 },
               }
-            : b
+            : b,
         ),
         loading: false,
       });

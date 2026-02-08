@@ -55,8 +55,8 @@ export const FriendsScreen: React.FC = () => {
     setRefreshing(false);
   }, [loadFriends]);
 
-  const filteredFriends = friends.filter(friend =>
-    friend.name.toLowerCase().includes(searchText.toLowerCase())
+  const filteredFriends = friends.filter((friend) =>
+    friend.name.toLowerCase().includes(searchText.toLowerCase()),
   );
 
   const handleFriendPress = (friendId: string) => {
@@ -177,9 +177,7 @@ export const FriendsScreen: React.FC = () => {
                     </View>
                     <Text style={styles.friendLocation}>📍 {friend.location}</Text>
                     {friend.mutualFriends > 0 && (
-                      <Text style={styles.mutualFriends}>
-                        공통 친구 {friend.mutualFriends}명
-                      </Text>
+                      <Text style={styles.mutualFriends}>공통 친구 {friend.mutualFriends}명</Text>
                     )}
                   </View>
 
@@ -188,9 +186,7 @@ export const FriendsScreen: React.FC = () => {
               ))
             ) : (
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>
-                  {searchText ? '🔍' : '👥'}
-                </Text>
+                <Text style={styles.emptyText}>{searchText ? '🔍' : '👥'}</Text>
                 <Text style={styles.emptyTitle}>
                   {searchText ? '검색 결과가 없습니다' : '아직 친구가 없습니다'}
                 </Text>

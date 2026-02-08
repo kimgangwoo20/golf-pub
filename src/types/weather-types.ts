@@ -2,24 +2,24 @@
 // weatherAPI.ts와 WeatherWidget.tsx 연동용 타입 정의
 
 export interface Weather {
-  temp: string;              // 온도 (예: "23.5°C")
-  sky: string;               // 하늘 상태 (예: "맑음", "구름많음", "흐림", "비")
-  wind: string;              // 풍속 (예: "3.2m/s")
-  humidity: string;          // 습도 (예: "65%")
-  precipitation: string;     // 강수량 (예: "0mm", "5.2mm")
+  temp: string; // 온도 (예: "23.5°C")
+  sky: string; // 하늘 상태 (예: "맑음", "구름많음", "흐림", "비")
+  wind: string; // 풍속 (예: "3.2m/s")
+  humidity: string; // 습도 (예: "65%")
+  precipitation: string; // 강수량 (예: "0mm", "5.2mm")
   golfScore: {
-    score: number;           // 골프 적합도 점수 (0~100)
-    recommendation: string;  // 추천 메시지
+    score: number; // 골프 적합도 점수 (0~100)
+    recommendation: string; // 추천 메시지
   };
 }
 
 export interface WeatherForecast {
-  date: string;              // 날짜 (YYYY-MM-DD)
-  tempMax: string;           // 최고기온 (예: "25°C")
-  tempMin: string;           // 최저기온 (예: "15°C")
-  sky: string;               // 하늘상태
-  precipitation: string;     // 강수확률 (예: "30%")
-  golfScore: number;         // 골프 적합도 점수
+  date: string; // 날짜 (YYYY-MM-DD)
+  tempMax: string; // 최고기온 (예: "25°C")
+  tempMin: string; // 최저기온 (예: "15°C")
+  sky: string; // 하늘상태
+  precipitation: string; // 강수확률 (예: "30%")
+  golfScore: number; // 골프 적합도 점수
 }
 
 // GPS 좌표 타입

@@ -30,7 +30,7 @@ interface ChatScreenProps {
 }
 
 export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => {
-  const { roomId, chatName, roomType = 'direct' } = route.params;
+  const { roomId, chatName, roomType: _roomType = 'direct' } = route.params;
   const { user } = useAuthStore();
   const {
     currentRoomMessages,
@@ -38,9 +38,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
     sendImage,
     markAsRead,
     listenToMessages,
-    loading,
+    loading: _loading,
   } = useChatStore();
-  const insets = useSafeAreaInsets();
+  const _insets = useSafeAreaInsets();
 
   const [message, setMessage] = useState('');
   const flatListRef = useRef<FlatList>(null);
@@ -49,7 +49,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
   useEffect(() => {
     if (!roomId) return;
 
-    const unsubscribe = listenToMessages(roomId, (messages) => {
+    const unsubscribe = listenToMessages(roomId, (_messages) => {
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
@@ -86,7 +86,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
           user.uid,
           user.displayName || '익명',
           uploadResult.url,
-          user.photoURL || undefined
+          user.photoURL || undefined,
         );
 
         setTimeout(() => {
@@ -108,7 +108,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
         user.uid,
         user.displayName || '익명',
         message.trim(),
-        user.photoURL || undefined
+        user.photoURL || undefined,
       );
       setMessage('');
 
@@ -134,27 +134,16 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
     }
 
     return (
-      <View
-        style={[
-          styles.messageContainer,
-          isMyMessage ? styles.myMessage : styles.otherMessage,
-        ]}
-      >
+      <View style={[styles.messageContainer, isMyMessage ? styles.myMessage : styles.otherMessage]}>
         {!isMyMessage && item.senderAvatar && (
           <Image source={{ uri: item.senderAvatar }} style={styles.avatar} />
         )}
 
         <View style={[styles.messageBubble, isMyMessage && styles.myBubble]}>
-          {!isMyMessage && (
-            <Text style={styles.senderName}>{item.senderName}</Text>
-          )}
+          {!isMyMessage && <Text style={styles.senderName}>{item.senderName}</Text>}
 
           {item.type === 'image' && item.imageUrl ? (
-            <Image
-              source={{ uri: item.imageUrl }}
-              style={styles.messageImage}
-              resizeMode="cover"
-            />
+            <Image source={{ uri: item.imageUrl }} style={styles.messageImage} resizeMode="cover" />
           ) : (
             <Text
               style={[
@@ -185,7 +174,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle} numberOfLines={1}>{chatName || '채팅'}</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            {chatName || '채팅'}
+          </Text>
           <View style={{ width: 36 }} />
         </View>
 
@@ -201,9 +192,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
             renderItem={renderMessage}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.messageList}
-            onContentSizeChange={() =>
-              flatListRef.current?.scrollToEnd({ animated: true })
-            }
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
           />
 
           {/* 입력창 */}

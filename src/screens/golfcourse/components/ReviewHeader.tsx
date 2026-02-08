@@ -11,7 +11,9 @@ export const ReviewHeader: React.FC<Props> = ({ courseName, onBack }) => (
     <TouchableOpacity onPress={onBack} style={styles.backButton}>
       <Text style={styles.backIcon}>←</Text>
     </TouchableOpacity>
-    <Text style={styles.title} numberOfLines={1}>{courseName} 리뷰</Text>
+    <Text style={styles.title} numberOfLines={1}>
+      {courseName} 리뷰
+    </Text>
     <View style={styles.placeholder} />
   </View>
 );

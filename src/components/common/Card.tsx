@@ -8,25 +8,14 @@ interface CardProps {
   variant?: 'default' | 'elevated' | 'outlined';
 }
 
-export const Card: React.FC<CardProps> = ({ 
-  children, 
-  style, 
+export const Card: React.FC<CardProps> = ({
+  children,
+  style,
   padding = 16,
   variant = 'default',
 }) => {
-  return (
-    <View 
-      style={[
-        styles.card,
-        styles[variant],
-        { padding },
-        style,
-      ]}
-    >
-      {children}
-    </View>
-  );
-}
+  return <View style={[styles.card, styles[variant], { padding }, style]}>{children}</View>;
+};
 
 const styles = StyleSheet.create({
   card: {

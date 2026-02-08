@@ -20,10 +20,8 @@ export const MembershipPlanScreen: React.FC = () => {
       return;
     }
 
-    const plan = MEMBERSHIP_PLANS.find(p => p.type === selectedPlan);
-    const price = billingCycle === BillingCycle.MONTHLY 
-      ? plan?.monthlyPrice 
-      : plan?.yearlyPrice;
+    const plan = MEMBERSHIP_PLANS.find((p) => p.type === selectedPlan);
+    const price = billingCycle === BillingCycle.MONTHLY ? plan?.monthlyPrice : plan?.yearlyPrice;
 
     (navigation as any).navigate('MembershipPayment', {
       plan: selectedPlan,
@@ -33,7 +31,7 @@ export const MembershipPlanScreen: React.FC = () => {
   };
 
   const getPrice = () => {
-    const plan = MEMBERSHIP_PLANS.find(p => p.type === selectedPlan);
+    const plan = MEMBERSHIP_PLANS.find((p) => p.type === selectedPlan);
     if (!plan) return 0;
     return billingCycle === BillingCycle.MONTHLY ? plan.monthlyPrice : plan.yearlyPrice;
   };
@@ -95,9 +93,7 @@ export const MembershipPlanScreen: React.FC = () => {
         </View>
 
         <View style={styles.infoBox}>
-          <Text style={styles.infoText}>
-            💡 언제든지 플랜 변경 및 해지가 가능합니다
-          </Text>
+          <Text style={styles.infoText}>💡 언제든지 플랜 변경 및 해지가 가능합니다</Text>
         </View>
       </ScrollView>
 
@@ -106,9 +102,7 @@ export const MembershipPlanScreen: React.FC = () => {
           <Text style={styles.priceLabel}>
             {billingCycle === BillingCycle.MONTHLY ? '월' : '연'} 결제 금액
           </Text>
-          <Text style={styles.priceValue}>
-            {getPrice().toLocaleString()}원
-          </Text>
+          <Text style={styles.priceValue}>{getPrice().toLocaleString()}원</Text>
         </View>
         <TouchableOpacity style={styles.button} onPress={handleContinue}>
           <Text style={styles.buttonText}>계속하기</Text>
@@ -116,7 +110,7 @@ export const MembershipPlanScreen: React.FC = () => {
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {

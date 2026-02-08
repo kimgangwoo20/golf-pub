@@ -1,5 +1,8 @@
 import { create } from 'zustand';
-import { firestore as firebaseFirestore, storage as firebaseStorage } from '@/services/firebase/firebaseConfig';
+import {
+  firestore as firebaseFirestore,
+  storage as firebaseStorage,
+} from '@/services/firebase/firebaseConfig';
 
 export interface UserProfile {
   uid: string;
@@ -73,10 +76,13 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      await firebaseFirestore.collection('users').doc(uid).update({
-        ...data,
-        updatedAt: new Date(),
-      });
+      await firebaseFirestore
+        .collection('users')
+        .doc(uid)
+        .update({
+          ...data,
+          updatedAt: new Date(),
+        });
 
       const { profile } = get();
       if (profile) {
@@ -137,7 +143,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     try {
       const userRef = firebaseFirestore.collection('users').doc(uid);
 
-      await firebaseFirestore.runTransaction(async transaction => {
+      await firebaseFirestore.runTransaction(async (transaction) => {
         const userDoc = await transaction.get(userRef);
 
         if (!userDoc.exists) {
@@ -182,7 +188,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     try {
       const userRef = firebaseFirestore.collection('users').doc(uid);
 
-      await firebaseFirestore.runTransaction(async transaction => {
+      await firebaseFirestore.runTransaction(async (transaction) => {
         const userDoc = await transaction.get(userRef);
 
         if (!userDoc.exists) {

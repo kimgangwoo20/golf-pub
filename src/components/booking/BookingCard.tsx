@@ -31,19 +31,11 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onPress, onJo
   const isFull = booking.participants.current >= booking.participants.max;
 
   return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={onPress}
-      activeOpacity={0.8}
-      disabled={isFull}
-    >
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8} disabled={isFull}>
       {/* 헤더 */}
       <View style={styles.header}>
         <View style={styles.hostInfo}>
-          <Image
-            source={{ uri: booking.host.avatar }}
-            style={styles.avatar}
-          />
+          <Image source={{ uri: booking.host.avatar }} style={styles.avatar} />
           <View style={styles.hostDetails}>
             <Text style={styles.hostName}>{booking.host.name}</Text>
             <View style={styles.ratingContainer}>
@@ -107,13 +99,10 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onPress, onJo
       <View style={styles.footer}>
         <View>
           {booking.price.original > booking.price.discount && (
-            <Text style={styles.originalPrice}>
-              {booking.price.original.toLocaleString()}원
-            </Text>
+            <Text style={styles.originalPrice}>{booking.price.original.toLocaleString()}원</Text>
           )}
           <Text style={styles.price}>
-            {booking.price.discount.toLocaleString()}원
-            <Text style={styles.priceUnit}>/인</Text>
+            {booking.price.discount.toLocaleString()}원<Text style={styles.priceUnit}>/인</Text>
           </Text>
         </View>
 
@@ -134,10 +123,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onPress, onJo
               }}
               activeOpacity={0.8}
             >
-              <LinearGradient
-                colors={[colors.primary, colors.primaryDark]}
-                style={styles.joinBtn}
-              >
+              <LinearGradient colors={[colors.primary, colors.primaryDark]} style={styles.joinBtn}>
                 <Text style={styles.joinBtnText}>참가하기</Text>
               </LinearGradient>
             </TouchableOpacity>

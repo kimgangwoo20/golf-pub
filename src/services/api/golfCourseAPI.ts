@@ -3,6 +3,7 @@
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { GolfCourseReview } from '@/types/golfcourse-types';
+import { useAuthStore } from '@/store/useAuthStore';
 
 const GOLF_COURSE_REVIEWS_COLLECTION = 'golf_course_reviews';
 
@@ -12,7 +13,7 @@ export const golfCourseAPI = {
    */
   getGolfCourseReviews: async (
     courseId: number | string,
-    limit: number = 20
+    limit: number = 20,
   ): Promise<GolfCourseReview[]> => {
     try {
       const snapshot = await firestore()
@@ -22,7 +23,7 @@ export const golfCourseAPI = {
         .limit(limit)
         .get();
 
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -57,7 +58,7 @@ export const golfCourseAPI = {
       serviceRating: number;
       content: string;
       images: string[];
-    }
+    },
   ): Promise<string> => {
     try {
       const currentUser = auth().currentUser;
@@ -71,7 +72,7 @@ export const golfCourseAPI = {
           id: currentUser.uid,
           name: currentUser.displayName || '익명',
           image: currentUser.photoURL || '',
-          handicap: 18, // TODO: 사용자 프로필에서 핸디캡 가져오기
+          handicap: (useAuthStore.getState() as any).userProfile?.handicap || 18,
         },
         ...reviewData,
         likes: 0,
@@ -79,9 +80,7 @@ export const golfCourseAPI = {
         createdAt: firestore.FieldValue.serverTimestamp(),
       };
 
-      const docRef = await firestore()
-        .collection(GOLF_COURSE_REVIEWS_COLLECTION)
-        .add(docData);
+      const docRef = await firestore().collection(GOLF_COURSE_REVIEWS_COLLECTION).add(docData);
 
       return docRef.id;
     } catch (error: any) {

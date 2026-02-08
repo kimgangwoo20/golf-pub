@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  Linking,
   TextInput,
   ActivityIndicator,
 } from 'react-native';
@@ -46,43 +45,35 @@ export const SettingsScreen: React.FC = () => {
   };
 
   const handleCache = () => {
-    Alert.alert(
-      '캐시 삭제',
-      '캐시를 삭제하시겠습니까? 앱이 재시작됩니다.',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await firestore().clearPersistence();
-              Alert.alert('완료', '캐시가 삭제되었습니다. 앱을 재시작해주세요.');
-            } catch {
-              Alert.alert('완료', '캐시가 삭제되었습니다.');
-            }
-          },
+    Alert.alert('캐시 삭제', '캐시를 삭제하시겠습니까? 앱이 재시작됩니다.', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await firestore().clearPersistence();
+            Alert.alert('완료', '캐시가 삭제되었습니다. 앱을 재시작해주세요.');
+          } catch {
+            Alert.alert('완료', '캐시가 삭제되었습니다.');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleWithdrawal = () => {
-    Alert.alert(
-      '회원 탈퇴',
-      '정말 탈퇴하시겠습니까? 모든 정보가 삭제되며 복구할 수 없습니다.',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '탈퇴',
-          style: 'destructive',
-          onPress: () => {
-            setShowWithdrawalConfirm(true);
-            setWithdrawalPassword('');
-          },
+    Alert.alert('회원 탈퇴', '정말 탈퇴하시겠습니까? 모든 정보가 삭제되며 복구할 수 없습니다.', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '탈퇴',
+        style: 'destructive',
+        onPress: () => {
+          setShowWithdrawalConfirm(true);
+          setWithdrawalPassword('');
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleConfirmWithdrawal = async () => {
@@ -100,10 +91,7 @@ export const SettingsScreen: React.FC = () => {
       }
 
       // 재인증
-      const credential = auth.EmailAuthProvider.credential(
-        currentUser.email,
-        withdrawalPassword
-      );
+      const credential = auth.EmailAuthProvider.credential(currentUser.email, withdrawalPassword);
       await currentUser.reauthenticateWithCredential(credential);
 
       // Firestore 사용자 데이터 삭제
@@ -251,7 +239,10 @@ export const SettingsScreen: React.FC = () => {
                       <Text style={styles.withdrawalCancelText}>취소</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.withdrawalConfirmButton, isWithdrawing && styles.withdrawalConfirmDisabled]}
+                      style={[
+                        styles.withdrawalConfirmButton,
+                        isWithdrawing && styles.withdrawalConfirmDisabled,
+                      ]}
                       onPress={handleConfirmWithdrawal}
                       disabled={isWithdrawing}
                     >

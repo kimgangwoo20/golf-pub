@@ -1,15 +1,12 @@
 // src/components/booking/BookingFilter.tsx
 
 import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal } from 'react-native';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  Modal,
-} from 'react-native';
-import { BookingFilter as BookingFilterType, BookingSortType, SkillLevel } from '@/types/booking-types';
+  BookingFilter as BookingFilterType,
+  BookingSortType,
+  SkillLevel,
+} from '@/types/booking-types';
 import { colors } from '@/styles/theme';
 
 interface Props {
@@ -62,7 +59,7 @@ export const BookingFilter: React.FC<Props> = ({
   /**
    * 날짜 필터 변경
    */
-  const handleDateFilter = (date: typeof dateFilters[0]['key']) => {
+  const handleDateFilter = (date: (typeof dateFilters)[0]['key']) => {
     if (date === 'all') {
       onFilterChange({ ...activeFilter, date: undefined });
     } else {
@@ -79,7 +76,7 @@ export const BookingFilter: React.FC<Props> = ({
 
     if (currentLevels.includes(level)) {
       // 이미 선택된 레벨이면 제거
-      newLevels = currentLevels.filter(l => l !== level);
+      newLevels = currentLevels.filter((l) => l !== level);
     } else {
       // 선택되지 않은 레벨이면 추가
       newLevels = [...currentLevels, level];
@@ -153,7 +150,7 @@ export const BookingFilter: React.FC<Props> = ({
           onPress={() => setShowSortModal(true)}
         >
           <Text style={styles.chipText}>
-            ↕️ {sortOptions.find(s => s.key === sortType)?.label}
+            ↕️ {sortOptions.find((s) => s.key === sortType)?.label}
           </Text>
         </TouchableOpacity>
 
@@ -183,10 +180,7 @@ export const BookingFilter: React.FC<Props> = ({
             {sortOptions.map((option) => (
               <TouchableOpacity
                 key={option.key}
-                style={[
-                  styles.modalOption,
-                  sortType === option.key && styles.modalOptionActive,
-                ]}
+                style={[styles.modalOption, sortType === option.key && styles.modalOptionActive]}
                 onPress={() => handleSortChange(option.key)}
               >
                 <Text
@@ -197,9 +191,7 @@ export const BookingFilter: React.FC<Props> = ({
                 >
                   {option.label}
                 </Text>
-                {sortType === option.key && (
-                  <Text style={styles.checkMark}>✓</Text>
-                )}
+                {sortType === option.key && <Text style={styles.checkMark}>✓</Text>}
               </TouchableOpacity>
             ))}
           </View>
@@ -276,10 +268,7 @@ export const BookingFilter: React.FC<Props> = ({
             </View>
 
             {/* 적용 버튼 */}
-            <TouchableOpacity
-              style={styles.applyButton}
-              onPress={() => setShowFilterModal(false)}
-            >
+            <TouchableOpacity style={styles.applyButton} onPress={() => setShowFilterModal(false)}>
               <Text style={styles.applyButtonText}>적용하기</Text>
             </TouchableOpacity>
           </View>

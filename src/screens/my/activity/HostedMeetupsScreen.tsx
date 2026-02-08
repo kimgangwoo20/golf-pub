@@ -53,8 +53,12 @@ export const HostedMeetupsScreen: React.FC = () => {
   }, [loadMyHostedBookingsData]);
 
   // status 매핑: Firestore에서는 OPEN/CLOSED/COMPLETED/CANCELLED
-  const recruitingMeetups = bookings.filter(m => m.status === 'OPEN' || m.status === 'recruiting');
-  const completedMeetups = bookings.filter(m => m.status === 'COMPLETED' || m.status === 'CLOSED' || m.status === 'completed');
+  const recruitingMeetups = bookings.filter(
+    (m) => m.status === 'OPEN' || m.status === 'recruiting',
+  );
+  const completedMeetups = bookings.filter(
+    (m) => m.status === 'COMPLETED' || m.status === 'CLOSED' || m.status === 'completed',
+  );
 
   const displayMeetups = activeTab === 'recruiting' ? recruitingMeetups : completedMeetups;
 
@@ -66,39 +70,43 @@ export const HostedMeetupsScreen: React.FC = () => {
   };
 
   const handleManageParticipants = (id: string) => {
-    Alert.alert('참가자 관리', '참가자 관리 기능은 개발 예정입니다.');
+    // BookingDetail 화면으로 이동하여 참가자 관리
+    (navigation as any).navigate('Bookings', {
+      screen: 'BookingDetail',
+      params: { bookingId: id },
+    });
   };
 
   const handleCancelMeetup = (id: string) => {
-    Alert.alert(
-      '모임 취소',
-      '정말 이 모임을 취소하시겠습니까?',
-      [
-        { text: '아니오', style: 'cancel' },
-        {
-          text: '예',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              if (!user?.uid) return;
-              const result = await cancelBooking(id, user.uid);
-              if (result.success) {
-                Alert.alert('완료', '모임이 취소되었습니다.');
-                loadMyHostedBookingsData();
-              } else {
-                Alert.alert('에러', result.message);
-              }
-            } catch (error) {
-              Alert.alert('에러', '모임 취소에 실패했습니다.');
+    Alert.alert('모임 취소', '정말 이 모임을 취소하시겠습니까?', [
+      { text: '아니오', style: 'cancel' },
+      {
+        text: '예',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            if (!user?.uid) return;
+            const result = await cancelBooking(id, user.uid);
+            if (result.success) {
+              Alert.alert('완료', '모임이 취소되었습니다.');
+              loadMyHostedBookingsData();
+            } else {
+              Alert.alert('에러', result.message);
             }
-          },
+          } catch (error) {
+            Alert.alert('에러', '모임 취소에 실패했습니다.');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleEditMeetup = (id: string) => {
-    Alert.alert('모임 수정', '모임 수정 기능은 개발 예정입니다.');
+    // CreateBooking 화면으로 이동하여 모임 수정
+    (navigation as any).navigate('Bookings', {
+      screen: 'CreateBooking',
+      params: { editId: id },
+    });
   };
 
   if (loading) {
@@ -186,7 +194,9 @@ export const HostedMeetupsScreen: React.FC = () => {
                     <Text style={styles.meetupTitle}>{meetup.title}</Text>
                     <Text style={styles.meetupInfo}>⛳ {meetup.course}</Text>
                     {meetup.location && <Text style={styles.meetupInfo}>📍 {meetup.location}</Text>}
-                    <Text style={styles.meetupInfo}>📅 {meetup.date} {meetup.time}</Text>
+                    <Text style={styles.meetupInfo}>
+                      📅 {meetup.date} {meetup.time}
+                    </Text>
 
                     <View style={styles.meetupFooter}>
                       <View>
@@ -229,11 +239,15 @@ export const HostedMeetupsScreen: React.FC = () => {
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>😢</Text>
                 <Text style={styles.emptyTitle}>
-                  {activeTab === 'recruiting' ? '모집 중인 모임이 없습니다' : '완료된 모임이 없습니다'}
+                  {activeTab === 'recruiting'
+                    ? '모집 중인 모임이 없습니다'
+                    : '완료된 모임이 없습니다'}
                 </Text>
                 <TouchableOpacity
                   style={styles.createButton}
-                  onPress={() => navigation.navigate('Bookings' as any, { screen: 'CreateBooking' } as any)}
+                  onPress={() =>
+                    navigation.navigate('Bookings' as any, { screen: 'CreateBooking' } as any)
+                  }
                 >
                   <Text style={styles.createButtonText}>+ 모임 만들기</Text>
                 </TouchableOpacity>

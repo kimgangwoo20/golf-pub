@@ -32,9 +32,7 @@ export const ComparisonTable: React.FC = () => {
               <Text style={styles.valueText}>{row.free}</Text>
             </View>
             <View style={[styles.cell, styles.premiumCell]}>
-              <Text style={[styles.valueText, styles.premiumValue]}>
-                {row.premium}
-              </Text>
+              <Text style={[styles.valueText, styles.premiumValue]}>{row.premium}</Text>
             </View>
             <View style={styles.cell}>
               <Text style={styles.valueText}>{row.vip}</Text>
@@ -44,7 +42,7 @@ export const ComparisonTable: React.FC = () => {
       </View>
     </ScrollView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   table: {

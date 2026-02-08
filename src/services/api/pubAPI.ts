@@ -53,7 +53,7 @@ const PUB_REVIEWS_COLLECTION = 'pub_reviews';
 export const pubAPI = {
   /**
    * 퍼블릭 목록 조회
-   * 
+   *
    * @param location 지역 (선택)
    * @param limit 결과 개수
    * @returns 퍼블릭 목록
@@ -66,9 +66,7 @@ export const pubAPI = {
         query = query.where('location', '==', location);
       }
 
-      query = query
-        .orderBy('rating', 'desc')
-        .limit(limit);
+      query = query.orderBy('rating', 'desc').limit(limit);
 
       const snapshot = await query.get();
       const pubs: Pub[] = snapshot.docs.map((doc: any) => ({
@@ -85,16 +83,13 @@ export const pubAPI = {
 
   /**
    * 퍼블릭 상세 조회
-   * 
+   *
    * @param pubId 퍼블릭 ID
    * @returns 퍼블릭 상세
    */
   getPubById: async (pubId: string): Promise<Pub | null> => {
     try {
-      const doc = await firestore()
-        .collection(PUBS_COLLECTION)
-        .doc(pubId)
-        .get();
+      const doc = await firestore().collection(PUBS_COLLECTION).doc(pubId).get();
 
       if (!doc.exists) {
         return null;
@@ -114,7 +109,7 @@ export const pubAPI = {
 
   /**
    * 인기 퍼블릭 조회 (평점순)
-   * 
+   *
    * @param limit 결과 개수
    * @returns 인기 퍼블릭 목록
    */
@@ -127,7 +122,7 @@ export const pubAPI = {
         .limit(limit)
         .get();
 
-      const pubs: Pub[] = snapshot.docs.map(doc => ({
+      const pubs: Pub[] = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as Pub[];
@@ -141,7 +136,7 @@ export const pubAPI = {
 
   /**
    * 퍼블릭 리뷰 조회
-   * 
+   *
    * @param pubId 퍼블릭 ID
    * @param limit 결과 개수
    * @returns 리뷰 목록
@@ -155,7 +150,7 @@ export const pubAPI = {
         .limit(limit)
         .get();
 
-      const reviews: PubReview[] = snapshot.docs.map(doc => ({
+      const reviews: PubReview[] = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
@@ -170,7 +165,7 @@ export const pubAPI = {
 
   /**
    * 퍼블릭 리뷰 작성
-   * 
+   *
    * @param pubId 퍼블릭 ID
    * @param rating 평점 (1-5)
    * @param comment 리뷰 내용
@@ -181,7 +176,7 @@ export const pubAPI = {
     pubId: string,
     rating: number,
     comment: string,
-    images?: string[]
+    images?: string[],
   ): Promise<string> => {
     try {
       const currentUser = auth().currentUser;
@@ -200,9 +195,7 @@ export const pubAPI = {
         createdAt: firestore.FieldValue.serverTimestamp(),
       };
 
-      const reviewRef = await firestore()
-        .collection(PUB_REVIEWS_COLLECTION)
-        .add(reviewData);
+      const reviewRef = await firestore().collection(PUB_REVIEWS_COLLECTION).add(reviewData);
 
       // 퍼블릭 평점 업데이트
       await pubAPI.updatePubRating(pubId);
@@ -216,7 +209,7 @@ export const pubAPI = {
 
   /**
    * 퍼블릭 평점 업데이트 (내부 함수)
-   * 
+   *
    * @param pubId 퍼블릭 ID
    */
   updatePubRating: async (pubId: string): Promise<void> => {
@@ -229,7 +222,7 @@ export const pubAPI = {
       if (reviewsSnapshot.empty) return;
 
       let totalRating = 0;
-      reviewsSnapshot.docs.forEach(doc => {
+      reviewsSnapshot.docs.forEach((doc) => {
         totalRating += doc.data().rating || 0;
       });
 
@@ -242,7 +235,6 @@ export const pubAPI = {
           rating: Math.round(averageRating * 10) / 10, // 소수점 1자리
           reviewCount: reviewsSnapshot.size,
         });
-
     } catch (error: any) {
       console.error('❌ 퍼블릭 평점 업데이트 실패:', error);
     }
@@ -250,7 +242,7 @@ export const pubAPI = {
 
   /**
    * 주변 퍼블릭 검색 (위치 기반)
-   * 
+   *
    * @param latitude 위도
    * @param longitude 경도
    * @param radiusKm 반경 (km)
@@ -259,25 +251,23 @@ export const pubAPI = {
   getNearbyPubs: async (
     latitude: number,
     longitude: number,
-    radiusKm: number = 5
+    radiusKm: number = 5,
   ): Promise<Pub[]> => {
     try {
       // Firestore는 geohash 쿼리를 권장하지만
       // 간단하게 모든 퍼블릭을 가져와서 클라이언트에서 필터링
-      const snapshot = await firestore()
-        .collection(PUBS_COLLECTION)
-        .get();
+      const snapshot = await firestore().collection(PUBS_COLLECTION).get();
 
       const pubs: Pub[] = [];
 
-      snapshot.docs.forEach(doc => {
+      snapshot.docs.forEach((doc) => {
         const data = doc.data();
         if (data.latitude && data.longitude) {
           const distance = pubAPI.calculateDistance(
             latitude,
             longitude,
             data.latitude,
-            data.longitude
+            data.longitude,
           );
 
           if (distance <= radiusKm) {
@@ -305,17 +295,19 @@ export const pubAPI = {
 
   /**
    * 두 좌표 사이 거리 계산 (Haversine formula)
-   * 
+   *
    * @returns 거리 (km)
    */
   calculateDistance: (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371; // 지구 반지름 (km)
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   },

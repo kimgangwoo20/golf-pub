@@ -20,6 +20,10 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Post, Comment } from '@/types/feed-types';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useFeedStore } from '@/store/useFeedStore';
+import {
+  firestore as firebaseFirestore,
+  FirestoreTimestamp,
+} from '@/services/firebase/firebaseConfig';
 
 const { width } = Dimensions.get('window');
 
@@ -31,7 +35,7 @@ export const PostDetailScreen: React.FC = () => {
   // 현재 사용자 ID
   const currentUserId = user?.uid || '';
 
-  // @ts-ignore
+  // @ts-expect-error route.params 타입 미정의
   const postId = route.params?.postId as string;
   const { getPostById, getPostComments } = useFeedStore();
 
@@ -90,16 +94,18 @@ export const PostDetailScreen: React.FC = () => {
   };
 
   const handleCommentLike = (commentId: string) => {
-    setComments(comments.map(comment => {
-      if (comment.id === commentId) {
-        return {
-          ...comment,
-          isLiked: !comment.isLiked,
-          likes: comment.isLiked ? comment.likes - 1 : comment.likes + 1,
-        };
-      }
-      return comment;
-    }));
+    setComments(
+      comments.map((comment) => {
+        if (comment.id === commentId) {
+          return {
+            ...comment,
+            isLiked: !comment.isLiked,
+            likes: comment.isLiked ? comment.likes - 1 : comment.likes + 1,
+          };
+        }
+        return comment;
+      }),
+    );
   };
 
   const handleSendComment = () => {
@@ -121,15 +127,17 @@ export const PostDetailScreen: React.FC = () => {
         createdAt: '방금',
       };
 
-      setComments(comments.map(comment => {
-        if (comment.id === replyingTo) {
-          return {
-            ...comment,
-            replies: [...comment.replies, newReply],
-          };
-        }
-        return comment;
-      }));
+      setComments(
+        comments.map((comment) => {
+          if (comment.id === replyingTo) {
+            return {
+              ...comment,
+              replies: [...comment.replies, newReply],
+            };
+          }
+          return comment;
+        }),
+      );
       setCommentText('');
       setReplyingTo(null);
     } else {
@@ -156,25 +164,38 @@ export const PostDetailScreen: React.FC = () => {
   };
 
   const handleEditComment = (commentId: string) => {
-    Alert.alert('댓글 수정', '댓글 수정 기능은 개발 예정입니다.');
+    // 수정할 댓글 내용 찾기
+    const targetComment = comments.find((c) => c.id === commentId);
+    if (!targetComment) return;
+
+    // 크로스 플랫폼 호환: 댓글 수정 확인 후 입력창에 내용 세팅
+    Alert.alert('댓글 수정', '댓글을 수정하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '수정',
+        onPress: () => {
+          // 댓글 내용을 입력창에 세팅하여 수정할 수 있도록 함
+          setCommentText(targetComment.content);
+          // 기존 댓글 삭제 후 새로 등록하는 방식으로 수정 처리
+          setComments(comments.filter((c) => c.id !== commentId));
+          setPost({ ...post, comments: post.comments - 1 });
+        },
+      },
+    ]);
   };
 
   const handleDeleteComment = (commentId: string) => {
-    Alert.alert(
-      '댓글 삭제',
-      '댓글을 삭제하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: () => {
-            setComments(comments.filter(c => c.id !== commentId));
-            setPost({ ...post, comments: post.comments - 1 });
-          },
+    Alert.alert('댓글 삭제', '댓글을 삭제하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: () => {
+          setComments(comments.filter((c) => c.id !== commentId));
+          setPost({ ...post, comments: post.comments - 1 });
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleReply = (commentId: string) => {
@@ -182,34 +203,29 @@ export const PostDetailScreen: React.FC = () => {
   };
 
   const handleEditPost = () => {
-    Alert.alert('게시물 수정', '게시물 수정 기능은 개발 예정입니다.');
+    // 게시물 수정 화면으로 이동
+    (navigation as any).navigate('CreatePost', { editId: postId });
   };
 
   const handleDeletePost = () => {
-    Alert.alert(
-      '게시물 삭제',
-      '게시물을 삭제하시겠습니까?\n삭제된 게시물은 복구할 수 없습니다.',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert('완료', '게시물이 삭제되었습니다.', [
-              { text: '확인', onPress: () => navigation.goBack() },
-            ]);
-          },
+    Alert.alert('게시물 삭제', '게시물을 삭제하시겠습니까?\n삭제된 게시물은 복구할 수 없습니다.', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: () => {
+          Alert.alert('완료', '게시물이 삭제되었습니다.', [
+            { text: '확인', onPress: () => navigation.goBack() },
+          ]);
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handlePostMenu = () => {
     const isMyPost = post.author.id === currentUserId;
 
-    const options = isMyPost
-      ? ['수정', '삭제', '취소']
-      : ['신고', '차단', '취소'];
+    const _options = isMyPost ? ['수정', '삭제', '취소'] : ['신고', '차단', '취소'];
 
     Alert.alert('게시물', '', [
       ...(isMyPost
@@ -218,8 +234,45 @@ export const PostDetailScreen: React.FC = () => {
             { text: '삭제', onPress: handleDeletePost, style: 'destructive' as const },
           ]
         : [
-            { text: '신고', onPress: () => Alert.alert('신고', '신고 기능은 개발 예정입니다.') },
-            { text: '차단', onPress: () => Alert.alert('차단', '차단 기능은 개발 예정입니다.') },
+            {
+              text: '신고',
+              onPress: async () => {
+                try {
+                  // Firestore reports 컬렉션에 게시물 신고 추가
+                  await firebaseFirestore.collection('reports').add({
+                    reporterId: currentUserId,
+                    targetId: postId,
+                    type: 'post',
+                    reason: '부적절한 게시물',
+                    createdAt: FirestoreTimestamp.now(),
+                  });
+                  Alert.alert('완료', '신고가 접수되었습니다.');
+                } catch (error: any) {
+                  Alert.alert('오류', error.message || '신고 접수에 실패했습니다.');
+                }
+              },
+            },
+            {
+              text: '차단',
+              onPress: async () => {
+                try {
+                  // 사용자의 blockedUsers 서브컬렉션에 차단 대상 추가
+                  await firebaseFirestore
+                    .collection('users')
+                    .doc(currentUserId)
+                    .collection('blockedUsers')
+                    .doc(post.author.id)
+                    .set({
+                      blockedUserId: post.author.id,
+                      blockedUserName: post.author.name,
+                      createdAt: FirestoreTimestamp.now(),
+                    });
+                  Alert.alert('완료', '해당 사용자를 차단했습니다.');
+                } catch (error: any) {
+                  Alert.alert('오류', error.message || '차단에 실패했습니다.');
+                }
+              },
+            },
           ]),
       { text: '취소', style: 'cancel' as const },
     ]);
@@ -232,11 +285,32 @@ export const PostDetailScreen: React.FC = () => {
       ...(isMyComment
         ? [
             { text: '수정', onPress: () => handleEditComment(comment.id) },
-            { text: '삭제', onPress: () => handleDeleteComment(comment.id), style: 'destructive' as const },
+            {
+              text: '삭제',
+              onPress: () => handleDeleteComment(comment.id),
+              style: 'destructive' as const,
+            },
           ]
         : [
             { text: '답글', onPress: () => handleReply(comment.id) },
-            { text: '신고', onPress: () => Alert.alert('신고', '신고 기능은 개발 예정입니다.') },
+            {
+              text: '신고',
+              onPress: async () => {
+                try {
+                  // Firestore reports 컬렉션에 댓글 신고 추가
+                  await firebaseFirestore.collection('reports').add({
+                    reporterId: currentUserId,
+                    targetId: comment.id,
+                    type: 'comment',
+                    reason: '부적절한 댓글',
+                    createdAt: FirestoreTimestamp.now(),
+                  });
+                  Alert.alert('완료', '신고가 접수되었습니다.');
+                } catch (error: any) {
+                  Alert.alert('오류', error.message || '신고 접수에 실패했습니다.');
+                }
+              },
+            },
           ]),
       { text: '취소', style: 'cancel' as const },
     ]);
@@ -371,7 +445,10 @@ export const PostDetailScreen: React.FC = () => {
                     <View style={styles.repliesContainer}>
                       {comment.replies.map((reply) => (
                         <View key={reply.id} style={styles.replyItem}>
-                          <Image source={{ uri: reply.author.image }} style={styles.replyAuthorImage} />
+                          <Image
+                            source={{ uri: reply.author.image }}
+                            style={styles.replyAuthorImage}
+                          />
                           <View style={styles.replyContent}>
                             <Text style={styles.replyAuthorName}>{reply.author.name}</Text>
                             <Text style={styles.replyText}>{reply.content}</Text>
@@ -418,7 +495,10 @@ export const PostDetailScreen: React.FC = () => {
               multiline
             />
             <TouchableOpacity
-              style={[styles.sendButton, commentText.trim().length === 0 && styles.sendButtonDisabled]}
+              style={[
+                styles.sendButton,
+                commentText.trim().length === 0 && styles.sendButtonDisabled,
+              ]}
               onPress={handleSendComment}
               disabled={commentText.trim().length === 0}
             >

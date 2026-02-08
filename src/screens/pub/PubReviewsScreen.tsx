@@ -88,9 +88,10 @@ export const PubReviewsScreen: React.FC = () => {
     </View>
   );
 
-  const averageRating = reviews.length > 0
-    ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
-    : '0.0';
+  const averageRating =
+    reviews.length > 0
+      ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
+      : '0.0';
 
   if (loading && reviews.length === 0) {
     return (
@@ -124,7 +125,7 @@ export const PubReviewsScreen: React.FC = () => {
       <FlatList
         data={reviews}
         renderItem={renderReview}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
         refreshControl={

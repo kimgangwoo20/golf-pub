@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
 
 interface Comment {
   id: string;
@@ -18,13 +25,13 @@ interface Props {
 export const CommentSection: React.FC<Props> = ({ comments, loading, onCommentLike }) => (
   <View style={styles.container}>
     <Text style={styles.title}>댓글 {comments.length}개</Text>
-    
+
     {loading ? (
       <ActivityIndicator size="small" color="#10b981" style={styles.loader} />
     ) : (
       <FlatList
         data={comments}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         scrollEnabled={false}
         renderItem={({ item }) => (
           <View style={styles.comment}>
@@ -33,10 +40,7 @@ export const CommentSection: React.FC<Props> = ({ comments, loading, onCommentLi
               <Text style={styles.commentDate}>{item.createdAt}</Text>
             </View>
             <Text style={styles.commentContent}>{item.content}</Text>
-            <TouchableOpacity 
-              style={styles.likeButton}
-              onPress={() => onCommentLike(item.id)}
-            >
+            <TouchableOpacity style={styles.likeButton} onPress={() => onCommentLike(item.id)}>
               <Text style={styles.likeIcon}>❤️</Text>
               <Text style={styles.likeCount}>{item.likeCount}</Text>
             </TouchableOpacity>

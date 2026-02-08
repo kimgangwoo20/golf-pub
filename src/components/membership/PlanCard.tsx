@@ -11,11 +11,7 @@ interface PlanCardProps {
 export const PlanCard: React.FC<PlanCardProps> = ({ plan, onSelect, isSelected = false }) => {
   return (
     <TouchableOpacity
-      style={[
-        styles.card,
-        isSelected && styles.selectedCard,
-        plan.isPopular && styles.popularCard,
-      ]}
+      style={[styles.card, isSelected && styles.selectedCard, plan.isPopular && styles.popularCard]}
       onPress={onSelect}
       activeOpacity={0.7}
     >
@@ -33,9 +29,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({ plan, onSelect, isSelected =
       <Text style={styles.description}>{plan.description}</Text>
 
       <View style={styles.priceContainer}>
-        <Text style={styles.price}>
-          월 {plan.monthlyPrice.toLocaleString()}원
-        </Text>
+        <Text style={styles.price}>월 {plan.monthlyPrice.toLocaleString()}원</Text>
         {plan.yearlyPrice > 0 && (
           <Text style={styles.yearlyPrice}>
             연 {plan.yearlyPrice.toLocaleString()}원 (17% 할인)
@@ -56,14 +50,12 @@ export const PlanCard: React.FC<PlanCardProps> = ({ plan, onSelect, isSelected =
 
       {plan.monthlyPoints > 0 && (
         <View style={styles.pointsContainer}>
-          <Text style={styles.pointsText}>
-            매월 {plan.monthlyPoints.toLocaleString()}P 적립
-          </Text>
+          <Text style={styles.pointsText}>매월 {plan.monthlyPoints.toLocaleString()}P 적립</Text>
         </View>
       )}
     </TouchableOpacity>
   );
-}
+};
 
 const styles = StyleSheet.create({
   card: {

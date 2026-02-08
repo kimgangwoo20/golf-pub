@@ -62,19 +62,19 @@ export enum PermissionStatus {
 export const FEATURE_PERMISSIONS = {
   // 프로필 사진 변경
   PROFILE_PHOTO: ['CAMERA', 'PHOTO_LIBRARY'],
-  
+
   // 상품 등록
   PRODUCT_UPLOAD: ['CAMERA', 'PHOTO_LIBRARY'],
-  
+
   // QR 코드 친구 추가
   QR_SCAN: ['CAMERA'],
-  
+
   // 골프장 검색
   GOLF_SEARCH: ['LOCATION'],
-  
+
   // 날씨 정보
   WEATHER: ['LOCATION'],
-  
+
   // 알림
   PUSH_NOTIFICATION: ['NOTIFICATIONS'],
 } as const;

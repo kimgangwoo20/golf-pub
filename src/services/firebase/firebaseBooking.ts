@@ -3,6 +3,7 @@
 
 import firestore from '@react-native-firebase/firestore';
 import { FirestoreTimestamp } from './firebaseConfig';
+import { firebaseMessaging } from './firebaseMessaging';
 
 export interface Booking {
   id: string;
@@ -28,7 +29,9 @@ export interface Booking {
 /**
  * 부킹 생성
  */
-export const createBooking = async (bookingData: Partial<Booking>): Promise<{
+export const createBooking = async (
+  bookingData: Partial<Booking>,
+): Promise<{
   success: boolean;
   bookingId?: string;
   message: string;
@@ -132,15 +135,13 @@ export const joinBooking = async (
     }
 
     // 참가 기록 생성
-    await firestore()
-      .collection('bookingParticipants')
-      .add({
-        bookingId,
-        userId,
-        hostId: bookingData.hostId,
-        status: 'pending', // pending, approved, rejected
-        joinedAt: FirestoreTimestamp.now(),
-      });
+    await firestore().collection('bookingParticipants').add({
+      bookingId,
+      userId,
+      hostId: bookingData.hostId,
+      status: 'pending', // pending, approved, rejected
+      joinedAt: FirestoreTimestamp.now(),
+    });
 
     // 사용자 통계 업데이트
     await firestore()
@@ -150,7 +151,18 @@ export const joinBooking = async (
         'stats.joinedBookings': firestore.FieldValue.increment(1),
       });
 
-    // 호스트에게 알림 (TODO: Firebase Cloud Messaging)
+    // 호스트에게 알림 전송
+    try {
+      await firebaseMessaging.createNotification(
+        bookingData.hostId,
+        'booking_join',
+        '새 참가 신청',
+        `"${bookingData.title}" 모임에 새로운 참가 신청이 있습니다.`,
+        { bookingId },
+      );
+    } catch {
+      // 알림 전송 실패 시 참가 처리에 영향 없음
+    }
 
     return {
       success: true,
@@ -174,10 +186,7 @@ export const getBookings = async (filter?: {
   level?: string;
 }): Promise<Booking[]> => {
   try {
-    let query = firestore()
-      .collection('bookings')
-      .orderBy('createdAt', 'desc')
-      .limit(20);
+    let query = firestore().collection('bookings').orderBy('createdAt', 'desc').limit(20);
 
     if (filter?.status) {
       query = query.where('status', '==', filter.status) as any;
@@ -204,10 +213,7 @@ export const getBookings = async (filter?: {
  */
 export const getBookingDetail = async (bookingId: string): Promise<Booking | null> => {
   try {
-    const doc = await firestore()
-      .collection('bookings')
-      .doc(bookingId)
-      .get();
+    const doc = await firestore().collection('bookings').doc(bookingId).get();
 
     if (!doc.exists) {
       return null;
@@ -276,10 +282,7 @@ export const cancelBooking = async (
   message: string;
 }> => {
   try {
-    const bookingDoc = await firestore()
-      .collection('bookings')
-      .doc(bookingId)
-      .get();
+    const bookingDoc = await firestore().collection('bookings').doc(bookingId).get();
 
     if (!bookingDoc.exists) {
       return {
@@ -297,15 +300,28 @@ export const cancelBooking = async (
       };
     }
 
-    await firestore()
-      .collection('bookings')
-      .doc(bookingId)
-      .update({
-        status: 'closed',
-        updatedAt: FirestoreTimestamp.now(),
-      });
+    await firestore().collection('bookings').doc(bookingId).update({
+      status: 'closed',
+      updatedAt: FirestoreTimestamp.now(),
+    });
 
-    // 참가자들에게 알림 (TODO: Firebase Cloud Messaging)
+    // 참가자들에게 알림 전송
+    try {
+      const participantsList: string[] = bookingData.participants?.list || [];
+      for (const participantId of participantsList) {
+        if (participantId !== userId) {
+          await firebaseMessaging.createNotification(
+            participantId,
+            'booking_new',
+            '모임 취소 안내',
+            `"${bookingData.title}" 모임이 호스트에 의해 취소되었습니다.`,
+            { bookingId },
+          );
+        }
+      }
+    } catch {
+      // 알림 전송 실패 시 취소 처리에 영향 없음
+    }
 
     return {
       success: true,
@@ -324,17 +340,21 @@ export const cancelBooking = async (
  * 참가 신청 목록 조회 (호스트용)
  * bookingParticipants 컬렉션에서 pending 상태 쿼리 + users 프로필 조인
  */
-export const getBookingRequests = async (bookingId: string): Promise<{
-  id: string;
-  userId: string;
-  name: string;
-  avatar: string;
-  level: string;
-  rating: number;
-  message: string;
-  status: string;
-  joinedAt: any;
-}[]> => {
+export const getBookingRequests = async (
+  bookingId: string,
+): Promise<
+  {
+    id: string;
+    userId: string;
+    name: string;
+    avatar: string;
+    level: string;
+    rating: number;
+    message: string;
+    status: string;
+    joinedAt: any;
+  }[]
+> => {
   try {
     const snapshot = await firestore()
       .collection('bookingParticipants')
@@ -354,10 +374,7 @@ export const getBookingRequests = async (bookingId: string): Promise<{
         let userProfile = { name: '알 수 없음', avatar: '', level: '', rating: 0 };
 
         try {
-          const userDoc = await firestore()
-            .collection('users')
-            .doc(data.userId)
-            .get();
+          const userDoc = await firestore().collection('users').doc(data.userId).get();
 
           if (userDoc.exists) {
             const userData = userDoc.data();
@@ -383,7 +400,7 @@ export const getBookingRequests = async (bookingId: string): Promise<{
           status: data.status,
           joinedAt: data.joinedAt,
         };
-      })
+      }),
     );
 
     return requests;
@@ -408,13 +425,10 @@ export const approveBookingRequest = async (
 }> => {
   try {
     // 신청 상태를 approved로 변경
-    await firestore()
-      .collection('bookingParticipants')
-      .doc(requestId)
-      .update({
-        status: 'approved',
-        approvedAt: FirestoreTimestamp.now(),
-      });
+    await firestore().collection('bookingParticipants').doc(requestId).update({
+      status: 'approved',
+      approvedAt: FirestoreTimestamp.now(),
+    });
 
     // bookings 문서의 participants 업데이트
     const bookingRef = firestore().collection('bookings').doc(bookingId);
@@ -450,18 +464,17 @@ export const approveBookingRequest = async (
  * 참가 신청 거절
  * bookingParticipants 문서 status → 'rejected'
  */
-export const rejectBookingRequest = async (requestId: string): Promise<{
+export const rejectBookingRequest = async (
+  requestId: string,
+): Promise<{
   success: boolean;
   message: string;
 }> => {
   try {
-    await firestore()
-      .collection('bookingParticipants')
-      .doc(requestId)
-      .update({
-        status: 'rejected',
-        rejectedAt: FirestoreTimestamp.now(),
-      });
+    await firestore().collection('bookingParticipants').doc(requestId).update({
+      status: 'rejected',
+      rejectedAt: FirestoreTimestamp.now(),
+    });
 
     return {
       success: true,
@@ -479,16 +492,20 @@ export const rejectBookingRequest = async (requestId: string): Promise<{
 /**
  * 인기 부킹 목록 (OPEN 상태, 참가자 많은 순)
  */
-export const getPopularBookings = async (limitCount: number = 20): Promise<{
-  id: string;
-  course: string;
-  date: string;
-  time: string;
-  organizer: string;
-  participants: number;
-  maxParticipants: number;
-  hostId: string;
-}[]> => {
+export const getPopularBookings = async (
+  limitCount: number = 20,
+): Promise<
+  {
+    id: string;
+    course: string;
+    date: string;
+    time: string;
+    organizer: string;
+    participants: number;
+    maxParticipants: number;
+    hostId: string;
+  }[]
+> => {
   try {
     const snapshot = await firestore()
       .collection('bookings')
@@ -524,7 +541,7 @@ export const getPopularBookings = async (limitCount: number = 20): Promise<{
           maxParticipants: data.participants?.max || 4,
           hostId: data.hostId || '',
         };
-      })
+      }),
     );
 
     // 참가자 많은 순으로 정렬
@@ -538,16 +555,21 @@ export const getPopularBookings = async (limitCount: number = 20): Promise<{
 /**
  * 추천 부킹 목록 (OPEN 상태, 본인 호스팅 제외)
  */
-export const getRecommendedBookings = async (userId: string, limitCount: number = 20): Promise<{
-  id: string;
-  course: string;
-  date: string;
-  time: string;
-  organizer: string;
-  participants: number;
-  maxParticipants: number;
-  hostId: string;
-}[]> => {
+export const getRecommendedBookings = async (
+  userId: string,
+  limitCount: number = 20,
+): Promise<
+  {
+    id: string;
+    course: string;
+    date: string;
+    time: string;
+    organizer: string;
+    participants: number;
+    maxParticipants: number;
+    hostId: string;
+  }[]
+> => {
   try {
     const snapshot = await firestore()
       .collection('bookings')
@@ -586,7 +608,7 @@ export const getRecommendedBookings = async (userId: string, limitCount: number 
             maxParticipants: data.participants?.max || 4,
             hostId: data.hostId || '',
           };
-        })
+        }),
     );
 
     return bookings;
@@ -599,7 +621,9 @@ export const getRecommendedBookings = async (userId: string, limitCount: number 
 /**
  * 참가 신청 상태 조회 (bookingParticipants + bookings 조인)
  */
-export const getRequestStatus = async (requestId: string): Promise<{
+export const getRequestStatus = async (
+  requestId: string,
+): Promise<{
   id: string;
   status: string;
   course: string;
@@ -610,10 +634,7 @@ export const getRequestStatus = async (requestId: string): Promise<{
   bookingId: string;
 } | null> => {
   try {
-    const requestDoc = await firestore()
-      .collection('bookingParticipants')
-      .doc(requestId)
-      .get();
+    const requestDoc = await firestore().collection('bookingParticipants').doc(requestId).get();
 
     if (!requestDoc.exists) return null;
 
@@ -626,10 +647,7 @@ export const getRequestStatus = async (requestId: string): Promise<{
     let organizerName = '알 수 없음';
 
     if (requestData?.bookingId) {
-      const bookingDoc = await firestore()
-        .collection('bookings')
-        .doc(requestData.bookingId)
-        .get();
+      const bookingDoc = await firestore().collection('bookings').doc(requestData.bookingId).get();
 
       if (bookingDoc.exists) {
         const bookingData = bookingDoc.data();
@@ -640,10 +658,7 @@ export const getRequestStatus = async (requestId: string): Promise<{
         // 호스트 이름 조회
         if (bookingData?.hostId) {
           try {
-            const hostDoc = await firestore()
-              .collection('users')
-              .doc(bookingData.hostId)
-              .get();
+            const hostDoc = await firestore().collection('users').doc(bookingData.hostId).get();
             const hostData = hostDoc.data();
             organizerName = hostData?.name || hostData?.displayName || '알 수 없음';
           } catch {
@@ -672,7 +687,9 @@ export const getRequestStatus = async (requestId: string): Promise<{
 /**
  * 신청자 프로필 조회 (users 컬렉션)
  */
-export const getApplicantProfile = async (userId: string): Promise<{
+export const getApplicantProfile = async (
+  userId: string,
+): Promise<{
   name: string;
   level: string;
   rating: number;
@@ -683,10 +700,7 @@ export const getApplicantProfile = async (userId: string): Promise<{
   bio: string;
 } | null> => {
   try {
-    const userDoc = await firestore()
-      .collection('users')
-      .doc(userId)
-      .get();
+    const userDoc = await firestore().collection('users').doc(userId).get();
 
     if (!userDoc.exists) return null;
 

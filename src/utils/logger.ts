@@ -22,7 +22,7 @@ export const logger = {
     if (isDevelopment) {
       console.warn('[WARN]', ...args);
     }
-    // TODO: 프로덕션에서 경고 모니터링 서비스로 전송
+    // [향후] Sentry 연동 시 프로덕션 경고 전송 (v2.0 릴리즈 시 @sentry/react-native 설치 후 활성화)
     // if (!isDevelopment) {
     //   Sentry.captureMessage(args[0], 'warning');
     // }
@@ -32,7 +32,7 @@ export const logger = {
     if (isDevelopment) {
       console.error('[ERROR]', ...args);
     }
-    // TODO: 프로덕션에서 에러 모니터링 서비스로 전송
+    // [향후] Sentry 연동 시 프로덕션 에러 전송 (v2.0 릴리즈 시 @sentry/react-native 설치 후 활성화)
     // if (!isDevelopment) {
     //   Sentry.captureException(args[0]);
     // }

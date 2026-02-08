@@ -1,6 +1,6 @@
 // MyHomeScreen.tsx - Witty 스타일 My 홈피 (무한 스크롤)
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '@/store/useAuthStore';
-import { FeedViewer, FeedItem } from '@/components/media';
+import { FeedViewer } from '@/components/media';
+import { firestore as firebaseFirestore } from '@/services/firebase/firebaseConfig';
 
 const { width } = Dimensions.get('window');
 const ITEMS_PER_PAGE = 6;
@@ -28,7 +29,7 @@ type Visibility = 'public' | 'friends' | 'private';
 
 // 컨텐츠 타입 정의
 interface ContentItem {
-  id: number;
+  id: string; // Firestore 문서 ID
   type: string;
   mediaType: 'image' | 'video';
   icon: string;
@@ -46,7 +47,7 @@ interface ContentItem {
 
 // 방명록 타입 정의
 interface GuestbookItem {
-  id: number;
+  id: string; // Firestore 문서 ID
   author: string;
   authorId: string; // 작성자 ID (접근 권한용)
   authorImage: string;
@@ -54,170 +55,76 @@ interface GuestbookItem {
   time: string;
 }
 
-// 전체 Mock 컨텐츠 데이터 (더 많은 데이터 시뮬레이션)
-const generateMockContents = (): ContentItem[] => {
-  const baseContents = [
-    {
-      type: 'diary',
-      mediaType: 'image' as const,
-      icon: '📖',
-      title: '오늘의 라운딩 후기',
-      description: '남서울CC에서 좋은 스코어!',
-      image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400',
-      mediaUrl: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=1200',
-      // 다중 이미지 예시: 라운딩 사진 여러 장
-      mediaUrls: [
-        'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=1200',
-        'https://images.unsplash.com/photo-1592919505780-303950717480?w=1200',
-        'https://images.unsplash.com/photo-1593111774240-d529f12cf4bb?w=1200',
-      ],
-    },
-    {
-      type: 'photo',
-      mediaType: 'image' as const,
-      icon: '📷',
-      title: '골프장 풍경',
-      description: '날씨 좋은 날 라운딩',
-      image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400',
-      mediaUrl: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=1200',
-      // 다중 이미지 예시: 코스 여러 홀 사진
-      mediaUrls: [
-        'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=1200',
-        'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=1200',
-      ],
-    },
-    {
-      type: 'video',
-      mediaType: 'video' as const,
-      icon: '🎥',
-      title: '스윙 연습 영상',
-      description: '오늘 연습장에서 스윙 연습한 영상입니다.',
-      image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400',
-      mediaUrl: 'https://d23dyxeqlo5psv.cloudfront.net/big_buck_bunny.mp4',
-      // 비디오는 다중 이미지 없음
-    },
-    {
-      type: 'diary',
-      mediaType: 'image' as const,
-      icon: '📖',
-      title: '100타 돌파 기념!',
-      description: '드디어 100타를 깼습니다',
-      image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400',
-      mediaUrl: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=1200',
-      // 다중 이미지 예시: 스코어카드 + 기념사진
-      mediaUrls: [
-        'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=1200',
-        'https://images.unsplash.com/photo-1592919505780-303950717480?w=1200',
-        'https://images.unsplash.com/photo-1593111774240-d529f12cf4bb?w=1200',
-        'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=1200',
-      ],
-    },
-    {
-      type: 'photo',
-      mediaType: 'image' as const,
-      icon: '📷',
-      title: '새 드라이버',
-      description: '테일러메이드 신제품',
-      image: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=400',
-      mediaUrl: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=1200',
-      // 단일 이미지 (mediaUrls 없음)
-    },
-    {
-      type: 'video',
-      mediaType: 'video' as const,
-      icon: '🎥',
-      title: '퍼팅 연습',
-      description: '집에서 퍼팅 연습하는 영상입니다.',
-      image: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=400',
-      mediaUrl: 'https://d23dyxeqlo5psv.cloudfront.net/big_buck_bunny.mp4',
-    },
-  ];
+// Firestore 문서를 ContentItem으로 변환하는 헬퍼
+const mapPostDocToContentItem = (doc: any): ContentItem => {
+  const data = doc.data();
+  const createdAt = data.createdAt?.toDate?.() || new Date();
+  const images: string[] = data.images || [];
+  const hasVideo = data.mediaType === 'video' || data.type === 'video';
 
-  // 30개 아이템 생성 (무한 스크롤 테스트용)
-  const contents: ContentItem[] = [];
-  const visibilities: Visibility[] = ['public', 'friends', 'private'];
+  // 게시글 타입 결정 (diary, photo, video)
+  let type = data.type || 'photo';
+  if (hasVideo) type = 'video';
+  else if (!data.type && images.length > 0) type = 'photo';
 
-  for (let i = 0; i < 30; i++) {
-    const base = baseContents[i % baseContents.length];
-    contents.push({
-      ...base,
-      id: i + 1,
-      likes: Math.floor(Math.random() * 200) + 10,
-      comments: Math.floor(Math.random() * 50) + 5,
-      date: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      mediaUrls: (base as any).mediaUrls, // 다중 이미지 URL 복사
-      authorId: 'current-user', // 모든 게시물은 현재 사용자 소유 (My홈피이므로)
-      visibility: visibilities[i % 3], // 테스트용 공개범위 설정
-    });
-  }
-  return contents;
+  // 타입별 아이콘
+  const iconMap: Record<string, string> = { diary: '📖', photo: '📷', video: '🎥' };
+
+  return {
+    id: doc.id,
+    type,
+    mediaType: hasVideo ? 'video' : 'image',
+    icon: iconMap[type] || '📷',
+    title: data.title || data.content?.substring(0, 20) || '',
+    description: data.content || '',
+    image: images[0] || data.image || '',
+    mediaUrl: hasVideo ? data.videoUrl || data.mediaUrl || '' : images[0] || data.image || '',
+    mediaUrls: images.length > 1 ? images : undefined,
+    likes: data.likes || 0,
+    comments: data.comments || 0,
+    date: createdAt.toISOString().split('T')[0],
+    authorId: data.author?.id || data.userId || '',
+    visibility: data.visibility || 'public',
+  };
 };
 
-const allMockContents = generateMockContents();
+// 상대 시간 포맷팅 헬퍼
+const formatRelativeTime = (date: Date): string => {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHour = Math.floor(diffMs / 3600000);
+  const diffDay = Math.floor(diffMs / 86400000);
 
-// Mock 방명록 데이터 생성
-const generateMockGuestbook = (currentUserName: string): GuestbookItem[] => [
-  {
-    id: 1,
-    author: '이민지',
-    authorId: 'user-1',
-    authorImage: 'https://i.pravatar.cc/150?img=45',
-    content: '오늘 라운딩 정말 즐거웠어요! 다음에 또 함께해요 ⛳',
-    time: '2시간 전',
-  },
-  {
-    id: 2,
-    author: '박정우',
-    authorId: 'user-2',
-    authorImage: 'https://i.pravatar.cc/150?img=33',
-    content: '스윙 자세가 많이 좋아지셨네요! 👍',
-    time: '5시간 전',
-  },
-  {
-    id: 3,
-    author: currentUserName, // 현재 사용자가 쓴 방명록 (삭제 가능)
-    authorId: 'current-user',
-    authorImage: 'https://i.pravatar.cc/150?img=12',
-    content: '내가 쓴 테스트 방명록입니다.',
-    time: '1일 전',
-  },
-  {
-    id: 4,
-    author: '김철수',
-    authorId: 'user-4',
-    authorImage: 'https://i.pravatar.cc/150?img=15',
-    content: '다음 주 레슨 기대됩니다!',
-    time: '2일 전',
-  },
-  {
-    id: 5,
-    author: '정미영',
-    authorId: 'user-5',
-    authorImage: 'https://i.pravatar.cc/150?img=28',
-    content: '드라이버 추천 감사합니다 ^^',
-    time: '3일 전',
-  },
-];
+  if (diffMin < 1) return '방금 전';
+  if (diffMin < 60) return `${diffMin}분 전`;
+  if (diffHour < 24) return `${diffHour}시간 전`;
+  if (diffDay < 7) return `${diffDay}일 전`;
+  return date.toLocaleDateString('ko-KR');
+};
 
 export const MyHomeScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { user, userProfile } = useAuthStore();
 
-  // 사용자 데이터
+  // 사용자 프로필 데이터 (Firestore userProfile에서 실제 값 사용)
+  const profileData = userProfile as any;
   const userData = {
     name: user?.displayName || '골퍼',
     email: user?.email || '',
     profileImage: user?.photoURL || 'https://i.pravatar.cc/150?img=12',
-    backgroundImage: 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=800',
+    backgroundImage:
+      profileData?.backgroundImage ||
+      'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=800',
     phone: user?.phoneNumber || '',
-    points: (userProfile as any)?.points || 0,
-    membership: (userProfile as any)?.membership || 'FREE',
-    handicap: '18',
-    todayVisits: 15,
-    totalVisits: 1234,
-    roundCount: 24,
-    avgScore: 4.8,
-    friends: 23,
+    points: profileData?.points || 0,
+    membership: profileData?.membership || 'FREE',
+    handicap: profileData?.handicap || '18',
+    todayVisits: profileData?.stats?.todayVisits || 0,
+    totalVisits: profileData?.stats?.totalVisits || 0,
+    roundCount: profileData?.stats?.roundCount || 0,
+    avgScore: profileData?.stats?.avgScore || 0,
+    friends: profileData?.stats?.friendsCount || 0,
   };
 
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -227,10 +134,12 @@ export const MyHomeScreen: React.FC = () => {
 
   // 무한 스크롤 상태
   const [contents, setContents] = useState<ContentItem[]>([]);
-  const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Firestore 페이지네이션 커서
+  const lastDocRef = useRef<any>(null);
 
   // 방명록 상태
   const [guestbook, setGuestbook] = useState<GuestbookItem[]>([]);
@@ -242,76 +151,163 @@ export const MyHomeScreen: React.FC = () => {
   // 현재 사용자 ID
   const currentUserId = user?.uid || '';
 
-  // 방명록 초기 로드
+  // 방명록 Firestore 로드
   useEffect(() => {
-    setGuestbook(generateMockGuestbook(userData.name));
-  }, [userData.name]);
+    loadGuestbook();
+  }, [user?.uid]);
+
+  // 방명록 Firestore 쿼리
+  const loadGuestbook = async () => {
+    if (!user?.uid) return;
+    try {
+      const snapshot = await firebaseFirestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('guestbook')
+        .orderBy('createdAt', 'desc')
+        .limit(20)
+        .get();
+
+      const entries: GuestbookItem[] = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        const createdAt = data.createdAt?.toDate?.() || new Date();
+        return {
+          id: doc.id,
+          author: data.authorName || '익명',
+          authorId: data.authorId || '',
+          authorImage: data.authorImage || '',
+          content: data.content || '',
+          time: formatRelativeTime(createdAt),
+        };
+      });
+      setGuestbook(entries);
+    } catch (error: any) {
+      console.error('방명록 로드 실패:', error);
+    }
+  };
 
   // 초기 데이터 로드
   useEffect(() => {
     loadInitialData();
-  }, [selectedTab]);
+  }, [selectedTab, user?.uid]);
 
-  const loadInitialData = () => {
+  // Firestore에서 posts 컬렉션 쿼리 (현재 사용자의 게시물)
+  const loadInitialData = async () => {
+    if (!user?.uid) return;
     setIsLoading(true);
-    setPage(1);
+    lastDocRef.current = null;
 
-    // 탭에 따른 필터링
-    const filtered = filterByTab(allMockContents, selectedTab);
-    const initialContents = filtered.slice(0, ITEMS_PER_PAGE);
+    try {
+      // 탭에 따른 Firestore 쿼리 구성
+      const query = buildPostsQuery(selectedTab);
+      const snapshot = await query.limit(ITEMS_PER_PAGE).get();
 
-    setTimeout(() => {
-      setContents(initialContents);
-      setHasMore(filtered.length > ITEMS_PER_PAGE);
+      const items = snapshot.docs.map(mapPostDocToContentItem);
+
+      // 페이지네이션 커서 저장
+      if (snapshot.docs.length > 0) {
+        lastDocRef.current = snapshot.docs[snapshot.docs.length - 1];
+      }
+
+      setContents(items);
+      setHasMore(snapshot.docs.length >= ITEMS_PER_PAGE);
+    } catch (error: any) {
+      console.error('컨텐츠 로드 실패:', error);
+      setContents([]);
+      setHasMore(false);
+    } finally {
       setIsLoading(false);
-    }, 300);
+    }
   };
 
-  const filterByTab = (items: ContentItem[], tab: string) => {
+  // 탭별 Firestore 쿼리 빌더
+  const buildPostsQuery = (tab: string) => {
+    let query: any = firebaseFirestore
+      .collection('posts')
+      .where('author.id', '==', user?.uid)
+      .orderBy('createdAt', 'desc');
+
+    // 탭별 추가 필터 (diary, photo/video)
+    if (tab === 'diary') {
+      query = firebaseFirestore
+        .collection('posts')
+        .where('author.id', '==', user?.uid)
+        .where('type', '==', 'diary')
+        .orderBy('createdAt', 'desc');
+    } else if (tab === 'photo') {
+      // photo 탭: photo + video 타입 (Firestore에서 in 쿼리 사용)
+      query = firebaseFirestore
+        .collection('posts')
+        .where('author.id', '==', user?.uid)
+        .where('type', 'in', ['photo', 'video'])
+        .orderBy('createdAt', 'desc');
+    }
+
+    return query;
+  };
+
+  // 로컬 탭 필터 (FeedViewer 등에서 사용)
+  const _filterByTab = (items: ContentItem[], tab: string) => {
     if (tab === 'all') return items;
-    if (tab === 'diary') return items.filter(item => item.type === 'diary');
-    if (tab === 'photo') return items.filter(item => item.type === 'photo' || item.type === 'video');
+    if (tab === 'diary') return items.filter((item) => item.type === 'diary');
+    if (tab === 'photo')
+      return items.filter((item) => item.type === 'photo' || item.type === 'video');
     return items;
   };
 
-  // 더 많은 데이터 로드 (무한 스크롤)
-  const loadMoreData = useCallback(() => {
-    if (isLoading || !hasMore) return;
+  // 더 많은 데이터 로드 (무한 스크롤 - Firestore startAfter 페이지네이션)
+  const loadMoreData = useCallback(async () => {
+    if (isLoading || !hasMore || !user?.uid || !lastDocRef.current) return;
 
     setIsLoading(true);
-    const nextPage = page + 1;
-    const filtered = filterByTab(allMockContents, selectedTab);
-    const start = (nextPage - 1) * ITEMS_PER_PAGE;
-    const end = start + ITEMS_PER_PAGE;
-    const newContents = filtered.slice(start, end);
+    try {
+      const query = buildPostsQuery(selectedTab);
+      const snapshot = await query.startAfter(lastDocRef.current).limit(ITEMS_PER_PAGE).get();
 
-    // 실제 API 호출 시뮬레이션
-    setTimeout(() => {
-      if (newContents.length > 0) {
-        setContents(prev => [...prev, ...newContents]);
-        setPage(nextPage);
-        setHasMore(end < filtered.length);
+      const newItems = snapshot.docs.map(mapPostDocToContentItem);
+
+      if (newItems.length > 0) {
+        lastDocRef.current = snapshot.docs[snapshot.docs.length - 1];
+        setContents((prev) => [...prev, ...newItems]);
+        setHasMore(snapshot.docs.length >= ITEMS_PER_PAGE);
       } else {
         setHasMore(false);
       }
+    } catch (error: any) {
+      console.error('추가 컨텐츠 로드 실패:', error);
+      setHasMore(false);
+    } finally {
       setIsLoading(false);
-    }, 500);
-  }, [page, isLoading, hasMore, selectedTab]);
+    }
+  }, [isLoading, hasMore, selectedTab, user?.uid]);
 
-  // 새로고침
-  const handleRefresh = useCallback(() => {
+  // 새로고침 (풀-투-리프레시)
+  const handleRefresh = useCallback(async () => {
+    if (!user?.uid) return;
     setRefreshing(true);
-    setPage(1);
+    lastDocRef.current = null;
 
-    const filtered = filterByTab(allMockContents, selectedTab);
-    const initialContents = filtered.slice(0, ITEMS_PER_PAGE);
+    try {
+      const query = buildPostsQuery(selectedTab);
+      const snapshot = await query.limit(ITEMS_PER_PAGE).get();
 
-    setTimeout(() => {
-      setContents(initialContents);
-      setHasMore(filtered.length > ITEMS_PER_PAGE);
+      const items = snapshot.docs.map(mapPostDocToContentItem);
+
+      if (snapshot.docs.length > 0) {
+        lastDocRef.current = snapshot.docs[snapshot.docs.length - 1];
+      }
+
+      setContents(items);
+      setHasMore(snapshot.docs.length >= ITEMS_PER_PAGE);
+
+      // 방명록도 새로고침
+      await loadGuestbook();
+    } catch (error: any) {
+      console.error('새로고침 실패:', error);
+    } finally {
       setRefreshing(false);
-    }, 500);
-  }, [selectedTab]);
+    }
+  }, [selectedTab, user?.uid]);
 
   // 미디어 클릭 핸들러 - 인스타 스타일 피드 뷰어
   const handleContentPress = (item: ContentItem, index: number) => {
@@ -323,12 +319,17 @@ export const MyHomeScreen: React.FC = () => {
     setFeedViewerVisible(false);
   };
 
-  const handleLike = (itemId: number) => {
-    // TODO: 실제 좋아요 API 연동
+  const handleLike = (itemId: string | number) => {
+    // 로컬 상태 업데이트 (낙관적 UI)
+    setContents((prev) => prev.map((c) => (c.id === itemId ? { ...c, likes: c.likes + 1 } : c)));
   };
 
-  const handleComment = (itemId: number, comment: string) => {
-    // TODO: 실제 댓글 API 연동
+  const handleComment = (itemId: string | number, comment: string) => {
+    if (!comment.trim()) return;
+    // 로컬 상태 업데이트 (낙관적 UI)
+    setContents((prev) =>
+      prev.map((c) => (c.id === itemId ? { ...c, comments: c.comments + 1 } : c)),
+    );
   };
 
   // ========== 게시물 관리 (접근 권한: 본인만) ==========
@@ -352,23 +353,19 @@ export const MyHomeScreen: React.FC = () => {
       return;
     }
 
-    Alert.alert(
-      '게시물 삭제',
-      '정말 이 게시물을 삭제하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: () => {
-            setContents(prev => prev.filter(c => c.id !== selectedContent.id));
-            setContentMenuVisible(false);
-            setSelectedContent(null);
-            Alert.alert('삭제 완료', '게시물이 삭제되었습니다.');
-          },
+    Alert.alert('게시물 삭제', '정말 이 게시물을 삭제하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: () => {
+          setContents((prev) => prev.filter((c) => c.id !== selectedContent.id));
+          setContentMenuVisible(false);
+          setSelectedContent(null);
+          Alert.alert('삭제 완료', '게시물이 삭제되었습니다.');
         },
-      ],
-    );
+      },
+    ]);
   };
 
   // 게시물 수정 (수정 화면으로 이동)
@@ -382,9 +379,10 @@ export const MyHomeScreen: React.FC = () => {
     }
 
     setContentMenuVisible(false);
-    // TODO: 수정 화면으로 이동
-    Alert.alert('게시물 수정', '게시물 수정 화면으로 이동합니다. (개발 예정)');
-    // navigation.navigate('EditContent', { contentId: selectedContent.id });
+    (navigation as any).navigate('Feed', {
+      screen: 'CreatePost',
+      params: { editId: selectedContent.id },
+    });
   };
 
   // 게시물 공개 범위 변경
@@ -397,10 +395,8 @@ export const MyHomeScreen: React.FC = () => {
       return;
     }
 
-    setContents(prev =>
-      prev.map(c =>
-        c.id === selectedContent.id ? { ...c, visibility: newVisibility } : c
-      )
+    setContents((prev) =>
+      prev.map((c) => (c.id === selectedContent.id ? { ...c, visibility: newVisibility } : c)),
     );
     setContentMenuVisible(false);
     setSelectedContent(null);
@@ -423,21 +419,17 @@ export const MyHomeScreen: React.FC = () => {
       return;
     }
 
-    Alert.alert(
-      '방명록 삭제',
-      '정말 이 방명록을 삭제하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: () => {
-            setGuestbook(prev => prev.filter(g => g.id !== item.id));
-            Alert.alert('삭제 완료', '방명록이 삭제되었습니다.');
-          },
+    Alert.alert('방명록 삭제', '정말 이 방명록을 삭제하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: () => {
+          setGuestbook((prev) => prev.filter((g) => g.id !== item.id));
+          Alert.alert('삭제 완료', '방명록이 삭제되었습니다.');
         },
-      ],
-    );
+      },
+    ]);
   };
 
   // 햄버거 메뉴 아이템
@@ -486,9 +478,12 @@ export const MyHomeScreen: React.FC = () => {
   // 공개 범위 아이콘
   const getVisibilityIcon = (visibility: Visibility) => {
     switch (visibility) {
-      case 'public': return '🌐';
-      case 'friends': return '👥';
-      case 'private': return '🔒';
+      case 'public':
+        return '🌐';
+      case 'friends':
+        return '👥';
+      case 'private':
+        return '🔒';
     }
   };
 

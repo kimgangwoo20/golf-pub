@@ -9,7 +9,7 @@ export const getMembershipPermissions = (type: MembershipType): MembershipPermis
 // 특정 권한 확인
 export const hasPermission = (
   type: MembershipType,
-  permission: keyof MembershipPermissions
+  permission: keyof MembershipPermissions,
 ): boolean => {
   const permissions = getMembershipPermissions(type);
   return permissions[permission];
@@ -53,7 +53,7 @@ export const isFreeMember = (type: MembershipType): boolean => {
 // 권한 없음 메시지 가져오기
 export const getPermissionDeniedMessage = (
   feature: string,
-  membershipType: MembershipType
+  membershipType: MembershipType,
 ): string => {
   if (membershipType === MembershipType.FREE) {
     return `${feature}은(는) 프리미엄 회원 전용 기능입니다.\n프리미엄으로 업그레이드하시겠습니까?`;
@@ -66,7 +66,7 @@ export const membershipGate = (
   membershipType: MembershipType,
   permission: keyof MembershipPermissions,
   onUpgrade: () => void,
-  onProceed: () => void
+  onProceed: () => void,
 ): void => {
   if (hasPermission(membershipType, permission)) {
     onProceed();

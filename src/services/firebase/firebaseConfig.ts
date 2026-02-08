@@ -107,28 +107,23 @@ export const collections = {
  */
 export const realtimeRefs = {
   // 채팅방 목록
-  chatRooms: (userId: string) =>
-    databaseInstance.ref(`chatRooms/${userId}`),
+  chatRooms: (userId: string) => databaseInstance.ref(`chatRooms/${userId}`),
 
   // 특정 채팅방
-  chatRoom: (roomId: string) =>
-    databaseInstance.ref(`chatRooms/${roomId}`),
+  chatRoom: (roomId: string) => databaseInstance.ref(`chatRooms/${roomId}`),
 
   // 메시지
-  messages: (roomId: string) =>
-    databaseInstance.ref(`messages/${roomId}`),
+  messages: (roomId: string) => databaseInstance.ref(`messages/${roomId}`),
 
   // 특정 메시지
   message: (roomId: string, messageId: string) =>
     databaseInstance.ref(`messages/${roomId}/${messageId}`),
 
   // 온라인 상태
-  presence: (userId: string) =>
-    databaseInstance.ref(`presence/${userId}`),
+  presence: (userId: string) => databaseInstance.ref(`presence/${userId}`),
 
   // 타이핑 상태
-  typing: (roomId: string, userId: string) =>
-    databaseInstance.ref(`typing/${roomId}/${userId}`),
+  typing: (roomId: string, userId: string) => databaseInstance.ref(`typing/${roomId}/${userId}`),
 
   // 읽음 상태
   readReceipts: (roomId: string, userId: string) =>
@@ -140,8 +135,7 @@ export const realtimeRefs = {
  */
 export const storageRefs = {
   // 프로필 이미지
-  profileImages: (userId: string) =>
-    storageInstance.ref(`profiles/${userId}/avatar.jpg`),
+  profileImages: (userId: string) => storageInstance.ref(`profiles/${userId}/avatar.jpg`),
 
   // 채팅 이미지
   chatImages: (roomId: string, imageId: string) =>

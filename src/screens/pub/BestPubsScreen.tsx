@@ -8,9 +8,9 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
-  Alert,
   RefreshControl,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { pubAPI, Pub } from '@/services/api/pubAPI';
@@ -50,8 +50,8 @@ export const BestPubsScreen: React.FC = () => {
     }
   }, []);
 
-  const filteredPubs = pubs.filter(pub =>
-    pub.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredPubs = pubs.filter((pub) =>
+    pub.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const renderPub = ({ item }: { item: Pub }) => (
@@ -73,9 +73,7 @@ export const BestPubsScreen: React.FC = () => {
         <View style={styles.rating}>
           <Text style={styles.ratingText}>⭐ {item.rating}</Text>
           <Text style={styles.reviewCount}>({item.reviewCount})</Text>
-          {item.location ? (
-            <Text style={styles.distance}>• {item.location}</Text>
-          ) : null}
+          {item.location ? <Text style={styles.distance}>• {item.location}</Text> : null}
         </View>
         {item.features && item.features.length > 0 && (
           <View style={styles.tags}>
@@ -95,7 +93,11 @@ export const BestPubsScreen: React.FC = () => {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>인기 펍</Text>
-          <TouchableOpacity onPress={() => Alert.alert('지도', '지도 기능은 준비 중입니다.')}>
+          <TouchableOpacity
+            onPress={() =>
+              Linking.openURL('https://maps.google.com/?q=' + encodeURIComponent('골프 펍'))
+            }
+          >
             <Text style={styles.mapButtonText}>🗺️ 지도</Text>
           </TouchableOpacity>
         </View>
@@ -112,7 +114,11 @@ export const BestPubsScreen: React.FC = () => {
       {/* 헤더 */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>인기 펍</Text>
-        <TouchableOpacity onPress={() => Alert.alert('지도', '지도 기능은 준비 중입니다.')}>
+        <TouchableOpacity
+          onPress={() =>
+            Linking.openURL('https://maps.google.com/?q=' + encodeURIComponent('골프 펍'))
+          }
+        >
           <Text style={styles.mapButtonText}>🗺️ 지도</Text>
         </TouchableOpacity>
       </View>
@@ -146,7 +152,7 @@ export const BestPubsScreen: React.FC = () => {
       <FlatList
         data={filteredPubs}
         renderItem={renderPub}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
         refreshControl={

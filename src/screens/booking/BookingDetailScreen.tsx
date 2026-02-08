@@ -100,19 +100,22 @@ export const BookingDetailScreen: React.FC = () => {
             }
           },
         },
-      ]
+      ],
     );
   };
 
   const handleChat = () => {
     if (!booking) return;
-    navigation.navigate('Chat' as any, {
-      screen: 'ChatRoom',
-      params: {
-        chatId: `booking_${booking.id}`,
-        chatName: booking.title,
-      },
-    } as any);
+    navigation.navigate(
+      'Chat' as any,
+      {
+        screen: 'ChatRoom',
+        params: {
+          chatId: `booking_${booking.id}`,
+          chatName: booking.title,
+        },
+      } as any,
+    );
   };
 
   // 새로고침
@@ -178,7 +181,9 @@ export const BookingDetailScreen: React.FC = () => {
         <View style={styles.mainInfo}>
           <View style={styles.titleRow}>
             <Text style={styles.title}>{booking.title}</Text>
-            <View style={[styles.statusBadge, booking.status === 'CLOSED' && styles.statusBadgeFull]}>
+            <View
+              style={[styles.statusBadge, booking.status === 'CLOSED' && styles.statusBadgeFull]}
+            >
               <Text style={styles.statusBadgeText}>
                 {booking.status === 'OPEN' ? '모집중' : '마감'}
               </Text>
@@ -223,8 +228,19 @@ export const BookingDetailScreen: React.FC = () => {
             {booking.host.avatar ? (
               <Image source={{ uri: booking.host.avatar }} style={styles.hostAvatar} />
             ) : (
-              <View style={[styles.hostAvatar, { backgroundColor: colors.bgTertiary, justifyContent: 'center', alignItems: 'center' }]}>
-                <Text style={{ fontSize: 24, color: colors.textTertiary }}>{booking.host.name?.charAt(0)}</Text>
+              <View
+                style={[
+                  styles.hostAvatar,
+                  {
+                    backgroundColor: colors.bgTertiary,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  },
+                ]}
+              >
+                <Text style={{ fontSize: 24, color: colors.textTertiary }}>
+                  {booking.host.name?.charAt(0)}
+                </Text>
               </View>
             )}
             <View style={styles.hostInfo}>
@@ -248,14 +264,16 @@ export const BookingDetailScreen: React.FC = () => {
                 <Text style={styles.participantName}>{member.name}</Text>
               </View>
             ))}
-            {Array.from({ length: booking.participants.max - booking.participants.current }).map((_, index) => (
-              <View key={`empty-${index}`} style={styles.participantItem}>
-                <View style={styles.emptySlot}>
-                  <Text style={styles.emptySlotText}>?</Text>
+            {Array.from({ length: booking.participants.max - booking.participants.current }).map(
+              (_, index) => (
+                <View key={`empty-${index}`} style={styles.participantItem}>
+                  <View style={styles.emptySlot}>
+                    <Text style={styles.emptySlotText}>?</Text>
+                  </View>
+                  <Text style={styles.participantName}>빈 자리</Text>
                 </View>
-                <Text style={styles.participantName}>빈 자리</Text>
-              </View>
-            ))}
+              ),
+            )}
           </View>
         </View>
 
@@ -293,7 +311,10 @@ export const BookingDetailScreen: React.FC = () => {
             <Text style={styles.chatButtonText}>💬</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.joinButton, (booking.status === 'CLOSED' || joining) && styles.joinButtonDisabled]}
+            style={[
+              styles.joinButton,
+              (booking.status === 'CLOSED' || joining) && styles.joinButtonDisabled,
+            ]}
             onPress={handleJoinBooking}
             disabled={booking.status === 'CLOSED' || joining}
           >

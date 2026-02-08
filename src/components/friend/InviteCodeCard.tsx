@@ -11,11 +11,7 @@ interface InviteCodeCardProps {
   type?: 'code' | 'link';
 }
 
-export const InviteCodeCard: React.FC<InviteCodeCardProps> = ({
-  code,
-  link,
-  type = 'code',
-}) => {
+export const InviteCodeCard: React.FC<InviteCodeCardProps> = ({ code, link, type = 'code' }) => {
   const handleCopy = () => {
     const textToCopy = type === 'link' && link ? link : code;
     Clipboard.setString(textToCopy);

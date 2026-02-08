@@ -11,9 +11,7 @@ export const PlanComparisonScreen: React.FC = () => {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>플랜 비교</Text>
-          <Text style={styles.subtitle}>
-            각 멤버십의 차이점을 한눈에 확인하세요
-          </Text>
+          <Text style={styles.subtitle}>각 멤버십의 차이점을 한눈에 확인하세요</Text>
         </View>
 
         <View style={styles.tableContainer}>
@@ -23,10 +21,9 @@ export const PlanComparisonScreen: React.FC = () => {
         <View style={styles.noteContainer}>
           <Text style={styles.noteTitle}>💡 참고사항</Text>
           <Text style={styles.noteText}>
-            • 모든 멤버십은 언제든 변경 및 해지 가능합니다{'\n'}
-            • 연간 결제 시 17% 할인 혜택이 적용됩니다{'\n'}
-            • VIP 회원은 모든 프리미엄 혜택이 포함됩니다{'\n'}
-            • 포인트는 매월 자동으로 적립됩니다
+            • 모든 멤버십은 언제든 변경 및 해지 가능합니다{'\n'}• 연간 결제 시 17% 할인 혜택이
+            적용됩니다{'\n'}• VIP 회원은 모든 프리미엄 혜택이 포함됩니다{'\n'}• 포인트는 매월
+            자동으로 적립됩니다
           </Text>
         </View>
       </ScrollView>
@@ -41,7 +38,7 @@ export const PlanComparisonScreen: React.FC = () => {
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {

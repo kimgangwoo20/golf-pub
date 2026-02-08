@@ -14,7 +14,7 @@ export const GOLF_COURSES: Record<string, GolfCourseData> = {
   // ========================================
   '스카이72 골프클럽': {
     lat: 37.4467,
-    lon: 126.4500,
+    lon: 126.45,
     region: '인천 중구',
     address: '인천광역시 중구 운서동 2851',
   },
@@ -31,7 +31,7 @@ export const GOLF_COURSES: Record<string, GolfCourseData> = {
     address: '경기도 양평군 강하면 전수리',
   },
   '용인 컨트리클럽': {
-    lat: 37.2420,
+    lat: 37.242,
     lon: 127.1777,
     region: '경기 용인',
     address: '경기도 용인시 처인구 남사면',
@@ -77,8 +77,8 @@ export const GOLF_COURSES: Record<string, GolfCourseData> = {
     address: '강원도 원주시 지정면 오크밸리2길 58',
   },
   '엘리시안 강촌 컨트리클럽': {
-    lat: 37.7500,
-    lon: 128.3500,
+    lat: 37.75,
+    lon: 128.35,
     region: '강원 춘천',
     address: '강원도 춘천시 남산면 북한강변길',
   },
@@ -98,7 +98,7 @@ export const GOLF_COURSES: Record<string, GolfCourseData> = {
   // ========================================
   // 🌊 제주
   // ========================================
-  '나인브릿지': {
+  나인브릿지: {
     lat: 33.3988,
     lon: 126.3194,
     region: '제주 서귀포',
@@ -111,8 +111,8 @@ export const GOLF_COURSES: Record<string, GolfCourseData> = {
     address: '제주특별자치도 제주시 구좌읍 해맞이해안로 2546',
   },
   '클럽나인 브릿지': {
-    lat: 33.4800,
-    lon: 126.9200,
+    lat: 33.48,
+    lon: 126.92,
     region: '제주 제주시',
     address: '제주특별자치도 제주시 애월읍',
   },
@@ -139,7 +139,7 @@ export const GOLF_COURSES: Record<string, GolfCourseData> = {
     address: '경상북도 안동시 풍천면',
   },
   '포항 컨트리클럽': {
-    lat: 36.0190,
+    lat: 36.019,
     lon: 129.3435,
     region: '경북 포항',
     address: '경상북도 포항시 북구 기계면',
@@ -245,7 +245,7 @@ export const GOLF_COURSES: Record<string, GolfCourseData> = {
     address: '충청남도 보령시 천북면',
   },
   '천안 컨트리클럽': {
-    lat: 36.8150,
+    lat: 36.815,
     lon: 127.1539,
     region: '충남 천안',
     address: '충청남도 천안시 동남구 북면',
@@ -320,7 +320,7 @@ export function getGolfCourseCoords(name: string): GolfCourseData | null {
  * @param region 지역명 (예: "경기", "제주")
  * @returns 해당 지역 골프장 배열
  */
-export function getGolfCoursesByRegion(region: string): Array<{ name: string; data: GolfCourseData }> {
+export function getGolfCoursesByRegion(region: string): { name: string; data: GolfCourseData }[] {
   return Object.entries(GOLF_COURSES)
     .filter(([_, data]) => data.region.includes(region))
     .map(([name, data]) => ({ name, data }));
@@ -345,15 +345,18 @@ export const GOLF_COURSE_STATS = {
   total: TOTAL_GOLF_COURSES,
   regions: {
     '서울/인천/경기': getGolfCoursesByRegion('경기').length + getGolfCoursesByRegion('인천').length,
-    '강원': getGolfCoursesByRegion('강원').length,
-    '제주': getGolfCoursesByRegion('제주').length,
-    '경북': getGolfCoursesByRegion('경북').length,
-    '경남': getGolfCoursesByRegion('경남').length,
-    '전북': getGolfCoursesByRegion('전북').length,
-    '전남': getGolfCoursesByRegion('전남').length,
-    '충북': getGolfCoursesByRegion('충북').length,
-    '충남': getGolfCoursesByRegion('충남').length,
-    '부산/대구/광주': getGolfCoursesByRegion('부산').length + getGolfCoursesByRegion('대구').length + getGolfCoursesByRegion('광주').length,
+    강원: getGolfCoursesByRegion('강원').length,
+    제주: getGolfCoursesByRegion('제주').length,
+    경북: getGolfCoursesByRegion('경북').length,
+    경남: getGolfCoursesByRegion('경남').length,
+    전북: getGolfCoursesByRegion('전북').length,
+    전남: getGolfCoursesByRegion('전남').length,
+    충북: getGolfCoursesByRegion('충북').length,
+    충남: getGolfCoursesByRegion('충남').length,
+    '부산/대구/광주':
+      getGolfCoursesByRegion('부산').length +
+      getGolfCoursesByRegion('대구').length +
+      getGolfCoursesByRegion('광주').length,
   },
 };
 

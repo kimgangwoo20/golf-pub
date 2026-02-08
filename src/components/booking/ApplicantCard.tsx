@@ -77,10 +77,7 @@ export const ApplicantCard: React.FC<ApplicantCardProps> = ({
 
         {status === 'pending' && (
           <View style={styles.actions}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.rejectButton]}
-              onPress={onReject}
-            >
+            <TouchableOpacity style={[styles.actionButton, styles.rejectButton]} onPress={onReject}>
               <Text style={styles.rejectButtonText}>거절</Text>
             </TouchableOpacity>
             <TouchableOpacity

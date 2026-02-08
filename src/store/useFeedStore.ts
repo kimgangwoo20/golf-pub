@@ -49,7 +49,7 @@ export const useFeedStore = create<FeedState>((set) => ({
         .limit(20)
         .get();
 
-      const posts = snapshot.docs.map(doc => {
+      const posts = snapshot.docs.map((doc) => {
         const data = doc.data();
         const createdAt = data.createdAt?.toDate?.() || new Date();
         return {
@@ -88,7 +88,7 @@ export const useFeedStore = create<FeedState>((set) => ({
         .limit(50)
         .get();
 
-      const myPosts = snapshot.docs.map(doc => {
+      const myPosts = snapshot.docs.map((doc) => {
         const data = doc.data();
         const createdAt = data.createdAt?.toDate?.() || new Date();
         return {
@@ -161,7 +161,7 @@ export const useFeedStore = create<FeedState>((set) => ({
         .limit(50)
         .get();
 
-      return snapshot.docs.map(doc => {
+      return snapshot.docs.map((doc) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -195,11 +195,11 @@ export const useFeedStore = create<FeedState>((set) => ({
         .get();
 
       const stories = snapshot.docs
-        .filter(doc => {
+        .filter((doc) => {
           const data = doc.data();
           return (data.images && data.images.length > 0) || data.image;
         })
-        .map(doc => {
+        .map((doc) => {
           const data = doc.data();
           return {
             id: doc.id,

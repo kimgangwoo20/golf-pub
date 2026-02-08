@@ -111,11 +111,11 @@ export interface BookingFilter {
  * 부킹 정렬 옵션
  */
 export type BookingSortType =
-  | 'latest'      // 최신순
-  | 'popular'     // 인기순
-  | 'priceLow'    // 가격 낮은순
-  | 'priceHigh'   // 가격 높은순
-  | 'dateClose';  // 날짜 가까운순
+  | 'latest' // 최신순
+  | 'popular' // 인기순
+  | 'priceLow' // 가격 낮은순
+  | 'priceHigh' // 가격 높은순
+  | 'dateClose'; // 날짜 가까운순
 
 /**
  * 부킹 생성 요청 데이터

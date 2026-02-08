@@ -49,7 +49,7 @@ class FirebaseStorageService {
   async uploadProfileImage(
     userId: string,
     uri: string,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
   ): Promise<UploadResult> {
     try {
       // 프로필 이미지 업로드
@@ -74,7 +74,7 @@ class FirebaseStorageService {
   async uploadChatImage(
     roomId: string,
     uri: string,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
   ): Promise<UploadResult> {
     try {
       // 채팅 이미지 업로드
@@ -100,7 +100,7 @@ class FirebaseStorageService {
   async uploadBookingImage(
     bookingId: string,
     uri: string,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
   ): Promise<UploadResult> {
     try {
       // 부킹 이미지 업로드 시작
@@ -126,7 +126,7 @@ class FirebaseStorageService {
   async uploadProductImage(
     productId: string,
     uri: string,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
   ): Promise<UploadResult> {
     try {
       // 상품 이미지 업로드 시작
@@ -152,7 +152,7 @@ class FirebaseStorageService {
   async uploadPostImage(
     postId: string,
     uri: string,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
   ): Promise<UploadResult> {
     try {
       // 포스트 이미지 업로드 시작
@@ -178,7 +178,7 @@ class FirebaseStorageService {
   async uploadReviewImage(
     reviewId: string,
     uri: string,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
   ): Promise<UploadResult> {
     try {
       // 리뷰 이미지 업로드 시작
@@ -204,7 +204,7 @@ class FirebaseStorageService {
   private async uploadImage(
     uri: string,
     path: string,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
   ): Promise<UploadResult> {
     try {
       // Storage 참조 생성
@@ -264,10 +264,7 @@ class FirebaseStorageService {
    * @param imageName - 이미지 이름
    * @returns Cloudflare Images URL
    */
-  private async uploadToCloudflare(
-    firebaseUrl: string,
-    imageName: string
-  ): Promise<string | null> {
+  private async uploadToCloudflare(firebaseUrl: string, imageName: string): Promise<string | null> {
     try {
       // Cloudflare Images 업로드 시작
 
@@ -286,10 +283,10 @@ class FirebaseStorageService {
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${CLOUDFLARE_CONFIG.apiToken}`,
+            Authorization: `Bearer ${CLOUDFLARE_CONFIG.apiToken}`,
           },
           body: formData,
-        }
+        },
       );
 
       const data = await response.json();
@@ -334,7 +331,7 @@ class FirebaseStorageService {
   async uploadMultipleImages(
     uris: string[],
     basePath: string,
-    onProgress?: (overall: number, current: number, total: number) => void
+    onProgress?: (overall: number, current: number, total: number) => void,
   ): Promise<UploadResult[]> {
     try {
       // 다중 이미지 업로드 시작
@@ -388,9 +385,7 @@ class FirebaseStorageService {
    * @param path - Storage 경로
    * @returns 메타데이터
    */
-  async getImageMetadata(
-    path: string
-  ): Promise<FirebaseStorageTypes.FullMetadata> {
+  async getImageMetadata(path: string): Promise<FirebaseStorageTypes.FullMetadata> {
     try {
       const reference = storage.ref(path);
       const metadata = await reference.getMetadata();
@@ -429,11 +424,11 @@ class FirebaseStorageService {
    */
   async compressImage(
     uri: string,
-    options: ImageCompressionOptions = {
+    _options: ImageCompressionOptions = {
       maxWidth: 1200,
       maxHeight: 1200,
       quality: 0.8,
-    }
+    },
   ): Promise<string> {
     try {
       // React Native Image Resizer 또는 Expo ImageManipulator 사용
@@ -441,7 +436,7 @@ class FirebaseStorageService {
 
       // 이미지 압축 시작
 
-      // TODO: 실제 압축 로직 구현
+      // [향후] expo-image-manipulator 설치 후 이미지 압축 활성화 (현재는 원본 업로드, 기능상 문제 없음)
       // import * as ImageManipulator from 'expo-image-manipulator';
       // const result = await ImageManipulator.manipulateAsync(
       //   uri,

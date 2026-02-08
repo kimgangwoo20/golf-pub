@@ -23,7 +23,21 @@ export const SearchHeader: React.FC<Props> = ({ query, onSearch, onFilterPress }
 
 const styles = StyleSheet.create({
   container: { flexDirection: 'row', padding: 16, backgroundColor: '#fff', marginBottom: 8 },
-  input: { flex: 1, backgroundColor: '#f1f5f9', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginRight: 8 },
-  filterButton: { width: 48, height: 48, backgroundColor: '#f1f5f9', borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  input: {
+    flex: 1,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginRight: 8,
+  },
+  filterButton: {
+    width: 48,
+    height: 48,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   filterIcon: { fontSize: 20 },
 });

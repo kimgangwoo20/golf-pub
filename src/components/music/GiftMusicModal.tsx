@@ -68,19 +68,14 @@ export const GiftMusicModal: React.FC<GiftMusicModalProps> = ({
             {popularSongs.map((song) => (
               <TouchableOpacity
                 key={song.id}
-                style={[
-                  styles.songItem,
-                  selectedSong === song.id && styles.songItemSelected,
-                ]}
+                style={[styles.songItem, selectedSong === song.id && styles.songItemSelected]}
                 onPress={() => setSelectedSong(song.id)}
               >
                 <View style={styles.songInfo}>
                   <Text style={styles.songTitle}>{song.title}</Text>
                   <Text style={styles.songArtist}>{song.artist}</Text>
                 </View>
-                {selectedSong === song.id && (
-                  <Text style={styles.checkmark}>✓</Text>
-                )}
+                {selectedSong === song.id && <Text style={styles.checkmark}>✓</Text>}
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -98,10 +93,7 @@ export const GiftMusicModal: React.FC<GiftMusicModalProps> = ({
           </View>
 
           <TouchableOpacity
-            style={[
-              styles.sendButton,
-              !selectedSong && styles.sendButtonDisabled,
-            ]}
+            style={[styles.sendButton, !selectedSong && styles.sendButtonDisabled]}
             onPress={handleSend}
             disabled={!selectedSong}
           >

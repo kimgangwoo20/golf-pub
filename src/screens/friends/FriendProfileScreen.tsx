@@ -51,46 +51,46 @@ export const FriendProfileScreen: React.FC = () => {
 
   const handleChat = () => {
     if (!profile) return;
-    navigation.navigate('Chat' as any, {
-      screen: 'ChatRoom',
-      params: {
-        chatId: `friend_${friendId}`,
-        chatName: profile.name,
-      },
-    } as any);
+    navigation.navigate(
+      'Chat' as any,
+      {
+        screen: 'ChatRoom',
+        params: {
+          chatId: `friend_${friendId}`,
+          chatName: profile.name,
+        },
+      } as any,
+    );
   };
 
   const handleInvite = () => {
-    Alert.alert('모임 초대', '모임 초대 기능은 개발 예정입니다.');
+    // 모임 생성 화면으로 이동 (친구 초대)
+    (navigation as any).navigate('Bookings', { screen: 'CreateBooking' });
   };
 
   const handleUnfriend = () => {
     if (!user?.uid || !friendId || !profile) return;
-    Alert.alert(
-      '친구 삭제',
-      `${profile.name}님을 친구 목록에서 삭제하시겠습니까?`,
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const result = await removeFriend(user.uid, friendId);
-              if (result.success) {
-                Alert.alert('완료', result.message);
-                navigation.goBack();
-              } else {
-                Alert.alert('오류', result.message);
-              }
-            } catch (error) {
-              console.error('친구 삭제 실패:', error);
-              Alert.alert('오류', '친구 삭제에 실패했습니다.');
+    Alert.alert('친구 삭제', `${profile.name}님을 친구 목록에서 삭제하시겠습니까?`, [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const result = await removeFriend(user.uid, friendId);
+            if (result.success) {
+              Alert.alert('완료', result.message);
+              navigation.goBack();
+            } else {
+              Alert.alert('오류', result.message);
             }
-          },
+          } catch (error) {
+            console.error('친구 삭제 실패:', error);
+            Alert.alert('오류', '친구 삭제에 실패했습니다.');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const formatDate = (date: any) => {
@@ -169,15 +169,11 @@ export const FriendProfileScreen: React.FC = () => {
             </View>
 
             <Text style={styles.profileLocation}>📍 {profile.location}</Text>
-            {profile.bio ? (
-              <Text style={styles.profileBio}>{profile.bio}</Text>
-            ) : null}
+            {profile.bio ? <Text style={styles.profileBio}>{profile.bio}</Text> : null}
 
             <View style={styles.metaInfo}>
               {profile.joinedDate && (
-                <Text style={styles.metaText}>
-                  가입일: {formatDate(profile.joinedDate)}
-                </Text>
+                <Text style={styles.metaText}>가입일: {formatDate(profile.joinedDate)}</Text>
               )}
               {friendshipInfo?.friendsSince && (
                 <>

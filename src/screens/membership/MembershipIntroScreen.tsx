@@ -45,9 +45,7 @@ export const MembershipIntroScreen: React.FC = () => {
         <View style={styles.header}>
           <Text style={styles.title}>골프 Pub</Text>
           <Text style={styles.titleHighlight}>프리미엄 멤버십</Text>
-          <Text style={styles.subtitle}>
-            골프를 더 즐겁게, 더 편리하게
-          </Text>
+          <Text style={styles.subtitle}>골프를 더 즐겁게, 더 편리하게</Text>
         </View>
 
         <View style={styles.benefitsContainer}>
@@ -90,7 +88,7 @@ export const MembershipIntroScreen: React.FC = () => {
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {

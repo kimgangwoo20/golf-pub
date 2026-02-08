@@ -100,30 +100,26 @@ export const AddFriendScreen: React.FC = () => {
       return;
     }
 
-    Alert.alert(
-      '친구 추가',
-      `${userName}님에게 친구 요청을 보내시겠습니까?`,
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '요청',
-          onPress: async () => {
-            try {
-              const result = await sendFriendRequest(user.uid, targetUserId);
+    Alert.alert('친구 추가', `${userName}님에게 친구 요청을 보내시겠습니까?`, [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '요청',
+        onPress: async () => {
+          try {
+            const result = await sendFriendRequest(user.uid, targetUserId);
 
-              if (result.success) {
-                Alert.alert('완료', result.message);
-              } else {
-                Alert.alert('알림', result.message);
-              }
-            } catch (error) {
-              console.error('친구 요청 실패:', error);
-              Alert.alert('오류', '친구 요청에 실패했습니다.');
+            if (result.success) {
+              Alert.alert('완료', result.message);
+            } else {
+              Alert.alert('알림', result.message);
             }
-          },
+          } catch (error) {
+            console.error('친구 요청 실패:', error);
+            Alert.alert('오류', '친구 요청에 실패했습니다.');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   // QR 코드 스캔 시작
@@ -159,7 +155,7 @@ export const AddFriendScreen: React.FC = () => {
 
       if (!match) {
         Alert.alert('오류', '유효하지 않은 QR 코드입니다.', [
-          { text: '확인', onPress: () => setScanned(false) }
+          { text: '확인', onPress: () => setScanned(false) },
         ]);
         return;
       }
@@ -169,7 +165,7 @@ export const AddFriendScreen: React.FC = () => {
       // 자기 자신 체크
       if (friendId === user?.uid) {
         Alert.alert('알림', '자신의 QR 코드입니다.', [
-          { text: '확인', onPress: () => setScanned(false) }
+          { text: '확인', onPress: () => setScanned(false) },
         ]);
         return;
       }
@@ -177,41 +173,37 @@ export const AddFriendScreen: React.FC = () => {
       setQrScanModalVisible(false);
 
       // 친구 요청 보내기
-      Alert.alert(
-        'QR 코드 인식 완료',
-        '이 사용자에게 친구 요청을 보내시겠습니까?',
-        [
-          {
-            text: '취소',
-            style: 'cancel',
-            onPress: () => setScanned(false)
-          },
-          {
-            text: '요청 보내기',
-            onPress: async () => {
-              try {
-                if (!user?.uid) {
-                  Alert.alert('알림', '로그인이 필요합니다.');
-                  return;
-                }
-                const result = await sendFriendRequest(user.uid, friendId);
-                if (result.success) {
-                  Alert.alert('완료', result.message);
-                } else {
-                  Alert.alert('알림', result.message);
-                }
-              } catch (error) {
-                console.error('QR 친구 요청 실패:', error);
-                Alert.alert('오류', '친구 요청에 실패했습니다.');
+      Alert.alert('QR 코드 인식 완료', '이 사용자에게 친구 요청을 보내시겠습니까?', [
+        {
+          text: '취소',
+          style: 'cancel',
+          onPress: () => setScanned(false),
+        },
+        {
+          text: '요청 보내기',
+          onPress: async () => {
+            try {
+              if (!user?.uid) {
+                Alert.alert('알림', '로그인이 필요합니다.');
+                return;
               }
-            },
+              const result = await sendFriendRequest(user.uid, friendId);
+              if (result.success) {
+                Alert.alert('완료', result.message);
+              } else {
+                Alert.alert('알림', result.message);
+              }
+            } catch (error) {
+              console.error('QR 친구 요청 실패:', error);
+              Alert.alert('오류', '친구 요청에 실패했습니다.');
+            }
           },
-        ]
-      );
+        },
+      ]);
     } catch (error) {
       console.error('QR 코드 처리 오류:', error);
       Alert.alert('오류', 'QR 코드 처리 중 오류가 발생했습니다.', [
-        { text: '확인', onPress: () => setScanned(false) }
+        { text: '확인', onPress: () => setScanned(false) },
       ]);
     }
   };
@@ -221,7 +213,7 @@ export const AddFriendScreen: React.FC = () => {
     return `golfpub://friend/${user?.uid || 'unknown'}`;
   };
 
-  const renderUserCard = (userItem: Friend, isSearch: boolean = false) => (
+  const renderUserCard = (userItem: Friend, _isSearch: boolean = false) => (
     <View key={userItem.id} style={styles.userCard}>
       <Image
         source={{ uri: userItem.avatar || 'https://i.pravatar.cc/150' }}
@@ -233,9 +225,7 @@ export const AddFriendScreen: React.FC = () => {
         <Text style={styles.userHandicap}>⛳ {userItem.handicap}</Text>
         <Text style={styles.userLocation}>📍 {userItem.location}</Text>
         {userItem.mutualFriends > 0 && (
-          <Text style={styles.mutualText}>
-            공통 친구 {userItem.mutualFriends}명
-          </Text>
+          <Text style={styles.mutualText}>공통 친구 {userItem.mutualFriends}명</Text>
         )}
       </View>
 
@@ -294,9 +284,7 @@ export const AddFriendScreen: React.FC = () => {
             <View style={styles.tabContent}>
               <View style={styles.searchSection}>
                 <Text style={styles.sectionTitle}>친구 검색</Text>
-                <Text style={styles.sectionDescription}>
-                  아이디, 이름, 전화번호로 검색하세요
-                </Text>
+                <Text style={styles.sectionDescription}>아이디, 이름, 전화번호로 검색하세요</Text>
 
                 <View style={styles.searchInputContainer}>
                   <TextInput
@@ -331,9 +319,7 @@ export const AddFriendScreen: React.FC = () => {
             <View style={styles.tabContent}>
               <View style={styles.suggestionsSection}>
                 <Text style={styles.sectionTitle}>추천 친구</Text>
-                <Text style={styles.sectionDescription}>
-                  새로 가입한 골퍼를 추천합니다
-                </Text>
+                <Text style={styles.sectionDescription}>새로 가입한 골퍼를 추천합니다</Text>
 
                 {suggestionsLoading ? (
                   <View style={styles.suggestionsLoading}>
@@ -361,17 +347,13 @@ export const AddFriendScreen: React.FC = () => {
                 <TouchableOpacity style={styles.qrCard} onPress={handleQRScan}>
                   <Text style={styles.qrIcon}>📷</Text>
                   <Text style={styles.qrTitle}>QR 코드 스캔</Text>
-                  <Text style={styles.qrDescription}>
-                    친구의 QR 코드를 스캔하세요
-                  </Text>
+                  <Text style={styles.qrDescription}>친구의 QR 코드를 스캔하세요</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.qrCard} onPress={handleShowMyQR}>
                   <Text style={styles.qrIcon}>📱</Text>
                   <Text style={styles.qrTitle}>내 QR 코드 보기</Text>
-                  <Text style={styles.qrDescription}>
-                    내 QR 코드를 친구에게 보여주세요
-                  </Text>
+                  <Text style={styles.qrDescription}>내 QR 코드를 친구에게 보여주세요</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -401,7 +383,11 @@ export const AddFriendScreen: React.FC = () => {
 
             <View style={styles.cameraContainer}>
               <CameraView
-                onBarcodeScanned={scanned ? undefined : (result) => handleBarCodeScanned({ type: result.type, data: result.data })}
+                onBarcodeScanned={
+                  scanned
+                    ? undefined
+                    : (result) => handleBarCodeScanned({ type: result.type, data: result.data })
+                }
                 style={styles.camera}
                 barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
               />
@@ -417,14 +403,9 @@ export const AddFriendScreen: React.FC = () => {
             </View>
 
             <View style={styles.qrModalFooter}>
-              <Text style={styles.qrModalHint}>
-                친구의 QR 코드를 사각형 안에 맞춰주세요
-              </Text>
+              <Text style={styles.qrModalHint}>친구의 QR 코드를 사각형 안에 맞춰주세요</Text>
               {scanned && (
-                <TouchableOpacity
-                  style={styles.rescanButton}
-                  onPress={() => setScanned(false)}
-                >
+                <TouchableOpacity style={styles.rescanButton} onPress={() => setScanned(false)}>
                   <Text style={styles.rescanButtonText}>다시 스캔</Text>
                 </TouchableOpacity>
               )}
@@ -453,16 +434,16 @@ export const AddFriendScreen: React.FC = () => {
 
               <View style={styles.qrCodeWrapper}>
                 <Image
-                  source={{ uri: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(getMyQRData())}` }}
+                  source={{
+                    uri: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(getMyQRData())}`,
+                  }}
                   style={styles.qrCodeImage}
                   resizeMode="contain"
                 />
               </View>
 
               <View style={styles.myQrInfo}>
-                <Text style={styles.myQrName}>
-                  {user?.displayName || '사용자'}
-                </Text>
+                <Text style={styles.myQrName}>{user?.displayName || '사용자'}</Text>
                 <Text style={styles.myQrHint}>
                   친구가 이 QR 코드를 스캔하면{'\n'}친구 요청이 전송됩니다
                 </Text>

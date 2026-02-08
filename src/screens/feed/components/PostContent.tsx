@@ -12,9 +12,9 @@ export const PostContent: React.FC<Props> = ({ post, onLike, onBack }) => (
     <TouchableOpacity style={styles.backButton} onPress={onBack}>
       <Text style={styles.backIcon}>←</Text>
     </TouchableOpacity>
-    
+
     <View style={styles.header}>
-      <Image 
+      <Image
         source={{ uri: post?.author?.avatar || 'https://via.placeholder.com/40' }}
         style={styles.avatar}
       />

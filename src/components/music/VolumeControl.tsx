@@ -7,10 +7,7 @@ interface VolumeControlProps {
   onVolumeChange?: (volume: number) => void;
 }
 
-export const VolumeControl: React.FC<VolumeControlProps> = ({
-  volume,
-  onVolumeChange,
-}) => {
+export const VolumeControl: React.FC<VolumeControlProps> = ({ volume, onVolumeChange }) => {
   const handleDecrease = () => {
     if (volume > 0 && onVolumeChange) {
       onVolumeChange(Math.max(0, volume - 10));

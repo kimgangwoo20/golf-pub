@@ -39,8 +39,9 @@ export const HomeScreen: React.FC = () => {
 
   const { bookings, loadBookings } = useBookingStore();
   const { user } = useAuthStore();
-  const { unreadCount, subscribeToUnreadCount, unsubscribeFromUnreadCount } = useNotificationStore();
-  const premiumPlan = MEMBERSHIP_PLANS.find(p => p.id === 'premium')!;
+  const { unreadCount, subscribeToUnreadCount, unsubscribeFromUnreadCount } =
+    useNotificationStore();
+  const premiumPlan = MEMBERSHIP_PLANS.find((p) => p.id === 'premium')!;
 
   useEffect(() => {
     if (user?.uid) {
@@ -81,13 +82,12 @@ export const HomeScreen: React.FC = () => {
     setRefreshing(false);
   }, []);
 
-  const filteredBookings = bookings.filter(booking => {
+  const filteredBookings = bookings.filter((booking) => {
     // 검색 필터
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       return (
-        booking.title.toLowerCase().includes(query) ||
-        booking.course.toLowerCase().includes(query)
+        booking.title.toLowerCase().includes(query) || booking.course.toLowerCase().includes(query)
       );
     }
 
@@ -121,7 +121,7 @@ export const HomeScreen: React.FC = () => {
     if (navigation) {
       navigation.navigate('Bookings', {
         screen: 'BookingDetail',
-        params: { booking }
+        params: { booking },
       });
     } else {
       Alert.alert('알림', '부킹 상세 화면으로 이동합니다.');
@@ -153,8 +153,8 @@ export const HomeScreen: React.FC = () => {
                     onPress: () => {
                       // 부킹 목록 새로고침
                       loadData();
-                    }
-                  }
+                    },
+                  },
                 ]);
               } else {
                 Alert.alert('알림', result.message);
@@ -185,9 +185,7 @@ export const HomeScreen: React.FC = () => {
 
       if (result.success) {
         setAttendanceChecked(true);
-        Alert.alert('출석 완료! 🎉', result.message, [
-          { text: '확인', style: 'default' as const }
-        ]);
+        Alert.alert('출석 완료! 🎉', result.message, [{ text: '확인', style: 'default' as const }]);
       } else {
         Alert.alert('알림', result.message);
       }
@@ -209,10 +207,7 @@ export const HomeScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* 헤더 */}
-      <LinearGradient
-        colors={[colors.primary, colors.primaryDark]}
-        style={styles.header}
-      >
+      <LinearGradient colors={[colors.primary, colors.primaryDark]} style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.logoContainer}>
             <Text style={styles.logoIcon}>⛳</Text>
@@ -229,9 +224,7 @@ export const HomeScreen: React.FC = () => {
               <Text style={styles.iconBtnText}>🔔</Text>
               {unreadCount > 0 && (
                 <View style={styles.notificationBadge}>
-                  <Text style={styles.badgeText}>
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </Text>
+                  <Text style={styles.badgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -268,55 +261,52 @@ export const HomeScreen: React.FC = () => {
           />
         }
       >
-
-                      {/* 멤버십 배너 */}
-                      <TouchableOpacity
-                        style={styles.membershipBanner}
-                        onPress={() => {
-                          navigation.navigate('MembershipIntro');
-                        }}
-                        activeOpacity={0.8}
-                      >
-                        <LinearGradient
-                          colors={['#7c3aed', '#a855f7']}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          style={styles.membershipGradient}
-                        >
-                          <View style={styles.membershipContent}>
-                            <View style={styles.membershipLeft}>
-                              <Text style={styles.membershipBadge}>{premiumPlan.badge} {premiumPlan.name}</Text>
-                              <Text style={styles.membershipTitle}>{premiumPlan.description}</Text>
-                              <Text style={styles.membershipSubtitle}>
-                                {premiumPlan.features[0]} • 매월 {premiumPlan.monthlyPoints.toLocaleString()}P 적립
-                              </Text>
-                            </View>
-                            <View style={styles.membershipRight}>
-                              <View style={styles.membershipButton}>
-                                <Text style={styles.membershipButtonText}>자세히 →</Text>
-                              </View>
-                            </View>
-                          </View>
-                        </LinearGradient>
-                      </TouchableOpacity>
+        {/* 멤버십 배너 */}
+        <TouchableOpacity
+          style={styles.membershipBanner}
+          onPress={() => {
+            navigation.navigate('Membership' as any);
+          }}
+          activeOpacity={0.8}
+        >
+          <LinearGradient
+            colors={['#7c3aed', '#a855f7']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.membershipGradient}
+          >
+            <View style={styles.membershipContent}>
+              <View style={styles.membershipLeft}>
+                <Text style={styles.membershipBadge}>
+                  {premiumPlan.badge} {premiumPlan.name}
+                </Text>
+                <Text style={styles.membershipTitle}>{premiumPlan.description}</Text>
+                <Text style={styles.membershipSubtitle}>
+                  {premiumPlan.features[0]} • 매월 {premiumPlan.monthlyPoints.toLocaleString()}P
+                  적립
+                </Text>
+              </View>
+              <View style={styles.membershipRight}>
+                <View style={styles.membershipButton}>
+                  <Text style={styles.membershipButtonText}>자세히 →</Text>
+                </View>
+              </View>
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
 
         {/* 날씨 위젯 */}
         <WeatherWidget />
 
         {/* 출석체크 이벤트 배너 */}
         <TouchableOpacity
-          style={[
-            styles.attendanceBanner,
-            attendanceChecked && styles.attendanceBannerChecked
-          ]}
+          style={[styles.attendanceBanner, attendanceChecked && styles.attendanceBannerChecked]}
           onPress={handleAttendanceCheck}
           activeOpacity={0.8}
           disabled={attendanceChecked}
         >
           <View style={styles.attendanceIconWrapper}>
-            <Text style={styles.attendanceIcon}>
-              {attendanceChecked ? '✓' : '✨'}
-            </Text>
+            <Text style={styles.attendanceIcon}>{attendanceChecked ? '✓' : '✨'}</Text>
           </View>
           <View style={styles.attendanceContent}>
             <Text style={styles.attendanceTitle}>
@@ -326,10 +316,9 @@ export const HomeScreen: React.FC = () => {
               {attendanceChecked ? '+100 포인트 적립됨' : '100 포인트 받기!'}
             </Text>
           </View>
-          <View style={[
-            styles.attendanceButton,
-            attendanceChecked && styles.attendanceButtonChecked
-          ]}>
+          <View
+            style={[styles.attendanceButton, attendanceChecked && styles.attendanceButtonChecked]}
+          >
             <Text style={styles.attendanceButtonText}>
               {attendanceChecked ? '✓ 완료' : '체크하기'}
             </Text>
@@ -382,7 +371,7 @@ export const HomeScreen: React.FC = () => {
               </Text>
             </View>
           ) : (
-            filteredBookings.map(booking => (
+            filteredBookings.map((booking) => (
               <BookingCard
                 key={booking.id}
                 booking={booking}
@@ -432,9 +421,7 @@ const FilterChip: React.FC<FilterChipProps> = ({ label, active, onPress }) => {
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
-        {label}
-      </Text>
+      <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>{label}</Text>
     </TouchableOpacity>
   );
 };
@@ -703,53 +690,53 @@ const styles = StyleSheet.create({
     height: 100,
   },
 
-    membershipBanner: {
-      marginHorizontal: spacing.md,
-      marginTop: spacing.md,
-      marginBottom: spacing.sm,
-      borderRadius: borderRadius.lg,
-      overflow: 'hidden',
-      ...shadows.md,
-    },
-    membershipGradient: {
-      padding: spacing.lg,
-    },
-    membershipContent: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    membershipLeft: {
-      flex: 1,
-    },
-    membershipBadge: {
-      fontSize: 14,
-      color: '#fff',
-      fontWeight: '600',
-      marginBottom: 4,
-    },
-    membershipTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: '#fff',
-      marginBottom: 4,
-    },
-    membershipSubtitle: {
-      fontSize: 13,
-      color: 'rgba(255, 255, 255, 0.9)',
-    },
-    membershipRight: {
-      marginLeft: spacing.md,
-    },
-    membershipButton: {
-      backgroundColor: 'rgba(255, 255, 255, 0.25)',
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      borderRadius: borderRadius.md,
-    },
-    membershipButtonText: {
-      color: '#fff',
-      fontWeight: '600',
-      fontSize: 14,
-    },
+  membershipBanner: {
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+    borderRadius: borderRadius.lg,
+    overflow: 'hidden',
+    ...shadows.md,
+  },
+  membershipGradient: {
+    padding: spacing.lg,
+  },
+  membershipContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  membershipLeft: {
+    flex: 1,
+  },
+  membershipBadge: {
+    fontSize: 14,
+    color: '#fff',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  membershipTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  membershipSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  membershipRight: {
+    marginLeft: spacing.md,
+  },
+  membershipButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: borderRadius.md,
+  },
+  membershipButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
+  },
 });

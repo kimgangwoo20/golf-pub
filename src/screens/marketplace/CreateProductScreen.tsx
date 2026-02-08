@@ -14,8 +14,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { CATEGORIES, CONDITION_LABELS, ProductCategory, ProductCondition } from '@/types/marketplace-types';
+import {
+  CATEGORIES,
+  CONDITION_LABELS,
+  ProductCategory,
+  ProductCondition,
+} from '@/types/marketplace-types';
 import { marketplaceAPI } from '@/services/api/marketplaceAPI';
+import { firebaseStorage } from '@/services/firebase/firebaseStorage';
 import { colors } from '@/styles/theme';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -37,59 +43,55 @@ export const CreateProductScreen: React.FC = () => {
       return;
     }
 
-    Alert.alert(
-      '이미지 추가',
-      '이미지를 가져올 방법을 선택하세요',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '카메라',
-          onPress: async () => {
-            const { status } = await ImagePicker.requestCameraPermissionsAsync();
-            if (status !== 'granted') {
-              Alert.alert('권한 필요', '카메라 사용을 위해 권한이 필요합니다.');
-              return;
-            }
+    Alert.alert('이미지 추가', '이미지를 가져올 방법을 선택하세요', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '카메라',
+        onPress: async () => {
+          const { status } = await ImagePicker.requestCameraPermissionsAsync();
+          if (status !== 'granted') {
+            Alert.alert('권한 필요', '카메라 사용을 위해 권한이 필요합니다.');
+            return;
+          }
 
-            const result = await ImagePicker.launchCameraAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Images,
-              allowsEditing: true,
-              aspect: [1, 1],
-              quality: 0.8,
-            });
+          const result = await ImagePicker.launchCameraAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+          });
 
-            if (!result.canceled && result.assets[0]) {
-              setImages(prev => [...prev, result.assets[0].uri]);
-            }
-          },
+          if (!result.canceled && result.assets[0]) {
+            setImages((prev) => [...prev, result.assets[0].uri]);
+          }
         },
-        {
-          text: '앨범',
-          onPress: async () => {
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (status !== 'granted') {
-              Alert.alert('권한 필요', '앨범 접근을 위해 권한이 필요합니다.');
-              return;
-            }
+      },
+      {
+        text: '앨범',
+        onPress: async () => {
+          const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+          if (status !== 'granted') {
+            Alert.alert('권한 필요', '앨범 접근을 위해 권한이 필요합니다.');
+            return;
+          }
 
-            const result = await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Images,
-              allowsEditing: true,
-              aspect: [1, 1],
-              quality: 0.8,
-            });
+          const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+          });
 
-            if (!result.canceled && result.assets[0]) {
-              setImages(prev => [...prev, result.assets[0].uri]);
-            }
-          },
+          if (!result.canceled && result.assets[0]) {
+            setImages((prev) => [...prev, result.assets[0].uri]);
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleRemoveImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
+    setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = () => {
@@ -115,39 +117,44 @@ export const CreateProductScreen: React.FC = () => {
       return;
     }
 
-    Alert.alert(
-      '상품 등록',
-      '상품을 등록하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '등록',
-          onPress: async () => {
-            try {
-              setSubmitting(true);
-              // TODO: 이미지 업로드 후 URL 배열로 변환 (Firebase Storage 연동 필요)
-              // 현재는 로컬 URI를 빈 배열로 처리
-              await marketplaceAPI.createProduct({
-                title: title.trim(),
-                description: description.trim(),
-                price: Number(price),
-                category,
-                condition,
-                images: [], // TODO: Firebase Storage 업로드 후 URL 배열
-                location: location.trim(),
-              });
-              Alert.alert('완료', '상품이 등록되었습니다.', [
-                { text: '확인', onPress: () => navigation.goBack() },
-              ]);
-            } catch (error: any) {
-              Alert.alert('오류', error.message || '상품 등록에 실패했습니다.');
-            } finally {
-              setSubmitting(false);
+    Alert.alert('상품 등록', '상품을 등록하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '등록',
+        onPress: async () => {
+          try {
+            setSubmitting(true);
+
+            // 이미지 업로드 (Firebase Storage)
+            let imageUrls: string[] = [];
+            if (images.length > 0) {
+              const uploadResults = await firebaseStorage.uploadMultipleImages(
+                images,
+                `products/${Date.now()}`,
+              );
+              imageUrls = uploadResults.filter((r) => r.url).map((r) => r.url);
             }
-          },
+
+            await marketplaceAPI.createProduct({
+              title: title.trim(),
+              description: description.trim(),
+              price: Number(price),
+              category,
+              condition,
+              images: imageUrls,
+              location: location.trim(),
+            });
+            Alert.alert('완료', '상품이 등록되었습니다.', [
+              { text: '확인', onPress: () => navigation.goBack() },
+            ]);
+          } catch (error: any) {
+            Alert.alert('오류', error.message || '상품 등록에 실패했습니다.');
+          } finally {
+            setSubmitting(false);
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   return (
@@ -168,7 +175,11 @@ export const CreateProductScreen: React.FC = () => {
             <Text style={styles.label}>
               상품 이미지 <Text style={styles.required}>*</Text>
             </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.imageScroll}
+            >
               <TouchableOpacity style={styles.addImageButton} onPress={handleAddImage}>
                 <Text style={styles.addImageIcon}>📷</Text>
                 <Text style={styles.addImageText}>{images.length}/10</Text>
@@ -218,10 +229,12 @@ export const CreateProductScreen: React.FC = () => {
                   onPress={() => setCategory(cat.id)}
                 >
                   <Text style={styles.categoryIcon}>{cat.icon}</Text>
-                  <Text style={[
-                    styles.categoryButtonText,
-                    category === cat.id && styles.categoryButtonTextActive,
-                  ]}>
+                  <Text
+                    style={[
+                      styles.categoryButtonText,
+                      category === cat.id && styles.categoryButtonTextActive,
+                    ]}
+                  >
                     {cat.name}
                   </Text>
                 </TouchableOpacity>
@@ -261,10 +274,12 @@ export const CreateProductScreen: React.FC = () => {
                   ]}
                   onPress={() => setCondition(cond)}
                 >
-                  <Text style={[
-                    styles.conditionButtonText,
-                    condition === cond && styles.conditionButtonTextActive,
-                  ]}>
+                  <Text
+                    style={[
+                      styles.conditionButtonText,
+                      condition === cond && styles.conditionButtonTextActive,
+                    ]}
+                  >
                     {CONDITION_LABELS[cond]}
                   </Text>
                 </TouchableOpacity>

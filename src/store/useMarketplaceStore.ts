@@ -30,7 +30,7 @@ export const useMarketplaceStore = create<MarketplaceState>((set) => ({
         .limit(50)
         .get();
 
-      const items = snapshot.docs.map(doc => ({
+      const items = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate(),
@@ -53,7 +53,7 @@ export const useMarketplaceStore = create<MarketplaceState>((set) => ({
         .orderBy('createdAt', 'desc')
         .get();
 
-      const items = snapshot.docs.map(doc => ({
+      const items = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate(),
@@ -86,10 +86,13 @@ export const useMarketplaceStore = create<MarketplaceState>((set) => ({
 
   updateItem: async (id, data) => {
     try {
-      await firebaseFirestore.collection('products').doc(id).update({
-        ...data,
-        updatedAt: new Date(),
-      });
+      await firebaseFirestore
+        .collection('products')
+        .doc(id)
+        .update({
+          ...data,
+          updatedAt: new Date(),
+        });
     } catch (error: any) {
       throw error;
     }

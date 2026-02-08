@@ -8,11 +8,7 @@ interface BookingDetailCardProps {
   icon?: string;
 }
 
-export const BookingDetailCard: React.FC<BookingDetailCardProps> = ({
-  label,
-  value,
-  icon,
-}) => {
+export const BookingDetailCard: React.FC<BookingDetailCardProps> = ({ label, value, icon }) => {
   return (
     <View style={styles.container}>
       {icon && <Text style={styles.icon}>{icon}</Text>}

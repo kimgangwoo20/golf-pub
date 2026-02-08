@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SearchHeader } from './components/SearchHeader';
 import { FilterSheet } from './components/FilterSheet';
 import { CourseList } from './components/CourseList';
 import { useCourseSearch } from './hooks/useCourseSearch';
 
-export const GolfCourseSearchScreen = ({ navigation }: any) => {
+export const GolfCourseSearchScreen = ({ navigation: _navigation }: any) => {
   const {
     courses,
     searchQuery,
@@ -26,11 +26,7 @@ export const GolfCourseSearchScreen = ({ navigation }: any) => {
         onSearch={handleSearch}
         onFilterPress={handleFilterToggle}
       />
-      <CourseList
-        courses={courses}
-        loading={loading}
-        onCoursePress={handleCoursePress}
-      />
+      <CourseList courses={courses} loading={loading} onCoursePress={handleCoursePress} />
       <FilterSheet
         visible={showFilters}
         filters={filters}

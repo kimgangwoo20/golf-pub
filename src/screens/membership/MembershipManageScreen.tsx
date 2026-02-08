@@ -43,22 +43,37 @@ export const MembershipManageScreen: React.FC = () => {
         <Text style={styles.buttonText}>플랜 변경</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.button, styles.dangerButton]} onPress={handleCancelSubscription}>
+      <TouchableOpacity
+        style={[styles.button, styles.dangerButton]}
+        onPress={handleCancelSubscription}
+      >
         <Text style={[styles.buttonText, styles.dangerText]}>구독 해지</Text>
       </TouchableOpacity>
     </ScrollView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa', padding: 20 },
   card: { backgroundColor: '#fff', borderRadius: 12, padding: 20, marginBottom: 20 },
   cardTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 16, color: '#1a1a1a' },
   badgeContainer: { alignItems: 'center', marginBottom: 20 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
   label: { fontSize: 14, color: '#666' },
   value: { fontSize: 14, fontWeight: '600', color: '#1a1a1a' },
-  button: { backgroundColor: '#10b981', padding: 16, borderRadius: 12, alignItems: 'center', marginBottom: 12 },
+  button: {
+    backgroundColor: '#10b981',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   dangerButton: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#FF3B30' },
   dangerText: { color: '#FF3B30' },

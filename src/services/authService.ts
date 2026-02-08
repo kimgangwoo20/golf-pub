@@ -40,7 +40,7 @@ class AuthService {
    */
   async signInWithEmailAndPassword(
     email: string,
-    password: string
+    password: string,
   ): Promise<FirebaseAuthTypes.UserCredential> {
     try {
       const userCredential = await auth().signInWithEmailAndPassword(email, password);
@@ -56,12 +56,12 @@ class AuthService {
   async createUserWithEmailAndPassword(
     email: string,
     password: string,
-    displayName: string
+    displayName: string,
   ): Promise<FirebaseAuthTypes.UserCredential> {
     try {
       // Firebase Auth에 사용자 생성
       const userCredential = await auth().createUserWithEmailAndPassword(email, password);
-      
+
       // 프로필 업데이트
       await userCredential.user.updateProfile({ displayName });
 
@@ -100,7 +100,7 @@ class AuthService {
       displayName: string | null;
       photoURL: string | null;
       phoneNumber: string | null;
-    }
+    },
   ): Promise<void> {
     try {
       const now = new Date();
@@ -137,7 +137,7 @@ class AuthService {
             photoURL: currentUser.photoURL,
             phoneNumber: currentUser.phoneNumber,
           });
-          
+
           // 다시 조회
           const newDoc = await firestore().collection('users').doc(uid).get();
           return newDoc.data() as unknown as UserProfile;
@@ -168,7 +168,7 @@ class AuthService {
       const currentUser = auth().currentUser;
       if (currentUser && currentUser.uid === uid) {
         const authUpdateData: { displayName?: string; photoURL?: string } = {};
-        
+
         if (data.displayName !== undefined) {
           authUpdateData.displayName = data.displayName ?? undefined;
         }

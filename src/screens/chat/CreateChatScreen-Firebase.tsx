@@ -28,8 +28,8 @@ export const CreateChatScreen: React.FC<{ navigation?: any }> = ({ navigation })
     }
   }, [user]);
 
-  const filteredFriends = friends.filter(friend =>
-    friend.friendName.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredFriends = friends.filter((friend) =>
+    friend.friendName.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const handleSelectFriend = async (friend: any) => {
@@ -65,13 +65,10 @@ export const CreateChatScreen: React.FC<{ navigation?: any }> = ({ navigation })
   };
 
   const renderFriendItem = ({ item }: { item: any }) => (
-    <TouchableOpacity
-      style={styles.friendItem}
-      onPress={() => handleSelectFriend(item)}
-    >
-      <Image 
-        source={{ uri: item.friendAvatar || 'https://i.pravatar.cc/150' }} 
-        style={styles.avatar} 
+    <TouchableOpacity style={styles.friendItem} onPress={() => handleSelectFriend(item)}>
+      <Image
+        source={{ uri: item.friendAvatar || 'https://i.pravatar.cc/150' }}
+        style={styles.avatar}
       />
       <View style={styles.friendInfo}>
         <Text style={styles.friendName}>{item.friendName}</Text>
@@ -83,45 +80,45 @@ export const CreateChatScreen: React.FC<{ navigation?: any }> = ({ navigation })
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-    <View style={styles.container}>
-      {/* 헤더 */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation?.goBack()} style={styles.backButton}>
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>새 채팅</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      <View style={styles.container}>
+        {/* 헤더 */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation?.goBack()} style={styles.backButton}>
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>새 채팅</Text>
+          <View style={{ width: 36 }} />
+        </View>
 
-      {/* 검색 */}
-      <View style={styles.searchContainer}>
-        <Text style={styles.searchIcon}>🔍</Text>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="친구 검색"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor="#999"
+        {/* 검색 */}
+        <View style={styles.searchContainer}>
+          <Text style={styles.searchIcon}>🔍</Text>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="친구 검색"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor="#999"
+          />
+        </View>
+
+        {/* 친구 목록 */}
+        <FlatList
+          data={filteredFriends}
+          renderItem={renderFriendItem}
+          keyExtractor={(item) => item.id}
+          ListHeaderComponent={
+            <Text style={styles.listHeader}>친구 목록 ({filteredFriends.length})</Text>
+          }
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>친구가 없습니다</Text>
+              <Text style={styles.emptySubtext}>친구를 추가해보세요!</Text>
+            </View>
+          }
         />
       </View>
-
-      {/* 친구 목록 */}
-      <FlatList
-        data={filteredFriends}
-        renderItem={renderFriendItem}
-        keyExtractor={item => item.id}
-        ListHeaderComponent={
-          <Text style={styles.listHeader}>친구 목록 ({filteredFriends.length})</Text>
-        }
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>친구가 없습니다</Text>
-            <Text style={styles.emptySubtext}>친구를 추가해보세요!</Text>
-          </View>
-        }
-      />
-    </View>
     </SafeAreaView>
   );
 };

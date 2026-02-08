@@ -8,11 +8,7 @@ interface MessageBubbleProps {
   timestamp: string;
 }
 
-export const MessageBubble: React.FC<MessageBubbleProps> = ({
-  text,
-  isMine,
-  timestamp,
-}) => {
+export const MessageBubble: React.FC<MessageBubbleProps> = ({ text, isMine, timestamp }) => {
   return (
     <View style={[styles.container, isMine && styles.myContainer]}>
       <View style={[styles.bubble, isMine && styles.myBubble]}>

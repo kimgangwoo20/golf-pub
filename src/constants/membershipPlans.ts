@@ -1,4 +1,4 @@
-import { MembershipType, BillingCycle, MembershipPlan, MembershipPermissions } from '@/types/membership';
+import { MembershipType, MembershipPlan, MembershipPermissions } from '@/types/membership';
 
 // 멤버십 플랜 정의
 export const MEMBERSHIP_PLANS: MembershipPlan[] = [
@@ -9,12 +9,7 @@ export const MEMBERSHIP_PLANS: MembershipPlan[] = [
     monthlyPrice: 0,
     yearlyPrice: 0,
     description: '기본 기능을 무료로 이용하세요',
-    features: [
-      '부킹 조회만 가능',
-      '프로필 열람 제한',
-      '광고 표시',
-      '기본 고객센터',
-    ],
+    features: ['부킹 조회만 가능', '프로필 열람 제한', '광고 표시', '기본 고객센터'],
     monthlyPoints: 0,
     badge: '⭐',
     color: '#95a5a6',

@@ -27,7 +27,8 @@ export const ChatRoomScreen: React.FC = () => {
   const chatName = route.params?.chatName || route.params?.chatTitle || '채팅';
 
   const { user } = useAuthStore();
-  const { currentRoomMessages, sendMessage, sendImage, markAsRead, listenToMessages } = useChatStore();
+  const { currentRoomMessages, sendMessage, sendImage, markAsRead, listenToMessages } =
+    useChatStore();
   const insets = useSafeAreaInsets();
 
   const [inputText, setInputText] = useState('');
@@ -68,7 +69,7 @@ export const ChatRoomScreen: React.FC = () => {
           duration: Platform.OS === 'ios' ? 250 : 100,
           useNativeDriver: false,
         }).start();
-      }
+      },
     );
 
     const keyboardWillHide = Keyboard.addListener(
@@ -79,7 +80,7 @@ export const ChatRoomScreen: React.FC = () => {
           duration: Platform.OS === 'ios' ? 250 : 100,
           useNativeDriver: false,
         }).start();
-      }
+      },
     );
 
     return () => {
@@ -141,7 +142,7 @@ export const ChatRoomScreen: React.FC = () => {
         user.uid,
         user.displayName || '사용자',
         imageUri,
-        user.photoURL || undefined
+        user.photoURL || undefined,
       );
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
@@ -163,7 +164,7 @@ export const ChatRoomScreen: React.FC = () => {
         user.uid,
         user.displayName || '사용자',
         text,
-        user.photoURL || undefined
+        user.photoURL || undefined,
       );
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
@@ -193,9 +194,7 @@ export const ChatRoomScreen: React.FC = () => {
           <Image source={{ uri: item.imageUrl }} style={styles.messageImage} />
         ) : (
           <View style={[styles.messageBubble, isMine && styles.myMessageBubble]}>
-            <Text style={[styles.messageText, isMine && styles.myMessageText]}>
-              {item.message}
-            </Text>
+            <Text style={[styles.messageText, isMine && styles.myMessageText]}>{item.message}</Text>
           </View>
         )}
         <Text style={styles.timestamp}>{formatMessageTime(item.createdAt)}</Text>
@@ -211,7 +210,9 @@ export const ChatRoomScreen: React.FC = () => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle} numberOfLines={1}>{chatName}</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            {chatName}
+          </Text>
         </View>
 
         {/* 메시지 목록 */}
@@ -219,7 +220,7 @@ export const ChatRoomScreen: React.FC = () => {
           ref={flatListRef}
           data={currentRoomMessages}
           renderItem={renderMessage}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={styles.messagesList}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
           keyboardShouldPersistTaps="handled"
@@ -255,44 +256,44 @@ export const ChatRoomScreen: React.FC = () => {
           </View>
         </Animated.View>
 
-      {/* 첨부 모달 */}
-      <Modal
-        visible={attachmentModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setAttachmentModalVisible(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setAttachmentModalVisible(false)}
+        {/* 첨부 모달 */}
+        <Modal
+          visible={attachmentModalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setAttachmentModalVisible(false)}
         >
-          <View style={styles.attachmentModal}>
-            <View style={styles.attachmentOptions}>
-              <TouchableOpacity style={styles.attachmentOption} onPress={handleTakePhoto}>
-                <View style={[styles.attachmentIcon, { backgroundColor: '#4CAF50' }]}>
-                  <Text style={styles.attachmentIconText}>📷</Text>
-                </View>
-                <Text style={styles.attachmentLabel}>카메라</Text>
-              </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setAttachmentModalVisible(false)}
+          >
+            <View style={styles.attachmentModal}>
+              <View style={styles.attachmentOptions}>
+                <TouchableOpacity style={styles.attachmentOption} onPress={handleTakePhoto}>
+                  <View style={[styles.attachmentIcon, { backgroundColor: '#4CAF50' }]}>
+                    <Text style={styles.attachmentIconText}>📷</Text>
+                  </View>
+                  <Text style={styles.attachmentLabel}>카메라</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity style={styles.attachmentOption} onPress={handlePickImage}>
-                <View style={[styles.attachmentIcon, { backgroundColor: '#2196F3' }]}>
-                  <Text style={styles.attachmentIconText}>🖼️</Text>
-                </View>
-                <Text style={styles.attachmentLabel}>앨범</Text>
+                <TouchableOpacity style={styles.attachmentOption} onPress={handlePickImage}>
+                  <View style={[styles.attachmentIcon, { backgroundColor: '#2196F3' }]}>
+                    <Text style={styles.attachmentIconText}>🖼️</Text>
+                  </View>
+                  <Text style={styles.attachmentLabel}>앨범</Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setAttachmentModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>취소</Text>
               </TouchableOpacity>
             </View>
-
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setAttachmentModalVisible(false)}
-            >
-              <Text style={styles.cancelButtonText}>취소</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+          </TouchableOpacity>
+        </Modal>
       </View>
     </SafeAreaView>
   );

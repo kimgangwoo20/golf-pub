@@ -25,11 +25,16 @@ export const MembershipBenefitsScreen: React.FC = () => {
       </View>
     </ScrollView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
-  header: { padding: 20, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e0e0e0' },
+  header: {
+    padding: 20,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
   title: { fontSize: 24, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 8 },
   subtitle: { fontSize: 14, color: '#666' },
   content: { padding: 20 },

@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import firestore from '@react-native-firebase/firestore';
 
 export const useCourseSearch = () => {
-  const [courses, setCourses] = useState([]);
+  const navigation = useNavigation<any>();
+  const [courses, setCourses] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({ region: 'all', price: 'all' });
   const [loading, setLoading] = useState(false);
@@ -13,8 +16,57 @@ export const useCourseSearch = () => {
 
   const searchCourses = async () => {
     setLoading(true);
-    // TODO: Firestore 또는 API에서 골프장 검색
-    setLoading(false);
+    try {
+      let query: any = firestore().collection('golfCourses');
+
+      // 이름 검색
+      if (searchQuery.trim()) {
+        query = query
+          .where('name', '>=', searchQuery.trim())
+          .where('name', '<=', searchQuery.trim() + '\uf8ff');
+      }
+
+      // 지역 필터
+      if (filters.region !== 'all') {
+        query = query.where('region', '==', filters.region);
+      }
+
+      const snapshot = await query.limit(30).get();
+
+      const results = snapshot.docs.map((doc: any) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.name || '',
+          region: data.region || '',
+          address: data.address || '',
+          rating: data.rating || 0,
+          reviewCount: data.reviewCount || 0,
+          greenFee: data.greenFee || 0,
+          image: data.image || data.images?.[0] || '',
+          holes: data.holes || 18,
+        };
+      });
+
+      // 클라이언트 사이드 가격 필터
+      let filtered = results;
+      if (filters.price !== 'all') {
+        if (filters.price === 'low') {
+          filtered = results.filter((c: any) => c.greenFee < 100000);
+        } else if (filters.price === 'mid') {
+          filtered = results.filter((c: any) => c.greenFee >= 100000 && c.greenFee < 200000);
+        } else if (filters.price === 'high') {
+          filtered = results.filter((c: any) => c.greenFee >= 200000);
+        }
+      }
+
+      setCourses(filtered);
+    } catch (error: any) {
+      console.error('골프장 검색 실패:', error);
+      setCourses([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSearch = (query: string) => setSearchQuery(query);
@@ -24,7 +76,7 @@ export const useCourseSearch = () => {
     setShowFilters(false);
   };
   const handleCoursePress = (courseId: string) => {
-    // TODO: 골프장 상세 화면으로 이동
+    navigation.navigate('GolfCourseDetail', { courseId });
   };
 
   return {

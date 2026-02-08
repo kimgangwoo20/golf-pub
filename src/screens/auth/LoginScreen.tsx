@@ -49,10 +49,7 @@ export const LoginScreen: React.FC = () => {
 
       await login(result.profile.id, result.profile);
     } catch (error: any) {
-      Alert.alert(
-        '로그인 오류',
-        error.message || '로그인 중 오류가 발생했습니다.',
-      );
+      Alert.alert('로그인 오류', error.message || '로그인 중 오류가 발생했습니다.');
     } finally {
       setKakaoLoading(false);
     }
@@ -86,10 +83,7 @@ export const LoginScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <LinearGradient
-        colors={['#10b981', '#1B5E20']}
-        style={styles.gradient}
-      >
+      <LinearGradient colors={['#10b981', '#1B5E20']} style={styles.gradient}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}

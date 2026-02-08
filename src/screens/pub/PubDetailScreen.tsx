@@ -68,10 +68,7 @@ export const PubDetailScreen: React.FC = () => {
         <View style={styles.loadingContainer}>
           <Text style={styles.emptyIcon}>🍺</Text>
           <Text style={styles.emptyText}>펍 정보를 찾을 수 없습니다</Text>
-          <TouchableOpacity
-            style={styles.goBackButton}
-            onPress={() => navigation.goBack()}
-          >
+          <TouchableOpacity style={styles.goBackButton} onPress={() => navigation.goBack()}>
             <Text style={styles.goBackButtonText}>돌아가기</Text>
           </TouchableOpacity>
         </View>

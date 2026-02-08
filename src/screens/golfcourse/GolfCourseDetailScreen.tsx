@@ -26,7 +26,7 @@ export const GolfCourseDetailScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
 
-  // @ts-ignore
+  // @ts-expect-error route.params 타입 미지정
   const courseParam = route.params?.course as GolfCourse;
 
   const [course, setCourse] = useState<GolfCourse>(courseParam);
@@ -44,10 +44,7 @@ export const GolfCourseDetailScreen: React.FC = () => {
     const loadWeather = async () => {
       try {
         setWeatherLoading(true);
-        const weatherData = await fetchWeather(
-          course.location.latitude,
-          course.location.longitude
-        );
+        const weatherData = await fetchWeather(course.location.latitude, course.location.longitude);
         setWeather(weatherData);
       } catch (error) {
         console.error('날씨 로딩 실패:', error);
@@ -77,17 +74,13 @@ export const GolfCourseDetailScreen: React.FC = () => {
   };
 
   const handleCall = () => {
-    Alert.alert(
-      '전화 걸기',
-      `${course.name}으로 전화를 걸까요?`,
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '전화',
-          onPress: () => Linking.openURL(`tel:${course.phone}`),
-        },
-      ]
-    );
+    Alert.alert('전화 걸기', `${course.name}으로 전화를 걸까요?`, [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '전화',
+        onPress: () => Linking.openURL(`tel:${course.phone}`),
+      },
+    ]);
   };
 
   const handleWebsite = () => {
@@ -99,25 +92,62 @@ export const GolfCourseDetailScreen: React.FC = () => {
   };
 
   const handleNavigation = () => {
-    Alert.alert(
-      '길찾기',
-      '어떤 앱으로 길찾기를 하시겠습니까?',
-      [
-        {
-          text: '카카오내비',
-          onPress: () => Alert.alert('알림', '카카오내비 연동은 개발 예정입니다.'),
+    const { latitude, longitude } = course.location;
+    const encodedName = encodeURIComponent(course.name);
+
+    Alert.alert('길찾기', '어떤 앱으로 길찾기를 하시겠습니까?', [
+      {
+        text: '카카오내비',
+        onPress: async () => {
+          // 카카오맵 앱 딥링크 시도, 실패 시 웹으로 fallback
+          const kakaoUrl = `kakaomap://route?ep=${latitude},${longitude}&by=CAR`;
+          try {
+            const supported = await Linking.canOpenURL(kakaoUrl);
+            if (supported) {
+              await Linking.openURL(kakaoUrl);
+            } else {
+              // 카카오맵 웹 fallback
+              await Linking.openURL(
+                `https://map.kakao.com/link/to/${encodedName},${latitude},${longitude}`,
+              );
+            }
+          } catch {
+            await Linking.openURL(
+              `https://map.kakao.com/link/to/${encodedName},${latitude},${longitude}`,
+            );
+          }
         },
-        {
-          text: '네이버지도',
-          onPress: () => Alert.alert('알림', '네이버지도 연동은 개발 예정입니다.'),
+      },
+      {
+        text: '네이버지도',
+        onPress: async () => {
+          // 네이버지도 앱 딥링크 시도, 실패 시 웹으로 fallback
+          const naverUrl = `nmap://route/car?dlat=${latitude}&dlng=${longitude}&dname=${encodedName}&appname=com.golfpub`;
+          try {
+            const supported = await Linking.canOpenURL(naverUrl);
+            if (supported) {
+              await Linking.openURL(naverUrl);
+            } else {
+              await Linking.openURL(
+                `https://map.naver.com/v5/directions/-/-/-/car?c=${longitude},${latitude},15,0,0,0,dh`,
+              );
+            }
+          } catch {
+            await Linking.openURL(
+              `https://map.naver.com/v5/directions/-/-/-/car?c=${longitude},${latitude},15,0,0,0,dh`,
+            );
+          }
         },
-        {
-          text: '구글맵',
-          onPress: () => Alert.alert('알림', '구글맵 연동은 개발 예정입니다.'),
+      },
+      {
+        text: '구글맵',
+        onPress: () => {
+          // 구글맵은 웹 URL로 바로 열기
+          Linking.openURL(`https://maps.google.com/maps?daddr=${latitude},${longitude}&dirflg=d`);
         },
-        { text: '취소', style: 'cancel' },
-      ]
-    );
+      },
+      { text: '취소', style: 'cancel' },
+    ]);
   };
 
   const handleBooking = () => {
@@ -215,16 +245,12 @@ export const GolfCourseDetailScreen: React.FC = () => {
             <View style={styles.priceContainer}>
               <View style={styles.priceRow}>
                 <Text style={styles.priceLabel}>주중 (평일)</Text>
-                <Text style={styles.priceValue}>
-                  {course.greenFee.weekday.toLocaleString()}원
-                </Text>
+                <Text style={styles.priceValue}>{course.greenFee.weekday.toLocaleString()}원</Text>
               </View>
               <View style={styles.priceDivider} />
               <View style={styles.priceRow}>
                 <Text style={styles.priceLabel}>주말 (토·일·공휴일)</Text>
-                <Text style={styles.priceValue}>
-                  {course.greenFee.weekend.toLocaleString()}원
-                </Text>
+                <Text style={styles.priceValue}>{course.greenFee.weekend.toLocaleString()}원</Text>
               </View>
             </View>
             <Text style={styles.priceNote}>
@@ -274,10 +300,16 @@ export const GolfCourseDetailScreen: React.FC = () => {
                   <View style={styles.weatherMain}>
                     <Text style={styles.weatherTemp}>{weather.temp}</Text>
                     <Text style={styles.weatherCondition}>
-                      {weather.sky.includes('맑음') ? '☀️' :
-                       weather.sky.includes('흐림') ? '☁️' :
-                       weather.sky.includes('비') ? '🌧️' :
-                       weather.sky.includes('눈') ? '❄️' : '🌤️'} {weather.sky}
+                      {weather.sky.includes('맑음')
+                        ? '☀️'
+                        : weather.sky.includes('흐림')
+                          ? '☁️'
+                          : weather.sky.includes('비')
+                            ? '🌧️'
+                            : weather.sky.includes('눈')
+                              ? '❄️'
+                              : '🌤️'}{' '}
+                      {weather.sky}
                     </Text>
                   </View>
                   <View style={styles.weatherDetails}>
@@ -299,11 +331,16 @@ export const GolfCourseDetailScreen: React.FC = () => {
                 <View style={styles.golfScoreCard}>
                   <View style={styles.golfScoreHeader}>
                     <Text style={styles.golfScoreTitle}>⛳ 골프 적합도</Text>
-                    <Text style={[
-                      styles.golfScoreValue,
-                      weather.golfScore.score >= 80 ? styles.scoreGood :
-                      weather.golfScore.score >= 60 ? styles.scoreOkay : styles.scoreBad
-                    ]}>
+                    <Text
+                      style={[
+                        styles.golfScoreValue,
+                        weather.golfScore.score >= 80
+                          ? styles.scoreGood
+                          : weather.golfScore.score >= 60
+                            ? styles.scoreOkay
+                            : styles.scoreBad,
+                      ]}
+                    >
                       {weather.golfScore.score}점
                     </Text>
                   </View>

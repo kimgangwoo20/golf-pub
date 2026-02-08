@@ -55,7 +55,7 @@ export const SettingsScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
       </View>
     </ScrollView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
@@ -64,7 +64,12 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: 'bold', color: '#1a1a1a' },
   section: { backgroundColor: '#fff', marginBottom: 12, padding: 20 },
   sectionTitle: { fontSize: 14, fontWeight: '600', color: '#666', marginBottom: 16 },
-  settingItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12 },
+  settingItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
   settingText: { fontSize: 16, color: '#1a1a1a' },
   arrow: { fontSize: 24, color: '#ccc' },
   versionText: { fontSize: 14, color: '#666' },
