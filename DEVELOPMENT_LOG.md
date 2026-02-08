@@ -702,7 +702,8 @@
 | Storage 규칙 핫픽스 (18차) | 5 | 5 | 0 | 100% |
 | 채팅 전송/읽음 핫픽스 (19차) | 5 | 5 | 0 | 100% |
 | 전체 코드베이스 감사 일괄 수정 (20차) | 9 | 9 | 0 | 100% |
-| **전체** | **226** | **223** | **3** | **99%** |
+| Cloud Functions 클라이언트 전환 완료 (21차) | 3 | 3 | 0 | 100% |
+| **전체** | **229** | **226** | **3** | **99%** |
 
 ---
 
@@ -710,6 +711,14 @@
 
 ### 2026.02.08
 
+> **Cloud Functions 클라이언트 전환 완료 21차 배치 (2개 파일, +20/-87줄)**
+> - 서버 Cloud Functions 15개 전체 구현 확인 (빌드 0 에러): kakaoToken, attendanceCheckIn, pointsEarn/Deduct, paymentConfirm/Cancel, bookingApprove/Reject/Cancel/Withdraw, couponIssue/Redeem, sendChatNotification, sendNotification
+> - profileAPI.issueCoupon: 직접 Firestore 쓰기 → `couponIssue` CF 호출 (ADMIN 서버 검증, 알림 전송 포함)
+> - profileAPI.useCoupon: 직접 Firestore read+write → `couponRedeem` CF 호출 (서버 유효성 검증: 존재/미사용/미만료)
+> - firebaseBooking.leaveBooking: 직접 Firestore 4단계 쓰기(read→check→update→subquery) → `bookingWithdraw` CF 재사용 (Transaction 원자적 처리, 호스트 알림 포함)
+> - 클라이언트→Cloud Functions 전환 함수 총 13개 완료 (직접 Firestore 쓰기 코드 87줄 삭제)
+> - 클라이언트 TypeScript typecheck 0 에러 + 서버 빌드 0 에러
+>
 > **전체 코드베이스 감사 - 8개 버그 카테고리 일괄 수정 20차 배치 (12개 파일, +358/-129줄)**
 > - 4개 병렬 감사 에이전트로 전체 코드베이스(screens, stores, services, rules, navigation) 자동 스캔 → CRITICAL 4건, HIGH 7건, MEDIUM 2건 발견
 > - HomeScreen: `{ booking }` → `{ bookingId: booking.id }` 네비게이션 크래시 수정
