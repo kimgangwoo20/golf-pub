@@ -14,9 +14,9 @@ export { attendanceCheckIn } from "./functions/attendance/checkIn";
 export { pointsEarn } from "./functions/points/earn";
 export { pointsDeduct } from "./functions/points/deduct";
 
-// 결제
-export { paymentConfirm } from "./functions/payments/confirm";
-export { paymentCancel } from "./functions/payments/cancel";
+// 결제 (TOSS_SECRET_KEY 설정 후 활성화)
+// export { paymentConfirm } from "./functions/payments/confirm";
+// export { paymentCancel } from "./functions/payments/cancel";
 
 // 부킹
 export { bookingApprove } from "./functions/booking/approve";
