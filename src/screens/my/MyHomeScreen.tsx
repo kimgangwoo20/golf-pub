@@ -358,11 +358,16 @@ export const MyHomeScreen: React.FC = () => {
       {
         text: '삭제',
         style: 'destructive',
-        onPress: () => {
-          setContents((prev) => prev.filter((c) => c.id !== selectedContent.id));
-          setContentMenuVisible(false);
-          setSelectedContent(null);
-          Alert.alert('삭제 완료', '게시물이 삭제되었습니다.');
+        onPress: async () => {
+          try {
+            await firebaseFirestore.collection('posts').doc(selectedContent.id).delete();
+            setContents((prev) => prev.filter((c) => c.id !== selectedContent.id));
+            setContentMenuVisible(false);
+            setSelectedContent(null);
+            Alert.alert('삭제 완료', '게시물이 삭제되었습니다.');
+          } catch (error: any) {
+            Alert.alert('오류', error.message || '삭제에 실패했습니다.');
+          }
         },
       },
     ]);
@@ -386,7 +391,7 @@ export const MyHomeScreen: React.FC = () => {
   };
 
   // 게시물 공개 범위 변경
-  const handleChangeVisibility = (newVisibility: Visibility) => {
+  const handleChangeVisibility = async (newVisibility: Visibility) => {
     if (!selectedContent) return;
 
     // 권한 검증
@@ -395,18 +400,25 @@ export const MyHomeScreen: React.FC = () => {
       return;
     }
 
-    setContents((prev) =>
-      prev.map((c) => (c.id === selectedContent.id ? { ...c, visibility: newVisibility } : c)),
-    );
-    setContentMenuVisible(false);
-    setSelectedContent(null);
+    try {
+      await firebaseFirestore.collection('posts').doc(selectedContent.id).update({
+        visibility: newVisibility,
+      });
+      setContents((prev) =>
+        prev.map((c) => (c.id === selectedContent.id ? { ...c, visibility: newVisibility } : c)),
+      );
+      setContentMenuVisible(false);
+      setSelectedContent(null);
 
-    const visibilityLabels = {
-      public: '전체 공개',
-      friends: '친구만',
-      private: '나만 보기',
-    };
-    Alert.alert('변경 완료', `공개 범위가 "${visibilityLabels[newVisibility]}"로 변경되었습니다.`);
+      const visibilityLabels = {
+        public: '전체 공개',
+        friends: '친구만',
+        private: '나만 보기',
+      };
+      Alert.alert('변경 완료', `공개 범위가 "${visibilityLabels[newVisibility]}"로 변경되었습니다.`);
+    } catch (error: any) {
+      Alert.alert('오류', error.message || '변경에 실패했습니다.');
+    }
   };
 
   // ========== 방명록 관리 (접근 권한: 본인이 쓴 것만 삭제) ==========
@@ -424,9 +436,19 @@ export const MyHomeScreen: React.FC = () => {
       {
         text: '삭제',
         style: 'destructive',
-        onPress: () => {
-          setGuestbook((prev) => prev.filter((g) => g.id !== item.id));
-          Alert.alert('삭제 완료', '방명록이 삭제되었습니다.');
+        onPress: async () => {
+          try {
+            await firebaseFirestore
+              .collection('users')
+              .doc(currentUserId)
+              .collection('guestbook')
+              .doc(item.id)
+              .delete();
+            setGuestbook((prev) => prev.filter((g) => g.id !== item.id));
+            Alert.alert('삭제 완료', '방명록이 삭제되었습니다.');
+          } catch (error: any) {
+            Alert.alert('오류', error.message || '삭제에 실패했습니다.');
+          }
         },
       },
     ]);

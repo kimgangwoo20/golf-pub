@@ -31,17 +31,47 @@ export const useFriendStore = create<FriendState>((set) => ({
     try {
       set({ loading: true, error: null });
 
+      // 서브컬렉션 경로: users/{userId}/friends
       const snapshot = await firebaseFirestore
+        .collection('users')
+        .doc(userId)
         .collection('friends')
-        .where('userId', '==', userId)
-        .where('status', '==', 'accepted')
         .get();
 
-      const friends = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate(),
-      })) as Friend[];
+      if (snapshot.empty) {
+        set({ friends: [], loading: false });
+        return;
+      }
+
+      // 친구 ID 목록에서 사용자 프로필 조인
+      const friendIds = snapshot.docs.map((doc) => doc.id);
+      const friends: Friend[] = [];
+
+      for (let i = 0; i < friendIds.length; i += 10) {
+        const batch = friendIds.slice(i, i + 10);
+        const usersSnapshot = await firebaseFirestore
+          .collection('users')
+          .where(
+            '__name__' as any,
+            'in',
+            batch,
+          )
+          .get();
+
+        usersSnapshot.docs.forEach((userDoc) => {
+          const userData = userDoc.data();
+          const friendDocData = snapshot.docs.find((d) => d.id === userDoc.id)?.data();
+          friends.push({
+            id: userDoc.id,
+            userId,
+            friendId: userDoc.id,
+            friendName: userData?.name || userData?.displayName || '사용자',
+            friendAvatar: userData?.avatar || userData?.photoURL || '',
+            status: 'accepted',
+            createdAt: friendDocData?.createdAt?.toDate() || new Date(),
+          });
+        });
+      }
 
       set({ friends, loading: false });
     } catch (error: any) {
@@ -51,9 +81,10 @@ export const useFriendStore = create<FriendState>((set) => ({
 
   sendFriendRequest: async (userId, friendId, friendName) => {
     try {
-      await firebaseFirestore.collection('friends').add({
-        userId,
-        friendId,
+      // friendRequests 컬렉션에 요청 생성 (firebaseFriends.ts의 sendFriendRequest와 동일 패턴)
+      await firebaseFirestore.collection('friendRequests').doc(`${userId}_${friendId}`).set({
+        fromUserId: userId,
+        toUserId: friendId,
         friendName,
         status: 'pending',
         createdAt: new Date(),
@@ -65,7 +96,7 @@ export const useFriendStore = create<FriendState>((set) => ({
 
   acceptFriendRequest: async (requestId) => {
     try {
-      await firebaseFirestore.collection('friends').doc(requestId).update({
+      await firebaseFirestore.collection('friendRequests').doc(requestId).update({
         status: 'accepted',
         updatedAt: new Date(),
       });
@@ -76,7 +107,8 @@ export const useFriendStore = create<FriendState>((set) => ({
 
   removeFriend: async (friendId) => {
     try {
-      await firebaseFirestore.collection('friends').doc(friendId).delete();
+      // 서브컬렉션에서 삭제 (양방향은 firebaseFriends.removeFriend 사용 권장)
+      await firebaseFirestore.collection('users').doc(friendId).collection('friends').doc(friendId).delete();
     } catch (error: any) {
       throw error;
     }
