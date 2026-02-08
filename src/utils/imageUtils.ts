@@ -191,7 +191,57 @@ export const showImagePickerOptions = (): Promise<string | null> => {
 };
 
 /**
- * Firebase Storage에 이미지 업로드
+ * 이미지 압축 및 리사이징
+ * expo-image-manipulator를 사용하여 업로드 전 이미지 최적화
+ *
+ * @param uri 원본 이미지 URI
+ * @param maxWidth 최대 너비 (기본: 1200)
+ * @param quality 압축 품질 0-1 (기본: 0.7)
+ * @returns 최적화된 이미지 URI
+ */
+export const compressImage = async (
+  uri: string,
+  maxWidth: number = 1200,
+  quality: number = 0.7,
+): Promise<string> => {
+  try {
+    let ImageManipulator;
+    try {
+      ImageManipulator = require('expo-image-manipulator');
+    } catch {
+      // expo-image-manipulator 미설치 시 원본 반환
+      return uri;
+    }
+
+    const result = await ImageManipulator.manipulateAsync(
+      uri,
+      [{ resize: { width: maxWidth } }],
+      { compress: quality, format: ImageManipulator.SaveFormat.JPEG },
+    );
+
+    return result.uri;
+  } catch {
+    // 압축 실패 시 원본 반환
+    return uri;
+  }
+};
+
+/**
+ * 썸네일 생성
+ *
+ * @param uri 원본 이미지 URI
+ * @param size 썸네일 크기 (기본: 200)
+ * @returns 썸네일 URI
+ */
+export const createThumbnail = async (
+  uri: string,
+  size: number = 200,
+): Promise<string> => {
+  return compressImage(uri, size, 0.6);
+};
+
+/**
+ * Firebase Storage에 이미지 업로드 (압축 포함)
  */
 export const uploadImageToStorage = async (
   imageUri: string,
@@ -199,12 +249,15 @@ export const uploadImageToStorage = async (
   onProgress?: (progress: number) => void,
 ): Promise<string> => {
   try {
+    // 업로드 전 이미지 압축
+    const compressedUri = await compressImage(imageUri);
+
     // 파일 이름 생성
     const filename = `${storagePath}/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
     const reference = storage().ref(filename);
 
     // 업로드 태스크 생성
-    const task = reference.putFile(imageUri);
+    const task = reference.putFile(compressedUri);
 
     // 진행률 콜백
     if (onProgress) {

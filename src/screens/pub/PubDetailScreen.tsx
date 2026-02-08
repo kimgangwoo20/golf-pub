@@ -8,10 +8,12 @@ import {
   Image,
   TouchableOpacity,
   Linking,
+  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { pubAPI, Pub } from '@/services/api/pubAPI';
+import { KakaoMapService } from '@/services/kakao/kakaoMap';
 
 export const PubDetailScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -45,10 +47,45 @@ export const PubDetailScreen: React.FC = () => {
   };
 
   const handleMap = () => {
-    if (pub?.address) {
-      const url = `https://maps.google.com/?q=${pub.address}`;
-      Linking.openURL(url);
-    }
+    if (!pub?.address) return;
+    Alert.alert('길찾기', '어떤 지도 앱으로 여시겠습니까?', [
+      {
+        text: '카카오맵',
+        onPress: async () => {
+          try {
+            await KakaoMapService.openNavigation({
+              id: pub.id,
+              place_name: pub.name,
+              address_name: pub.address || '',
+              road_address_name: pub.address || '',
+              x: '0',
+              y: '0',
+              category_name: '음식점',
+              category_group_code: 'FD6',
+              category_group_name: '음식점',
+              phone: pub.phone || '',
+              place_url: '',
+              distance: '',
+            });
+          } catch {
+            Linking.openURL(`https://map.kakao.com/link/search/${encodeURIComponent(pub.name)}`);
+          }
+        },
+      },
+      {
+        text: '네이버맵',
+        onPress: () => {
+          Linking.openURL(`nmap://search?query=${encodeURIComponent(pub.name)}&appname=com.golfpub.app`).catch(() => {
+            Linking.openURL(`https://map.naver.com/v5/search/${encodeURIComponent(pub.name)}`);
+          });
+        },
+      },
+      {
+        text: '구글맵',
+        onPress: () => Linking.openURL(`https://maps.google.com/?q=${encodeURIComponent(pub.address || '')}`),
+      },
+      { text: '취소', style: 'cancel' },
+    ]);
   };
 
   if (loading) {
