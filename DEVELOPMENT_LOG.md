@@ -135,6 +135,35 @@
   - my/: MyHomeScreen, AccountManagementScreen
 - [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.07 완료)
 
+### 2026.02.08 CRITICAL 감사 이슈 6건 수정 (17차 배치)
+
+- [x] ~~친구 시스템 Firestore 컬렉션 경로 수정 (firebaseFriends.ts + useFriendStore.ts)~~ (2026.02.08 완료)
+  - flat `friends` 컬렉션 → `users/{userId}/friends` 서브컬렉션으로 6곳 수정
+  - sendFriendRequest: 기존 친구 확인 경로 수정
+  - acceptFriendRequest: 양방향 서브컬렉션에 friend 문서 생성
+  - getFriendsList: 서브컬렉션 조회 + 배치 프로필 조인 (10개씩 분할)
+  - getFriendProfile/getSuggestedFriends/removeFriend: 서브컬렉션 경로 통일
+  - useFriendStore: loadFriends 프로필 조인 재작성, sendFriendRequest/acceptFriendRequest/removeFriend 경로 수정
+- [x] ~~알림 딥링킹 크래시 수정 (GolfCourseReviewScreen.tsx)~~ (2026.02.08 완료)
+  - `route.params?.course` (객체)만 지원 → `route.params?.courseId` (문자열) 파라미터도 지원
+  - 딥링킹에서 courseId만 전달해도 크래시 없이 리뷰 화면 로드
+- [x] ~~MyHomeScreen Firestore 삭제 로직 추가 (MyHomeScreen.tsx)~~ (2026.02.08 완료)
+  - handleDeleteContent: 로컬 상태만 변경 → Firestore `posts/{id}` 실제 삭제 추가
+  - handleDeleteGuestbook: 로컬 상태만 변경 → Firestore `users/{uid}/guestbook/{id}` 실제 삭제 추가
+  - handleChangeVisibility: Firestore `posts/{id}` visibility 필드 업데이트 추가
+- [x] ~~useMarketplaceStore Firestore 타임스탬프 수정 (useMarketplaceStore.ts)~~ (2026.02.08 완료)
+  - `new Date()` → `FirestoreTimestamp.now()` (서버 타임스탬프) 3곳 교체
+  - createItem: createdAt/updatedAt, updateItem: updatedAt
+- [x] ~~CreatePostScreen Firebase 연동 (CreatePostScreen.tsx)~~ (2026.02.08 완료)
+  - handlePublish: Alert만 표시 → Firestore `posts` 컬렉션 실제 저장 구현
+  - 이미지 업로드: firebaseStorage.uploadMultipleImages → URL 배열 저장
+  - author/content/images/hashtags/location/visibility/likes/comments/status/createdAt 필드 저장
+  - publishing 로딩 상태 + 게시 버튼 비활성화 추가
+- [x] ~~골프장 리뷰 좋아요 Firestore 저장 (GolfCourseReviewScreen.tsx)~~ (2026.02.08 완료)
+  - handleLike: 로컬 상태만 변경 → 낙관적 업데이트 + Firestore likes 필드 저장
+  - 실패 시 UI 자동 롤백 처리
+- [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.08 완료)
+
 ### 2026.02.08 Cloud Functions 전체 감사 - 3개 근본 원인 수정 (16차 핫픽스)
 
 - [x] ~~Cloud Functions 리전 미지정 수정 (firebaseFunctions.ts)~~ (2026.02.08 완료)
@@ -604,7 +633,8 @@
 | Deep Linking/ErrorBoundary/Validation (14차) | 8 | 8 | 0 | 100% |
 | 가격제안/카카오맵/이미지압축/최적화/테스트 (15차) | 7 | 7 | 0 | 100% |
 | Cloud Functions 전체 감사 핫픽스 (16차) | 5 | 5 | 0 | 100% |
-| **전체** | **200** | **197** | **3** | **98%** |
+| CRITICAL 감사 이슈 수정 (17차) | 7 | 7 | 0 | 100% |
+| **전체** | **207** | **204** | **3** | **99%** |
 
 ---
 
@@ -612,6 +642,15 @@
 
 ### 2026.02.08
 
+> **CRITICAL 감사 이슈 6건 수정 17차 배치 (6개 파일, +235/-85줄)**
+> - 친구 시스템: flat `friends` 컬렉션 → `users/{userId}/friends` 서브컬렉션으로 전면 수정 (firebaseFriends.ts 6곳, useFriendStore.ts 4개 메서드 재작성). 데이터가 서브컬렉션에 저장되는데 flat 컬렉션을 조회하여 친구 목록이 항상 비어있던 근본 원인 해결
+> - 알림 딥링킹: GolfCourseReviewScreen이 `route.params?.course` (전체 객체)만 받아 courseId만 넘기는 딥링킹 시 크래시. courseId 파라미터도 지원하도록 수정
+> - MyHomeScreen 삭제: 게시물/방명록 삭제 시 로컬 상태만 변경되고 Firestore는 그대로 남아있던 문제 → 실제 Firestore 삭제 + visibility 변경 반영 추가
+> - useMarketplaceStore 타임스탬프: `new Date()` → `FirestoreTimestamp.now()` (서버 타임스탬프) 교체. 클라이언트-서버 시간 불일치 및 orderBy 쿼리 오류 방지
+> - CreatePostScreen Firebase 연동: handlePublish가 Alert만 표시하고 실제 Firestore 저장 없이 끝나던 문제 → 이미지 업로드(firebaseStorage) + Firestore posts 컬렉션 저장 구현
+> - 골프장 리뷰 좋아요: 화면 내에서만 토글되고 Firestore에 저장되지 않던 문제 → 낙관적 업데이트 + Firestore likes 필드 저장 (실패 시 롤백)
+> - TypeScript typecheck 0 에러, 전체 진행률 98% → **99%**
+>
 > **Cloud Functions 전체 감사 - 3개 근본 원인 수정 (16차 핫픽스)**
 > - firebaseFunctions.ts: Cloud Functions 리전 미지정 → `functions('asia-northeast3')` 명시 (모든 CF 호출이 us-central1로 가서 not_found 에러 발생하던 근본 원인)
 > - functions/src/utils/points.ts: 사용자 문서 미존재 시 `HttpsError("not-found")` throw → 기본값으로 자동 생성 (points: 0, stats: {})
