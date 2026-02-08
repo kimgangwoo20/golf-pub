@@ -9,9 +9,11 @@ import {
   StyleSheet,
   Alert,
   Switch,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { colors } from '@/styles/theme';
 import { SkillLevel } from '@/types/booking-types';
 import { useBookingStore } from '@/store/useBookingStore';
@@ -25,15 +27,27 @@ export const CreateBookingScreen: React.FC = () => {
   const [title, setTitle] = useState('');
   const [golfCourse, setGolfCourse] = useState('');
   const [location, setLocation] = useState('');
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedTime, setSelectedTime] = useState<Date>(() => {
+    const d = new Date();
+    d.setHours(8, 0, 0, 0);
+    return d;
+  });
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [maxPlayers, setMaxPlayers] = useState('4');
   const [price, setPrice] = useState('');
   const [level, setLevel] = useState<SkillLevel>('any');
   const [description, setDescription] = useState('');
   const [hasPub, setHasPub] = useState(false);
   const [pubName, setPubName] = useState('');
-  const [pubTime, setPubTime] = useState('');
+  const [showPubTimePicker, setShowPubTimePicker] = useState(false);
+  const [selectedPubTime, setSelectedPubTime] = useState<Date>(() => {
+    const d = new Date();
+    d.setHours(19, 0, 0, 0);
+    return d;
+  });
+  const [submitting, setSubmitting] = useState(false);
 
   const levels: { key: SkillLevel; label: string; desc: string }[] = [
     { key: 'any', label: '누구나', desc: '실력 무관' },
@@ -43,6 +57,57 @@ export const CreateBookingScreen: React.FC = () => {
   ];
 
   const playerCounts = ['2', '3', '4'];
+
+  // 날짜 포맷 (YYYY-MM-DD)
+  const formatDate = (d: Date): string => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // 시간 포맷 (HH:MM)
+  const formatTime = (d: Date): string => {
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
+  // 날짜 표시 (한국어)
+  const formatDateDisplay = (d: Date): string => {
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    const month = d.getMonth() + 1;
+    const day = d.getDate();
+    const dayOfWeek = days[d.getDay()];
+    return `${month}월 ${day}일 (${dayOfWeek})`;
+  };
+
+  const onDateChange = (_event: DateTimePickerEvent, date?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    if (date) {
+      setSelectedDate(date);
+    }
+  };
+
+  const onTimeChange = (_event: DateTimePickerEvent, date?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowTimePicker(false);
+    }
+    if (date) {
+      setSelectedTime(date);
+    }
+  };
+
+  const onPubTimeChange = (_event: DateTimePickerEvent, date?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowPubTimePicker(false);
+    }
+    if (date) {
+      setSelectedPubTime(date);
+    }
+  };
 
   const validateForm = (): boolean => {
     if (!title.trim()) {
@@ -57,20 +122,12 @@ export const CreateBookingScreen: React.FC = () => {
       Alert.alert('입력 오류', '지역을 입력해주세요.');
       return false;
     }
-    if (!date.trim()) {
-      Alert.alert('입력 오류', '날짜를 입력해주세요.');
-      return false;
-    }
-    if (!time.trim()) {
-      Alert.alert('입력 오류', '시간을 입력해주세요.');
-      return false;
-    }
     if (!price.trim() || !validators.isValidAmount(Number(price))) {
       Alert.alert('입력 오류', '가격을 정확히 입력해주세요. (양수만 가능)');
       return false;
     }
-    if (hasPub && (!pubName.trim() || !pubTime.trim())) {
-      Alert.alert('입력 오류', '술집 연계 정보를 모두 입력해주세요.');
+    if (hasPub && !pubName.trim()) {
+      Alert.alert('입력 오류', '술집 이름을 입력해주세요.');
       return false;
     }
     return true;
@@ -85,19 +142,21 @@ export const CreateBookingScreen: React.FC = () => {
         text: '등록',
         onPress: async () => {
           try {
+            setSubmitting(true);
             const user = useAuthStore.getState().user;
             if (!user) {
               Alert.alert('오류', '로그인이 필요합니다.');
               return;
             }
 
-            await useBookingStore.getState().createBooking({
+            // Firestore에 undefined 값이 들어가지 않도록 정리
+            const bookingData: Record<string, any> = {
               hostId: user.uid,
               title: title.trim(),
               course: golfCourse.trim(),
               location: location.trim(),
-              date: date.trim(),
-              time: time.trim(),
+              date: formatDate(selectedDate),
+              time: formatTime(selectedTime),
               host: {
                 name: user.displayName || '호스트',
                 avatar: user.photoURL || '',
@@ -121,11 +180,20 @@ export const CreateBookingScreen: React.FC = () => {
                 drinking: hasPub ? 'yes' : 'no',
               },
               status: 'OPEN',
-              description: description.trim(),
               level,
               hasPub,
-              pubName: hasPub ? pubName.trim() : undefined,
-            });
+            };
+
+            // 선택 필드는 값이 있을 때만 추가 (undefined 방지)
+            if (description.trim()) {
+              bookingData.description = description.trim();
+            }
+            if (hasPub && pubName.trim()) {
+              bookingData.pubName = pubName.trim();
+              bookingData.pubTime = formatTime(selectedPubTime);
+            }
+
+            await useBookingStore.getState().createBooking(bookingData as any);
 
             Alert.alert('등록 완료', '모집글이 등록되었습니다!', [
               {
@@ -135,6 +203,8 @@ export const CreateBookingScreen: React.FC = () => {
             ]);
           } catch (error: any) {
             Alert.alert('등록 실패', error.message || '모집글 등록에 실패했습니다.');
+          } finally {
+            setSubmitting(false);
           }
         },
       },
@@ -149,8 +219,10 @@ export const CreateBookingScreen: React.FC = () => {
           <Text style={styles.headerButton}>취소</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>모집글 작성</Text>
-        <TouchableOpacity onPress={handleSubmit}>
-          <Text style={[styles.headerButton, styles.headerButtonPrimary]}>등록</Text>
+        <TouchableOpacity onPress={handleSubmit} disabled={submitting}>
+          <Text style={[styles.headerButton, styles.headerButtonPrimary, submitting && styles.headerButtonDisabled]}>
+            {submitting ? '등록 중...' : '등록'}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -196,26 +268,48 @@ export const CreateBookingScreen: React.FC = () => {
           />
         </View>
 
-        {/* 날짜 & 시간 */}
+        {/* 날짜 & 시간 - 피커 */}
         <View style={styles.section}>
           <Text style={styles.label}>
             날짜 & 시간 <Text style={styles.required}>*</Text>
           </Text>
           <View style={styles.row}>
-            <TextInput
-              style={[styles.input, styles.halfInput]}
-              placeholder="2025-01-18"
-              value={date}
-              onChangeText={setDate}
-            />
-            <TextInput
-              style={[styles.input, styles.halfInput]}
-              placeholder="08:00"
-              value={time}
-              onChangeText={setTime}
-            />
+            <TouchableOpacity
+              style={[styles.pickerButton, styles.halfInput]}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={styles.pickerIcon}>📅</Text>
+              <Text style={styles.pickerText}>{formatDateDisplay(selectedDate)}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.pickerButton, styles.halfInput]}
+              onPress={() => setShowTimePicker(true)}
+            >
+              <Text style={styles.pickerIcon}>🕐</Text>
+              <Text style={styles.pickerText}>{formatTime(selectedTime)}</Text>
+            </TouchableOpacity>
           </View>
-          <Text style={styles.hint}>형식: YYYY-MM-DD, HH:MM</Text>
+
+          {showDatePicker && (
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              minimumDate={new Date()}
+              onChange={onDateChange}
+              locale="ko"
+            />
+          )}
+          {showTimePicker && (
+            <DateTimePicker
+              value={selectedTime}
+              mode="time"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              minuteInterval={10}
+              onChange={onTimeChange}
+              locale="ko"
+            />
+          )}
         </View>
 
         {/* 인원 */}
@@ -284,7 +378,7 @@ export const CreateBookingScreen: React.FC = () => {
         <View style={styles.section}>
           <View style={styles.switchRow}>
             <View>
-              <Text style={styles.label}>🍺 술집 연계</Text>
+              <Text style={styles.label}>술집 연계</Text>
               <Text style={styles.hint}>라운딩 후 골프 Pub에서 모임</Text>
             </View>
             <Switch
@@ -303,12 +397,23 @@ export const CreateBookingScreen: React.FC = () => {
                 value={pubName}
                 onChangeText={setPubName}
               />
-              <TextInput
-                style={[styles.input, { marginTop: 8 }]}
-                placeholder="예상 시간 (예: 19:00)"
-                value={pubTime}
-                onChangeText={setPubTime}
-              />
+              <TouchableOpacity
+                style={[styles.pickerButton, { marginTop: 8 }]}
+                onPress={() => setShowPubTimePicker(true)}
+              >
+                <Text style={styles.pickerIcon}>🕐</Text>
+                <Text style={styles.pickerText}>{formatTime(selectedPubTime)}</Text>
+              </TouchableOpacity>
+              {showPubTimePicker && (
+                <DateTimePicker
+                  value={selectedPubTime}
+                  mode="time"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  minuteInterval={10}
+                  onChange={onPubTimeChange}
+                  locale="ko"
+                />
+              )}
             </View>
           )}
         </View>
@@ -335,8 +440,14 @@ export const CreateBookingScreen: React.FC = () => {
 
       {/* 하단 등록 버튼 */}
       <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>모집글 등록하기</Text>
+        <TouchableOpacity
+          style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+          onPress={handleSubmit}
+          disabled={submitting}
+        >
+          <Text style={styles.submitButtonText}>
+            {submitting ? '등록 중...' : '모집글 등록하기'}
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -365,6 +476,9 @@ const styles = StyleSheet.create({
   headerButtonPrimary: {
     color: colors.primary,
     fontWeight: '600',
+  },
+  headerButtonDisabled: {
+    opacity: 0.5,
   },
   headerTitle: {
     fontSize: 18,
@@ -414,6 +528,24 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textTertiary,
     marginTop: 8,
+  },
+  pickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    padding: 16,
+    backgroundColor: colors.bgSecondary,
+    gap: 8,
+  },
+  pickerIcon: {
+    fontSize: 18,
+  },
+  pickerText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: colors.textPrimary,
   },
   chipRow: {
     flexDirection: 'row',
@@ -510,6 +642,9 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
   },
   submitButtonText: {
     color: 'white',
