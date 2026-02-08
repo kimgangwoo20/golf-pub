@@ -135,6 +135,45 @@
   - my/: MyHomeScreen, AccountManagementScreen
 - [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.07 완료)
 
+### 2026.02.08 전체 코드베이스 감사 - 8개 버그 카테고리 일괄 수정 (20차 배치)
+
+- [x] ~~HomeScreen 네비게이션 크래시 수정 (HomeScreen.tsx)~~ (2026.02.08 완료)
+  - `params: { booking }` (객체) → `params: { bookingId: booking.id }` (문자열)
+  - BookingDetailScreen이 `bookingId` 파라미터를 기대하는데 전체 객체를 전달하여 크래시
+- [x] ~~FeedScreen 좋아요/댓글 Firestore 영속화 (FeedScreen.tsx)~~ (2026.02.08 완료)
+  - handleLike: 로컬 토글만 → 낙관적 UI + posts/{id}/likes 서브컬렉션 + likes 카운터 증감 + 실패 시 롤백
+  - handleSubmitComment: 로컬 배열만 → posts/{id}/comments 서브컬렉션 저장 + comments 카운터 증가
+- [x] ~~PostDetailScreen 좋아요/댓글/삭제 Firestore 영속화 (PostDetailScreen.tsx)~~ (2026.02.08 완료)
+  - handleLike: 낙관적 UI + posts/{id}/likes 서브컬렉션 + 실패 시 롤백
+  - handleCommentLike: comments 서브컬렉션 likes 필드 업데이트
+  - handleSendComment: posts/{id}/comments 서브컬렉션 저장 (댓글/대댓글 모두)
+  - handleDeleteComment: comments 서브컬렉션 삭제 + 카운터 감소
+  - handleDeletePost: Alert만 표시 → Firestore status='deleted' 소프트 삭제 구현
+- [x] ~~Firestore rules 누락 컬렉션 규칙 추가 (firestore.rules)~~ (2026.02.08 완료)
+  - golfCourses 컬렉션: 읽기(로그인), 생성/삭제(관리자), 수정(로그인 - 평점 업데이트용)
+  - users/{userId}/blockedUsers 서브컬렉션: 본인만 CRUD
+  - posts/{postId}/likes 서브컬렉션: 본인만 생성/삭제
+  - chatRooms 삭제: `isSignedIn()` → `participantIds에 포함된 사용자만` 제한
+- [x] ~~new Date() → FirestoreTimestamp.now() 전환 (3개 스토어, 12곳)~~ (2026.02.08 완료)
+  - useBookingStore: createBooking(2), updateBooking(1), joinBooking(1), leaveBooking(1)
+  - useFriendStore: sendFriendRequest(1), acceptFriendRequest(1)
+  - useProfileStore: updateProfile(1), uploadProfileImage(1), addPoints(2), subtractPoints(2)
+- [x] ~~.update() → .set({merge:true}) 전환 (5개 파일, 11곳)~~ (2026.02.08 완료)
+  - useProfileStore: updateProfile, uploadProfileImage (문서 미존재 크래시 방지)
+  - golfCourseAPI: updateGolfCourseRating 2곳
+  - pubAPI: updatePubRating 2곳
+  - firebaseFriends: acceptFriendRequest stats 2곳, removeFriend stats 2곳
+  - useFriendStore: acceptFriendRequest 1곳
+- [x] ~~복합 인덱스 3개 추가 + Storage rules 수정 (firestore.indexes.json, storage.rules)~~ (2026.02.08 완료)
+  - pubs: location + rating (지역별 인기순 정렬)
+  - pub_reviews: pubId + createdAt (펍별 최신 리뷰)
+  - golf_course_reviews: courseId + createdAt (골프장별 최신 리뷰)
+  - storage.rules reviews/: `reviews/{userId}/{reviewId}/{file}` → `reviews/{reviewId}/{file}` (코드 경로 일치)
+- [x] ~~joinBooking/leaveBooking 경쟁 조건 수정 (useBookingStore.ts)~~ (2026.02.08 완료)
+  - read → check → update 패턴 → Firestore runTransaction 원자적 처리
+  - 동시 참가 시 정원 초과 방지, 동시 탈퇴 시 참가자 수 불일치 방지
+- [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.08 완료)
+
 ### 2026.02.08 채팅 메시지 전송/읽음 처리 실패 수정 (19차 핫픽스)
 
 - [x] ~~useChatStore sendMessage/sendImage: update() → set({merge:true}) 변경 (useChatStore.ts)~~ (2026.02.08 완료)
@@ -662,7 +701,8 @@
 | CRITICAL 감사 이슈 수정 (17차) | 7 | 7 | 0 | 100% |
 | Storage 규칙 핫픽스 (18차) | 5 | 5 | 0 | 100% |
 | 채팅 전송/읽음 핫픽스 (19차) | 5 | 5 | 0 | 100% |
-| **전체** | **217** | **214** | **3** | **99%** |
+| 전체 코드베이스 감사 일괄 수정 (20차) | 9 | 9 | 0 | 100% |
+| **전체** | **226** | **223** | **3** | **99%** |
 
 ---
 
@@ -670,6 +710,19 @@
 
 ### 2026.02.08
 
+> **전체 코드베이스 감사 - 8개 버그 카테고리 일괄 수정 20차 배치 (12개 파일, +358/-129줄)**
+> - 4개 병렬 감사 에이전트로 전체 코드베이스(screens, stores, services, rules, navigation) 자동 스캔 → CRITICAL 4건, HIGH 7건, MEDIUM 2건 발견
+> - HomeScreen: `{ booking }` → `{ bookingId: booking.id }` 네비게이션 크래시 수정
+> - FeedScreen/PostDetailScreen: 좋아요·댓글이 로컬 React state에서만 동작하고 Firestore에 미저장 → 낙관적 UI + posts/likes·comments 서브컬렉션 영속화 + 실패 시 롤백
+> - PostDetailScreen handleDeletePost: Alert만 표시 → Firestore `status='deleted'` 소프트 삭제 구현
+> - useBookingStore joinBooking/leaveBooking: read→check→update 패턴 → `runTransaction` 원자적 처리 (동시 참가 시 정원 초과 경쟁 조건 방지)
+> - 12곳 `new Date()` → `FirestoreTimestamp.now()` 서버 타임스탬프 전환 (useBookingStore 5곳, useFriendStore 2곳, useProfileStore 6곳). 클라이언트-서버 시간 불일치 및 orderBy 정렬 오류 방지
+> - 11곳 `.update()` → `.set({merge:true})` 전환 (useProfileStore, golfCourseAPI, pubAPI, firebaseFriends, useFriendStore). 문서 미존재 시 크래시 방지
+> - Firestore rules: golfCourses, users/blockedUsers, posts/likes 3개 컬렉션 규칙 추가 + chatRooms 삭제를 참가자만으로 제한
+> - 복합 인덱스 3개 추가 (pubs location+rating, pub_reviews pubId+createdAt, golf_course_reviews courseId+createdAt)
+> - Storage rules: reviews/ 경로 `{userId}/{reviewId}/{file}` → `{reviewId}/{file}` 코드 일치 수정
+> - TypeScript typecheck 0 에러 유지
+>
 > **채팅 메시지 전송/읽음 처리 실패 수정 19차 핫픽스 (2개 파일, +26/-19줄)**
 > - 근본 원인: BookingDetailScreen에서 `chatId: booking_${bookingId}`로 채팅방 진입 시 해당 chatRoom 문서가 Firestore에 존재하지 않음. `.update()`는 문서 미존재 시 에러 throw
 > - useChatStore.ts: sendMessage/sendImage/markAsRead에서 chatRoom 문서 `.update()` → `.set({}, { merge: true })`로 변경 (문서 없으면 자동 생성)
