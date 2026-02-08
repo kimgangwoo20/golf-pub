@@ -369,22 +369,14 @@ export const profileAPI = {
     },
   ): Promise<{ success: boolean; message: string }> => {
     try {
-      const expiryDate = new Date();
-      expiryDate.setDate(expiryDate.getDate() + couponData.expiryDays);
-
-      await firestore()
-        .collection(USERS_COLLECTION)
-        .doc(userId)
-        .collection(COUPONS_COLLECTION)
-        .add({
-          title: couponData.title,
-          discount: couponData.discount,
-          discountType: couponData.discountType,
-          minAmount: couponData.minAmount || 0,
-          isUsed: false,
-          expiryDate: firestore.Timestamp.fromDate(expiryDate),
-          createdAt: firestore.FieldValue.serverTimestamp(),
-        });
+      await callFunction('couponIssue', {
+        userId,
+        name: couponData.title,
+        discount: couponData.discount,
+        discountType: couponData.discountType,
+        minAmount: couponData.minAmount,
+        expiryDays: couponData.expiryDays,
+      });
 
       return { success: true, message: '쿠폰이 발급되었습니다.' };
     } catch (error: any) {
@@ -401,30 +393,11 @@ export const profileAPI = {
    * @returns 사용 결과
    */
   useCoupon: async (
-    userId: string,
+    _userId: string,
     couponId: string,
   ): Promise<{ success: boolean; message: string }> => {
     try {
-      const couponRef = firestore()
-        .collection(USERS_COLLECTION)
-        .doc(userId)
-        .collection(COUPONS_COLLECTION)
-        .doc(couponId);
-
-      const couponDoc = await couponRef.get();
-      if (!couponDoc.exists) {
-        return { success: false, message: '쿠폰을 찾을 수 없습니다.' };
-      }
-
-      const couponData = couponDoc.data();
-      if (couponData?.isUsed) {
-        return { success: false, message: '이미 사용된 쿠폰입니다.' };
-      }
-
-      await couponRef.update({
-        isUsed: true,
-        usedAt: firestore.FieldValue.serverTimestamp(),
-      });
+      await callFunction('couponRedeem', { couponId });
 
       return { success: true, message: '쿠폰이 사용되었습니다.' };
     } catch (error: any) {
