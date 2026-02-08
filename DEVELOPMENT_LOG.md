@@ -135,6 +135,20 @@
   - my/: MyHomeScreen, AccountManagementScreen
 - [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.07 완료)
 
+### 2026.02.08 채팅 메시지 전송/읽음 처리 실패 수정 (19차 핫픽스)
+
+- [x] ~~useChatStore sendMessage/sendImage: update() → set({merge:true}) 변경 (useChatStore.ts)~~ (2026.02.08 완료)
+  - BookingDetailScreen에서 `chatId: booking_${booking.id}`로 채팅방 진입 시, chatRoom 문서가 Firestore에 미존재
+  - `.update()`는 문서 없으면 실패 → `.set({}, { merge: true })`로 변경하여 문서 없어도 자동 생성
+- [x] ~~useChatStore markAsRead: chatRoom update → set({merge:true}) 변경 (useChatStore.ts)~~ (2026.02.08 완료)
+  - 동일 원인으로 unreadCount 업데이트 실패 → set+merge로 수정
+- [x] ~~useChatStore 타임스탬프: new Date() → FirestoreTimestamp.now() 전환 (useChatStore.ts)~~ (2026.02.08 완료)
+  - sendMessage, sendImage, sendSystemMessage, createChatRoom 4곳 서버 타임스탬프 전환
+- [x] ~~Firestore 규칙: chatRooms/messages update 허용 (firestore.rules)~~ (2026.02.08 완료)
+  - `allow update: if false` → `allow update: if isSignedIn() && readBy 필드만 변경 허용`
+  - 읽음 처리(readBy 배열 업데이트) 차단되던 문제 해결
+- [x] ~~Firestore 규칙 배포 완료~~ (2026.02.08 완료)
+
 ### 2026.02.08 Storage 보안 규칙 경로 불일치 수정 (18차 핫픽스)
 
 - [x] ~~Storage 보안 규칙 - bookings/ 경로 신규 추가 (storage.rules)~~ (2026.02.08 완료)
@@ -647,7 +661,8 @@
 | Cloud Functions 전체 감사 핫픽스 (16차) | 5 | 5 | 0 | 100% |
 | CRITICAL 감사 이슈 수정 (17차) | 7 | 7 | 0 | 100% |
 | Storage 규칙 핫픽스 (18차) | 5 | 5 | 0 | 100% |
-| **전체** | **212** | **209** | **3** | **99%** |
+| 채팅 전송/읽음 핫픽스 (19차) | 5 | 5 | 0 | 100% |
+| **전체** | **217** | **214** | **3** | **99%** |
 
 ---
 
@@ -655,6 +670,13 @@
 
 ### 2026.02.08
 
+> **채팅 메시지 전송/읽음 처리 실패 수정 19차 핫픽스 (2개 파일, +26/-19줄)**
+> - 근본 원인: BookingDetailScreen에서 `chatId: booking_${bookingId}`로 채팅방 진입 시 해당 chatRoom 문서가 Firestore에 존재하지 않음. `.update()`는 문서 미존재 시 에러 throw
+> - useChatStore.ts: sendMessage/sendImage/markAsRead에서 chatRoom 문서 `.update()` → `.set({}, { merge: true })`로 변경 (문서 없으면 자동 생성)
+> - useChatStore.ts: sendMessage/sendImage/sendSystemMessage/createChatRoom에서 `new Date()` → `FirestoreTimestamp.now()` 서버 타임스탬프 전환
+> - firestore.rules: `chatRooms/{roomId}/messages/{messageId}` update 규칙을 `if false` → `if isSignedIn() && readBy만 변경 허용`으로 수정 (읽음 처리 차단 해제)
+> - Firestore 규칙 배포 완료
+>
 > **Storage 보안 규칙 경로 불일치 수정 18차 핫픽스 (1개 파일, +71/-31줄)**
 > - 모집글 이미지 업로드 실패 근본 원인: storage.rules에 `bookings/` 경로 규칙이 없어 catch-all `allow write: if false`에 차단
 > - `bookings/{bookingId}/{fileName}`, `chats/{roomId}/{fileName}` 규칙 신규 추가
