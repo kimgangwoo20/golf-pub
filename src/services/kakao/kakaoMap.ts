@@ -5,20 +5,20 @@ import { Platform } from 'react-native';
 
 /**
  * 카카오맵 서비스
- * 
+ *
  * 기능:
  * - 골프장 키워드 검색
  * - 좌표 기반 주변 검색
  * - 거리 계산
  * - 경로 안내
- * 
+ *
  * 사용 예시:
  * ```typescript
  * import { KakaoMapService } from './services/kakao/kakaoMap';
- * 
+ *
  * // 골프장 검색
  * const results = await KakaoMapService.searchGolfCourses('서울');
- * 
+ *
  * // 거리 계산
  * const distance = KakaoMapService.calculateDistance(lat1, lng1, lat2, lng2);
  * ```
@@ -73,7 +73,7 @@ class KakaoMapServiceClass {
 
   /**
    * 골프장 키워드 검색
-   * 
+   *
    * @param query 검색어 (예: "서울", "강남", "용인")
    * @param page 페이지 번호 (1-45)
    * @param size 페이지당 결과 개수 (1-15)
@@ -82,7 +82,7 @@ class KakaoMapServiceClass {
   async searchGolfCourses(
     query: string,
     page: number = 1,
-    size: number = 15
+    size: number = 15,
   ): Promise<KakaoPlace[]> {
     try {
       const searchQuery = `${query} 골프장`;
@@ -103,20 +103,20 @@ class KakaoMapServiceClass {
       return data.documents;
     } catch (error: any) {
       console.error('❌ 골프장 검색 실패:', error);
-      
+
       if (error.message?.includes('401')) {
         throw new Error('카카오 API 키가 유효하지 않습니다. 환경 변수를 확인해주세요.');
       } else if (error.message?.includes('network')) {
         throw new Error('네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.');
       }
-      
+
       throw error;
     }
   }
 
   /**
    * 좌표 기반 주변 골프장 검색
-   * 
+   *
    * @param latitude 위도
    * @param longitude 경도
    * @param radius 반경 (미터, 기본 20000m = 20km)
@@ -129,7 +129,7 @@ class KakaoMapServiceClass {
     longitude: number,
     radius: number = 20000,
     page: number = 1,
-    size: number = 15
+    size: number = 15,
   ): Promise<KakaoPlace[]> {
     try {
       const url = `${this.baseUrl}/search/keyword.json?query=골프장&x=${longitude}&y=${latitude}&radius=${radius}&page=${page}&size=${size}`;
@@ -162,7 +162,7 @@ class KakaoMapServiceClass {
 
   /**
    * 주소로 좌표 검색 (지오코딩)
-   * 
+   *
    * @param address 주소 (예: "서울특별시 강남구 테헤란로 152")
    * @returns 좌표 또는 null
    */
@@ -201,7 +201,7 @@ class KakaoMapServiceClass {
 
   /**
    * 좌표로 주소 검색 (역지오코딩)
-   * 
+   *
    * @param latitude 위도
    * @param longitude 경도
    * @returns 주소 또는 null
@@ -238,7 +238,7 @@ class KakaoMapServiceClass {
 
   /**
    * 두 지점 간 거리 계산 (Haversine 공식)
-   * 
+   *
    * @param lat1 지점1 위도
    * @param lng1 지점1 경도
    * @param lat2 지점2 위도
@@ -247,20 +247,20 @@ class KakaoMapServiceClass {
    */
   calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
     const R = 6371; // 지구 반지름 (km)
-    
+
     const dLat = this.toRad(lat2 - lat1);
     const dLng = this.toRad(lng2 - lng1);
-    
+
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(this.toRad(lat1)) *
-      Math.cos(this.toRad(lat2)) *
-      Math.sin(dLng / 2) *
-      Math.sin(dLng / 2);
-    
+        Math.cos(this.toRad(lat2)) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
-    
+
     return Math.round(distance * 100) / 100; // 소수점 2자리
   }
 
@@ -273,7 +273,7 @@ class KakaoMapServiceClass {
 
   /**
    * 거리 포맷팅 (km 또는 m)
-   * 
+   *
    * @param meters 거리 (미터)
    * @returns 포맷된 문자열 (예: "1.5km", "850m")
    */
@@ -286,27 +286,27 @@ class KakaoMapServiceClass {
 
   /**
    * 카카오맵 앱으로 길찾기
-   * 
+   *
    * @param place 목적지 장소 정보
    * @param currentLocation 현재 위치 (선택)
    */
-  async openNavigation(place: KakaoPlace, currentLocation?: Coordinates): Promise<void> {
+  async openNavigation(place: KakaoPlace, _currentLocation?: Coordinates): Promise<void> {
     try {
-      const { place_name, x, y, address_name } = place;
-      
+      const { place_name, x, y } = place;
+
       // 카카오내비 딥링크
       const kakaoNavUrl = `kakaomap://route?ep=${y},${x}&by=CAR`;
-      
+
       // 카카오맵 딥링크 (대체)
       const kakaoMapUrl = `kakaomap://look?p=${y},${x}`;
-      
+
       // 웹 URL (모바일 브라우저에서 앱으로 자동 전환)
       const webUrl = `https://map.kakao.com/link/to/${encodeURIComponent(place_name)},${y},${x}`;
 
       if (Platform.OS === 'ios') {
         // iOS: 카카오내비 → 카카오맵 → 웹
         const { Linking } = await import('react-native');
-        
+
         const canOpen = await Linking.canOpenURL(kakaoNavUrl);
         if (canOpen) {
           await Linking.openURL(kakaoNavUrl);
@@ -321,7 +321,7 @@ class KakaoMapServiceClass {
       } else {
         // Android: 인텐트 사용
         const { Linking } = await import('react-native');
-        
+
         try {
           await Linking.openURL(kakaoNavUrl);
         } catch {
@@ -332,7 +332,6 @@ class KakaoMapServiceClass {
           }
         }
       }
-
     } catch (error) {
       console.error('❌ 길찾기 실패:', error);
       throw new Error('길찾기를 실행할 수 없습니다. 카카오맵 앱을 설치해주세요.');
@@ -341,7 +340,7 @@ class KakaoMapServiceClass {
 
   /**
    * 카카오맵 웹 링크 생성
-   * 
+   *
    * @param place 장소 정보
    * @returns 카카오맵 URL
    */
@@ -352,7 +351,7 @@ class KakaoMapServiceClass {
 
   /**
    * 장소 공유 링크 생성
-   * 
+   *
    * @param place 장소 정보
    * @returns 공유 URL
    */
@@ -366,9 +365,9 @@ export const KakaoMapService = new KakaoMapServiceClass();
 
 /**
  * 환경 변수 설정 (.env 파일):
- * 
+ *
  * EXPO_PUBLIC_KAKAO_REST_API_KEY=YOUR_KAKAO_REST_API_KEY
- * 
+ *
  * Kakao Developers에서 발급:
  * 1. https://developers.kakao.com
  * 2. 내 애플리케이션 → 앱 키 → REST API 키 복사
@@ -376,27 +375,27 @@ export const KakaoMapService = new KakaoMapServiceClass();
 
 /**
  * 사용 예시:
- * 
+ *
  * ```typescript
  * import { KakaoMapService } from './services/kakao/kakaoMap';
- * 
+ *
  * // 1. 골프장 검색
  * const results = await KakaoMapService.searchGolfCourses('서울');
  * console.log(`검색 결과: ${results.length}개`);
- * 
+ *
  * // 2. 주변 골프장 검색
  * const nearby = await KakaoMapService.searchNearbyGolfCourses(37.5665, 126.9780);
- * 
+ *
  * // 3. 거리 계산
  * const distance = KakaoMapService.calculateDistance(
  *   37.5665, 126.9780, // 서울시청
  *   37.5133, 127.0592  // 강남역
  * );
  * console.log(`거리: ${distance}km`);
- * 
+ *
  * // 4. 길찾기
  * await KakaoMapService.openNavigation(results[0]);
- * 
+ *
  * // 5. 카카오맵 링크
  * const link = KakaoMapService.getKakaoMapLink(results[0]);
  * ```

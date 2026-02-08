@@ -88,21 +88,17 @@ export const ProductDetailScreen: React.FC = () => {
 
   const handleReport = () => {
     setMoreMenuVisible(false);
-    Alert.alert(
-      '신고하기',
-      '이 상품을 신고하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '허위 매물',
-          onPress: () => Alert.alert('신고 완료', '신고가 접수되었습니다. 검토 후 처리됩니다.'),
-        },
-        {
-          text: '사기 의심',
-          onPress: () => Alert.alert('신고 완료', '신고가 접수되었습니다. 검토 후 처리됩니다.'),
-        },
-      ],
-    );
+    Alert.alert('신고하기', '이 상품을 신고하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '허위 매물',
+        onPress: () => Alert.alert('신고 완료', '신고가 접수되었습니다. 검토 후 처리됩니다.'),
+      },
+      {
+        text: '사기 의심',
+        onPress: () => Alert.alert('신고 완료', '신고가 접수되었습니다. 검토 후 처리됩니다.'),
+      },
+    ]);
   };
 
   const handleHide = () => {
@@ -135,24 +131,30 @@ export const ProductDetailScreen: React.FC = () => {
 
   const handleChat = () => {
     if (!product) return;
-    navigation.navigate('Chat' as any, {
-      screen: 'ChatRoom',
-      params: {
-        chatId: `product_${product.id}`,
-        chatName: product.sellerName,
-      },
-    } as any);
+    navigation.navigate(
+      'Chat' as any,
+      {
+        screen: 'ChatRoom',
+        params: {
+          chatId: `product_${product.id}`,
+          chatName: product.sellerName,
+        },
+      } as any,
+    );
   };
 
   const handleSellerPress = () => {
     if (!product) return;
-    navigation.navigate('MyHome' as any, {
-      screen: 'FriendProfile',
-      params: {
-        friendId: product.sellerId,
-        friendName: product.sellerName,
-      },
-    } as any);
+    navigation.navigate(
+      'MyHome' as any,
+      {
+        screen: 'FriendProfile',
+        params: {
+          friendId: product.sellerId,
+          friendName: product.sellerName,
+        },
+      } as any,
+    );
   };
 
   // 로딩 상태
@@ -216,14 +218,12 @@ export const ProductDetailScreen: React.FC = () => {
             >
               {product.images.length > 0 ? (
                 product.images.map((image, index) => (
-                  <Image
-                    key={index}
-                    source={{ uri: image }}
-                    style={styles.galleryImage}
-                  />
+                  <Image key={index} source={{ uri: image }} style={styles.galleryImage} />
                 ))
               ) : (
-                <View style={[styles.galleryImage, { justifyContent: 'center', alignItems: 'center' }]}>
+                <View
+                  style={[styles.galleryImage, { justifyContent: 'center', alignItems: 'center' }]}
+                >
                   <Text style={{ fontSize: 48 }}>📷</Text>
                   <Text style={{ color: colors.textTertiary, marginTop: 8 }}>이미지 없음</Text>
                 </View>
@@ -245,8 +245,15 @@ export const ProductDetailScreen: React.FC = () => {
             {product.sellerImage ? (
               <Image source={{ uri: product.sellerImage }} style={styles.sellerImage} />
             ) : (
-              <View style={[styles.sellerImage, { backgroundColor: '#E5E5E5', justifyContent: 'center', alignItems: 'center' }]}>
-                <Text style={{ fontSize: 20, color: colors.textTertiary }}>{product.sellerName?.charAt(0)}</Text>
+              <View
+                style={[
+                  styles.sellerImage,
+                  { backgroundColor: '#E5E5E5', justifyContent: 'center', alignItems: 'center' },
+                ]}
+              >
+                <Text style={{ fontSize: 20, color: colors.textTertiary }}>
+                  {product.sellerName?.charAt(0)}
+                </Text>
               </View>
             )}
             <View style={styles.sellerInfo}>
@@ -265,7 +272,9 @@ export const ProductDetailScreen: React.FC = () => {
             <View style={styles.productMeta}>
               <Text style={styles.metaItem}>카테고리 • {product.category}</Text>
               <Text style={styles.metaDot}>•</Text>
-              <Text style={styles.metaItem}>{typeof product.createdAt === 'string' ? product.createdAt : ''}</Text>
+              <Text style={styles.metaItem}>
+                {typeof product.createdAt === 'string' ? product.createdAt : ''}
+              </Text>
             </View>
 
             <Text style={styles.productPrice}>{product.price.toLocaleString()}원</Text>

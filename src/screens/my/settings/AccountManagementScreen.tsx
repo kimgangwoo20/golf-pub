@@ -48,22 +48,22 @@ export const AccountManagementScreen: React.FC = () => {
       }
 
       // 현재 비밀번호로 재인증
-      const credential = auth.EmailAuthProvider.credential(
-        currentUser.email,
-        currentPassword
-      );
+      const credential = auth.EmailAuthProvider.credential(currentUser.email, currentPassword);
       await currentUser.reauthenticateWithCredential(credential);
 
       // 비밀번호 변경
       await currentUser.updatePassword(newPassword);
 
       Alert.alert('완료', '비밀번호가 변경되었습니다.', [
-        { text: '확인', onPress: () => {
-          setCurrentPassword('');
-          setNewPassword('');
-          setConfirmPassword('');
-          setShowPasswordSection(false);
-        }},
+        {
+          text: '확인',
+          onPress: () => {
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+            setShowPasswordSection(false);
+          },
+        },
       ]);
     } catch (error: any) {
       if (error.code === 'auth/wrong-password') {
@@ -78,7 +78,7 @@ export const AccountManagementScreen: React.FC = () => {
     }
   };
 
-  const handleChangeEmail = () => {
+  const _handleChangeEmail = () => {
     Alert.alert('이메일 변경', '이메일 변경 기능은 준비 중입니다.');
   };
 
@@ -104,17 +104,23 @@ export const AccountManagementScreen: React.FC = () => {
             <View style={styles.infoCard}>
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>이메일</Text>
-                <Text style={styles.infoValue}>{user?.email || userProfile?.email || '미설정'}</Text>
+                <Text style={styles.infoValue}>
+                  {user?.email || userProfile?.email || '미설정'}
+                </Text>
               </View>
               <View style={styles.divider} />
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>이름</Text>
-                <Text style={styles.infoValue}>{user?.displayName || userProfile?.nickname || '골퍼'}</Text>
+                <Text style={styles.infoValue}>
+                  {user?.displayName || userProfile?.nickname || '골퍼'}
+                </Text>
               </View>
               <View style={styles.divider} />
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>로그인 방식</Text>
-                <Text style={styles.infoValue}>{userProfile?.provider === 'kakao' ? '카카오 로그인' : '이메일 로그인'}</Text>
+                <Text style={styles.infoValue}>
+                  {userProfile?.provider === 'kakao' ? '카카오 로그인' : '이메일 로그인'}
+                </Text>
               </View>
             </View>
           </View>
@@ -179,7 +185,10 @@ export const AccountManagementScreen: React.FC = () => {
                       <Text style={styles.cancelButtonText}>취소</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.confirmButton, isChangingPassword && styles.confirmButtonDisabled]}
+                      style={[
+                        styles.confirmButton,
+                        isChangingPassword && styles.confirmButtonDisabled,
+                      ]}
                       onPress={handleChangePassword}
                       disabled={isChangingPassword}
                     >
@@ -204,7 +213,12 @@ export const AccountManagementScreen: React.FC = () => {
                   <Text style={styles.kakaoIcon}>💬</Text>
                   <Text style={styles.menuLabel}>카카오 계정 연동</Text>
                 </View>
-                <Text style={[styles.linkStatus, userProfile?.provider === 'kakao' ? styles.linked : styles.notLinked]}>
+                <Text
+                  style={[
+                    styles.linkStatus,
+                    userProfile?.provider === 'kakao' ? styles.linked : styles.notLinked,
+                  ]}
+                >
                   {userProfile?.provider === 'kakao' ? '연동됨' : '미연동'}
                 </Text>
               </TouchableOpacity>
@@ -222,34 +236,63 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#fff' },
   container: { flex: 1, backgroundColor: '#F5F5F5' },
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingVertical: 16, backgroundColor: '#fff',
-    borderBottomWidth: 1, borderBottomColor: '#E5E5E5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
   },
   backButton: { padding: 4 },
   backIcon: { fontSize: 32, color: '#1A1A1A', fontWeight: '300' },
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A1A' },
   scrollView: { flex: 1 },
   section: { marginTop: 20, marginHorizontal: 16 },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: '#666', marginBottom: 12, paddingHorizontal: 4 },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#666',
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
   infoCard: {
-    backgroundColor: '#fff', borderRadius: 12, paddingVertical: 8,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    paddingVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   infoRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingVertical: 14, paddingHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
   },
   infoLabel: { fontSize: 15, color: '#666' },
   infoValue: { fontSize: 15, fontWeight: '600', color: '#1A1A1A' },
   divider: { height: 1, backgroundColor: '#F0F0F0', marginHorizontal: 20 },
   menuCard: {
-    backgroundColor: '#fff', borderRadius: 12, paddingVertical: 8,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    paddingVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   menuItem: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 16, paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
   },
   menuItemLeft: { flexDirection: 'row', alignItems: 'center' },
   menuLabel: { fontSize: 15, fontWeight: '600', color: '#1A1A1A' },
@@ -262,16 +305,28 @@ const styles = StyleSheet.create({
   inputGroup: { marginBottom: 16 },
   inputLabel: { fontSize: 13, fontWeight: '600', color: '#666', marginBottom: 6 },
   input: {
-    backgroundColor: '#F5F5F5', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 12,
-    fontSize: 15, color: '#1A1A1A',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: '#1A1A1A',
   },
   buttonRow: { flexDirection: 'row', gap: 12, marginTop: 8 },
   cancelButton: {
-    flex: 1, paddingVertical: 14, borderRadius: 10, backgroundColor: '#F0F0F0', alignItems: 'center',
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 10,
+    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
   },
   cancelButtonText: { fontSize: 15, fontWeight: '600', color: '#666' },
   confirmButton: {
-    flex: 1, paddingVertical: 14, borderRadius: 10, backgroundColor: '#10b981', alignItems: 'center',
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 10,
+    backgroundColor: '#10b981',
+    alignItems: 'center',
   },
   confirmButtonDisabled: {
     backgroundColor: '#6ee7b7',

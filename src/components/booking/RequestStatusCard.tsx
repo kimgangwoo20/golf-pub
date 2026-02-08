@@ -68,7 +68,7 @@ export const RequestStatusCard: React.FC<RequestStatusCardProps> = ({
 
       <View style={styles.body}>
         <Text style={styles.bookingTitle}>{bookingTitle}</Text>
-        
+
         <View style={styles.detailRow}>
           <Text style={styles.detailIcon}>⛳</Text>
           <Text style={styles.detailText}>{courseName}</Text>
@@ -76,7 +76,9 @@ export const RequestStatusCard: React.FC<RequestStatusCardProps> = ({
 
         <View style={styles.detailRow}>
           <Text style={styles.detailIcon}>📅</Text>
-          <Text style={styles.detailText}>{date} {time}</Text>
+          <Text style={styles.detailText}>
+            {date} {time}
+          </Text>
         </View>
 
         <View style={styles.detailRow}>

@@ -52,8 +52,10 @@ export const JoinedMeetupsScreen: React.FC = () => {
   }, [loadMyBookings]);
 
   // status 매핑: Firestore OPEN → upcoming, COMPLETED/CLOSED → completed
-  const upcomingMeetups = bookings.filter(m => m.status === 'OPEN' || m.status === 'upcoming');
-  const completedMeetups = bookings.filter(m => m.status === 'COMPLETED' || m.status === 'CLOSED' || m.status === 'completed');
+  const upcomingMeetups = bookings.filter((m) => m.status === 'OPEN' || m.status === 'upcoming');
+  const completedMeetups = bookings.filter(
+    (m) => m.status === 'COMPLETED' || m.status === 'CLOSED' || m.status === 'completed',
+  );
 
   const displayMeetups = activeTab === 'upcoming' ? upcomingMeetups : completedMeetups;
 
@@ -142,7 +144,9 @@ export const JoinedMeetupsScreen: React.FC = () => {
                     <Text style={styles.meetupTitle}>{meetup.title}</Text>
                     <Text style={styles.meetupInfo}>⛳ {meetup.course}</Text>
                     {meetup.location && <Text style={styles.meetupInfo}>📍 {meetup.location}</Text>}
-                    <Text style={styles.meetupInfo}>📅 {meetup.date} {meetup.time}</Text>
+                    <Text style={styles.meetupInfo}>
+                      📅 {meetup.date} {meetup.time}
+                    </Text>
                     {meetup.host?.name && (
                       <Text style={styles.meetupInfo}>👤 호스트: {meetup.host.name}</Text>
                     )}

@@ -30,14 +30,14 @@ export const useFriendStore = create<FriendState>((set) => ({
   loadFriends: async (userId) => {
     try {
       set({ loading: true, error: null });
-      
+
       const snapshot = await firebaseFirestore
         .collection('friends')
         .where('userId', '==', userId)
         .where('status', '==', 'accepted')
         .get();
 
-      const friends = snapshot.docs.map(doc => ({
+      const friends = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate(),

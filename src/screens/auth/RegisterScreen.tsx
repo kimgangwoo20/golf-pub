@@ -153,10 +153,7 @@ export const RegisterScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.loginLink}
-              onPress={() => navigation?.goBack()}
-            >
+            <TouchableOpacity style={styles.loginLink} onPress={() => navigation?.goBack()}>
               <Text style={styles.loginLinkText}>
                 이미 계정이 있으신가요? <Text style={styles.loginLinkBold}>로그인</Text>
               </Text>

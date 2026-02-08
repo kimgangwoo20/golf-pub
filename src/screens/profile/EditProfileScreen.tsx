@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+  Image,
+} from 'react-native';
 import { profileAPI } from '@/services/api/profileAPI';
 import { showImagePickerOptions } from '@/utils/imageUtils';
 
@@ -58,7 +68,16 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
 
     // 전화번호 형식 검증
     const phoneRegex = /^(010-?\d{4}-?\d{4})?$/;
-    if (phone.trim() && !phoneRegex.test(phone.trim().replace(/-/g, '').replace(/^(\d{3})(\d{4})(\d{4})$/, '$1-$2-$3')) && !/^\d{10,11}$/.test(phone.trim().replace(/-/g, ''))) {
+    if (
+      phone.trim() &&
+      !phoneRegex.test(
+        phone
+          .trim()
+          .replace(/-/g, '')
+          .replace(/^(\d{3})(\d{4})(\d{4})$/, '$1-$2-$3'),
+      ) &&
+      !/^\d{10,11}$/.test(phone.trim().replace(/-/g, ''))
+    ) {
       Alert.alert('알림', '올바른 전화번호 형식을 입력해주세요. (예: 010-0000-0000)');
       return;
     }
@@ -200,7 +219,12 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
   loadingText: { marginTop: 12, fontSize: 14, color: '#666' },
   header: { padding: 24, paddingTop: 60 },
   backButton: { fontSize: 16, color: '#10b981', marginBottom: 24 },
@@ -210,20 +234,37 @@ const styles = StyleSheet.create({
   profileImageContainer: { width: 120, height: 120, borderRadius: 60, position: 'relative' },
   profileImage: { width: 120, height: 120, borderRadius: 60 },
   profileImagePlaceholder: {
-    width: 120, height: 120, borderRadius: 60, backgroundColor: '#E5E5E5',
-    alignItems: 'center', justifyContent: 'center',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#E5E5E5',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   profileImagePlaceholderText: { fontSize: 48 },
   imageOverlay: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    borderRadius: 60, backgroundColor: 'rgba(0,0,0,0.5)',
-    alignItems: 'center', justifyContent: 'center',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 60,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   editBadge: {
-    position: 'absolute', bottom: 0, right: 0,
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: '#10b981', alignItems: 'center', justifyContent: 'center',
-    borderWidth: 3, borderColor: '#fff',
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#10b981',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#fff',
   },
   editBadgeText: { fontSize: 16 },
   changeImageText: { marginTop: 12, fontSize: 14, color: '#10b981' },
@@ -232,7 +273,14 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 12, padding: 16, fontSize: 16 },
   textArea: { height: 100, textAlignVertical: 'top' },
   charCount: { fontSize: 12, color: '#999', textAlign: 'right', marginTop: 4 },
-  saveButton: { backgroundColor: '#10b981', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 24, marginBottom: 40 },
+  saveButton: {
+    backgroundColor: '#10b981',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 40,
+  },
   saveButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   saveButtonDisabled: { opacity: 0.7 },
 });

@@ -14,7 +14,11 @@ const PRODUCTS_COLLECTION = 'products';
 const POSTS_COLLECTION = 'posts';
 
 // 시드 데이터 중복 생성 방지용 체크
-const checkAlreadySeeded = async (collection: string, field: string, value: string): Promise<boolean> => {
+const checkAlreadySeeded = async (
+  collection: string,
+  field: string,
+  value: string,
+): Promise<boolean> => {
   const snapshot = await firestore()
     .collection(collection)
     .where(field, '==', value)
@@ -80,9 +84,7 @@ const seedBookings = async (uid: string, displayName: string) => {
       participants: {
         current: 1,
         max: 3,
-        members: [
-          { uid, name: displayName, role: 'host' },
-        ],
+        members: [{ uid, name: displayName, role: 'host' }],
       },
       createdAt: firestore.FieldValue.serverTimestamp(),
       updatedAt: firestore.FieldValue.serverTimestamp(),
@@ -140,7 +142,8 @@ const seedPosts = async (uid: string, displayName: string, photoURL: string) => 
         name: displayName,
         image: photoURL,
       },
-      content: '오늘 블루원 용인CC에서 라운딩 다녀왔습니다! 날씨가 정말 좋았네요. 드라이버가 잘 맞아서 기분 좋은 하루였습니다 ⛳',
+      content:
+        '오늘 블루원 용인CC에서 라운딩 다녀왔습니다! 날씨가 정말 좋았네요. 드라이버가 잘 맞아서 기분 좋은 하루였습니다 ⛳',
       images: [],
       hashtags: ['라운딩후기', '블루원용인', '골프일상'],
       likes: 12,
@@ -157,7 +160,8 @@ const seedPosts = async (uid: string, displayName: string, photoURL: string) => 
         name: displayName,
         image: photoURL,
       },
-      content: '초보자에게 추천하는 드라이버! 테일러메이드 SIM2 사용 중인데 관용성이 정말 좋습니다. 슬라이스가 줄었어요.',
+      content:
+        '초보자에게 추천하는 드라이버! 테일러메이드 SIM2 사용 중인데 관용성이 정말 좋습니다. 슬라이스가 줄었어요.',
       images: [],
       hashtags: ['장비추천', '드라이버', '테일러메이드'],
       likes: 8,
@@ -311,7 +315,7 @@ export const clearSeedData = async (): Promise<{ success: boolean; message: stri
 
       if (!snapshot.empty) {
         const batch = firestore().batch();
-        snapshot.docs.forEach(doc => batch.delete(doc.ref));
+        snapshot.docs.forEach((doc) => batch.delete(doc.ref));
         await batch.commit();
       }
     }

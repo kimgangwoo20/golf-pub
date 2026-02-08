@@ -1,14 +1,6 @@
 // ChatListScreen.tsx - 채팅 목록 (Firebase 실시간 연동)
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Image,
-  TextInput,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useChatStore } from '@/store/useChatStore';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -25,18 +17,17 @@ export const ChatListScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
     }
   }, [user]);
 
-  const filteredChats = chatRooms.filter(chat =>
-    chat.participants.some(p => 
-      p.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+  const filteredChats = chatRooms.filter((chat) =>
+    chat.participants.some((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase())),
   );
 
   const renderChatItem = ({ item }: { item: any }) => {
     // 현재 사용자가 아닌 참여자 찾기 (1:1 채팅의 경우)
     const otherParticipant = item.participants.find((p: any) => p.uid !== user?.uid);
-    const chatName = item.type === 'direct' 
-      ? otherParticipant?.name || '알 수 없음'
-      : `그룹 채팅 (${item.participants.length})`;
+    const chatName =
+      item.type === 'direct'
+        ? otherParticipant?.name || '알 수 없음'
+        : `그룹 채팅 (${item.participants.length})`;
 
     const unreadCount = item.unreadCount?.[user?.uid || ''] || 0;
 
@@ -50,15 +41,15 @@ export const ChatListScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
           });
         }}
       >
-        <Image 
-          source={{ uri: otherParticipant?.avatar || 'https://i.pravatar.cc/150' }} 
-          style={styles.avatar} 
+        <Image
+          source={{ uri: otherParticipant?.avatar || 'https://i.pravatar.cc/150' }}
+          style={styles.avatar}
         />
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
             <Text style={styles.chatName}>{chatName}</Text>
             <Text style={styles.timestamp}>
-              {item.lastMessage?.createdAt 
+              {item.lastMessage?.createdAt
                 ? new Date(item.lastMessage.createdAt).toLocaleString('ko-KR', {
                     hour: '2-digit',
                     minute: '2-digit',
@@ -83,53 +74,53 @@ export const ChatListScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-    <View style={styles.container}>
-      {/* 헤더 */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>채팅</Text>
-        <View style={styles.headerButtons}>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={() => navigation?.navigate('CreateChat')}
-          >
-            <Text style={styles.headerButtonText}>💬</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={() => navigation?.navigate('ChatSettings')}
-          >
-            <Text style={styles.headerButtonText}>⚙️</Text>
-          </TouchableOpacity>
+      <View style={styles.container}>
+        {/* 헤더 */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>채팅</Text>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={() => navigation?.navigate('CreateChat')}
+            >
+              <Text style={styles.headerButtonText}>💬</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={() => navigation?.navigate('ChatSettings')}
+            >
+              <Text style={styles.headerButtonText}>⚙️</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
-      {/* 검색 */}
-      <View style={styles.searchContainer}>
-        <Text style={styles.searchIcon}>🔍</Text>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="채팅 검색"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor="#999"
+        {/* 검색 */}
+        <View style={styles.searchContainer}>
+          <Text style={styles.searchIcon}>🔍</Text>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="채팅 검색"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor="#999"
+          />
+        </View>
+
+        {/* 채팅 목록 */}
+        <FlatList
+          data={filteredChats}
+          renderItem={renderChatItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>채팅이 없습니다</Text>
+              <Text style={styles.emptySubtext}>새 채팅을 시작해보세요!</Text>
+            </View>
+          }
         />
       </View>
-
-      {/* 채팅 목록 */}
-      <FlatList
-        data={filteredChats}
-        renderItem={renderChatItem}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>채팅이 없습니다</Text>
-            <Text style={styles.emptySubtext}>새 채팅을 시작해보세요!</Text>
-          </View>
-        }
-      />
-    </View>
     </SafeAreaView>
   );
 };

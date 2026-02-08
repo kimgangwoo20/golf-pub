@@ -21,7 +21,7 @@ interface Props {
 export const BookingList: React.FC<Props> = ({ bookings, onBookingPress, onJoinPress }) => (
   <FlatList
     data={bookings}
-    keyExtractor={item => item.id}
+    keyExtractor={(item) => item.id}
     scrollEnabled={false}
     renderItem={({ item }) => (
       <TouchableOpacity style={styles.card} onPress={() => onBookingPress(item.id)}>
@@ -37,7 +37,7 @@ export const BookingList: React.FC<Props> = ({ bookings, onBookingPress, onJoinP
           </Text>
           <Text style={styles.price}>💰 {item.price.toLocaleString()}원</Text>
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.joinButton}
           onPress={(e) => {
             e.stopPropagation();
@@ -57,7 +57,13 @@ export const BookingList: React.FC<Props> = ({ bookings, onBookingPress, onJoinP
 );
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: '#fff', marginHorizontal: 16, marginBottom: 12, padding: 16, borderRadius: 12 },
+  card: {
+    backgroundColor: '#fff',
+    marginHorizontal: 16,
+    marginBottom: 12,
+    padding: 16,
+    borderRadius: 12,
+  },
   title: { fontSize: 16, fontWeight: '600', marginBottom: 6 },
   course: { fontSize: 14, color: '#64748b', marginBottom: 8 },
   info: { flexDirection: 'row', gap: 16, marginBottom: 12 },
@@ -65,7 +71,12 @@ const styles = StyleSheet.create({
   footer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
   players: { fontSize: 14, color: '#0f172a' },
   price: { fontSize: 14, fontWeight: '600', color: '#10b981' },
-  joinButton: { backgroundColor: '#10b981', paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
+  joinButton: {
+    backgroundColor: '#10b981',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
   joinText: { color: '#fff', fontWeight: '600', fontSize: 15 },
   empty: { padding: 50, alignItems: 'center' },
   emptyText: { fontSize: 16, color: '#94a3b8' },

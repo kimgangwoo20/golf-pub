@@ -63,7 +63,7 @@ export const OpenSourceScreen: React.FC = () => {
 
         <FlatList
           data={LICENSES}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -77,27 +77,42 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#fff' },
   container: { flex: 1, backgroundColor: '#F5F5F5' },
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingVertical: 16, backgroundColor: '#fff',
-    borderBottomWidth: 1, borderBottomColor: '#E5E5E5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
   },
   backButton: { padding: 4 },
   backIcon: { fontSize: 32, color: '#1A1A1A', fontWeight: '300' },
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A1A' },
   infoBox: {
-    backgroundColor: '#fff', padding: 16, margin: 16, borderRadius: 12,
+    backgroundColor: '#fff',
+    padding: 16,
+    margin: 16,
+    borderRadius: 12,
   },
   infoText: { fontSize: 14, color: '#666', lineHeight: 20 },
   listContent: { paddingHorizontal: 16, paddingBottom: 40 },
   licenseItem: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    backgroundColor: '#fff', padding: 16, borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
   },
   licenseLeft: { flex: 1 },
   licenseName: { fontSize: 15, fontWeight: '600', color: '#1A1A1A', marginBottom: 2 },
   licenseVersion: { fontSize: 13, color: '#999' },
   licenseBadge: {
-    backgroundColor: '#E8F5E9', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8,
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
   licenseBadgeText: { fontSize: 12, fontWeight: '600', color: '#10b981' },
   separator: { height: 8 },

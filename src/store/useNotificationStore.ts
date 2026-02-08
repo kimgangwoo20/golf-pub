@@ -46,14 +46,15 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
           const notifications = snapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
-            createdAt: doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+            createdAt:
+              doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
           })) as Notification[];
 
           set({ notifications });
         },
         () => {
           // 알림 구독 오류 - 무시
-        }
+        },
       );
   },
 
@@ -81,7 +82,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         },
         () => {
           // 읽지 않은 알림 구독 오류 - 무시
-        }
+        },
       );
   },
 
@@ -104,7 +105,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       // Firestore는 onSnapshot이 자동 반영
       set({
         notifications: notifications.map((n) =>
-          n.id === notificationId ? { ...n, read: true } : n
+          n.id === notificationId ? { ...n, read: true } : n,
         ),
       });
     } catch (error) {

@@ -15,22 +15,10 @@ interface AvatarProps {
   style?: ViewStyle;
 }
 
-export const Avatar: React.FC<AvatarProps> = ({
-  uri,
-  name,
-  size = 'medium',
-  badge,
-  style,
-}) => {
+export const Avatar: React.FC<AvatarProps> = ({ uri, name, size = 'medium', badge, style }) => {
   // 크기 계산
   const avatarSize =
-    typeof size === 'number'
-      ? size
-      : size === 'small'
-      ? 32
-      : size === 'large'
-      ? 64
-      : 48;
+    typeof size === 'number' ? size : size === 'small' ? 32 : size === 'large' ? 64 : 48;
 
   // 이니셜 추출
   const getInitials = (name?: string) => {
@@ -67,9 +55,7 @@ export const Avatar: React.FC<AvatarProps> = ({
             { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 },
           ]}
         >
-          <Text style={[styles.initials, { fontSize: avatarSize / 2.5 }]}>
-            {getInitials(name)}
-          </Text>
+          <Text style={[styles.initials, { fontSize: avatarSize / 2.5 }]}>{getInitials(name)}</Text>
         </View>
       )}
       {badge && (

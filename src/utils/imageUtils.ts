@@ -1,21 +1,21 @@
 // 📷 이미지 선택 및 업로드 유틸리티
 // expo-image-picker 또는 react-native-image-picker 사용
 
-import { Alert, Platform } from 'react-native';
+import { Alert } from 'react-native';
 import storage from '@react-native-firebase/storage';
 import { requestCameraPermission, requestStoragePermission } from './devicePermissions';
 
 // expo-image-picker 타입 (설치 후 사용)
 interface ImagePickerResult {
   canceled: boolean;
-  assets?: Array<{
+  assets?: {
     uri: string;
     width: number;
     height: number;
     type?: string;
     fileName?: string;
     fileSize?: number;
-  }>;
+  }[];
 }
 
 /**
@@ -35,7 +35,7 @@ export interface ImagePickerOptions {
  * 갤러리에서 이미지 선택
  */
 export const pickImageFromGallery = async (
-  options?: ImagePickerOptions
+  options?: ImagePickerOptions,
 ): Promise<string | null> => {
   try {
     // 권한 확인
@@ -51,7 +51,7 @@ export const pickImageFromGallery = async (
     } catch (e) {
       Alert.alert(
         '기능 사용 불가',
-        '이미지 선택을 위해 expo-image-picker 설치가 필요합니다.\n\nnpx expo install expo-image-picker'
+        '이미지 선택을 위해 expo-image-picker 설치가 필요합니다.\n\nnpx expo install expo-image-picker',
       );
       console.error('expo-image-picker가 설치되지 않았습니다.');
       return null;
@@ -79,9 +79,7 @@ export const pickImageFromGallery = async (
 /**
  * 갤러리에서 여러 이미지 선택
  */
-export const pickMultipleImages = async (
-  options?: ImagePickerOptions
-): Promise<string[]> => {
+export const pickMultipleImages = async (options?: ImagePickerOptions): Promise<string[]> => {
   try {
     const hasPermission = await requestStoragePermission();
     if (!hasPermission) {
@@ -94,7 +92,7 @@ export const pickMultipleImages = async (
     } catch (e) {
       Alert.alert(
         '기능 사용 불가',
-        '이미지 선택을 위해 expo-image-picker 설치가 필요합니다.\n\nnpx expo install expo-image-picker'
+        '이미지 선택을 위해 expo-image-picker 설치가 필요합니다.\n\nnpx expo install expo-image-picker',
       );
       return [];
     }
@@ -121,9 +119,7 @@ export const pickMultipleImages = async (
 /**
  * 카메라로 사진 촬영
  */
-export const takePhoto = async (
-  options?: ImagePickerOptions
-): Promise<string | null> => {
+export const takePhoto = async (options?: ImagePickerOptions): Promise<string | null> => {
   try {
     const hasPermission = await requestCameraPermission();
     if (!hasPermission) {
@@ -136,7 +132,7 @@ export const takePhoto = async (
     } catch (e) {
       Alert.alert(
         '기능 사용 불가',
-        '카메라 사용을 위해 expo-image-picker 설치가 필요합니다.\n\nnpx expo install expo-image-picker'
+        '카메라 사용을 위해 expo-image-picker 설치가 필요합니다.\n\nnpx expo install expo-image-picker',
       );
       return null;
     }
@@ -189,7 +185,7 @@ export const showImagePickerOptions = (): Promise<string | null> => {
           onPress: () => resolve(null),
         },
       ],
-      { cancelable: true, onDismiss: () => resolve(null) }
+      { cancelable: true, onDismiss: () => resolve(null) },
     );
   });
 };
@@ -200,7 +196,7 @@ export const showImagePickerOptions = (): Promise<string | null> => {
 export const uploadImageToStorage = async (
   imageUri: string,
   storagePath: string,
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
 ): Promise<string> => {
   try {
     // 파일 이름 생성
@@ -236,7 +232,7 @@ export const uploadImageToStorage = async (
 export const uploadMultipleImages = async (
   imageUris: string[],
   storagePath: string,
-  onProgress?: (currentIndex: number, totalCount: number) => void
+  onProgress?: (currentIndex: number, totalCount: number) => void,
 ): Promise<string[]> => {
   const uploadedUrls: string[] = [];
 

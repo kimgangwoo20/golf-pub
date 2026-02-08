@@ -57,7 +57,7 @@ class FirebaseAuthService {
    */
   async loginWithKakao(
     customToken: string,
-    kakaoUserInfo: KakaoUserInfo
+    kakaoUserInfo: KakaoUserInfo,
   ): Promise<FirebaseAuthTypes.UserCredential> {
     try {
       // Custom Token으로 Firebase 인증
@@ -83,10 +83,7 @@ class FirebaseAuthService {
    * @param password - 비밀번호
    * @returns Firebase User Credential
    */
-  async loginWithEmail(
-    email: string,
-    password: string
-  ): Promise<FirebaseAuthTypes.UserCredential> {
+  async loginWithEmail(email: string, password: string): Promise<FirebaseAuthTypes.UserCredential> {
     try {
       // 이메일 로그인 시작
 
@@ -113,7 +110,7 @@ class FirebaseAuthService {
   async registerWithEmail(
     email: string,
     password: string,
-    displayName: string
+    displayName: string,
   ): Promise<FirebaseAuthTypes.UserCredential> {
     try {
       // 이메일 회원가입 시작
@@ -220,7 +217,7 @@ class FirebaseAuthService {
       displayName: string | null;
       photoURL: string | null;
       phoneNumber: string | null;
-    }
+    },
   ): Promise<void> {
     try {
       const userProfile: UserProfile = {
@@ -254,10 +251,7 @@ class FirebaseAuthService {
    * @param uid - 사용자 ID
    * @param kakaoUserInfo - 카카오 사용자 정보
    */
-  private async updateUserProfile(
-    uid: string,
-    kakaoUserInfo: KakaoUserInfo
-  ): Promise<void> {
+  private async updateUserProfile(uid: string, kakaoUserInfo: KakaoUserInfo): Promise<void> {
     try {
       const userRef = firestore.collection('users').doc(uid);
       const doc = await userRef.get();
@@ -347,15 +341,15 @@ class FirebaseAuthService {
    * @param uid - 사용자 ID
    * @param updates - 업데이트할 데이터
    */
-  async updateProfile(
-    uid: string,
-    updates: Partial<UserProfile>
-  ): Promise<void> {
+  async updateProfile(uid: string, updates: Partial<UserProfile>): Promise<void> {
     try {
-      await firestore.collection('users').doc(uid).update({
-        ...updates,
-        updatedAt: FirestoreTimestamp.now(),
-      });
+      await firestore
+        .collection('users')
+        .doc(uid)
+        .update({
+          ...updates,
+          updatedAt: FirestoreTimestamp.now(),
+        });
 
       // 프로필 업데이트 성공
     } catch (error) {
@@ -433,11 +427,7 @@ class FirebaseAuthService {
         });
 
         // 포인트 히스토리 기록
-        const historyRef = firestore
-          .collection('users')
-          .doc(uid)
-          .collection('pointHistory')
-          .doc();
+        const historyRef = firestore.collection('users').doc(uid).collection('pointHistory').doc();
 
         transaction.set(historyRef, {
           amount: points,
@@ -487,11 +477,7 @@ class FirebaseAuthService {
         });
 
         // 포인트 히스토리 기록
-        const historyRef = firestore
-          .collection('users')
-          .doc(uid)
-          .collection('pointHistory')
-          .doc();
+        const historyRef = firestore.collection('users').doc(uid).collection('pointHistory').doc();
 
         transaction.set(historyRef, {
           amount: -points,
@@ -537,9 +523,7 @@ class FirebaseAuthService {
    * @param callback - 콜백 함수
    * @returns Unsubscribe function
    */
-  onAuthStateChanged(
-    callback: (user: FirebaseAuthTypes.User | null) => void
-  ): () => void {
+  onAuthStateChanged(callback: (user: FirebaseAuthTypes.User | null) => void): () => void {
     return auth.onAuthStateChanged(callback);
   }
 }

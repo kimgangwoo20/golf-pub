@@ -11,7 +11,7 @@ import { profileAPI } from './profileAPI';
 export const authAPI = {
   /**
    * 이메일/비밀번호 로그인
-   * 
+   *
    * @param email 이메일
    * @param password 비밀번호
    * @returns 사용자 정보
@@ -19,7 +19,7 @@ export const authAPI = {
   login: async (email: string, password: string) => {
     try {
       const userCredential = await auth().signInWithEmailAndPassword(email, password);
-      
+
       return {
         user: userCredential.user,
         token: await userCredential.user.getIdToken(),
@@ -35,14 +35,14 @@ export const authAPI = {
       } else if (error.code === 'auth/user-disabled') {
         message = '비활성화된 계정입니다.';
       }
-      
+
       throw new Error(message);
     }
   },
 
   /**
    * 이메일/비밀번호 회원가입
-   * 
+   *
    * @param email 이메일
    * @param password 비밀번호
    * @param name 이름
@@ -51,7 +51,7 @@ export const authAPI = {
   register: async (email: string, password: string, name: string) => {
     try {
       const userCredential = await auth().createUserWithEmailAndPassword(email, password);
-      
+
       // 이름 업데이트
       await userCredential.user.updateProfile({
         displayName: name,
@@ -73,7 +73,7 @@ export const authAPI = {
       } else if (error.code === 'auth/weak-password') {
         message = '비밀번호는 최소 6자 이상이어야 합니다.';
       }
-      
+
       throw new Error(message);
     }
   },
@@ -91,7 +91,7 @@ export const authAPI = {
 
   /**
    * 현재 로그인한 사용자 가져오기
-   * 
+   *
    * @returns 현재 사용자 or null
    */
   getCurrentUser: () => {
@@ -100,7 +100,7 @@ export const authAPI = {
 
   /**
    * 비밀번호 재설정 이메일 전송
-   * 
+   *
    * @param email 이메일
    */
   sendPasswordResetEmail: async (email: string) => {
@@ -113,14 +113,14 @@ export const authAPI = {
       } else if (error.code === 'auth/invalid-email') {
         message = '올바른 이메일 형식이 아닙니다.';
       }
-      
+
       throw new Error(message);
     }
   },
 
   /**
    * 비밀번호 변경
-   * 
+   *
    * @param newPassword 새 비밀번호
    */
   updatePassword: async (newPassword: string) => {
@@ -138,7 +138,7 @@ export const authAPI = {
       } else if (error.code === 'auth/weak-password') {
         message = '비밀번호는 최소 6자 이상이어야 합니다.';
       }
-      
+
       throw new Error(message);
     }
   },
@@ -165,7 +165,7 @@ export const authAPI = {
 
   /**
    * 이메일 인증 여부 확인
-   * 
+   *
    * @returns 인증 여부
    */
   isEmailVerified: (): boolean => {
@@ -205,14 +205,14 @@ export const authAPI = {
       if (error.code === 'auth/requires-recent-login') {
         message = '보안을 위해 다시 로그인해주세요.';
       }
-      
+
       throw new Error(message);
     }
   },
 
   /**
    * ID Token 가져오기
-   * 
+   *
    * @param forceRefresh 강제 새로고침
    * @returns ID Token
    */
@@ -232,13 +232,11 @@ export const authAPI = {
 
   /**
    * 인증 상태 변경 리스너 등록
-   * 
+   *
    * @param callback 콜백 함수
    * @returns 구독 해제 함수
    */
-  onAuthStateChanged: (
-    callback: (user: any) => void
-  ): (() => void) => {
+  onAuthStateChanged: (callback: (user: any) => void): (() => void) => {
     return auth().onAuthStateChanged(callback);
   },
 };

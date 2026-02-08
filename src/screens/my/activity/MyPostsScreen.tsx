@@ -47,28 +47,31 @@ export const MyPostsScreen: React.FC = () => {
   };
 
   const handleEditPost = (id: string) => {
-    Alert.alert('모집글 수정', '수정 기능은 개발 예정입니다.');
+    // Feed 탭의 CreatePost 화면으로 이동하여 수정
+    (navigation as any).navigate('Feed', { screen: 'CreatePost', params: { editId: id } });
   };
 
   const handleDeletePost = (id: string) => {
-    Alert.alert(
-      '모집글 삭제',
-      '이 모집글을 삭제하시겠습니까?\n삭제된 글은 복구할 수 없습니다.',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: async () => {
-            // TODO: 실제 삭제 API 호출
+    Alert.alert('모집글 삭제', '이 모집글을 삭제하시겠습니까?\n삭제된 글은 복구할 수 없습니다.', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const { firestore: firebaseFirestore } =
+              await import('@/services/firebase/firebaseConfig');
+            await firebaseFirestore.collection('posts').doc(id).delete();
             Alert.alert('완료', '모집글이 삭제되었습니다.');
             if (user?.uid) {
               loadMyPosts(user.uid);
             }
-          },
+          } catch (error: any) {
+            Alert.alert('오류', error.message || '삭제에 실패했습니다.');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const posts = myPosts as any[];
@@ -114,7 +117,10 @@ export const MyPostsScreen: React.FC = () => {
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>
-              {posts.filter((p: any) => p.status === 'recruiting' || p.status === 'published').length}
+              {
+                posts.filter((p: any) => p.status === 'recruiting' || p.status === 'published')
+                  .length
+              }
             </Text>
             <Text style={styles.statLabel}>모집중</Text>
           </View>
@@ -147,9 +153,7 @@ export const MyPostsScreen: React.FC = () => {
                 return (
                   <View key={post.id} style={styles.postCard}>
                     {/* 이미지 */}
-                    {post.image && (
-                      <Image source={{ uri: post.image }} style={styles.postImage} />
-                    )}
+                    {post.image && <Image source={{ uri: post.image }} style={styles.postImage} />}
 
                     {/* 상태 배지 */}
                     <View style={[styles.statusBadge, { backgroundColor: statusBadge.bgColor }]}>
@@ -162,15 +166,15 @@ export const MyPostsScreen: React.FC = () => {
                     <View style={styles.postContent}>
                       <Text style={styles.postTitle}>{post.title || post.content}</Text>
                       {post.golfCourse && (
-                        <Text style={styles.postInfo}>⛳ {post.golfCourse} · {post.location}</Text>
+                        <Text style={styles.postInfo}>
+                          ⛳ {post.golfCourse} · {post.location}
+                        </Text>
                       )}
                       {post.date && <Text style={styles.postInfo}>📅 {post.date}</Text>}
 
                       {post.price > 0 && (
                         <View style={styles.postFooter}>
-                          <Text style={styles.postPrice}>
-                            {post.price.toLocaleString()}원/인
-                          </Text>
+                          <Text style={styles.postPrice}>{post.price.toLocaleString()}원/인</Text>
                           {post.maxPlayers > 0 && (
                             <Text style={styles.postPlayers}>
                               {post.currentPlayers}/{post.maxPlayers}명
@@ -180,7 +184,9 @@ export const MyPostsScreen: React.FC = () => {
                       )}
 
                       {post.createdAt && (
-                        <Text style={styles.postDate}>작성일: {new Date(post.createdAt).toLocaleDateString('ko-KR')}</Text>
+                        <Text style={styles.postDate}>
+                          작성일: {new Date(post.createdAt).toLocaleDateString('ko-KR')}
+                        </Text>
                       )}
 
                       {/* 버튼 */}

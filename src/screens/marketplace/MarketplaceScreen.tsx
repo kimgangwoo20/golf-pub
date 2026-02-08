@@ -32,11 +32,11 @@ export const MarketplaceScreen: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       loadItems();
-    }, [])
+    }, []),
   );
 
   // 카테고리 필터링
-  const filteredProducts = items.filter(product => {
+  const filteredProducts = items.filter((product) => {
     if (selectedCategory !== 'all' && product.category !== selectedCategory) {
       return false;
     }
@@ -57,7 +57,7 @@ export const MarketplaceScreen: React.FC = () => {
   };
 
   const handleLike = (productId: string) => {
-    setLikedProducts(prev => {
+    setLikedProducts((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(productId)) {
         newSet.delete(productId);
@@ -115,19 +115,29 @@ export const MarketplaceScreen: React.FC = () => {
             style={[styles.categoryChip, selectedCategory === 'all' && styles.categoryChipActive]}
             onPress={() => setSelectedCategory('all')}
           >
-            <Text style={[styles.categoryText, selectedCategory === 'all' && styles.categoryTextActive]}>
+            <Text
+              style={[styles.categoryText, selectedCategory === 'all' && styles.categoryTextActive]}
+            >
               전체
             </Text>
           </TouchableOpacity>
 
-          {CATEGORIES.map(category => (
+          {CATEGORIES.map((category) => (
             <TouchableOpacity
               key={category.id}
-              style={[styles.categoryChip, selectedCategory === category.id && styles.categoryChipActive]}
+              style={[
+                styles.categoryChip,
+                selectedCategory === category.id && styles.categoryChipActive,
+              ]}
               onPress={() => setSelectedCategory(category.id)}
             >
               <Text style={styles.categoryIcon}>{category.icon}</Text>
-              <Text style={[styles.categoryText, selectedCategory === category.id && styles.categoryTextActive]}>
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategory === category.id && styles.categoryTextActive,
+                ]}
+              >
                 {category.name}
               </Text>
             </TouchableOpacity>
@@ -139,7 +149,11 @@ export const MarketplaceScreen: React.FC = () => {
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary}
+            />
           }
         >
           {loading && items.length === 0 ? (
@@ -186,7 +200,9 @@ export const MarketplaceScreen: React.FC = () => {
                       style={styles.likeButton}
                       onPress={() => handleLike(product.id)}
                     >
-                      <Text style={styles.likeIcon}>{likedProducts.has(product.id) ? '❤️' : '🤍'}</Text>
+                      <Text style={styles.likeIcon}>
+                        {likedProducts.has(product.id) ? '❤️' : '🤍'}
+                      </Text>
                     </TouchableOpacity>
                   </View>
 
@@ -195,12 +211,12 @@ export const MarketplaceScreen: React.FC = () => {
                     <Text style={styles.productTitle} numberOfLines={2}>
                       {product.title}
                     </Text>
-                    <Text style={styles.productPrice}>
-                      {product.price.toLocaleString()}원
-                    </Text>
+                    <Text style={styles.productPrice}>{product.price.toLocaleString()}원</Text>
                     <Text style={styles.productLocation}>{product.location}</Text>
                     <View style={styles.productMeta}>
-                      <Text style={styles.metaText}>관심 {product.likeCount + (likedProducts.has(product.id) ? 1 : 0)}</Text>
+                      <Text style={styles.metaText}>
+                        관심 {product.likeCount + (likedProducts.has(product.id) ? 1 : 0)}
+                      </Text>
                       <Text style={styles.metaDot}>•</Text>
                       <Text style={styles.metaText}>조회 {product.viewCount}</Text>
                     </View>

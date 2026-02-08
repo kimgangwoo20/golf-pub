@@ -107,4 +107,16 @@ export interface GolfCourse {
 
 // Re-exports from sub-type files
 export type { Weather, WeatherForecast } from './weather-types';
-export type { Booking, BookingFilter, BookingPayment, BookingStatus, SkillLevel, BookingHost, BookingPrice, BookingParticipants, BookingConditions, BookingWeather, BookingMember } from './booking-types';
+export type {
+  Booking,
+  BookingFilter,
+  BookingPayment,
+  BookingStatus,
+  SkillLevel,
+  BookingHost,
+  BookingPrice,
+  BookingParticipants,
+  BookingConditions,
+  BookingWeather,
+  BookingMember,
+} from './booking-types';

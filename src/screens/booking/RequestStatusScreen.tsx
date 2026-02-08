@@ -85,10 +85,7 @@ export const RequestStatusScreen: React.FC = () => {
         <View style={styles.loadingContainer}>
           <Text style={styles.emptyIcon}>📋</Text>
           <Text style={styles.emptyText}>신청 정보를 찾을 수 없습니다</Text>
-          <TouchableOpacity
-            style={styles.goBackButton}
-            onPress={() => navigation.goBack()}
-          >
+          <TouchableOpacity style={styles.goBackButton} onPress={() => navigation.goBack()}>
             <Text style={styles.goBackButtonText}>돌아가기</Text>
           </TouchableOpacity>
         </View>
@@ -139,9 +136,7 @@ export const RequestStatusScreen: React.FC = () => {
         <View style={styles.actions}>
           <TouchableOpacity
             style={styles.detailButton}
-            onPress={() =>
-              navigation.navigate('BookingDetail', { bookingId: request.bookingId })
-            }
+            onPress={() => navigation.navigate('BookingDetail', { bookingId: request.bookingId })}
           >
             <Text style={styles.detailButtonText}>부킹 상세보기</Text>
           </TouchableOpacity>

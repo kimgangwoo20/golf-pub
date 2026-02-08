@@ -14,8 +14,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 
-const { width } = Dimensions.get('window');
+const { width: _width } = Dimensions.get('window');
 const MAX_IMAGES = 10;
 const MAX_TEXT_LENGTH = 500;
 
@@ -28,23 +29,31 @@ export const CreatePostScreen: React.FC = () => {
   const [visibility, setVisibility] = useState<'public' | 'friends'>('public');
   const [hashtags, setHashtags] = useState<string[]>([]);
 
-  const handleAddImage = () => {
+  const handleAddImage = async () => {
     if (images.length >= MAX_IMAGES) {
       Alert.alert('알림', `최대 ${MAX_IMAGES}장까지 첨부 가능합니다.`);
       return;
     }
 
-    // Mock: 이미지 선택
-    Alert.alert('이미지 선택', '이미지 업로드 기능은 개발 예정입니다.', [
-      {
-        text: 'Mock 이미지 추가',
-        onPress: () => {
-          const newImage = `https://picsum.photos/800/600?random=${Date.now()}`;
-          setImages([...images, newImage]);
-        },
-      },
-      { text: '취소', style: 'cancel' },
-    ]);
+    // 앨범 권한 요청
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('권한 필요', '앨범 접근을 위해 권한이 필요합니다.');
+      return;
+    }
+
+    // 이미지 선택
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      selectionLimit: MAX_IMAGES - images.length,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      const newImages = result.assets.map((asset) => asset.uri);
+      setImages([...images, ...newImages].slice(0, MAX_IMAGES));
+    }
   };
 
   const handleRemoveImage = (index: number) => {
@@ -79,7 +88,7 @@ export const CreatePostScreen: React.FC = () => {
           },
         },
       ],
-      'plain-text'
+      'plain-text',
     );
   };
 
@@ -103,38 +112,30 @@ export const CreatePostScreen: React.FC = () => {
       return;
     }
 
-    Alert.alert(
-      '게시물 등록',
-      '게시물을 등록하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '등록',
-          onPress: () => {
-            Alert.alert('완료', '게시물이 등록되었습니다.', [
-              { text: '확인', onPress: () => navigation.goBack() },
-            ]);
-          },
+    Alert.alert('게시물 등록', '게시물을 등록하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '등록',
+        onPress: () => {
+          Alert.alert('완료', '게시물이 등록되었습니다.', [
+            { text: '확인', onPress: () => navigation.goBack() },
+          ]);
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleCancel = () => {
     if (content.trim().length > 0 || images.length > 0) {
-      Alert.alert(
-        '작성 취소',
-        '작성 중인 내용이 사라집니다.\n임시저장하시겠습니까?',
-        [
-          { text: '취소', style: 'cancel' },
-          { text: '임시저장', onPress: handleSaveDraft },
-          {
-            text: '나가기',
-            style: 'destructive',
-            onPress: () => navigation.goBack(),
-          },
-        ]
-      );
+      Alert.alert('작성 취소', '작성 중인 내용이 사라집니다.\n임시저장하시겠습니까?', [
+        { text: '취소', style: 'cancel' },
+        { text: '임시저장', onPress: handleSaveDraft },
+        {
+          text: '나가기',
+          style: 'destructive',
+          onPress: () => navigation.goBack(),
+        },
+      ]);
     } else {
       navigation.goBack();
     }
@@ -284,7 +285,10 @@ export const CreatePostScreen: React.FC = () => {
         {/* 게시 버튼 */}
         <View style={styles.footer}>
           <TouchableOpacity
-            style={[styles.publishButton, content.trim().length === 0 && styles.publishButtonDisabled]}
+            style={[
+              styles.publishButton,
+              content.trim().length === 0 && styles.publishButtonDisabled,
+            ]}
             onPress={handlePublish}
             disabled={content.trim().length === 0}
           >

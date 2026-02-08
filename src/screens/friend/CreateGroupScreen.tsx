@@ -8,7 +8,7 @@ export const CreateGroupScreen: React.FC = () => {
       <Text style={styles.subtitle}>구현 예정</Text>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {

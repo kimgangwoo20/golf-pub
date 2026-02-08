@@ -41,7 +41,7 @@ export const useHomeScreen = () => {
 
   const handleFilterChange = (newFilter: string) => setFilter(newFilter);
   const handleSearch = (text: string) => setSearchQuery(text);
-  
+
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadData();
@@ -50,7 +50,7 @@ export const useHomeScreen = () => {
   }, []);
 
   const handleBookingPress = (bookingId: string) => {
-    navigation.navigate('BookingDetail', { bookingId });
+    (navigation as any).navigate('Bookings', { screen: 'BookingDetail', params: { bookingId } });
   };
 
   const handleJoinBooking = async (bookingId: string) => {
@@ -59,25 +59,21 @@ export const useHomeScreen = () => {
       return;
     }
 
-    Alert.alert(
-      '참가 신청',
-      '이 모임에 참가하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '참가하기',
-          onPress: async () => {
-            try {
-              await joinBooking(bookingId, user.uid);
-              Alert.alert('성공', '참가 신청이 완료되었습니다!');
-              await loadData();
-            } catch (error) {
-              Alert.alert('오류', '참가 신청에 실패했습니다.');
-            }
-          },
+    Alert.alert('참가 신청', '이 모임에 참가하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '참가하기',
+        onPress: async () => {
+          try {
+            await joinBooking(bookingId, user.uid);
+            Alert.alert('성공', '참가 신청이 완료되었습니다!');
+            await loadData();
+          } catch (error) {
+            Alert.alert('오류', '참가 신청에 실패했습니다.');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleAttendanceCheck = async () => {
@@ -97,7 +93,7 @@ export const useHomeScreen = () => {
         setAttendanceChecked(true);
         Alert.alert(
           '출석 완료! 🎉',
-          `+${result.points}P 적립!\n${result.consecutiveDays}일 연속 출석 중`
+          `+${result.points}P 적립!\n${result.consecutiveDays}일 연속 출석 중`,
         );
       } else {
         Alert.alert('알림', result.message);

@@ -47,18 +47,20 @@ export const PointHistoryScreen: React.FC = () => {
     setRefreshing(false);
   }, [loadPoints]);
 
-  const filteredPoints = filter === 'all'
-    ? points
-    : points.filter(p => p.type === filter);
+  const filteredPoints = filter === 'all' ? points : points.filter((p) => p.type === filter);
 
   const renderItem = ({ item }: { item: Point }) => {
     const isEarn = item.type === 'earn';
     return (
       <View style={styles.pointItem}>
         <View style={styles.pointLeft}>
-          <View style={[styles.typeIndicator, isEarn ? styles.earnIndicator : styles.useIndicator]} />
+          <View
+            style={[styles.typeIndicator, isEarn ? styles.earnIndicator : styles.useIndicator]}
+          />
           <View>
-            <Text style={styles.pointTitle}>{item.description || (isEarn ? '포인트 적립' : '포인트 사용')}</Text>
+            <Text style={styles.pointTitle}>
+              {item.description || (isEarn ? '포인트 적립' : '포인트 사용')}
+            </Text>
             <Text style={styles.pointDate}>
               {item.date ? new Date(item.date).toLocaleDateString('ko-KR') : ''}
             </Text>
@@ -66,7 +68,8 @@ export const PointHistoryScreen: React.FC = () => {
         </View>
         <View style={styles.pointRight}>
           <Text style={[styles.pointAmount, isEarn ? styles.earnAmount : styles.useAmount]}>
-            {isEarn ? '+' : ''}{item.amount.toLocaleString()}P
+            {isEarn ? '+' : ''}
+            {item.amount.toLocaleString()}P
           </Text>
         </View>
       </View>
@@ -110,7 +113,7 @@ export const PointHistoryScreen: React.FC = () => {
         </View>
 
         <View style={styles.filterRow}>
-          {(['all', 'earn', 'spend'] as const).map(f => (
+          {(['all', 'earn', 'spend'] as const).map((f) => (
             <TouchableOpacity
               key={f}
               style={[styles.filterButton, filter === f && styles.filterButtonActive]}
@@ -125,7 +128,7 @@ export const PointHistoryScreen: React.FC = () => {
 
         <FlatList
           data={filteredPoints}
-          keyExtractor={item => String(item.id)}
+          keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -154,32 +157,52 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 12, fontSize: 14, color: '#666' },
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingVertical: 16, backgroundColor: '#fff',
-    borderBottomWidth: 1, borderBottomColor: '#E5E5E5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
   },
   backButton: { padding: 4 },
   backIcon: { fontSize: 32, color: '#1A1A1A', fontWeight: '300' },
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A1A' },
   totalCard: {
-    backgroundColor: '#10b981', margin: 16, padding: 24, borderRadius: 16, alignItems: 'center',
+    backgroundColor: '#10b981',
+    margin: 16,
+    padding: 24,
+    borderRadius: 16,
+    alignItems: 'center',
   },
   totalLabel: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginBottom: 8 },
   totalAmount: { fontSize: 32, fontWeight: '800', color: '#fff' },
   filterRow: {
-    flexDirection: 'row', paddingHorizontal: 16, marginBottom: 8, gap: 8,
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    gap: 8,
   },
   filterButton: {
-    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff',
-    borderWidth: 1, borderColor: '#E5E5E5',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
   },
   filterButtonActive: { backgroundColor: '#10b981', borderColor: '#10b981' },
   filterText: { fontSize: 14, fontWeight: '600', color: '#666' },
   filterTextActive: { color: '#fff' },
   listContent: { paddingHorizontal: 16, paddingBottom: 40 },
   pointItem: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    backgroundColor: '#fff', padding: 16, borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
   },
   pointLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   typeIndicator: { width: 4, height: 40, borderRadius: 2, marginRight: 12 },

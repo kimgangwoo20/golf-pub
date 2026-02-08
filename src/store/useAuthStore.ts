@@ -15,11 +15,15 @@ interface AuthState {
   login: (kakaoId: string, profile: any) => Promise<void>;
   signInWithCustomToken: (token: string) => Promise<void>;
   signInWithEmailAndPassword: (email: string, password: string) => Promise<void>;
-  createUserWithEmailAndPassword: (email: string, password: string, displayName: string) => Promise<void>;
+  createUserWithEmailAndPassword: (
+    email: string,
+    password: string,
+    displayName: string,
+  ) => Promise<void>;
   signOut: () => Promise<void>;
   loadUserProfile: (uid: string) => Promise<void>;
   updateUserProfile: (uid: string, data: Partial<UserProfile>) => Promise<void>;
-  initAuth: () => (() => void);
+  initAuth: () => () => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -53,10 +57,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       };
 
       // Firestore에 프로필 저장 (merge로 기존 데이터 보존)
-      await firestore().collection('users').doc(firebaseUser.uid).set(
-        { ...userProfile, kakaoId },
-        { merge: true }
-      );
+      await firestore()
+        .collection('users')
+        .doc(firebaseUser.uid)
+        .set({ ...userProfile, kakaoId }, { merge: true });
 
       set({
         user: firebaseUser,
@@ -133,7 +137,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      const userCredential = await authService.createUserWithEmailAndPassword(email, password, displayName);
+      const userCredential = await authService.createUserWithEmailAndPassword(
+        email,
+        password,
+        displayName,
+      );
       const profile = await authService.getUserProfile(userCredential.user.uid);
 
       set({

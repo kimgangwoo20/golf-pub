@@ -49,9 +49,9 @@ export const MyProductsScreen: React.FC = () => {
   }, [loadProducts]);
 
   const sellingProducts = products.filter(
-    p => p.status === 'available' || p.status === 'reserved'
+    (p) => p.status === 'available' || p.status === 'reserved',
   );
-  const soldProducts = products.filter(p => p.status === 'sold');
+  const soldProducts = products.filter((p) => p.status === 'sold');
 
   const displayProducts = activeTab === 'selling' ? sellingProducts : soldProducts;
 
@@ -64,78 +64,70 @@ export const MyProductsScreen: React.FC = () => {
   };
 
   const handleDelete = (productId: string) => {
-    Alert.alert(
-      '상품 삭제',
-      '정말 삭제하시겠습니까?\n삭제된 상품은 복구할 수 없습니다.',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await marketplaceAPI.deleteProduct(productId);
-              setProducts(prev => prev.filter(p => p.id !== productId));
-              Alert.alert('완료', '상품이 삭제되었습니다.');
-            } catch (error: any) {
-              Alert.alert('오류', error.message || '상품 삭제에 실패했습니다.');
-            }
-          },
+    Alert.alert('상품 삭제', '정말 삭제하시겠습니까?\n삭제된 상품은 복구할 수 없습니다.', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await marketplaceAPI.deleteProduct(productId);
+            setProducts((prev) => prev.filter((p) => p.id !== productId));
+            Alert.alert('완료', '상품이 삭제되었습니다.');
+          } catch (error: any) {
+            Alert.alert('오류', error.message || '상품 삭제에 실패했습니다.');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleChangeStatus = (productId: string) => {
-    Alert.alert(
-      '상태 변경',
-      '상품 상태를 선택하세요',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '판매중',
-          onPress: async () => {
-            try {
-              await marketplaceAPI.updateProductStatus(productId, 'available' as ProductStatus);
-              setProducts(prev => prev.map(p =>
-                p.id === productId ? { ...p, status: 'available' as const } : p
-              ));
-              Alert.alert('완료', '판매중으로 변경되었습니다.');
-            } catch (error: any) {
-              Alert.alert('오류', error.message || '상태 변경에 실패했습니다.');
-            }
-          },
+    Alert.alert('상태 변경', '상품 상태를 선택하세요', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '판매중',
+        onPress: async () => {
+          try {
+            await marketplaceAPI.updateProductStatus(productId, 'available' as ProductStatus);
+            setProducts((prev) =>
+              prev.map((p) => (p.id === productId ? { ...p, status: 'available' as const } : p)),
+            );
+            Alert.alert('완료', '판매중으로 변경되었습니다.');
+          } catch (error: any) {
+            Alert.alert('오류', error.message || '상태 변경에 실패했습니다.');
+          }
         },
-        {
-          text: '예약중',
-          onPress: async () => {
-            try {
-              await marketplaceAPI.updateProductStatus(productId, 'reserved' as ProductStatus);
-              setProducts(prev => prev.map(p =>
-                p.id === productId ? { ...p, status: 'reserved' as const } : p
-              ));
-              Alert.alert('완료', '예약중으로 변경되었습니다.');
-            } catch (error: any) {
-              Alert.alert('오류', error.message || '상태 변경에 실패했습니다.');
-            }
-          },
+      },
+      {
+        text: '예약중',
+        onPress: async () => {
+          try {
+            await marketplaceAPI.updateProductStatus(productId, 'reserved' as ProductStatus);
+            setProducts((prev) =>
+              prev.map((p) => (p.id === productId ? { ...p, status: 'reserved' as const } : p)),
+            );
+            Alert.alert('완료', '예약중으로 변경되었습니다.');
+          } catch (error: any) {
+            Alert.alert('오류', error.message || '상태 변경에 실패했습니다.');
+          }
         },
-        {
-          text: '판매완료',
-          onPress: async () => {
-            try {
-              await marketplaceAPI.updateProductStatus(productId, 'sold' as ProductStatus);
-              setProducts(prev => prev.map(p =>
-                p.id === productId ? { ...p, status: 'sold' as const } : p
-              ));
-              Alert.alert('완료', '판매완료로 변경되었습니다.');
-            } catch (error: any) {
-              Alert.alert('오류', error.message || '상태 변경에 실패했습니다.');
-            }
-          },
+      },
+      {
+        text: '판매완료',
+        onPress: async () => {
+          try {
+            await marketplaceAPI.updateProductStatus(productId, 'sold' as ProductStatus);
+            setProducts((prev) =>
+              prev.map((p) => (p.id === productId ? { ...p, status: 'sold' as const } : p)),
+            );
+            Alert.alert('완료', '판매완료로 변경되었습니다.');
+          } catch (error: any) {
+            Alert.alert('오류', error.message || '상태 변경에 실패했습니다.');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const getStatusBadge = (status: string) => {
@@ -236,7 +228,12 @@ export const MyProductsScreen: React.FC = () => {
                       {product.images[0] ? (
                         <Image source={{ uri: product.images[0] }} style={styles.productImage} />
                       ) : (
-                        <View style={[styles.productImage, { justifyContent: 'center', alignItems: 'center' }]}>
+                        <View
+                          style={[
+                            styles.productImage,
+                            { justifyContent: 'center', alignItems: 'center' },
+                          ]}
+                        >
                           <Text style={{ fontSize: 24 }}>📷</Text>
                         </View>
                       )}
@@ -245,15 +242,15 @@ export const MyProductsScreen: React.FC = () => {
                         <Text style={styles.productTitle} numberOfLines={2}>
                           {product.title}
                         </Text>
-                        <Text style={styles.productPrice}>
-                          {product.price.toLocaleString()}원
-                        </Text>
+                        <Text style={styles.productPrice}>{product.price.toLocaleString()}원</Text>
                         <View style={styles.productMeta}>
                           <Text style={styles.metaText}>관심 {product.likeCount}</Text>
                           <Text style={styles.metaDot}>•</Text>
                           <Text style={styles.metaText}>조회 {product.viewCount}</Text>
                         </View>
-                        <View style={[styles.statusBadge, { backgroundColor: statusBadge.bgColor }]}>
+                        <View
+                          style={[styles.statusBadge, { backgroundColor: statusBadge.bgColor }]}
+                        >
                           <Text style={[styles.statusText, { color: statusBadge.color }]}>
                             {statusBadge.text}
                           </Text>
@@ -291,7 +288,9 @@ export const MyProductsScreen: React.FC = () => {
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>📦</Text>
                 <Text style={styles.emptyTitle}>
-                  {activeTab === 'selling' ? '판매중인 상품이 없습니다' : '거래완료 상품이 없습니다'}
+                  {activeTab === 'selling'
+                    ? '판매중인 상품이 없습니다'
+                    : '거래완료 상품이 없습니다'}
                 </Text>
               </View>
             )}

@@ -46,9 +46,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
               onPress={() => onSelectCategory?.(category.id)}
             >
               <Text style={styles.categoryIcon}>{category.icon}</Text>
-              <Text
-                style={[styles.categoryName, isSelected && styles.categoryNameSelected]}
-              >
+              <Text style={[styles.categoryName, isSelected && styles.categoryNameSelected]}>
                 {category.name}
               </Text>
             </TouchableOpacity>

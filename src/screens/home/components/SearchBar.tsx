@@ -16,5 +16,12 @@ export const SearchBar: React.FC<Props> = ({ value, onChangeText }) => (
 );
 
 const styles = StyleSheet.create({
-  input: { margin: 16, marginTop: 0, padding: 14, backgroundColor: '#f1f5f9', borderRadius: 12, fontSize: 15 },
+  input: {
+    margin: 16,
+    marginTop: 0,
+    padding: 14,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 12,
+    fontSize: 15,
+  },
 });

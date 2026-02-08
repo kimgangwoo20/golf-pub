@@ -101,9 +101,7 @@ export const WeatherWidget: React.FC = () => {
         {/* 골프 조건 점수 */}
         <View style={[styles.scoreContainer, { backgroundColor: `${golfScoreColor}20` }]}>
           <View style={styles.scoreHeader}>
-            <Text style={[styles.scoreTitle, { color: golfScoreColor }]}>
-              골프 지수
-            </Text>
+            <Text style={[styles.scoreTitle, { color: golfScoreColor }]}>골프 지수</Text>
             <View style={[styles.scoreBadge, { backgroundColor: golfScoreColor }]}>
               <Text style={styles.scoreBadgeText}>{weather.golfScore.score}점</Text>
             </View>
@@ -115,9 +113,7 @@ export const WeatherWidget: React.FC = () => {
         {weather.precipitation && parseFloat(weather.precipitation) > 0 && (
           <View style={styles.precipitationWarning}>
             <Text style={styles.warningIcon}>☔</Text>
-            <Text style={styles.warningText}>
-              강수량: {weather.precipitation}
-            </Text>
+            <Text style={styles.warningText}>강수량: {weather.precipitation}</Text>
           </View>
         )}
       </LinearGradient>

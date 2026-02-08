@@ -1,6 +1,6 @@
 // MarketplaceCard.tsx - 마켓플레이스 카드 (카테고리별)
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 interface MarketplaceCardProps {
   title: string;

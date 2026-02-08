@@ -26,7 +26,7 @@ import { useNotificationStore } from '@/store/useNotificationStore';
 import { useFeedStore } from '@/store/useFeedStore';
 import { colors } from '@/styles/theme';
 
-const { width } = Dimensions.get('window');
+const { width: _width } = Dimensions.get('window');
 
 // 댓글 타입 (화면 내부 로컬 사용)
 interface LocalComment {
@@ -68,8 +68,10 @@ export const FeedScreen: React.FC = () => {
   const [commentText, setCommentText] = useState('');
   const [commentModalVisible, setCommentModalVisible] = useState(false);
   const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null);
-  const [editingComment, setEditingComment] = useState<{ id: string; parentId?: string } | null>(null);
-  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [editingComment, setEditingComment] = useState<{ id: string; parentId?: string } | null>(
+    null,
+  );
+  const [unreadMessages, _setUnreadMessages] = useState(0);
 
   // Instagram/YouTube 스타일 키보드 처리
   const keyboardHeight = useRef(new Animated.Value(0)).current;
@@ -91,7 +93,7 @@ export const FeedScreen: React.FC = () => {
         unsubscribeFromNotifications();
         unsubscribeFromUnreadCount();
       };
-    }, [user?.uid])
+    }, [user?.uid]),
   );
 
   useEffect(() => {
@@ -103,7 +105,7 @@ export const FeedScreen: React.FC = () => {
           duration: Platform.OS === 'ios' ? 250 : 100,
           useNativeDriver: false,
         }).start();
-      }
+      },
     );
 
     const keyboardWillHide = Keyboard.addListener(
@@ -114,7 +116,7 @@ export const FeedScreen: React.FC = () => {
           duration: Platform.OS === 'ios' ? 250 : 100,
           useNativeDriver: false,
         }).start();
-      }
+      },
     );
 
     return () => {
@@ -132,7 +134,7 @@ export const FeedScreen: React.FC = () => {
 
   const handleLike = (feedId: string) => {
     if (likedFeeds.includes(feedId)) {
-      setLikedFeeds(likedFeeds.filter(id => id !== feedId));
+      setLikedFeeds(likedFeeds.filter((id) => id !== feedId));
     } else {
       setLikedFeeds([...likedFeeds, feedId]);
     }
@@ -164,26 +166,28 @@ export const FeedScreen: React.FC = () => {
 
     if (replyTarget) {
       // 답글인 경우: 해당 댓글의 replies 배열에 추가
-      setComments(prev => prev.map(comment => {
-        if (comment.id === replyTarget.commentId) {
-          return {
-            ...comment,
-            replies: [...(comment.replies || []), { ...newComment, parentId: comment.id }],
-          };
-        }
-        return comment;
-      }));
+      setComments((prev) =>
+        prev.map((comment) => {
+          if (comment.id === replyTarget.commentId) {
+            return {
+              ...comment,
+              replies: [...(comment.replies || []), { ...newComment, parentId: comment.id }],
+            };
+          }
+          return comment;
+        }),
+      );
       setReplyTarget(null);
     } else {
       // 일반 댓글
-      setComments(prev => [...prev, newComment]);
+      setComments((prev) => [...prev, newComment]);
     }
     setCommentText('');
   };
 
   // 댓글 좋아요
   const handleCommentLike = (commentId: string) => {
-    setLikedComments(prev => {
+    setLikedComments((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(commentId)) {
         newSet.delete(commentId);
@@ -227,34 +231,32 @@ export const FeedScreen: React.FC = () => {
 
   // 댓글 삭제
   const handleDeleteComment = (commentId: string, parentId?: string) => {
-    Alert.alert(
-      '댓글 삭제',
-      '이 댓글을 삭제하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: () => {
-            if (parentId) {
-              // 답글 삭제
-              setComments(prev => prev.map(comment => {
+    Alert.alert('댓글 삭제', '이 댓글을 삭제하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: () => {
+          if (parentId) {
+            // 답글 삭제
+            setComments((prev) =>
+              prev.map((comment) => {
                 if (comment.id === parentId) {
                   return {
                     ...comment,
-                    replies: (comment.replies || []).filter(reply => reply.id !== commentId),
+                    replies: (comment.replies || []).filter((reply) => reply.id !== commentId),
                   };
                 }
                 return comment;
-              }));
-            } else {
-              // 댓글 삭제
-              setComments(prev => prev.filter(comment => comment.id !== commentId));
-            }
-          },
+              }),
+            );
+          } else {
+            // 댓글 삭제
+            setComments((prev) => prev.filter((comment) => comment.id !== commentId));
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   // 댓글 수정 제출
@@ -263,26 +265,26 @@ export const FeedScreen: React.FC = () => {
 
     if (editingComment.parentId) {
       // 답글 수정
-      setComments(prev => prev.map(comment => {
-        if (comment.id === editingComment.parentId) {
-          return {
-            ...comment,
-            replies: (comment.replies || []).map(reply =>
-              reply.id === editingComment.id
-                ? { ...reply, content: commentText.trim() }
-                : reply
-            ),
-          };
-        }
-        return comment;
-      }));
+      setComments((prev) =>
+        prev.map((comment) => {
+          if (comment.id === editingComment.parentId) {
+            return {
+              ...comment,
+              replies: (comment.replies || []).map((reply) =>
+                reply.id === editingComment.id ? { ...reply, content: commentText.trim() } : reply,
+              ),
+            };
+          }
+          return comment;
+        }),
+      );
     } else {
       // 댓글 수정
-      setComments(prev => prev.map(comment =>
-        comment.id === editingComment.id
-          ? { ...comment, content: commentText.trim() }
-          : comment
-      ));
+      setComments((prev) =>
+        prev.map((comment) =>
+          comment.id === editingComment.id ? { ...comment, content: commentText.trim() } : comment,
+        ),
+      );
     }
 
     setEditingComment(null);
@@ -290,11 +292,11 @@ export const FeedScreen: React.FC = () => {
   };
 
   const getCommentsForFeed = (feedId: string) => {
-    return comments.filter(c => c.feedId === feedId);
+    return comments.filter((c) => c.feedId === feedId);
   };
 
-  const handleStoryPress = (storyId: string) => {
-    Alert.alert('스토리', '스토리 상세 보기는 개발 예정입니다.');
+  const handleStoryPress = (_storyId: string) => {
+    Alert.alert('스토리', '스토리 기능은 향후 업데이트에서 제공됩니다.');
   };
 
   const handleAddFriend = (userId: string, userName: string) => {
@@ -315,22 +317,18 @@ export const FeedScreen: React.FC = () => {
             text: '구독하기',
             onPress: () => (navigation as any).navigate('Home', { screen: 'Membership' }),
           },
-        ]
+        ],
       );
       return;
     }
 
-    Alert.alert(
-      '친구 추가',
-      `${userName}님에게 친구 요청을 보내시겠습니까?`,
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '요청 보내기',
-          onPress: () => Alert.alert('완료', `${userName}님에게 친구 요청을 보냈습니다.`),
-        },
-      ]
-    );
+    Alert.alert('친구 추가', `${userName}님에게 친구 요청을 보내시겠습니까?`, [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '요청 보내기',
+        onPress: () => Alert.alert('완료', `${userName}님에게 친구 요청을 보냈습니다.`),
+      },
+    ]);
   };
 
   const handleCreatePost = () => {
@@ -392,16 +390,10 @@ export const FeedScreen: React.FC = () => {
             {tabs.map((tab) => (
               <TouchableOpacity
                 key={tab.id}
-                style={[
-                  styles.tabItem,
-                  selectedTab === tab.id && styles.tabItemActive
-                ]}
+                style={[styles.tabItem, selectedTab === tab.id && styles.tabItemActive]}
                 onPress={() => setSelectedTab(tab.id)}
               >
-                <Text style={[
-                  styles.tabLabel,
-                  selectedTab === tab.id && styles.tabLabelActive
-                ]}>
+                <Text style={[styles.tabLabel, selectedTab === tab.id && styles.tabLabelActive]}>
                   {tab.label}
                 </Text>
               </TouchableOpacity>
@@ -426,10 +418,7 @@ export const FeedScreen: React.FC = () => {
                     onPress={() => handleStoryPress(story.id)}
                   >
                     <View style={styles.storyImageWrapper}>
-                      <Image
-                        source={{ uri: story.userImage }}
-                        style={styles.storyImage}
-                      />
+                      <Image source={{ uri: story.userImage }} style={styles.storyImage} />
                       <View style={styles.storyRing} />
                     </View>
                     <Text style={styles.storyName} numberOfLines={1}>
@@ -473,10 +462,7 @@ export const FeedScreen: React.FC = () => {
               <View key={feed.id} style={styles.feedCard}>
                 {/* 피드 헤더 */}
                 <View style={styles.feedHeader}>
-                  <Image
-                    source={{ uri: feed.userImage }}
-                    style={styles.feedAvatar}
-                  />
+                  <Image source={{ uri: feed.userImage }} style={styles.feedAvatar} />
                   <View style={styles.feedUserInfo}>
                     <Text style={styles.feedUserName}>{feed.userName}</Text>
                     <Text style={styles.feedTime}>{feed.time}</Text>
@@ -487,12 +473,7 @@ export const FeedScreen: React.FC = () => {
                 <Text style={styles.feedContent}>{feed.content}</Text>
 
                 {/* 피드 이미지 */}
-                {feed.image && (
-                  <Image
-                    source={{ uri: feed.image }}
-                    style={styles.feedImage}
-                  />
-                )}
+                {feed.image && <Image source={{ uri: feed.image }} style={styles.feedImage} />}
 
                 {/* 위치 */}
                 {feed.location && (
@@ -508,21 +489,22 @@ export const FeedScreen: React.FC = () => {
                 {feed.tags && feed.tags.length > 0 && (
                   <View style={styles.feedTags}>
                     {feed.tags.map((tag, index) => (
-                      <Text key={index} style={styles.tagText}>{tag} </Text>
+                      <Text key={index} style={styles.tagText}>
+                        {tag}{' '}
+                      </Text>
                     ))}
                   </View>
                 )}
 
                 {/* 액션 버튼 */}
                 <View style={styles.feedActions}>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => handleLike(feed.id)}
-                  >
-                    <Text style={[
-                      styles.actionIcon,
-                      likedFeeds.includes(feed.id) && styles.actionIconActive
-                    ]}>
+                  <TouchableOpacity style={styles.actionButton} onPress={() => handleLike(feed.id)}>
+                    <Text
+                      style={[
+                        styles.actionIcon,
+                        likedFeeds.includes(feed.id) && styles.actionIconActive,
+                      ]}
+                    >
                       {likedFeeds.includes(feed.id) ? '❤️' : '🤍'}
                     </Text>
                     <Text style={styles.actionLabel}>
@@ -555,10 +537,7 @@ export const FeedScreen: React.FC = () => {
         </ScrollView>
 
         {/* 글쓰기 플로팅 버튼 */}
-        <TouchableOpacity
-          style={styles.fabButton}
-          onPress={handleCreatePost}
-        >
+        <TouchableOpacity style={styles.fabButton} onPress={handleCreatePost}>
           <Text style={styles.fabIcon}>✏️</Text>
         </TouchableOpacity>
 
@@ -574,10 +553,12 @@ export const FeedScreen: React.FC = () => {
         >
           <View style={styles.modalWrapper}>
             {/* 배경 터치시 닫기 */}
-            <TouchableWithoutFeedback onPress={() => {
-              Keyboard.dismiss();
-              setCommentModalVisible(false);
-            }}>
+            <TouchableWithoutFeedback
+              onPress={() => {
+                Keyboard.dismiss();
+                setCommentModalVisible(false);
+              }}
+            >
               <View style={styles.modalOverlay} />
             </TouchableWithoutFeedback>
 
@@ -588,16 +569,18 @@ export const FeedScreen: React.FC = () => {
                 {
                   // 키보드가 올라오면 모달 전체를 위로 이동
                   transform: [{ translateY: Animated.multiply(keyboardHeight, -1) }],
-                }
+                },
               ]}
             >
               {/* 헤더 */}
               <View style={styles.sheetHeader}>
                 <Text style={styles.sheetTitle}>댓글</Text>
-                <TouchableOpacity onPress={() => {
-                  Keyboard.dismiss();
-                  setCommentModalVisible(false);
-                }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setCommentModalVisible(false);
+                  }}
+                >
                   <Text style={styles.closeButton}>✕</Text>
                 </TouchableOpacity>
               </View>
@@ -668,7 +651,10 @@ export const FeedScreen: React.FC = () => {
                             const isMyReply = reply.userName === currentUserName;
                             return (
                               <View key={reply.id} style={styles.replyItem}>
-                                <Image source={{ uri: reply.userImage }} style={styles.replyAvatar} />
+                                <Image
+                                  source={{ uri: reply.userImage }}
+                                  style={styles.replyAvatar}
+                                />
                                 <View style={styles.commentContent}>
                                   <View style={styles.commentHeader}>
                                     <Text style={styles.commentUserName}>{reply.userName}</Text>
@@ -726,9 +712,7 @@ export const FeedScreen: React.FC = () => {
               {/* 수정 모드 표시 */}
               {editingComment && (
                 <View style={styles.editIndicator}>
-                  <Text style={styles.editIndicatorText}>
-                    댓글 수정 중
-                  </Text>
+                  <Text style={styles.editIndicatorText}>댓글 수정 중</Text>
                   <TouchableOpacity onPress={cancelEdit}>
                     <Text style={styles.replyIndicatorCancel}>✕</Text>
                   </TouchableOpacity>
@@ -754,10 +738,10 @@ export const FeedScreen: React.FC = () => {
                   style={styles.commentInput}
                   placeholder={
                     editingComment
-                      ? "댓글 수정..."
+                      ? '댓글 수정...'
                       : replyTarget
                         ? `@${replyTarget.userName}에게 답글 달기...`
-                        : "댓글을 입력하세요..."
+                        : '댓글을 입력하세요...'
                   }
                   placeholderTextColor="#999"
                   value={commentText}
@@ -766,7 +750,10 @@ export const FeedScreen: React.FC = () => {
                   maxLength={500}
                 />
                 <TouchableOpacity
-                  style={[styles.commentSendButton, !commentText.trim() && styles.commentSendButtonDisabled]}
+                  style={[
+                    styles.commentSendButton,
+                    !commentText.trim() && styles.commentSendButtonDisabled,
+                  ]}
                   onPress={handleSubmitComment}
                   disabled={!commentText.trim()}
                 >

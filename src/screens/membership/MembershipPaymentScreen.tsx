@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useAuthStore } from '@/store/useAuthStore';
+import { tossPayments } from '@/services/payment/tossPayments';
+import { subscriptionService } from '@/services/payment/subscriptionService';
+import type { MembershipPlan, BillingCycle } from '@/services/payment/subscriptionService';
 
 export const MembershipPaymentScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -11,23 +15,53 @@ export const MembershipPaymentScreen: React.FC = () => {
   const { plan, billingCycle, price } = params || {};
 
   const handlePayment = () => {
-    // 결제 처리 로직 (Toss Payments 연동)
-    Alert.alert(
-      '결제 진행',
-      '결제를 진행하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '확인',
-          onPress: () => {
-            // TODO: 실제 결제 API 호출
-            setTimeout(() => {
-              navigation.navigate('MembershipSuccess' as any);
-            }, 1000);
-          },
+    Alert.alert('결제 진행', '결제를 진행하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '확인',
+        onPress: async () => {
+          try {
+            const user = useAuthStore.getState().user;
+            if (!user) {
+              Alert.alert('오류', '로그인이 필요합니다.');
+              return;
+            }
+
+            // Toss Payments 결제 요청
+            const orderId = tossPayments.generateOrderId('MEMBERSHIP');
+            const paymentResult = await tossPayments.requestPayment({
+              orderId,
+              orderName: `Golf Pub ${plan} 멤버십 (${billingCycle === 'MONTHLY' ? '월간' : '연간'})`,
+              amount: price,
+              method: paymentMethod as any,
+              customerName: user.displayName || '회원',
+            });
+
+            if (!paymentResult.success) {
+              Alert.alert('결제 실패', paymentResult.message);
+              return;
+            }
+
+            // 결제 성공 → 멤버십 구독 시작
+            const result = await subscriptionService.subscribe(
+              user.uid,
+              plan as MembershipPlan,
+              billingCycle as BillingCycle,
+              price,
+            );
+
+            if (!result.success) {
+              Alert.alert('오류', result.message);
+              return;
+            }
+
+            navigation.navigate('MembershipSuccess' as any);
+          } catch (error: any) {
+            Alert.alert('오류', error.message || '멤버십 결제에 실패했습니다.');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   return (
@@ -75,7 +109,7 @@ export const MembershipPaymentScreen: React.FC = () => {
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
@@ -83,13 +117,26 @@ const styles = StyleSheet.create({
   section: { padding: 20 },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 12, color: '#1a1a1a' },
   card: { backgroundColor: '#fff', borderRadius: 12, padding: 16 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
   totalRow: { borderBottomWidth: 0, marginTop: 8 },
   label: { fontSize: 14, color: '#666' },
   value: { fontSize: 14, fontWeight: '600', color: '#1a1a1a' },
   totalLabel: { fontSize: 16, fontWeight: 'bold', color: '#1a1a1a' },
   totalValue: { fontSize: 20, fontWeight: 'bold', color: '#10b981' },
-  methodCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 12, borderWidth: 2, borderColor: '#e0e0e0' },
+  methodCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: '#e0e0e0',
+  },
   methodCardActive: { borderColor: '#10b981', backgroundColor: '#F0F8FF' },
   methodText: { fontSize: 16, fontWeight: '600' },
   footer: { padding: 20, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#e0e0e0' },

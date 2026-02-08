@@ -33,7 +33,7 @@ const USERS_COLLECTION = 'users';
 export const membershipAPI = {
   /**
    * 내 멤버십 조회
-   * 
+   *
    * @returns 멤버십 정보
    */
   getMyMembership: async (): Promise<Membership> => {
@@ -87,14 +87,11 @@ export const membershipAPI = {
 
   /**
    * 멤버십 업그레이드
-   * 
+   *
    * @param tier 업그레이드할 등급
    * @param paymentMethod 결제 수단
    */
-  upgradeMembership: async (
-    tier: 'PRO' | 'PREMIUM',
-    paymentMethod: string
-  ): Promise<void> => {
+  upgradeMembership: async (tier: 'PRO' | 'PREMIUM', paymentMethod: string): Promise<void> => {
     try {
       const currentUser = auth().currentUser;
       if (!currentUser) {
@@ -117,17 +114,13 @@ export const membershipAPI = {
             paymentMethod,
             updatedAt: firestore.FieldValue.serverTimestamp(),
           },
-          { merge: true }
+          { merge: true },
         );
 
       // 사용자 정보에도 업데이트
-      await firestore()
-        .collection(USERS_COLLECTION)
-        .doc(currentUser.uid)
-        .update({
-          membership: tier,
-        });
-
+      await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).update({
+        membership: tier,
+      });
     } catch (error: any) {
       console.error('❌ 멤버십 업그레이드 실패:', error);
       throw new Error(error.message || '멤버십 업그레이드에 실패했습니다.');
@@ -144,14 +137,10 @@ export const membershipAPI = {
         throw new Error('로그인이 필요합니다.');
       }
 
-      await firestore()
-        .collection(MEMBERSHIPS_COLLECTION)
-        .doc(currentUser.uid)
-        .update({
-          autoRenew: false,
-          updatedAt: firestore.FieldValue.serverTimestamp(),
-        });
-
+      await firestore().collection(MEMBERSHIPS_COLLECTION).doc(currentUser.uid).update({
+        autoRenew: false,
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+      });
     } catch (error: any) {
       console.error('❌ 멤버십 취소 실패:', error);
       throw new Error(error.message || '멤버십 취소에 실패했습니다.');
@@ -160,17 +149,13 @@ export const membershipAPI = {
 
   /**
    * 멤버십 혜택 조회
-   * 
+   *
    * @param tier 멤버십 등급
    * @returns 혜택 목록
    */
   getMembershipBenefits: (tier: MembershipTier): string[] => {
     const benefits = {
-      FREE: [
-        '기본 부킹 참여',
-        '중고거래 이용',
-        '친구 추가 (최대 50명)',
-      ],
+      FREE: ['기본 부킹 참여', '중고거래 이용', '친구 추가 (최대 50명)'],
       PRO: [
         '모든 FREE 혜택',
         '부킹 우선 신청',

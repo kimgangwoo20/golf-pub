@@ -48,9 +48,7 @@ export const FriendCard: React.FC<FriendCardProps> = ({
     <Component style={styles.container} onPress={onPress}>
       <View style={styles.avatarContainer}>
         <Image source={{ uri: avatar }} style={styles.avatar} />
-        {status && (
-          <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
-        )}
+        {status && <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />}
       </View>
       <View style={styles.info}>
         <Text style={styles.name}>{name}</Text>

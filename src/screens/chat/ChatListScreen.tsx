@@ -57,18 +57,18 @@ export const ChatListScreen: React.FC = () => {
 
   // 다른 참가자 정보 가져오기
   const getOtherParticipant = (room: ChatRoom) => {
-    const other = room.participants.find(p => p.uid !== user?.uid);
+    const other = room.participants.find((p) => p.uid !== user?.uid);
     return other || { uid: '', name: '알 수 없음', avatar: '' };
   };
 
-  const filteredRooms = chatRooms.filter(room => {
+  const filteredRooms = chatRooms.filter((room) => {
     const other = getOtherParticipant(room);
     return other.name.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   const renderChatItem = ({ item }: { item: ChatRoom }) => {
     const other = getOtherParticipant(item);
-    const unreadCount = user?.uid ? (item.unreadCount?.[user.uid] || 0) : 0;
+    const unreadCount = user?.uid ? item.unreadCount?.[user.uid] || 0 : 0;
 
     return (
       <TouchableOpacity
@@ -87,9 +87,7 @@ export const ChatListScreen: React.FC = () => {
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
             <Text style={styles.chatName}>{other.name}</Text>
-            <Text style={styles.timestamp}>
-              {formatChatTime(item.lastMessage?.createdAt)}
-            </Text>
+            <Text style={styles.timestamp}>{formatChatTime(item.lastMessage?.createdAt)}</Text>
           </View>
           <View style={styles.chatFooter}>
             <Text style={styles.lastMessage} numberOfLines={1}>
@@ -159,7 +157,7 @@ export const ChatListScreen: React.FC = () => {
       <FlatList
         data={filteredRooms}
         renderItem={renderChatItem}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         refreshControl={

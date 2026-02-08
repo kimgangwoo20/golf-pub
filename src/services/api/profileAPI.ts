@@ -19,7 +19,7 @@ const COUPONS_COLLECTION = 'coupons';
 export const profileAPI = {
   /**
    * 내 프로필 조회
-   * 
+   *
    * @returns 프로필 정보
    */
   getMyProfile: async (): Promise<UserProfile | null> => {
@@ -29,19 +29,13 @@ export const profileAPI = {
         throw new Error('로그인이 필요합니다.');
       }
 
-      const userDoc = await firestore()
-        .collection(USERS_COLLECTION)
-        .doc(currentUser.uid)
-        .get();
+      const userDoc = await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).get();
 
       if (!userDoc.exists) {
         // Firestore에 없으면 Auth 정보로 생성
         await profileAPI.createUserProfile();
         // 생성 후 직접 조회 (재귀 방지)
-        const newDoc = await firestore()
-          .collection(USERS_COLLECTION)
-          .doc(currentUser.uid)
-          .get();
+        const newDoc = await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).get();
         if (!newDoc.exists) {
           return null;
         }
@@ -122,16 +116,18 @@ export const profileAPI = {
 
   /**
    * 프로필 수정
-   * 
+   *
    * @param updates 수정할 데이터
    */
-  updateProfile: async (updates: Partial<{
-    name: string;
-    phone: string;
-    handicap: number;
-    bio: string;
-    location: string;
-  }>): Promise<void> => {
+  updateProfile: async (
+    updates: Partial<{
+      name: string;
+      phone: string;
+      handicap: number;
+      bio: string;
+      location: string;
+    }>,
+  ): Promise<void> => {
     try {
       const currentUser = auth().currentUser;
       if (!currentUser) {
@@ -164,7 +160,7 @@ export const profileAPI = {
 
   /**
    * 프로필 이미지 업로드
-   * 
+   *
    * @param imageUri 이미지 URI
    * @returns 업로드된 이미지 URL
    */
@@ -178,19 +174,16 @@ export const profileAPI = {
       // Storage에 업로드
       const filename = `profile_${currentUser.uid}_${Date.now()}.jpg`;
       const reference = storage().ref(`profiles/${filename}`);
-      
+
       await reference.putFile(imageUri);
       const downloadURL = await reference.getDownloadURL();
 
       // Firestore 업데이트
-      await firestore()
-        .collection(USERS_COLLECTION)
-        .doc(currentUser.uid)
-        .update({
-          photoURL: downloadURL,
-          profileImage: downloadURL,
-          updatedAt: firestore.FieldValue.serverTimestamp(),
-        });
+      await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).update({
+        photoURL: downloadURL,
+        profileImage: downloadURL,
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+      });
 
       // Firebase Auth 업데이트
       await currentUser.updateProfile({
@@ -207,7 +200,7 @@ export const profileAPI = {
 
   /**
    * 포인트 내역 조회
-   * 
+   *
    * @param limit 결과 개수
    * @returns 포인트 내역
    */
@@ -226,7 +219,7 @@ export const profileAPI = {
         .limit(limit)
         .get();
 
-      const points: Point[] = snapshot.docs.map(doc => ({
+      const points: Point[] = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         date: doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
@@ -242,7 +235,7 @@ export const profileAPI = {
 
   /**
    * 포인트 적립
-   * 
+   *
    * @param amount 적립 포인트
    * @param description 적립 사유
    */
@@ -270,9 +263,7 @@ export const profileAPI = {
       });
 
       // 총 포인트 증가
-      const userRef = firestore()
-        .collection(USERS_COLLECTION)
-        .doc(currentUser.uid);
+      const userRef = firestore().collection(USERS_COLLECTION).doc(currentUser.uid);
 
       batch.update(userRef, {
         points: firestore.FieldValue.increment(amount),
@@ -288,7 +279,7 @@ export const profileAPI = {
 
   /**
    * 포인트 사용
-   * 
+   *
    * @param amount 사용 포인트
    * @param description 사용 사유
    */
@@ -300,10 +291,7 @@ export const profileAPI = {
       }
 
       // 현재 포인트 확인
-      const userDoc = await firestore()
-        .collection(USERS_COLLECTION)
-        .doc(currentUser.uid)
-        .get();
+      const userDoc = await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).get();
 
       const currentPoints = userDoc.data()?.points || 0;
       if (currentPoints < amount) {
@@ -327,9 +315,7 @@ export const profileAPI = {
       });
 
       // 총 포인트 감소
-      const userRef = firestore()
-        .collection(USERS_COLLECTION)
-        .doc(currentUser.uid);
+      const userRef = firestore().collection(USERS_COLLECTION).doc(currentUser.uid);
 
       batch.update(userRef, {
         points: firestore.FieldValue.increment(-amount),
@@ -345,7 +331,7 @@ export const profileAPI = {
 
   /**
    * 쿠폰 목록 조회
-   * 
+   *
    * @returns 쿠폰 목록
    */
   getCoupons: async (): Promise<Coupon[]> => {
@@ -362,7 +348,7 @@ export const profileAPI = {
         .orderBy('expiryDate', 'asc')
         .get();
 
-      const coupons: Coupon[] = snapshot.docs.map(doc => ({
+      const coupons: Coupon[] = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         expiryDate: doc.data().expiryDate?.toDate?.()?.toISOString?.() || new Date().toISOString(),
@@ -395,7 +381,7 @@ export const profileAPI = {
         .orderBy('createdAt', 'desc')
         .get();
 
-      const reviews = snapshot.docs.map(doc => ({
+      const reviews = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         date: doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
@@ -416,10 +402,7 @@ export const profileAPI = {
    */
   getUserProfile: async (userId: string): Promise<UserProfile | null> => {
     try {
-      const userDoc = await firestore()
-        .collection(USERS_COLLECTION)
-        .doc(userId)
-        .get();
+      const userDoc = await firestore().collection(USERS_COLLECTION).doc(userId).get();
 
       if (!userDoc.exists) {
         // 사용자를 찾을 수 없음

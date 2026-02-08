@@ -1,13 +1,6 @@
 // ProductFilter.tsx - 상품 필터 (가격대, 상태, 지역)
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Modal,
-  ScrollView,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 
 interface FilterOptions {
   priceRange?: string;
@@ -97,9 +90,7 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
                       styles.optionButton,
                       filters.priceRange === option.id && styles.optionButtonSelected,
                     ]}
-                    onPress={() =>
-                      setFilters({ ...filters, priceRange: option.id })
-                    }
+                    onPress={() => setFilters({ ...filters, priceRange: option.id })}
                   >
                     <Text
                       style={[
@@ -125,9 +116,7 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
                       styles.optionButton,
                       filters.condition === option.id && styles.optionButtonSelected,
                     ]}
-                    onPress={() =>
-                      setFilters({ ...filters, condition: option.id })
-                    }
+                    onPress={() => setFilters({ ...filters, condition: option.id })}
                   >
                     <Text
                       style={[

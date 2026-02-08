@@ -2,26 +2,36 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useBookingStore } from '@/store/useBookingStore';
 
 export const MyBookingsScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const { user } = useAuthStore();
-  const [bookings, setBookings] = useState([
-    { id: 1, title: '주말 라운딩', course: '레이크사이드CC', date: '2024-02-10', status: '확정' },
-    { id: 2, title: '평일 조인', course: '스카이72', date: '2024-02-15', status: '대기' },
-  ]);
+  const { loadMyBookings } = useBookingStore();
+  const [bookings, setBookings] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadBookings = useCallback(async () => {
-    // TODO: 실제 API 호출
-    // const myBookings = await bookingAPI.getMyBookings(user?.uid);
-    // setBookings(myBookings);
-  }, [user]);
+    if (!user?.uid) return;
+    try {
+      await loadMyBookings(user.uid);
+      const myBookings = useBookingStore.getState().bookings.map((b) => ({
+        id: b.id,
+        title: b.title || '',
+        course: b.course || '',
+        date: b.date || '',
+        status: b.status === 'OPEN' ? '대기' : b.status === 'COMPLETED' ? '확정' : '취소',
+      }));
+      setBookings(myBookings);
+    } catch (error: any) {
+      console.error('내 부킹 로드 실패:', error);
+    }
+  }, [user, loadMyBookings]);
 
   // 화면 포커스 시 새로고침
   useFocusEffect(
     useCallback(() => {
       loadBookings();
-    }, [loadBookings])
+    }, [loadBookings]),
   );
 
   const handleRefresh = useCallback(async () => {
@@ -31,7 +41,7 @@ export const MyBookingsScreen: React.FC<{ navigation?: any }> = ({ navigation })
   }, [loadBookings]);
 
   const handleBookingPress = (bookingId: number) => {
-    navigation?.navigate('BookingDetail', { bookingId });
+    (navigation as any)?.navigate('Bookings', { screen: 'BookingDetail', params: { bookingId } });
   };
 
   return (
@@ -55,7 +65,7 @@ export const MyBookingsScreen: React.FC<{ navigation?: any }> = ({ navigation })
         }
       >
         {bookings.length > 0 ? (
-          bookings.map(booking => (
+          bookings.map((booking) => (
             <TouchableOpacity
               key={booking.id}
               style={styles.bookingCard}
@@ -63,8 +73,20 @@ export const MyBookingsScreen: React.FC<{ navigation?: any }> = ({ navigation })
             >
               <View style={styles.bookingHeader}>
                 <Text style={styles.bookingTitle}>{booking.title}</Text>
-                <View style={[styles.statusBadge, booking.status === '확정' ? styles.statusConfirmed : styles.statusPending]}>
-                  <Text style={[styles.statusText, booking.status === '확정' ? styles.statusTextConfirmed : styles.statusTextPending]}>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    booking.status === '확정' ? styles.statusConfirmed : styles.statusPending,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.statusText,
+                      booking.status === '확정'
+                        ? styles.statusTextConfirmed
+                        : styles.statusTextPending,
+                    ]}
+                  >
                     {booking.status}
                   </Text>
                 </View>
@@ -88,7 +110,7 @@ export const MyBookingsScreen: React.FC<{ navigation?: any }> = ({ navigation })
       </ScrollView>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
@@ -97,7 +119,12 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: 'bold', color: '#1a1a1a' },
   content: { flex: 1, padding: 20 },
   bookingCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 12 },
-  bookingHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  bookingHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   bookingTitle: { fontSize: 18, fontWeight: 'bold', color: '#1a1a1a' },
   statusBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
   statusConfirmed: { backgroundColor: '#E8F5E9' },
@@ -110,6 +137,11 @@ const styles = StyleSheet.create({
   emptyContainer: { alignItems: 'center', paddingVertical: 60 },
   emptyIcon: { fontSize: 48, marginBottom: 16 },
   emptyText: { fontSize: 16, color: '#666', marginBottom: 20 },
-  findButton: { backgroundColor: '#10b981', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 },
+  findButton: {
+    backgroundColor: '#10b981',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
   findButtonText: { color: '#fff', fontSize: 15, fontWeight: '600' },
 });

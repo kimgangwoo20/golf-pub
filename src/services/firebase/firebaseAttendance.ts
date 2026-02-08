@@ -18,11 +18,8 @@ interface AttendanceRecord {
 export const checkTodayAttendance = async (userId: string): Promise<boolean> => {
   try {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    
-    const doc = await firestore()
-      .collection('attendance')
-      .doc(`${userId}_${today}`)
-      .get();
+
+    const doc = await firestore().collection('attendance').doc(`${userId}_${today}`).get();
 
     return doc.exists;
   } catch (error) {
@@ -34,7 +31,9 @@ export const checkTodayAttendance = async (userId: string): Promise<boolean> => 
 /**
  * 출석 체크 실행
  */
-export const markAttendance = async (userId: string): Promise<{
+export const markAttendance = async (
+  userId: string,
+): Promise<{
   success: boolean;
   points: number;
   consecutiveDays: number;
@@ -78,10 +77,7 @@ export const markAttendance = async (userId: string): Promise<{
       consecutiveDays: newConsecutiveDays,
     };
 
-    await firestore()
-      .collection('attendance')
-      .doc(`${userId}_${today}`)
-      .set(attendanceRecord);
+    await firestore().collection('attendance').doc(`${userId}_${today}`).set(attendanceRecord);
 
     // 사용자 포인트 업데이트
     await updateUserPoints(userId, points);
@@ -118,10 +114,7 @@ export const markAttendance = async (userId: string): Promise<{
  */
 const getConsecutiveDays = async (userId: string): Promise<number> => {
   try {
-    const userDoc = await firestore()
-      .collection('users')
-      .doc(userId)
-      .get();
+    const userDoc = await firestore().collection('users').doc(userId).get();
 
     const userData = userDoc.data();
     const lastAttendance = userData?.stats?.lastAttendance;
@@ -166,15 +159,13 @@ const updateUserPoints = async (userId: string, points: number): Promise<void> =
       });
 
     // 포인트 내역 기록
-    await firestore()
-      .collection('pointHistory')
-      .add({
-        userId,
-        type: 'attendance',
-        amount: points,
-        timestamp: FirestoreTimestamp.now(),
-        description: '출석 체크 포인트',
-      });
+    await firestore().collection('pointHistory').add({
+      userId,
+      type: 'attendance',
+      amount: points,
+      timestamp: FirestoreTimestamp.now(),
+      description: '출석 체크 포인트',
+    });
   } catch (error) {
     console.error('포인트 업데이트 실패:', error);
     throw error;
@@ -213,17 +204,16 @@ export const getAttendanceCalendar = async (
 /**
  * 출석 통계 가져오기
  */
-export const getAttendanceStats = async (userId: string): Promise<{
+export const getAttendanceStats = async (
+  userId: string,
+): Promise<{
   totalDays: number;
   currentStreak: number;
   longestStreak: number;
   thisMonthDays: number;
 }> => {
   try {
-    const userDoc = await firestore()
-      .collection('users')
-      .doc(userId)
-      .get();
+    const userDoc = await firestore().collection('users').doc(userId).get();
 
     const userData = userDoc.data();
 

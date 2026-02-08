@@ -21,7 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const { width, height } = Dimensions.get('window');
 
 export interface FeedItem {
-  id: number;
+  id: string | number; // Firestore 문서 ID (string) 또는 기존 숫자 ID 지원
   type: string;
   mediaType: 'image' | 'video';
   icon: string;
@@ -40,7 +40,7 @@ export interface FeedItem {
 // 댓글 인터페이스
 interface Comment {
   id: number;
-  feedId: number;
+  feedId: string | number; // Firestore 문서 ID (string) 또는 숫자 ID 지원
   userName: string;
   userImage: string;
   content: string;
@@ -60,8 +60,8 @@ interface FeedViewerProps {
   items: FeedItem[];
   initialIndex: number;
   onClose: () => void;
-  onLike?: (id: number) => void;
-  onComment?: (id: number, comment: string) => void;
+  onLike?: (id: string | number) => void;
+  onComment?: (id: string | number, comment: string) => void;
   authorName?: string;
   authorImage?: string;
 }
@@ -69,19 +69,80 @@ interface FeedViewerProps {
 // Mock 댓글 데이터 생성
 const generateMockComments = (): Comment[] => [
   {
-    id: 1, feedId: 1, userName: '이민지',
+    id: 1,
+    feedId: 1,
+    userName: '이민지',
     userImage: 'https://i.pravatar.cc/150?img=45',
-    content: '우와 날씨 진짜 좋아보여요!', time: '1시간 전', likes: 5,
+    content: '우와 날씨 진짜 좋아보여요!',
+    time: '1시간 전',
+    likes: 5,
     replies: [
-      { id: 101, feedId: 1, userName: '박정우', userImage: 'https://i.pravatar.cc/150?img=33', content: '맞아요 완전 좋았어요!', time: '50분 전', likes: 2, parentId: 1 },
+      {
+        id: 101,
+        feedId: 1,
+        userName: '박정우',
+        userImage: 'https://i.pravatar.cc/150?img=33',
+        content: '맞아요 완전 좋았어요!',
+        time: '50분 전',
+        likes: 2,
+        parentId: 1,
+      },
     ],
   },
-  { id: 2, feedId: 1, userName: '최수진', userImage: 'https://i.pravatar.cc/150?img=27', content: '스코어 어떻게 되셨어요?', time: '1시간 전', likes: 3 },
-  { id: 3, feedId: 2, userName: '박정우', userImage: 'https://i.pravatar.cc/150?img=33', content: '골프장 풍경 최고네요!', time: '3시간 전', likes: 8 },
-  { id: 4, feedId: 3, userName: '이민지', userImage: 'https://i.pravatar.cc/150?img=45', content: '스윙 폼이 좋아지셨네요!', time: '5시간 전', likes: 12 },
-  { id: 5, feedId: 4, userName: '최수진', userImage: 'https://i.pravatar.cc/150?img=27', content: '100타 돌파 축하드려요!! 🎉', time: '1일 전', likes: 15 },
-  { id: 6, feedId: 4, userName: '김철수', userImage: 'https://i.pravatar.cc/150?img=15', content: '대단해요! 저도 목표입니다', time: '1일 전', likes: 7 },
-  { id: 7, feedId: 5, userName: '박정우', userImage: 'https://i.pravatar.cc/150?img=33', content: '새 드라이버 어떤 건가요?', time: '2일 전', likes: 4 },
+  {
+    id: 2,
+    feedId: 1,
+    userName: '최수진',
+    userImage: 'https://i.pravatar.cc/150?img=27',
+    content: '스코어 어떻게 되셨어요?',
+    time: '1시간 전',
+    likes: 3,
+  },
+  {
+    id: 3,
+    feedId: 2,
+    userName: '박정우',
+    userImage: 'https://i.pravatar.cc/150?img=33',
+    content: '골프장 풍경 최고네요!',
+    time: '3시간 전',
+    likes: 8,
+  },
+  {
+    id: 4,
+    feedId: 3,
+    userName: '이민지',
+    userImage: 'https://i.pravatar.cc/150?img=45',
+    content: '스윙 폼이 좋아지셨네요!',
+    time: '5시간 전',
+    likes: 12,
+  },
+  {
+    id: 5,
+    feedId: 4,
+    userName: '최수진',
+    userImage: 'https://i.pravatar.cc/150?img=27',
+    content: '100타 돌파 축하드려요!! 🎉',
+    time: '1일 전',
+    likes: 15,
+  },
+  {
+    id: 6,
+    feedId: 4,
+    userName: '김철수',
+    userImage: 'https://i.pravatar.cc/150?img=15',
+    content: '대단해요! 저도 목표입니다',
+    time: '1일 전',
+    likes: 7,
+  },
+  {
+    id: 7,
+    feedId: 5,
+    userName: '박정우',
+    userImage: 'https://i.pravatar.cc/150?img=33',
+    content: '새 드라이버 어떤 건가요?',
+    time: '2일 전',
+    likes: 4,
+  },
 ];
 
 // 가로 이미지 캐러셀 컴포넌트
@@ -90,11 +151,7 @@ const ImageCarousel: React.FC<{ urls: string[] }> = React.memo(({ urls }) => {
 
   if (urls.length === 1) {
     return (
-      <Image
-        source={{ uri: urls[0] }}
-        style={carouselStyles.singleImage}
-        resizeMode="contain"
-      />
+      <Image source={{ uri: urls[0] }} style={carouselStyles.singleImage} resizeMode="contain" />
     );
   }
 
@@ -111,11 +168,7 @@ const ImageCarousel: React.FC<{ urls: string[] }> = React.memo(({ urls }) => {
         }}
         keyExtractor={(_, i) => i.toString()}
         renderItem={({ item: url }) => (
-          <Image
-            source={{ uri: url }}
-            style={carouselStyles.image}
-            resizeMode="contain"
-          />
+          <Image source={{ uri: url }} style={carouselStyles.image} resizeMode="contain" />
         )}
         getItemLayout={(_, index) => ({
           length: width,
@@ -131,10 +184,7 @@ const ImageCarousel: React.FC<{ urls: string[] }> = React.memo(({ urls }) => {
         {urls.map((_, i) => (
           <View
             key={i}
-            style={[
-              carouselStyles.dot,
-              i === activeIndex && carouselStyles.dotActive,
-            ]}
+            style={[carouselStyles.dot, i === activeIndex && carouselStyles.dotActive]}
           />
         ))}
       </View>
@@ -209,19 +259,21 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
   authorName,
   authorImage,
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  const [likedItems, setLikedItems] = useState<Set<number>>(new Set());
+  const [_currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [likedItems, setLikedItems] = useState<Set<string | number>>(new Set());
   const flatListRef = useRef<FlatList>(null);
   const insets = useSafeAreaInsets();
 
   // 댓글 상태
   const [comments, setComments] = useState<Comment[]>(generateMockComments);
   const [commentModalVisible, setCommentModalVisible] = useState(false);
-  const [selectedFeedId, setSelectedFeedId] = useState<number | null>(null);
+  const [selectedFeedId, setSelectedFeedId] = useState<string | number | null>(null);
   const [commentText, setCommentText] = useState('');
   const [likedComments, setLikedComments] = useState<Set<number>>(new Set());
   const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null);
-  const [editingComment, setEditingComment] = useState<{ id: number; parentId?: number } | null>(null);
+  const [editingComment, setEditingComment] = useState<{ id: number; parentId?: number } | null>(
+    null,
+  );
 
   const keyboardHeight = useRef(new Animated.Value(0)).current;
   const inputRef = useRef<TextInput>(null);
@@ -253,29 +305,35 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
     };
   }, []);
 
-  const handleLike = useCallback((itemId: number) => {
-    setLikedItems(prev => {
-      const next = new Set(prev);
-      if (next.has(itemId)) {
-        next.delete(itemId);
-      } else {
-        next.add(itemId);
-      }
-      return next;
-    });
-    onLike?.(itemId);
-  }, [onLike]);
+  const handleLike = useCallback(
+    (itemId: string | number) => {
+      setLikedItems((prev) => {
+        const next = new Set(prev);
+        if (next.has(itemId)) {
+          next.delete(itemId);
+        } else {
+          next.add(itemId);
+        }
+        return next;
+      });
+      onLike?.(itemId);
+    },
+    [onLike],
+  );
 
   // 댓글 모달 열기
-  const handleOpenComments = useCallback((feedId: number) => {
+  const handleOpenComments = useCallback((feedId: string | number) => {
     setSelectedFeedId(feedId);
     setCommentModalVisible(true);
   }, []);
 
   // 댓글 가져오기
-  const getCommentsForFeed = useCallback((feedId: number) => {
-    return comments.filter(c => c.feedId === feedId);
-  }, [comments]);
+  const getCommentsForFeed = useCallback(
+    (feedId: string | number) => {
+      return comments.filter((c) => c.feedId === feedId);
+    },
+    [comments],
+  );
 
   // 댓글 등록
   const handleSubmitComment = useCallback(() => {
@@ -284,14 +342,23 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
     if (editingComment) {
       // 수정 모드
       if (editingComment.parentId) {
-        setComments(prev => prev.map(c => {
-          if (c.id === editingComment.parentId) {
-            return { ...c, replies: (c.replies || []).map(r => r.id === editingComment.id ? { ...r, content: commentText.trim() } : r) };
-          }
-          return c;
-        }));
+        setComments((prev) =>
+          prev.map((c) => {
+            if (c.id === editingComment.parentId) {
+              return {
+                ...c,
+                replies: (c.replies || []).map((r) =>
+                  r.id === editingComment.id ? { ...r, content: commentText.trim() } : r,
+                ),
+              };
+            }
+            return c;
+          }),
+        );
       } else {
-        setComments(prev => prev.map(c => c.id === editingComment.id ? { ...c, content: commentText.trim() } : c));
+        setComments((prev) =>
+          prev.map((c) => (c.id === editingComment.id ? { ...c, content: commentText.trim() } : c)),
+        );
       }
       setEditingComment(null);
       setCommentText('');
@@ -309,24 +376,34 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
     };
 
     if (replyTarget) {
-      setComments(prev => prev.map(c => {
-        if (c.id === replyTarget.commentId) {
-          return { ...c, replies: [...(c.replies || []), { ...newComment, parentId: c.id }] };
-        }
-        return c;
-      }));
+      setComments((prev) =>
+        prev.map((c) => {
+          if (c.id === replyTarget.commentId) {
+            return { ...c, replies: [...(c.replies || []), { ...newComment, parentId: c.id }] };
+          }
+          return c;
+        }),
+      );
       setReplyTarget(null);
     } else {
-      setComments(prev => [...prev, newComment]);
+      setComments((prev) => [...prev, newComment]);
     }
 
     onComment?.(selectedFeedId, commentText.trim());
     setCommentText('');
-  }, [commentText, selectedFeedId, editingComment, replyTarget, currentUserName, authorImage, onComment]);
+  }, [
+    commentText,
+    selectedFeedId,
+    editingComment,
+    replyTarget,
+    currentUserName,
+    authorImage,
+    onComment,
+  ]);
 
   // 댓글 좋아요
   const handleCommentLike = useCallback((commentId: number) => {
-    setLikedComments(prev => {
+    setLikedComments((prev) => {
       const next = new Set(prev);
       if (next.has(commentId)) next.delete(commentId);
       else next.add(commentId);
@@ -352,14 +429,16 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
   // 댓글 삭제
   const handleDeleteComment = useCallback((commentId: number, parentId?: number) => {
     if (parentId) {
-      setComments(prev => prev.map(c => {
-        if (c.id === parentId) {
-          return { ...c, replies: (c.replies || []).filter(r => r.id !== commentId) };
-        }
-        return c;
-      }));
+      setComments((prev) =>
+        prev.map((c) => {
+          if (c.id === parentId) {
+            return { ...c, replies: (c.replies || []).filter((r) => r.id !== commentId) };
+          }
+          return c;
+        }),
+      );
     } else {
-      setComments(prev => prev.filter(c => c.id !== commentId));
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
     }
   }, []);
 
@@ -372,71 +451,82 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
     setCommentText('');
   }, []);
 
-  const renderItem = useCallback(({ item }: { item: FeedItem }) => {
-    const isLiked = likedItems.has(item.id);
-    const imageUrls = (item.mediaUrls && item.mediaUrls.length > 0)
-      ? item.mediaUrls
-      : [item.mediaUrl || item.image];
-    const feedComments = getCommentsForFeed(item.id);
+  const renderItem = useCallback(
+    ({ item }: { item: FeedItem }) => {
+      const isLiked = likedItems.has(item.id);
+      const imageUrls =
+        item.mediaUrls && item.mediaUrls.length > 0
+          ? item.mediaUrls
+          : [item.mediaUrl || item.image];
+      const feedComments = getCommentsForFeed(item.id);
 
-    return (
-      <View style={[styles.slide, { height }]}>
-        {/* 헤더 */}
-        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-          <View style={styles.authorInfo}>
-            {authorImage && (
-              <Image source={{ uri: authorImage }} style={styles.authorAvatar} />
-            )}
-            <View>
-              <Text style={styles.authorName}>{authorName || '사용자'}</Text>
-              <Text style={styles.date}>{item.date}</Text>
+      return (
+        <View style={[styles.slide, { height }]}>
+          {/* 헤더 */}
+          <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+            <View style={styles.authorInfo}>
+              {authorImage && <Image source={{ uri: authorImage }} style={styles.authorAvatar} />}
+              <View>
+                <Text style={styles.authorName}>{authorName || '사용자'}</Text>
+                <Text style={styles.date}>{item.date}</Text>
+              </View>
             </View>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Text style={styles.closeText}>✕</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Text style={styles.closeText}>✕</Text>
-          </TouchableOpacity>
-        </View>
 
-        {/* 미디어 - 가로 스크롤 캐러셀 */}
-        <View style={styles.mediaContainer}>
-          <ImageCarousel urls={imageUrls} />
-        </View>
+          {/* 미디어 - 가로 스크롤 캐러셀 */}
+          <View style={styles.mediaContainer}>
+            <ImageCarousel urls={imageUrls} />
+          </View>
 
-        {/* 하단 정보 */}
-        <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
-          <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
-          {item.description ? (
-            <Text style={styles.description} numberOfLines={3}>{item.description}</Text>
-          ) : null}
-
-          {/* 액션 버튼 */}
-          <View style={styles.actions}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => handleLike(item.id)}
-            >
-              <Text style={styles.actionIcon}>{isLiked ? '❤️' : '🤍'}</Text>
-              <Text style={styles.actionText}>
-                {item.likes + (isLiked ? 1 : 0)}
+          {/* 하단 정보 */}
+          <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
+            <Text style={styles.title} numberOfLines={2}>
+              {item.title}
+            </Text>
+            {item.description ? (
+              <Text style={styles.description} numberOfLines={3}>
+                {item.description}
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => handleOpenComments(item.id)}
-            >
-              <Text style={styles.actionIcon}>{'💬'}</Text>
-              <Text style={styles.actionText}>{feedComments.length || item.comments}</Text>
-            </TouchableOpacity>
-          </View>
+            ) : null}
 
-          {/* 포스트 인디케이터 */}
-          <Text style={styles.pageIndicator}>
-            {items.indexOf(item) + 1} / {items.length}
-          </Text>
+            {/* 액션 버튼 */}
+            <View style={styles.actions}>
+              <TouchableOpacity style={styles.actionButton} onPress={() => handleLike(item.id)}>
+                <Text style={styles.actionIcon}>{isLiked ? '❤️' : '🤍'}</Text>
+                <Text style={styles.actionText}>{item.likes + (isLiked ? 1 : 0)}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => handleOpenComments(item.id)}
+              >
+                <Text style={styles.actionIcon}>{'💬'}</Text>
+                <Text style={styles.actionText}>{feedComments.length || item.comments}</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* 포스트 인디케이터 */}
+            <Text style={styles.pageIndicator}>
+              {items.indexOf(item) + 1} / {items.length}
+            </Text>
+          </View>
         </View>
-      </View>
-    );
-  }, [likedItems, authorImage, authorName, onClose, handleLike, handleOpenComments, items, insets, getCommentsForFeed]);
+      );
+    },
+    [
+      likedItems,
+      authorImage,
+      authorName,
+      onClose,
+      handleLike,
+      handleOpenComments,
+      items,
+      insets,
+      getCommentsForFeed,
+    ],
+  );
 
   if (!items[initialIndex]) return null;
 
@@ -523,10 +613,16 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
                             <Text style={commentStyles.time}>{comment.time}</Text>
                             {isMine && (
                               <View style={commentStyles.editActions}>
-                                <TouchableOpacity style={commentStyles.editBtn} onPress={() => startEdit(comment)}>
+                                <TouchableOpacity
+                                  style={commentStyles.editBtn}
+                                  onPress={() => startEdit(comment)}
+                                >
                                   <Text style={commentStyles.editText}>수정</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={commentStyles.editBtn} onPress={() => handleDeleteComment(comment.id)}>
+                                <TouchableOpacity
+                                  style={commentStyles.editBtn}
+                                  onPress={() => handleDeleteComment(comment.id)}
+                                >
                                   <Text style={commentStyles.deleteText}>삭제</Text>
                                 </TouchableOpacity>
                               </View>
@@ -534,11 +630,19 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
                           </View>
                           <Text style={commentStyles.text}>{comment.content}</Text>
                           <View style={commentStyles.actionRow}>
-                            <TouchableOpacity style={commentStyles.action} onPress={() => handleCommentLike(comment.id)}>
+                            <TouchableOpacity
+                              style={commentStyles.action}
+                              onPress={() => handleCommentLike(comment.id)}
+                            >
                               <Text style={commentStyles.actionIcon}>{isLiked ? '❤️' : '🤍'}</Text>
-                              <Text style={commentStyles.actionLabel}>{comment.likes + (isLiked ? 1 : 0)}</Text>
+                              <Text style={commentStyles.actionLabel}>
+                                {comment.likes + (isLiked ? 1 : 0)}
+                              </Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={commentStyles.action} onPress={() => startReply(comment.id, comment.userName)}>
+                            <TouchableOpacity
+                              style={commentStyles.action}
+                              onPress={() => startReply(comment.id, comment.userName)}
+                            >
                               <Text style={commentStyles.actionLabel}>답글 달기</Text>
                             </TouchableOpacity>
                           </View>
@@ -553,17 +657,26 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
                             const rMine = reply.userName === currentUserName;
                             return (
                               <View key={reply.id} style={commentStyles.replyItem}>
-                                <Image source={{ uri: reply.userImage }} style={commentStyles.replyAvatar} />
+                                <Image
+                                  source={{ uri: reply.userImage }}
+                                  style={commentStyles.replyAvatar}
+                                />
                                 <View style={commentStyles.body}>
                                   <View style={commentStyles.meta}>
                                     <Text style={commentStyles.userName}>{reply.userName}</Text>
                                     <Text style={commentStyles.time}>{reply.time}</Text>
                                     {rMine && (
                                       <View style={commentStyles.editActions}>
-                                        <TouchableOpacity style={commentStyles.editBtn} onPress={() => startEdit(reply, comment.id)}>
+                                        <TouchableOpacity
+                                          style={commentStyles.editBtn}
+                                          onPress={() => startEdit(reply, comment.id)}
+                                        >
                                           <Text style={commentStyles.editText}>수정</Text>
                                         </TouchableOpacity>
-                                        <TouchableOpacity style={commentStyles.editBtn} onPress={() => handleDeleteComment(reply.id, comment.id)}>
+                                        <TouchableOpacity
+                                          style={commentStyles.editBtn}
+                                          onPress={() => handleDeleteComment(reply.id, comment.id)}
+                                        >
                                           <Text style={commentStyles.deleteText}>삭제</Text>
                                         </TouchableOpacity>
                                       </View>
@@ -571,9 +684,16 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
                                   </View>
                                   <Text style={commentStyles.text}>{reply.content}</Text>
                                   <View style={commentStyles.actionRow}>
-                                    <TouchableOpacity style={commentStyles.action} onPress={() => handleCommentLike(reply.id)}>
-                                      <Text style={commentStyles.actionIcon}>{rLiked ? '❤️' : '🤍'}</Text>
-                                      <Text style={commentStyles.actionLabel}>{reply.likes + (rLiked ? 1 : 0)}</Text>
+                                    <TouchableOpacity
+                                      style={commentStyles.action}
+                                      onPress={() => handleCommentLike(reply.id)}
+                                    >
+                                      <Text style={commentStyles.actionIcon}>
+                                        {rLiked ? '❤️' : '🤍'}
+                                      </Text>
+                                      <Text style={commentStyles.actionLabel}>
+                                        {reply.likes + (rLiked ? 1 : 0)}
+                                      </Text>
                                     </TouchableOpacity>
                                   </View>
                                 </View>
@@ -591,7 +711,12 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
               {editingComment && (
                 <View style={commentStyles.indicator}>
                   <Text style={commentStyles.indicatorEditText}>댓글 수정 중</Text>
-                  <TouchableOpacity onPress={() => { setEditingComment(null); setCommentText(''); }}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setEditingComment(null);
+                      setCommentText('');
+                    }}
+                  >
                     <Text style={commentStyles.indicatorCancel}>✕</Text>
                   </TouchableOpacity>
                 </View>
@@ -600,7 +725,9 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
               {/* 답글 표시 */}
               {replyTarget && !editingComment && (
                 <View style={commentStyles.indicator}>
-                  <Text style={commentStyles.indicatorReplyText}>@{replyTarget.userName}에게 답글 작성 중</Text>
+                  <Text style={commentStyles.indicatorReplyText}>
+                    @{replyTarget.userName}에게 답글 작성 중
+                  </Text>
                   <TouchableOpacity onPress={() => setReplyTarget(null)}>
                     <Text style={commentStyles.indicatorCancel}>✕</Text>
                   </TouchableOpacity>
@@ -613,8 +740,10 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
                   ref={inputRef}
                   style={commentStyles.input}
                   placeholder={
-                    editingComment ? '댓글 수정...'
-                      : replyTarget ? `@${replyTarget.userName}에게 답글 달기...`
+                    editingComment
+                      ? '댓글 수정...'
+                      : replyTarget
+                        ? `@${replyTarget.userName}에게 답글 달기...`
                         : '댓글을 입력하세요...'
                   }
                   placeholderTextColor="#999"
@@ -624,7 +753,10 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
                   maxLength={500}
                 />
                 <TouchableOpacity
-                  style={[commentStyles.sendBtn, !commentText.trim() && commentStyles.sendBtnDisabled]}
+                  style={[
+                    commentStyles.sendBtn,
+                    !commentText.trim() && commentStyles.sendBtnDisabled,
+                  ]}
                   onPress={handleSubmitComment}
                   disabled={!commentText.trim()}
                 >

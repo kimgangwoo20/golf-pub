@@ -18,11 +18,11 @@ export interface ChatRoom {
   id: string;
   type: 'booking' | 'marketplace' | 'direct'; // 부킹 채팅, 중고거래 채팅, 1:1 채팅
   relatedId?: string; // 부킹 ID 또는 상품 ID
-  participants: Array<{
+  participants: {
     uid: string;
     name: string;
     avatar?: string;
-  }>;
+  }[];
   participantIds: string[]; // uid 배열 (Firestore array-contains 쿼리용)
   lastMessage?: {
     message: string;
@@ -43,11 +43,25 @@ interface ChatState {
   // Actions
   loadChatRooms: (userId: string) => Promise<void>;
   loadMessages: (roomId: string) => Promise<void>;
-  sendMessage: (roomId: string, senderId: string, senderName: string, message: string, senderAvatar?: string) => Promise<void>;
-  sendImage: (roomId: string, senderId: string, senderName: string, imageUrl: string, senderAvatar?: string) => Promise<void>;
+  sendMessage: (
+    roomId: string,
+    senderId: string,
+    senderName: string,
+    message: string,
+    senderAvatar?: string,
+  ) => Promise<void>;
+  sendImage: (
+    roomId: string,
+    senderId: string,
+    senderName: string,
+    imageUrl: string,
+    senderAvatar?: string,
+  ) => Promise<void>;
   sendSystemMessage: (roomId: string, message: string) => Promise<void>;
   markAsRead: (roomId: string, userId: string) => Promise<void>;
-  createChatRoom: (room: Omit<ChatRoom, 'id' | 'createdAt' | 'updatedAt' | 'unreadCount' | 'participantIds'>) => Promise<string>;
+  createChatRoom: (
+    room: Omit<ChatRoom, 'id' | 'createdAt' | 'updatedAt' | 'unreadCount' | 'participantIds'>,
+  ) => Promise<string>;
   deleteChatRoom: (roomId: string) => Promise<void>;
   listenToMessages: (roomId: string, callback: (messages: ChatMessage[]) => void) => () => void;
 }
@@ -71,7 +85,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         .orderBy('updatedAt', 'desc')
         .get();
 
-      const chatRooms = snapshot.docs.map(doc => ({
+      const chatRooms = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate(),
@@ -109,7 +123,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         .limit(100)
         .get();
 
-      const messages = snapshot.docs.map(doc => ({
+      const messages = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate(),
@@ -165,10 +179,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       // 로컬 상태 업데이트
       const { currentRoomMessages } = get();
       set({
-        currentRoomMessages: [
-          ...currentRoomMessages,
-          { id: messageRef.id, ...messageData },
-        ],
+        currentRoomMessages: [...currentRoomMessages, { id: messageRef.id, ...messageData }],
       });
     } catch (error: any) {
       console.error('메시지 전송 실패:', error);
@@ -218,10 +229,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       // 로컬 상태 업데이트
       const { currentRoomMessages } = get();
       set({
-        currentRoomMessages: [
-          ...currentRoomMessages,
-          { id: messageRef.id, ...messageData },
-        ],
+        currentRoomMessages: [...currentRoomMessages, { id: messageRef.id, ...messageData }],
       });
     } catch (error: any) {
       console.error('이미지 전송 실패:', error);
@@ -271,7 +279,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       const batch = firebaseFirestore.batch();
 
-      messagesSnapshot.docs.forEach(doc => {
+      messagesSnapshot.docs.forEach((doc) => {
         const readBy: string[] = doc.data().readBy || [];
         if (!readBy.includes(userId)) {
           batch.update(doc.ref, {
@@ -303,11 +311,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       const now = new Date();
       const unreadCount: { [key: string]: number } = {};
-      room.participants.forEach(p => {
+      room.participants.forEach((p) => {
         unreadCount[p.uid] = 0;
       });
 
-      const participantIds = room.participants.map(p => p.uid);
+      const participantIds = room.participants.map((p) => p.uid);
 
       const newRoom = {
         ...room,
@@ -352,7 +360,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         .get();
 
       const batch = firebaseFirestore.batch();
-      messagesSnapshot.docs.forEach(doc => {
+      messagesSnapshot.docs.forEach((doc) => {
         batch.delete(doc.ref);
       });
 
@@ -364,7 +372,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       // 로컬 상태 업데이트
       const { chatRooms } = get();
       set({
-        chatRooms: chatRooms.filter(room => room.id !== roomId),
+        chatRooms: chatRooms.filter((room) => room.id !== roomId),
         loading: false,
       });
     } catch (error: any) {
@@ -386,8 +394,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       .doc(roomId)
       .collection('messages')
       .orderBy('createdAt', 'asc')
-      .onSnapshot(snapshot => {
-        const messages = snapshot.docs.map(doc => ({
+      .onSnapshot((snapshot) => {
+        const messages = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
           createdAt: doc.data().createdAt?.toDate(),

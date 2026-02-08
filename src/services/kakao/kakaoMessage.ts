@@ -41,20 +41,20 @@ const sendLink = async (_link: LinkObject): Promise<void> => {
 
 /**
  * 카카오톡 메시지 서비스
- * 
+ *
  * 기능:
  * - 부킹 공유
  * - 상품 공유
  * - 친구 초대
  * - 커스텀 메시지
- * 
+ *
  * 사용 예시:
  * ```typescript
  * import { KakaoMessageService } from './services/kakao/kakaoMessage';
- * 
+ *
  * // 부킹 공유
  * await KakaoMessageService.shareBooking(booking);
- * 
+ *
  * // 친구 초대
  * await KakaoMessageService.inviteFriend();
  * ```
@@ -96,7 +96,7 @@ class KakaoMessageServiceClass {
 
   /**
    * 부킹 공유하기
-   * 
+   *
    * @param booking 부킹 정보
    */
   async shareBooking(booking: BookingInfo): Promise<void> {
@@ -139,7 +139,7 @@ class KakaoMessageServiceClass {
 
   /**
    * 상품 공유하기
-   * 
+   *
    * @param product 상품 정보
    */
   async shareProduct(product: ProductInfo): Promise<void> {
@@ -186,7 +186,7 @@ class KakaoMessageServiceClass {
 
   /**
    * 친구 초대하기
-   * 
+   *
    * @param inviterName 초대하는 사람 이름 (선택)
    */
   async inviteFriend(inviterName?: string): Promise<void> {
@@ -233,7 +233,7 @@ class KakaoMessageServiceClass {
 
   /**
    * 골프장 정보 공유하기
-   * 
+   *
    * @param golfCourseName 골프장 이름
    * @param address 주소
    * @param phone 전화번호
@@ -243,12 +243,10 @@ class KakaoMessageServiceClass {
     golfCourseName: string,
     address: string,
     phone?: string,
-    imageUrl?: string
+    imageUrl?: string,
   ): Promise<void> {
     try {
-      const description = phone
-        ? `📍 ${address}\n📞 ${phone}`
-        : `📍 ${address}`;
+      const description = phone ? `📍 ${address}\n📞 ${phone}` : `📍 ${address}`;
 
       const content: ContentObject = {
         title: `⛳ ${golfCourseName}`,
@@ -284,7 +282,7 @@ class KakaoMessageServiceClass {
 
   /**
    * 커스텀 메시지 공유
-   * 
+   *
    * @param title 제목
    * @param description 설명
    * @param imageUrl 이미지 URL
@@ -296,7 +294,7 @@ class KakaoMessageServiceClass {
     description: string,
     imageUrl: string,
     buttonTitle: string = '자세히 보기',
-    link?: string
+    link?: string,
   ): Promise<void> {
     try {
       const targetUrl = link || this.webUrl;
@@ -335,7 +333,7 @@ class KakaoMessageServiceClass {
 
   /**
    * 가격 포맷팅
-   * 
+   *
    * @param price 가격
    * @returns 포맷된 문자열 (예: "50,000원")
    */
@@ -345,7 +343,7 @@ class KakaoMessageServiceClass {
 
   /**
    * 날짜 포맷팅
-   * 
+   *
    * @param dateString 날짜 문자열
    * @returns 포맷된 문자열 (예: "2024년 1월 27일")
    */
@@ -359,11 +357,11 @@ class KakaoMessageServiceClass {
 
   /**
    * 링크로 공유하기 (간단한 URL 공유)
-   * 
+   *
    * @param url 공유할 URL
    * @param title 제목 (선택)
    */
-  async shareLink(url: string, title?: string): Promise<void> {
+  async shareLink(url: string, _title?: string): Promise<void> {
     try {
       const linkObject: LinkObject = {
         link: {
@@ -385,13 +383,13 @@ class KakaoMessageServiceClass {
 
   /**
    * 앱 설치 확인
-   * 
+   *
    * @returns 카카오톡 설치 여부
    */
   async isKakaoTalkInstalled(): Promise<boolean> {
     try {
       const { Platform, Linking } = await import('react-native');
-      
+
       if (Platform.OS === 'ios') {
         return await Linking.canOpenURL('kakaokompassauth://');
       } else {
@@ -409,11 +407,11 @@ export const KakaoMessageService = new KakaoMessageServiceClass();
 
 /**
  * 설치 필요 패키지:
- * 
+ *
  * npm install @react-native-seoul/kakao-login
- * 
+ *
  * 참고: @react-native-seoul/kakao-login에 로그인 + 공유 기능 모두 포함
- * 
+ *
  * app.json 설정:
  * {
  *   "expo": {
@@ -437,10 +435,10 @@ export const KakaoMessageService = new KakaoMessageServiceClass();
 
 /**
  * 사용 예시:
- * 
+ *
  * ```typescript
  * import { KakaoMessageService } from './services/kakao/kakaoMessage';
- * 
+ *
  * // 1. 부킹 공유
  * const booking = {
  *   id: '123',
@@ -454,7 +452,7 @@ export const KakaoMessageService = new KakaoMessageServiceClass();
  *   imageUrl: 'https://example.com/golf.jpg',
  * };
  * await KakaoMessageService.shareBooking(booking);
- * 
+ *
  * // 2. 상품 공유
  * const product = {
  *   id: '456',
@@ -465,10 +463,10 @@ export const KakaoMessageService = new KakaoMessageServiceClass();
  *   condition: '거의 새것',
  * };
  * await KakaoMessageService.shareProduct(product);
- * 
+ *
  * // 3. 친구 초대
  * await KakaoMessageService.inviteFriend('홍길동');
- * 
+ *
  * // 4. 커스텀 메시지
  * await KakaoMessageService.shareCustomMessage(
  *   '⛳ Golf Pub',
@@ -481,7 +479,7 @@ export const KakaoMessageService = new KakaoMessageServiceClass();
 
 /**
  * Kakao Developers 설정:
- * 
+ *
  * 1. https://developers.kakao.com 접속
  * 2. 내 애플리케이션 선택
  * 3. 플랫폼 설정:

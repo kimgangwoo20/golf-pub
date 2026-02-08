@@ -20,7 +20,9 @@ export const FriendSection: React.FC<Props> = ({ friends, onPress }) => (
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{friend.name?.[0] || '?'}</Text>
           </View>
-          <Text style={styles.friendName} numberOfLines={1}>{friend.name}</Text>
+          <Text style={styles.friendName} numberOfLines={1}>
+            {friend.name}
+          </Text>
         </View>
       ))}
     </ScrollView>
@@ -33,7 +35,15 @@ const styles = StyleSheet.create({
   title: { fontSize: 16, fontWeight: '600' },
   more: { fontSize: 14, color: '#10b981' },
   friendCard: { alignItems: 'center', marginRight: 16 },
-  avatar: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#e0f2fe', alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#e0f2fe',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
   avatarText: { fontSize: 24, color: '#0ea5e9' },
   friendName: { fontSize: 12, color: '#64748b', maxWidth: 60 },
 });

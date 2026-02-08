@@ -2,7 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, RefreshControl, FlatList, ActivityIndicator,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  RefreshControl,
+  FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -24,10 +30,12 @@ export const BookingListScreen: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       loadBookings();
-    }, [])
+    }, []),
   );
 
-  useEffect(() => { applyFiltersAndSort(); }, [bookings, activeFilter, sortType]);
+  useEffect(() => {
+    applyFiltersAndSort();
+  }, [bookings, activeFilter, sortType]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -41,35 +49,52 @@ export const BookingListScreen: React.FC = () => {
       const now = new Date();
       const today = now.toISOString().split('T')[0];
       if (activeFilter.date === 'today') {
-        filtered = filtered.filter(b => b.date === today);
+        filtered = filtered.filter((b) => b.date === today);
       } else if (activeFilter.date === 'thisWeek') {
         const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-        filtered = filtered.filter(b => b.date >= today && b.date <= weekLater.toISOString().split('T')[0]);
+        filtered = filtered.filter(
+          (b) => b.date >= today && b.date <= weekLater.toISOString().split('T')[0],
+        );
       } else if (activeFilter.date === 'thisMonth') {
         const monthLater = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
-        filtered = filtered.filter(b => b.date >= today && b.date <= monthLater.toISOString().split('T')[0]);
+        filtered = filtered.filter(
+          (b) => b.date >= today && b.date <= monthLater.toISOString().split('T')[0],
+        );
       }
     }
-    if (activeFilter.location) filtered = filtered.filter(b => b.location?.includes(activeFilter.location!));
+    if (activeFilter.location)
+      filtered = filtered.filter((b) => b.location?.includes(activeFilter.location!));
     if (activeFilter.priceRange) {
       const { min, max } = activeFilter.priceRange;
-      filtered = filtered.filter(b => b.price.discount >= min && b.price.discount <= max);
+      filtered = filtered.filter((b) => b.price.discount >= min && b.price.discount <= max);
     }
     if (activeFilter.level && activeFilter.level.length > 0) {
-      filtered = filtered.filter(b => (b.level && activeFilter.level!.includes(b.level)) || b.level === 'any');
+      filtered = filtered.filter(
+        (b) => (b.level && activeFilter.level!.includes(b.level)) || b.level === 'any',
+      );
     }
     if (activeFilter.status && activeFilter.status.length > 0) {
-      filtered = filtered.filter(b => activeFilter.status!.includes(b.status));
+      filtered = filtered.filter((b) => activeFilter.status!.includes(b.status));
     }
     if (activeFilter.hasPub !== undefined) {
-      filtered = filtered.filter(b => b.hasPub === activeFilter.hasPub);
+      filtered = filtered.filter((b) => b.hasPub === activeFilter.hasPub);
     }
     switch (sortType) {
-      case 'latest': filtered.sort((a, b) => b.id.localeCompare(a.id)); break;
-      case 'popular': filtered.sort((a, b) => b.participants.current - a.participants.current); break;
-      case 'priceLow': filtered.sort((a, b) => a.price.discount - b.price.discount); break;
-      case 'priceHigh': filtered.sort((a, b) => b.price.discount - a.price.discount); break;
-      case 'dateClose': filtered.sort((a, b) => a.date.localeCompare(b.date)); break;
+      case 'latest':
+        filtered.sort((a, b) => b.id.localeCompare(a.id));
+        break;
+      case 'popular':
+        filtered.sort((a, b) => b.participants.current - a.participants.current);
+        break;
+      case 'priceLow':
+        filtered.sort((a, b) => a.price.discount - b.price.discount);
+        break;
+      case 'priceHigh':
+        filtered.sort((a, b) => b.price.discount - a.price.discount);
+        break;
+      case 'dateClose':
+        filtered.sort((a, b) => a.date.localeCompare(b.date));
+        break;
     }
     setFilteredBookings(filtered);
   };
@@ -120,11 +145,19 @@ export const BookingListScreen: React.FC = () => {
           renderItem={({ item }) => (
             <BookingListItem
               booking={item}
-              onPress={() => navigation.navigate('BookingDetail' as any, { bookingId: item.id } as any)}
+              onPress={() =>
+                navigation.navigate('BookingDetail' as any, { bookingId: item.id } as any)
+              }
             />
           )}
           contentContainerStyle={styles.listContainer}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+            />
+          }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>😢</Text>
@@ -141,12 +174,31 @@ export const BookingListScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: 'white' },
   container: { flex: 1, backgroundColor: colors.bgSecondary },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: colors.border },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
   headerTitle: { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
-  createButton: { backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
+  createButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
   createButtonText: { color: 'white', fontSize: 14, fontWeight: '600' },
   listContainer: { padding: 16 },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgSecondary },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.bgSecondary,
+  },
   loadingText: { marginTop: 12, fontSize: 14, color: colors.textSecondary },
   emptyContainer: { alignItems: 'center', paddingVertical: 60 },
   emptyText: { fontSize: 48, marginBottom: 16 },

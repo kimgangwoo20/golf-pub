@@ -47,7 +47,7 @@ function calculateGolfScore(
   temp: number,
   humidity: number,
   windSpeed: number,
-  weatherCode: number
+  weatherCode: number,
 ): { score: number; recommendation: string } {
   let score = 100;
 
@@ -116,7 +116,7 @@ function calculateGolfScore(
 // ========================================
 export async function fetchWeather(
   lat: number = 37.5665, // 기본값: 서울시청
-  lon: number = 126.978
+  lon: number = 126.978,
 ): Promise<Weather> {
   try {
     const response = await axios.get(BASE_URL, {
@@ -184,7 +184,7 @@ export async function fetchWeather(
 // ========================================
 export async function fetch10DayForecast(
   lat: number = 37.5665,
-  lon: number = 126.978
+  lon: number = 126.978,
 ): Promise<WeatherForecast[]> {
   try {
     const response = await axios.get(BASE_URL, {
@@ -261,15 +261,15 @@ export async function fetch10DayForecast(
 export async function fetchHourlyForecast(
   lat: number = 37.5665,
   lon: number = 126.978,
-  hours: number = 24
+  hours: number = 24,
 ): Promise<
-  Array<{
+  {
     time: string;
     temp: string;
     sky: string;
     precipitation: string;
     golfScore: number;
-  }>
+  }[]
 > {
   try {
     const response = await axios.get(BASE_URL, {

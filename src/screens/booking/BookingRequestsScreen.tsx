@@ -68,7 +68,7 @@ export const BookingRequestsScreen: React.FC<{ navigation?: any }> = ({ navigati
         onPress: async () => {
           const result = await approveBookingRequest(request.id, bookingId, request.userId);
           if (result.success) {
-            setRequests(prev => prev.filter(r => r.id !== request.id));
+            setRequests((prev) => prev.filter((r) => r.id !== request.id));
             Alert.alert('완료', '신청이 승인되었습니다');
           } else {
             Alert.alert('오류', result.message);
@@ -87,7 +87,7 @@ export const BookingRequestsScreen: React.FC<{ navigation?: any }> = ({ navigati
         onPress: async () => {
           const result = await rejectBookingRequest(requestId);
           if (result.success) {
-            setRequests(prev => prev.filter(r => r.id !== requestId));
+            setRequests((prev) => prev.filter((r) => r.id !== requestId));
             Alert.alert('완료', '신청이 거절되었습니다');
           } else {
             Alert.alert('오류', result.message);
@@ -149,7 +149,7 @@ export const BookingRequestsScreen: React.FC<{ navigation?: any }> = ({ navigati
       <FlatList
         data={requests}
         renderItem={renderRequest}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl

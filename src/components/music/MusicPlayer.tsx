@@ -1,5 +1,5 @@
 // MusicPlayer.tsx - 음악 플레이어
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 
 interface MusicPlayerProps {

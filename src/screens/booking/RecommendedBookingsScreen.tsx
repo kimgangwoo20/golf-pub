@@ -98,14 +98,12 @@ export const RecommendedBookingsScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={styles.notice}>
-        <Text style={styles.noticeText}>
-          회원님의 레벨과 선호도를 기반으로 추천해드립니다
-        </Text>
+        <Text style={styles.noticeText}>회원님의 레벨과 선호도를 기반으로 추천해드립니다</Text>
       </View>
       <FlatList
         data={bookings}
         renderItem={renderBooking}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl

@@ -47,16 +47,13 @@ export const requestCameraPermission = async (): Promise<boolean> => {
   }
 
   try {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.CAMERA,
-      {
-        title: '카메라 권한 요청',
-        message: '사진 촬영 및 QR 코드 스캔을 위해 카메라 권한이 필요합니다.',
-        buttonNeutral: '나중에',
-        buttonNegative: '거부',
-        buttonPositive: '허용',
-      },
-    );
+    const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA, {
+      title: '카메라 권한 요청',
+      message: '사진 촬영 및 QR 코드 스캔을 위해 카메라 권한이 필요합니다.',
+      buttonNeutral: '나중에',
+      buttonNegative: '거부',
+      buttonPositive: '허용',
+    });
 
     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
       return true;
@@ -208,29 +205,21 @@ export const checkAllPermissions = async (): Promise<{
   }
 
   const location = await PermissionsAndroid.check(
-    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
   );
 
-  const camera = await PermissionsAndroid.check(
-    PermissionsAndroid.PERMISSIONS.CAMERA
-  );
+  const camera = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.CAMERA);
 
   let storage = false;
   if (Number(Platform.Version) >= 33) {
-    storage = await PermissionsAndroid.check(
-      'android.permission.READ_MEDIA_IMAGES' as any
-    );
+    storage = await PermissionsAndroid.check('android.permission.READ_MEDIA_IMAGES' as any);
   } else {
-    storage = await PermissionsAndroid.check(
-      PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE
-    );
+    storage = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE);
   }
 
   let notification = true;
   if (Number(Platform.Version) >= 33) {
-    notification = await PermissionsAndroid.check(
-      'android.permission.POST_NOTIFICATIONS' as any
-    );
+    notification = await PermissionsAndroid.check('android.permission.POST_NOTIFICATIONS' as any);
   }
 
   return { location, camera, storage, notification };

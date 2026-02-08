@@ -18,7 +18,7 @@ export const ParticipantItem: React.FC<ParticipantItemProps> = ({
   onPress,
 }) => {
   const Component = onPress ? TouchableOpacity : View;
-  
+
   return (
     <Component style={styles.container} onPress={onPress}>
       <Image source={{ uri: avatar }} style={styles.avatar} />

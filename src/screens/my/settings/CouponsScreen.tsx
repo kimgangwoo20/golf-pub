@@ -51,14 +51,17 @@ export const CouponsScreen: React.FC = () => {
     setRefreshing(false);
   }, [loadCoupons]);
 
-  const filteredCoupons = coupons.filter(c => getCouponStatus(c) === filter);
-  const availableCount = coupons.filter(c => getCouponStatus(c) === 'available').length;
+  const filteredCoupons = coupons.filter((c) => getCouponStatus(c) === filter);
+  const availableCount = coupons.filter((c) => getCouponStatus(c) === 'available').length;
 
   const getStatusColor = (status: CouponStatus) => {
     switch (status) {
-      case 'available': return '#4CAF50';
-      case 'used': return '#999';
-      case 'expired': return '#FF5722';
+      case 'available':
+        return '#4CAF50';
+      case 'used':
+        return '#999';
+      case 'expired':
+        return '#FF5722';
     }
   };
 
@@ -91,7 +94,9 @@ export const CouponsScreen: React.FC = () => {
             </TouchableOpacity>
           )}
           {status === 'used' && <Text style={styles.statusLabel}>사용완료</Text>}
-          {status === 'expired' && <Text style={[styles.statusLabel, { color: '#FF5722' }]}>기간만료</Text>}
+          {status === 'expired' && (
+            <Text style={[styles.statusLabel, { color: '#FF5722' }]}>기간만료</Text>
+          )}
         </View>
       </View>
     );
@@ -129,14 +134,18 @@ export const CouponsScreen: React.FC = () => {
         </View>
 
         <View style={styles.filterRow}>
-          {(['available', 'used', 'expired'] as const).map(f => (
+          {(['available', 'used', 'expired'] as const).map((f) => (
             <TouchableOpacity
               key={f}
               style={[styles.filterButton, filter === f && styles.filterButtonActive]}
               onPress={() => setFilter(f)}
             >
               <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
-                {f === 'available' ? `사용가능 (${availableCount})` : f === 'used' ? '사용완료' : '기간만료'}
+                {f === 'available'
+                  ? `사용가능 (${availableCount})`
+                  : f === 'used'
+                    ? '사용완료'
+                    : '기간만료'}
               </Text>
             </TouchableOpacity>
           ))}
@@ -144,7 +153,7 @@ export const CouponsScreen: React.FC = () => {
 
         <FlatList
           data={filteredCoupons}
-          keyExtractor={item => String(item.id)}
+          keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           refreshControl={
@@ -173,45 +182,77 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 12, fontSize: 14, color: '#666' },
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingVertical: 16, backgroundColor: '#fff',
-    borderBottomWidth: 1, borderBottomColor: '#E5E5E5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
   },
   backButton: { padding: 4 },
   backIcon: { fontSize: 32, color: '#1A1A1A', fontWeight: '300' },
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A1A' },
   filterRow: {
-    flexDirection: 'row', padding: 16, gap: 8,
+    flexDirection: 'row',
+    padding: 16,
+    gap: 8,
   },
   filterButton: {
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff',
-    borderWidth: 1, borderColor: '#E5E5E5',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
   },
   filterButtonActive: { backgroundColor: '#10b981', borderColor: '#10b981' },
   filterText: { fontSize: 13, fontWeight: '600', color: '#666' },
   filterTextActive: { color: '#fff' },
   listContent: { paddingHorizontal: 16, paddingBottom: 40, gap: 12 },
   couponCard: {
-    flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   couponInactive: { opacity: 0.6 },
   couponLeft: {
-    flex: 1, padding: 16, borderLeftWidth: 4,
+    flex: 1,
+    padding: 16,
+    borderLeftWidth: 4,
   },
   couponDiscount: { fontSize: 18, fontWeight: '800', color: '#10b981', marginBottom: 4 },
   couponTitle: { fontSize: 15, fontWeight: '600', color: '#1A1A1A', marginBottom: 2 },
   couponDesc: { fontSize: 13, color: '#666', marginBottom: 6 },
   couponExpiry: { fontSize: 12, color: '#999' },
   couponRight: {
-    width: 80, alignItems: 'center', justifyContent: 'center', padding: 12,
+    width: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
   },
   couponDivider: {
-    position: 'absolute', left: 0, top: 12, bottom: 12, width: 1,
-    borderLeftWidth: 1, borderLeftColor: '#E5E5E5', borderStyle: 'dashed',
+    position: 'absolute',
+    left: 0,
+    top: 12,
+    bottom: 12,
+    width: 1,
+    borderLeftWidth: 1,
+    borderLeftColor: '#E5E5E5',
+    borderStyle: 'dashed',
   },
   useButton: {
-    backgroundColor: '#10b981', paddingHorizontal: 16, paddingVertical: 6, borderRadius: 12,
+    backgroundColor: '#10b981',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
   useButtonText: { fontSize: 13, fontWeight: '600', color: '#fff' },
   statusLabel: { fontSize: 12, fontWeight: '600', color: '#999' },

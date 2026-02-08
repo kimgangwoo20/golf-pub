@@ -74,7 +74,7 @@ export const kakaoLogin = async (): Promise<KakaoLoginResult> => {
 export const kakaoLogout = async (): Promise<{ success: boolean; error?: string }> => {
   try {
     await logout();
-    
+
     return { success: true };
   } catch (error: any) {
     console.error('❌ Kakao 로그아웃 실패:', error);

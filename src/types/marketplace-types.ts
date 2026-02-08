@@ -53,14 +53,14 @@ export const CATEGORIES: CategoryInfo[] = [
 ];
 
 export const CONDITION_LABELS: Record<ProductCondition, string> = {
-  'new': '새제품',
+  new: '새제품',
   'like-new': '거의 새것',
-  'good': '좋음',
-  'fair': '사용감 있음',
+  good: '좋음',
+  fair: '사용감 있음',
 };
 
 export const STATUS_LABELS: Record<ProductStatus, string> = {
-  'available': '판매중',
-  'reserved': '예약중',
-  'sold': '판매완료',
+  available: '판매중',
+  reserved: '예약중',
+  sold: '판매완료',
 };
