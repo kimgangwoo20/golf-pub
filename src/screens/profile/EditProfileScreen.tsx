@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { profileAPI } from '@/services/api/profileAPI';
 import { showImagePickerOptions } from '@/utils/imageUtils';
+import { validators } from '@/utils/validators';
 
 export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -61,23 +62,12 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
   };
 
   const handleSave = async () => {
-    if (!name.trim()) {
-      Alert.alert('알림', '이름을 입력해주세요.');
+    if (!validators.isValidNickname(name.trim())) {
+      Alert.alert('알림', '이름은 2~10자로 입력해주세요.');
       return;
     }
 
-    // 전화번호 형식 검증
-    const phoneRegex = /^(010-?\d{4}-?\d{4})?$/;
-    if (
-      phone.trim() &&
-      !phoneRegex.test(
-        phone
-          .trim()
-          .replace(/-/g, '')
-          .replace(/^(\d{3})(\d{4})(\d{4})$/, '$1-$2-$3'),
-      ) &&
-      !/^\d{10,11}$/.test(phone.trim().replace(/-/g, ''))
-    ) {
+    if (phone.trim() && !validators.isValidPhoneNumber(phone.trim())) {
       Alert.alert('알림', '올바른 전화번호 형식을 입력해주세요. (예: 010-0000-0000)');
       return;
     }

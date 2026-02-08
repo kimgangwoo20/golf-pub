@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/store/useAuthStore';
+import { validators } from '@/utils/validators';
 
 export const RegisterScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -29,9 +30,12 @@ export const RegisterScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
       return;
     }
 
-    // 이메일 형식 검증
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!validators.isValidNickname(name)) {
+      Alert.alert('알림', '이름은 2~10자로 입력해주세요.');
+      return;
+    }
+
+    if (!validators.isValidEmail(email)) {
       Alert.alert('알림', '올바른 이메일 형식을 입력해주세요.');
       return;
     }
@@ -41,8 +45,8 @@ export const RegisterScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
       return;
     }
 
-    if (password.length < 6) {
-      Alert.alert('알림', '비밀번호는 최소 6자 이상이어야 합니다.');
+    if (!validators.isValidPassword(password)) {
+      Alert.alert('알림', '비밀번호는 최소 8자 이상이어야 합니다.');
       return;
     }
 

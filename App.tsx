@@ -109,6 +109,12 @@ import { useAuthStore } from './src/store/useAuthStore';
 import { firebaseMessaging } from './src/services/firebase/firebaseMessaging';
 import { useNotificationStore } from './src/store/useNotificationStore';
 
+// Error Boundary
+import { ErrorBoundary } from './src/components/common/ErrorBoundary';
+
+// 결제 내역
+import { PaymentHistoryScreen } from './src/screens/profile/PaymentHistoryScreen';
+
 const Tab = createBottomTabNavigator();
 const HomeStack = createNativeStackNavigator();
 const BookingStack = createNativeStackNavigator();
@@ -180,6 +186,7 @@ const MyHomeStackNavigator = () => (
     {/* 포인트, 쿠폰, 고객센터 */}
     <MyHomeStack.Screen name="PointHistory" component={PointHistoryScreen} />
     <MyHomeStack.Screen name="Coupons" component={CouponsScreen} />
+    <MyHomeStack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
     <MyHomeStack.Screen name="Support" component={SupportScreen} />
     {/* 설정 하위 화면들 */}
     <MyHomeStack.Screen name="AccountManagement" component={AccountManagementScreen} />
@@ -345,6 +352,60 @@ function AppContent() {
   );
 }
 
+// Deep Linking 설정
+const linking = {
+  prefixes: ['golfpub://', 'https://golfpub.app'],
+  config: {
+    screens: {
+      Home: {
+        screens: {
+          HomeMain: 'home',
+          NotificationList: 'notifications',
+        },
+      },
+      Bookings: {
+        screens: {
+          BookingList: 'bookings',
+          BookingDetail: 'bookings/:bookingId',
+        },
+      },
+      Feed: {
+        screens: {
+          FeedMain: 'feed',
+          PostDetail: 'feed/:postId',
+        },
+      },
+      Chat: {
+        screens: {
+          ChatList: 'chat',
+          ChatRoom: 'chat/:chatId',
+        },
+      },
+      Marketplace: {
+        screens: {
+          MarketplaceMain: 'marketplace',
+          ProductDetail: 'marketplace/:productId',
+        },
+      },
+      GolfCourse: {
+        screens: {
+          GolfCourseSearch: 'golfcourse',
+          GolfCourseDetail: 'golfcourse/:courseId',
+        },
+      },
+      MyHome: {
+        screens: {
+          MyHomeMain: 'myhome',
+          Profile: 'profile',
+          PointHistory: 'points',
+          Coupons: 'coupons',
+          PaymentHistory: 'payments',
+        },
+      },
+    },
+  },
+};
+
 export default function App() {
   const { user, loading, initAuth } = useAuthStore();
   const { subscribeToUnreadCount, unsubscribeFromUnreadCount } = useNotificationStore();
@@ -376,9 +437,11 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer ref={navigationRef}>
-        {user ? <AppContent /> : <AuthNavigator />}
-      </NavigationContainer>
+      <ErrorBoundary>
+        <NavigationContainer ref={navigationRef} linking={linking}>
+          {user ? <AppContent /> : <AuthNavigator />}
+        </NavigationContainer>
+      </ErrorBoundary>
       <StatusBar style="dark" />
     </SafeAreaProvider>
   );

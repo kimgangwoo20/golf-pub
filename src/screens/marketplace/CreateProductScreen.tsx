@@ -24,6 +24,7 @@ import { marketplaceAPI } from '@/services/api/marketplaceAPI';
 import { firebaseStorage } from '@/services/firebase/firebaseStorage';
 import { colors } from '@/styles/theme';
 import * as ImagePicker from 'expo-image-picker';
+import { validators } from '@/utils/validators';
 
 export const CreateProductScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -104,8 +105,8 @@ export const CreateProductScreen: React.FC = () => {
       Alert.alert('알림', '카테고리를 선택해주세요.');
       return;
     }
-    if (!price.trim()) {
-      Alert.alert('알림', '가격을 입력해주세요.');
+    if (!price.trim() || !validators.isValidAmount(Number(price))) {
+      Alert.alert('알림', '올바른 가격을 입력해주세요.');
       return;
     }
     if (!condition) {

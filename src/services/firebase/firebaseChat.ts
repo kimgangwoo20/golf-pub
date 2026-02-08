@@ -2,7 +2,7 @@
 // Firebase Realtime Database 1:1 채팅
 
 import { database, RealtimeTimestamp, handleFirebaseError } from './firebaseConfig';
-import { firebaseMessaging } from './firebaseMessaging';
+import { callFunction } from './firebaseFunctions';
 
 /**
  * 채팅방 인터페이스
@@ -170,24 +170,23 @@ class FirebaseChatService {
       // 수신자의 읽지 않은 메시지 카운트 증가
       await this.incrementUnreadCount(roomId, senderId);
 
-      // 다른 참여자에게 채팅 메시지 알림 전송
+      // 다른 참여자에게 채팅 메시지 푸시 알림 전송 (Cloud Function 경유)
       try {
         const roomSnapshot = await database.ref(`chatRooms/${roomId}`).once('value');
         if (roomSnapshot.exists()) {
           const roomData = roomSnapshot.val() as ChatRoom;
           const notificationText = type === 'image' ? '사진을 보냈습니다.' : text;
 
-          // 발신자를 제외한 참여자에게 알림 전송
+          // 발신자를 제외한 참여자에게 FCM 푸시 알림 전송
           const notificationPromises = roomData.participants
             .filter((participantId) => participantId !== senderId)
             .map((participantId) =>
-              firebaseMessaging.createNotification(
-                participantId,
-                'chat_message',
+              callFunction('sendChatNotification', {
+                recipientId: participantId,
                 senderName,
-                notificationText,
-                { chatId: roomId },
-              ),
+                message: notificationText,
+                chatId: roomId,
+              }),
             );
 
           await Promise.all(notificationPromises);
