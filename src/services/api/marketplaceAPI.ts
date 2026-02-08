@@ -18,6 +18,19 @@ const PRODUCT_LIKES_COLLECTION = 'product_likes';
 const USERS_COLLECTION = 'users';
 
 /**
+ * 가격 제안 인터페이스
+ */
+export interface PriceOffer {
+  id: string;
+  userId: string;
+  userName: string;
+  offerPrice: number;
+  originalPrice: number;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  createdAt: string;
+}
+
+/**
  * 상품 필터 옵션
  */
 export interface ProductFilter {
@@ -108,17 +121,19 @@ export const marketplaceAPI = {
   },
 
   /**
-   * 상품 목록 조회
+   * 상품 목록 조회 (커서 기반 페이지네이션)
    *
    * @param filter 필터 옵션
    * @param sortBy 정렬 방식
    * @param limit 결과 개수
-   * @returns 상품 목록
+   * @param lastDoc 마지막 문서 (페이지네이션 커서)
+   * @returns 상품 목록 + 마지막 문서 커서
    */
   getProducts: async (
     filter?: ProductFilter,
     sortBy: ProductSortType = 'latest',
     limit: number = 20,
+    lastDoc?: any,
   ): Promise<Product[]> => {
     try {
       const currentUser = auth().currentUser;
@@ -163,6 +178,11 @@ export const marketplaceAPI = {
         case 'popular':
           query = query.orderBy('viewCount', 'desc');
           break;
+      }
+
+      // 커서 기반 페이지네이션
+      if (lastDoc) {
+        query = query.startAfter(lastDoc);
       }
 
       query = query.limit(limit);
@@ -525,6 +545,142 @@ export const marketplaceAPI = {
     } catch (error: any) {
       console.error('❌ 조회수 증가 실패:', error);
       // 조회수는 실패해도 무시
+    }
+  },
+
+  /**
+   * 가격 제안 목록 조회 (판매자용)
+   *
+   * @param productId 상품 ID
+   * @returns 가격 제안 목록
+   */
+  getOffers: async (productId: string): Promise<PriceOffer[]> => {
+    try {
+      const snapshot = await firestore()
+        .collection(PRODUCTS_COLLECTION)
+        .doc(productId)
+        .collection('offers')
+        .orderBy('createdAt', 'desc')
+        .get();
+
+      return snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+      })) as PriceOffer[];
+    } catch (error: any) {
+      console.error('가격 제안 조회 실패:', error);
+      throw new Error(error.message || '가격 제안 목록을 불러오는데 실패했습니다.');
+    }
+  },
+
+  /**
+   * 가격 제안 수락
+   *
+   * @param productId 상품 ID
+   * @param offerId 제안 ID
+   */
+  acceptOffer: async (productId: string, offerId: string): Promise<void> => {
+    try {
+      const currentUser = auth().currentUser;
+      if (!currentUser) throw new Error('로그인이 필요합니다.');
+
+      // 판매자 검증
+      const productDoc = await firestore().collection(PRODUCTS_COLLECTION).doc(productId).get();
+      if (productDoc.data()?.sellerId !== currentUser.uid) {
+        throw new Error('판매자만 제안을 수락할 수 있습니다.');
+      }
+
+      const batch = firestore().batch();
+
+      // 해당 제안 수락
+      const offerRef = firestore()
+        .collection(PRODUCTS_COLLECTION)
+        .doc(productId)
+        .collection('offers')
+        .doc(offerId);
+      batch.update(offerRef, { status: 'ACCEPTED', updatedAt: firestore.FieldValue.serverTimestamp() });
+
+      // 다른 PENDING 제안들 자동 거절
+      const pendingOffers = await firestore()
+        .collection(PRODUCTS_COLLECTION)
+        .doc(productId)
+        .collection('offers')
+        .where('status', '==', 'PENDING')
+        .get();
+
+      pendingOffers.docs.forEach((doc) => {
+        if (doc.id !== offerId) {
+          batch.update(doc.ref, { status: 'REJECTED', updatedAt: firestore.FieldValue.serverTimestamp() });
+        }
+      });
+
+      // 상품 상태를 예약중으로 변경
+      batch.update(firestore().collection(PRODUCTS_COLLECTION).doc(productId), {
+        status: 'reserved' as ProductStatus,
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+      });
+
+      await batch.commit();
+    } catch (error: any) {
+      console.error('가격 제안 수락 실패:', error);
+      throw new Error(error.message || '가격 제안 수락에 실패했습니다.');
+    }
+  },
+
+  /**
+   * 가격 제안 거절
+   *
+   * @param productId 상품 ID
+   * @param offerId 제안 ID
+   */
+  rejectOffer: async (productId: string, offerId: string): Promise<void> => {
+    try {
+      const currentUser = auth().currentUser;
+      if (!currentUser) throw new Error('로그인이 필요합니다.');
+
+      const productDoc = await firestore().collection(PRODUCTS_COLLECTION).doc(productId).get();
+      if (productDoc.data()?.sellerId !== currentUser.uid) {
+        throw new Error('판매자만 제안을 거절할 수 있습니다.');
+      }
+
+      await firestore()
+        .collection(PRODUCTS_COLLECTION)
+        .doc(productId)
+        .collection('offers')
+        .doc(offerId)
+        .update({ status: 'REJECTED', updatedAt: firestore.FieldValue.serverTimestamp() });
+    } catch (error: any) {
+      console.error('가격 제안 거절 실패:', error);
+      throw new Error(error.message || '가격 제안 거절에 실패했습니다.');
+    }
+  },
+
+  /**
+   * 내 상품에 대한 전체 제안 조회 (판매자 대시보드)
+   *
+   * @returns 내 상품별 제안 목록
+   */
+  getMyProductOffers: async (): Promise<{ product: Product; offers: PriceOffer[] }[]> => {
+    try {
+      const currentUser = auth().currentUser;
+      if (!currentUser) throw new Error('로그인이 필요합니다.');
+
+      const products = await marketplaceAPI.getMyProducts();
+      const results: { product: Product; offers: PriceOffer[] }[] = [];
+
+      for (const product of products) {
+        const offers = await marketplaceAPI.getOffers(product.id);
+        const pendingOffers = offers.filter((o) => o.status === 'PENDING');
+        if (pendingOffers.length > 0) {
+          results.push({ product, offers: pendingOffers });
+        }
+      }
+
+      return results;
+    } catch (error: any) {
+      console.error('내 상품 제안 조회 실패:', error);
+      throw new Error(error.message || '제안 목록을 불러오는데 실패했습니다.');
     }
   },
 
