@@ -25,8 +25,8 @@
 
 ### Phase 1: 기본 구조 & 인증 (완료)
 ### Phase 2: 핵심 기능 개발 (완료)
-### Phase 3: 결제 & 알림 연동 (진행 중 - Cloud Functions 구현 완료, Toss SDK 클라이언트 연동 예정)
-### Phase 4: 테스트 & 최적화 (예정)
+### Phase 3: 결제 & 알림 연동 (진행 중 - Cloud Functions 11개 배포 완료, Toss SDK 클라이언트 위젯 연동 예정)
+### Phase 4: 테스트 & 최적화 (진행 중 - Jest 20개 테스트, CI/CD 설정 완료)
 ### Phase 5: 배포 준비 (예정)
 
 ---
@@ -134,6 +134,37 @@
   - profile/: EditProfileScreen, MyBookingsScreen
   - my/: MyHomeScreen, AccountManagementScreen
 - [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.07 완료)
+
+### 2026.02.08 알림/예약취소/공유/테스트 등 8개 기능 구현 (13차 배치)
+
+- [x] ~~푸시 알림 딥링킹 완성~~ (2026.02.08 완료)
+  - NotificationListScreen 전체 구현 (FlatList, 알림 타입별 아이콘 16종, 시간 포맷, 읽음/미읽음, 모두 읽기)
+  - App.tsx에 FCM 초기화 (`firebaseMessaging.initialize`) + 미읽은 알림 수 구독
+  - useNotificationStore: markAsRead Firestore 업데이트 연동, data 필드 추가
+  - firebaseMessaging: 딥링크 3건 추가 (booking_cancelled, point_earned, coupon_issued)
+  - navigationRef.ts 타입 에러 수정
+- [x] ~~예약 취소/탈퇴 Cloud Functions 구현~~ (2026.02.08 완료)
+  - `bookingCancel` CF: 호스트 검증 + 참가자 일괄 취소 + 알림 전송
+  - `bookingWithdraw` CF: Transaction 기반 참가자 제거 + 정원 상태 롤백 + 호스트 알림
+  - firebaseBooking.ts: cancelBooking/withdrawFromBooking → Cloud Function 호출로 전환
+  - Firebase 배포 완료 (총 11개 함수)
+- [x] ~~리뷰 시스템 버그 수정~~ (2026.02.08 완료)
+  - pubAPI.ts: 리뷰 전체 삭제 시 rating 0 리셋 누락 수정 (golfCourseAPI는 이미 구현됨)
+- [x] ~~카카오 메시지 공유 → React Native Share API 전환~~ (2026.02.08 완료)
+  - kakaoMessage.ts 전면 재작성: 카카오 SDK share API (v5에서 제거됨) → `Share.share()` 네이티브 공유
+  - shareBooking, shareProduct, inviteFriend, shareGolfCourse, shareCustomMessage, shareLink 6개 메서드
+- [x] ~~FlatList 성능 최적화 유틸리티 생성~~ (2026.02.08 완료)
+  - `src/utils/listOptimization.ts`: flatListOptimizedProps, chatListOptimizedProps, createGetItemLayout, defaultKeyExtractor
+- [x] ~~CI/CD GitHub Actions 워크플로우 설정~~ (2026.02.08 완료)
+  - `.github/workflows/ci.yml`: lint-and-typecheck, functions-build, test, android-build (EAS) 4개 Job
+- [x] ~~Jest 테스트 프레임워크 설정 + 20개 테스트~~ (2026.02.08 완료)
+  - jest.config.js (ts-jest, @/ 별칭), `__tests__/setup.ts` (Firebase/RN 전체 Mock)
+  - formatters 8개 + validators 8개 + kakaoMessage 4개 = 20개 테스트 통과
+- [x] ~~유틸리티 함수 실제 로직 구현~~ (2026.02.08 완료)
+  - formatters.ts: formatPrice, formatNumber, formatDate, formatDateTime, formatPhoneNumber, formatRelativeTime, formatDistance
+  - validators.ts: isValidEmail, isValidPhoneNumber, isValidPassword, isValidNickname, isValidAmount, isValidUrl, isValidReviewContent, isValidRating
+- [x] ~~Functions 빌드 0 에러, TypeScript typecheck 0 에러, Jest 20/20 통과~~ (2026.02.08 완료)
+- [x] ~~Cloud Functions 11개 Firebase 배포 성공 (bookingCancel, bookingWithdraw 신규 2개 포함)~~ (2026.02.08 완료)
 
 ### 2026.02.08 Cloud Functions 전체 구현 + 클라이언트 연동 (12차 배치)
 
@@ -384,32 +415,32 @@
 - [ ] **푸시 알림 완성** - Firebase Cloud Messaging
   - [x] ~~FCM 토큰 등록 & 서버 전송~~ (2026.02.08 완료)
   - [x] ~~알림 수신 처리 (포그라운드/백그라운드) → expo-notifications 연동~~ (2026.02.08 완료)
-  - [ ] 알림 클릭 시 딥링킹
+  - [x] ~~알림 클릭 시 딥링킹~~ (2026.02.08 완료)
   - [x] ~~알림 뱃지 업데이트 → Notifications.setBadgeCountAsync~~ (2026.02.08 완료)
   - [x] ~~알림 종류별 처리 (예약 참여/취소, 친구 요청)~~ (2026.02.08 완료)
   - [ ] 채팅 메시지 알림 전송
 
 ### 🟡 우선순위 중간 (P1 - 중요)
 
-- [ ] **예약 상세 기능 보완**
+- [x] ~~**예약 상세 기능 보완**~~ (2026.02.08 완료)
   - [x] ~~BookingDetailScreen - Mock 제거 → useBookingStore.getBooking 연결~~ (2026.02.07 완료)
   - [x] ~~BookingRequestsScreen - Mock 제거 → firebaseBooking 실제 API 연결~~ (2026.02.07 완료)
-  - [ ] 예약 취소/환불 프로세스
-  - [ ] 예약 상태 변경 알림
+  - [x] ~~예약 취소/환불 프로세스~~ (2026.02.08 완료)
+  - [x] ~~예약 상태 변경 알림~~ (2026.02.08 완료)
 
-- [ ] **리뷰 시스템 완성**
+- [x] ~~**리뷰 시스템 완성**~~ (2026.02.08 완료)
   - [x] ~~골프장 리뷰 작성 → Firestore 저장 (golfCourseAPI.createGolfCourseReview)~~ (2026.02.07 완료)
   - [x] ~~골프장 리뷰 조회 → Firestore 연동 (golfCourseAPI.getGolfCourseReviews)~~ (2026.02.07 완료)
   - [x] ~~펍 리뷰 작성 → Firestore 저장 (pubAPI.createPubReview)~~ (2026.02.07 완료)
-  - [ ] 리뷰 별점 집계 & 표시
-  - [ ] 리뷰 수정/삭제
+  - [x] ~~리뷰 별점 집계 & 표시~~ (2026.02.08 완료)
+  - [x] ~~리뷰 수정/삭제~~ (2026.02.08 완료)
 
 - [ ] **중고마켓 기능 완성**
   - [x] ~~ProductDetailScreen - Mock 제거 → marketplaceAPI 연결 (조회수, 찜, 상세조회)~~ (2026.02.07 완료)
   - [x] ~~CreateProductScreen - console.log 제거 → marketplaceAPI.createProduct 연결~~ (2026.02.07 완료)
   - [x] ~~MyProductsScreen - Mock 제거 → marketplaceAPI 연결 (삭제, 상태변경)~~ (2026.02.07 완료)
   - [x] ~~이미지 업로드 → Firebase Storage 연동 (expo-image-picker + firebaseStorage)~~ (2026.02.08 완료)
-  - [ ] 판매자-구매자 채팅 연결
+  - [x] ~~판매자-구매자 채팅 연결~~ (2026.02.08 완료)
   - [ ] 가격 제안 기능
 
 - [ ] **포인트 & 쿠폰 시스템**
@@ -432,12 +463,12 @@
 
 - [ ] **카카오 연동 확장**
   - [ ] 카카오맵 연동 (골프장/펍 위치)
-  - [ ] 카카오 메시지 공유 (모임 초대)
+  - [x] ~~카카오 메시지 공유 (모임 초대) → React Native Share API로 전환~~ (2026.02.08 완료)
 
 - [ ] **성능 최적화**
   - [ ] 이미지 캐싱 & 리사이징
   - [ ] Firestore 쿼리 최적화
-  - [ ] 리스트 가상화 (FlatList 최적화)
+  - [x] ~~리스트 가상화 (FlatList 최적화) → listOptimization.ts~~ (2026.02.08 완료)
   - [ ] 앱 시작 속도 개선
 
 ### 🔵 배포 준비 (P3)
@@ -448,15 +479,15 @@
   - [ ] 사용자 행동 분석
 
 - [ ] **테스트**
-  - [ ] 단위 테스트 작성 (서비스 레이어)
+  - [x] ~~단위 테스트 작성 (formatters, validators, kakaoMessage - 20개)~~ (2026.02.08 완료)
   - [ ] 통합 테스트 (네비게이션 플로우)
   - [ ] E2E 테스트 (주요 사용자 시나리오)
 
-- [ ] **CI/CD 파이프라인**
-  - [ ] GitHub Actions 설정
-  - [ ] 자동 빌드 (Android APK / iOS IPA)
-  - [ ] 코드 품질 검사 (ESLint, TypeScript)
-  - [ ] 테스트 자동 실행
+- [x] ~~**CI/CD 파이프라인**~~ (2026.02.08 완료)
+  - [x] ~~GitHub Actions 설정~~ (2026.02.08 완료)
+  - [x] ~~자동 빌드 (Android EAS Build)~~ (2026.02.08 완료)
+  - [x] ~~코드 품질 검사 (ESLint, TypeScript)~~ (2026.02.08 완료)
+  - [x] ~~테스트 자동 실행~~ (2026.02.08 완료)
 
 - [ ] **앱 스토어 배포**
   - [ ] Android - Google Play Store 등록
@@ -473,7 +504,7 @@
 | 인증 & 프로필 | 6 | 6 | 0 | 100% |
 | 네비게이션 & UI | 8 | 8 | 0 | 100% |
 | 채팅 | 5 | 5 | 0 | 100% |
-| 예약/모임 | 10 | 9 | 1 | 90% |
+| 예약/모임 | 10 | 10 | 0 | 100% |
 | 피드/소셜 | 5 | 5 | 0 | 100% |
 | 친구 관리 | 5 | 5 | 0 | 100% |
 | 중고마켓 | 9 | 9 | 0 | 100% |
@@ -482,9 +513,9 @@
 | 알림 | 6 | 5 | 1 | 83% |
 | 포인트/쿠폰 | 5 | 5 | 0 | 100% |
 | 내 정보/프로필 화면 | 7 | 7 | 0 | 100% |
-| 리뷰 시스템 | 5 | 3 | 2 | 60% |
+| 리뷰 시스템 | 5 | 5 | 0 | 100% |
 | 음악 | 4 | 0 | 4 | 0% |
-| 테스트/배포 | 10 | 0 | 10 | 0% |
+| 테스트/배포 | 10 | 5 | 5 | 50% |
 | 코드 품질 | 4 | 4 | 0 | 100% |
 | 친구 Mock→API 전환 | 4 | 4 | 0 | 100% |
 | 예약 Mock→API 전환 (5차) | 5 | 5 | 0 | 100% |
@@ -495,7 +526,8 @@
 | Firebase 배포 + 감사 (10차) | 10 | 10 | 0 | 100% |
 | 감사 액션 아이템 + 알림 (11차) | 12 | 12 | 0 | 100% |
 | Cloud Functions + 연동 + 배포 (12차) | 16 | 16 | 0 | 100% |
-| **전체** | **169** | **152** | **17** | **90%** |
+| 알림/예약취소/공유/테스트 (13차) | 10 | 10 | 0 | 100% |
+| **전체** | **179** | **168** | **11** | **94%** |
 
 ---
 
@@ -503,6 +535,19 @@
 
 ### 2026.02.08
 
+> **알림/예약취소/공유/테스트 등 8개 기능 구현 13차 배치 (22개 파일, +11,812/-5,420줄)**
+> - 푸시 알림 딥링킹 완성: NotificationListScreen 전체 구현 (FlatList, 16종 아이콘, 읽음/미읽음, 모두 읽기), App.tsx FCM 초기화 + 미읽은 수 구독, useNotificationStore markAsRead Firestore 연동, firebaseMessaging 딥링크 3건 추가 (booking_cancelled/point_earned/coupon_issued)
+> - 예약 취소/탈퇴 Cloud Functions: bookingCancel(호스트 검증+일괄 취소+알림), bookingWithdraw(Transaction 참가자 제거+정원 롤백+호스트 알림), firebaseBooking.ts cancelBooking/withdrawFromBooking → CF 호출 전환
+> - 리뷰 시스템: pubAPI.ts 빈 리뷰 시 rating 0 리셋 누락 버그 수정
+> - 카카오 공유: kakaoMessage.ts 전면 재작성 → React Native Share API (카카오 SDK v5에서 share API 제거됨)
+> - 성능 최적화: listOptimization.ts 생성 (flatListOptimizedProps, chatListOptimizedProps, createGetItemLayout)
+> - CI/CD: .github/workflows/ci.yml (lint-typecheck, functions-build, test, android-eas-build 4개 Job)
+> - 테스트: jest.config.js + __tests__/setup.ts (Firebase/RN 전체 Mock) + 20개 테스트 (formatters 8 + validators 8 + kakaoMessage 4)
+> - 유틸리티 구현: formatters.ts (7개 함수), validators.ts (8개 함수) 스텁 → 실제 로직 구현
+> - Cloud Functions 11개 Firebase 배포 완료 (bookingCancel, bookingWithdraw 신규 2개 추가)
+> - Functions 빌드 0 에러, TypeScript typecheck 0 에러, Jest 20/20 통과
+> - 전체 진행률: 90% → **94%**
+>
 > **Cloud Functions 전체 구현 + 클라이언트 연동 12차 배치 (42개 파일, +2,287/-341줄)**
 > - functions/ 프로젝트 초기화: firebase-admin v12, firebase-functions v5, TypeScript, ESLint 설정
 > - firebase.json functions 섹션 + emulators.functions(port 5001) 추가, .firebaserc 생성
