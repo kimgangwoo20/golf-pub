@@ -595,6 +595,12 @@
 
 ### 2026.02.08
 
+> **디바이스 테스트 버그 3건 수정 + Firestore 인덱스 추가**
+> - LoginScreen: 카카오 accessToken이 login()에 전달되지 않던 문제 수정 (result.profile → { ...result.profile, accessToken: result.accessToken })
+> - RegisterScreen: Android KeyboardAvoidingView behavior undefined → 'height' 변경 + keyboardVerticalOffset 추가 (비밀번호 확인 입력 시 키보드가 화면 가림 해결)
+> - MyHomeScreen: 방명록 탭에서 FlatList contentContainerStyle paddingHorizontal이 ListHeaderComponent까지 영향주는 레이아웃 축소 버그 수정 (paddingHorizontal → 개별 카드 marginHorizontal로 이동)
+> - firestore.indexes.json: posts(author.id + type + createdAt) 복합 인덱스 추가 + Firebase 배포
+>
 > **날씨 위젯 문구 개선 (UX)**
 > - weatherAPI.ts: 골프 점수 40점 미만 부정적 문구 완화
 > - 기존 "❌ 골프하기 어려운 날씨입니다." → 20~39점 "🌧️ 실내 연습장을 추천드려요." / 0~19점 "☔ 오늘은 실내에서 스윙 연습 어떠세요?"
