@@ -25,8 +25,8 @@
 
 ### Phase 1: 기본 구조 & 인증 (완료)
 ### Phase 2: 핵심 기능 개발 (완료)
-### Phase 3: 결제 & 알림 연동 (진행 중 - Cloud Functions 11개 배포 완료, Toss SDK 클라이언트 위젯 연동 예정)
-### Phase 4: 테스트 & 최적화 (진행 중 - Jest 20개 테스트, CI/CD 설정 완료)
+### Phase 3: 결제 & 알림 연동 (진행 중 - Cloud Functions 12개 배포 완료, Toss SDK 클라이언트 위젯 연동 예정)
+### Phase 4: 테스트 & 최적화 (진행 중 - Jest 20개 테스트, CI/CD 설정 완료, Error Boundary 추가)
 ### Phase 5: 배포 준비 (예정)
 
 ---
@@ -134,6 +134,37 @@
   - profile/: EditProfileScreen, MyBookingsScreen
   - my/: MyHomeScreen, AccountManagementScreen
 - [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.07 완료)
+
+### 2026.02.08 Deep Linking/Error Boundary/Validation/알림/결제내역 등 7개 기능 구현 (14차 배치)
+
+- [x] ~~Deep Linking URL 설정~~ (2026.02.08 완료)
+  - App.tsx에 `linking` config 추가: `golfpub://` + `https://golfpub.app` prefix
+  - 7개 탭 전체 라우트 매핑 (Home, Bookings, Feed, Chat, Marketplace, GolfCourse, MyHome)
+  - 파라미터 경로 지원: `bookings/:bookingId`, `feed/:postId`, `marketplace/:productId`, `golfcourse/:courseId`, `chat/:chatId`
+- [x] ~~Error Boundary 컴포넌트 생성 + 적용~~ (2026.02.08 완료)
+  - `src/components/common/ErrorBoundary.tsx` 신규 생성 (React class component)
+  - getDerivedStateFromError + componentDidCatch로 크래시 캐치
+  - 에러 화면 UI (재시작 버튼 포함), 프로젝트 테마 색상 적용
+  - App.tsx NavigationContainer를 ErrorBoundary로 래핑
+- [x] ~~Input Validation 5개 폼 연동~~ (2026.02.08 완료)
+  - RegisterScreen: `validators.isValidNickname`, `isValidEmail`, `isValidPassword` 적용
+  - LoginScreen: `validators.isValidEmail` 적용
+  - EditProfileScreen: 복잡한 정규식 → `validators.isValidPhoneNumber`, `isValidNickname` 대체
+  - CreateProductScreen: `validators.isValidAmount` 적용
+  - CreateBookingScreen: `validators.isValidAmount` 적용
+- [x] ~~console.log 2건 제거 + .env.example 정리~~ (2026.02.08 완료)
+  - golfCourses.ts: console.log 2줄 제거 (모듈 로드 시 불필요 출력)
+  - .env.example: TOSS_SECRET_KEY(클라이언트 불필요), WEATHER_*, CLOUDFLARE_*, API_BASE_URL, KAKAO_REDIRECT_URI 제거
+- [x] ~~채팅 메시지 알림 Cloud Function 구현~~ (2026.02.08 완료)
+  - `functions/src/functions/chat/sendChatNotification.ts` 신규 생성: FCM 푸시 + Firestore 기록
+  - functions/src/index.ts에 export 추가
+  - firebaseChat.ts: `firebaseMessaging.createNotification` (Firestore-only) → `callFunction('sendChatNotification')` (FCM 실제 푸시) 전환
+- [x] ~~결제 내역 조회 화면 구현~~ (2026.02.08 완료)
+  - `src/services/api/paymentAPI.ts` 신규 생성: getPaymentHistory, getPaymentDetail
+  - `src/screens/profile/PaymentHistoryScreen.tsx` 신규 생성: FlatList, 상태 뱃지, 날짜/금액 포맷
+  - App.tsx MyHomeStackNavigator에 PaymentHistory 라우트 추가
+- [x] ~~Cloud Functions 12개 Firebase 배포 성공 (sendChatNotification 신규 1개 포함)~~ (2026.02.08 완료)
+- [x] ~~Functions 빌드 0 에러, TypeScript typecheck 0 에러, Jest 20/20 통과~~ (2026.02.08 완료)
 
 ### 2026.02.08 알림/예약취소/공유/테스트 등 8개 기능 구현 (13차 배치)
 
@@ -374,7 +405,7 @@
   - [x] ~~예약 참가비 결제 → 시뮬레이션 모드 구현~~ (2026.02.08 완료)
   - [x] ~~결제 성공/실패 처리~~ (2026.02.08 완료)
   - [x] ~~결제 확인/취소 Cloud Functions 구현 (Toss API 서버 사이드 검증)~~ (2026.02.08 완료)
-  - [ ] 결제 내역 조회
+  - [x] ~~결제 내역 조회~~ (2026.02.08 완료)
   - [ ] Toss Payments SDK 클라이언트 위젯 연동 (@tosspayments/widget-sdk-react-native)
 
 - [ ] **Mock 데이터 → 실제 API 교체**
@@ -418,7 +449,7 @@
   - [x] ~~알림 클릭 시 딥링킹~~ (2026.02.08 완료)
   - [x] ~~알림 뱃지 업데이트 → Notifications.setBadgeCountAsync~~ (2026.02.08 완료)
   - [x] ~~알림 종류별 처리 (예약 참여/취소, 친구 요청)~~ (2026.02.08 완료)
-  - [ ] 채팅 메시지 알림 전송
+  - [x] ~~채팅 메시지 알림 전송~~ (2026.02.08 완료)
 
 ### 🟡 우선순위 중간 (P1 - 중요)
 
@@ -509,8 +540,8 @@
 | 친구 관리 | 5 | 5 | 0 | 100% |
 | 중고마켓 | 9 | 9 | 0 | 100% |
 | 골프장/펍 | 8 | 8 | 0 | 100% |
-| 멤버십/결제 | 9 | 8 | 1 | 89% |
-| 알림 | 6 | 5 | 1 | 83% |
+| 멤버십/결제 | 9 | 9 | 0 | 100% |
+| 알림 | 6 | 6 | 0 | 100% |
 | 포인트/쿠폰 | 5 | 5 | 0 | 100% |
 | 내 정보/프로필 화면 | 7 | 7 | 0 | 100% |
 | 리뷰 시스템 | 5 | 5 | 0 | 100% |
@@ -527,7 +558,8 @@
 | 감사 액션 아이템 + 알림 (11차) | 12 | 12 | 0 | 100% |
 | Cloud Functions + 연동 + 배포 (12차) | 16 | 16 | 0 | 100% |
 | 알림/예약취소/공유/테스트 (13차) | 10 | 10 | 0 | 100% |
-| **전체** | **179** | **168** | **11** | **94%** |
+| Deep Linking/ErrorBoundary/Validation (14차) | 8 | 8 | 0 | 100% |
+| **전체** | **187** | **178** | **9** | **95%** |
 
 ---
 
@@ -535,6 +567,17 @@
 
 ### 2026.02.08
 
+> **Deep Linking/Error Boundary/Validation/알림/결제내역 등 7개 기능 구현 14차 배치 (14개 파일, +550/-68줄)**
+> - Deep Linking URL 설정: App.tsx에 linking config 추가 (golfpub:// + https://golfpub.app prefix, 7개 탭 전체 라우트 매핑, 파라미터 경로 지원)
+> - Error Boundary 컴포넌트: ErrorBoundary.tsx 신규 생성 (React class component, 크래시 캐치 + 재시작 UI), App.tsx NavigationContainer 래핑
+> - Input Validation 5개 폼 연동: RegisterScreen(닉네임/이메일/비밀번호), LoginScreen(이메일), EditProfileScreen(전화번호/닉네임), CreateProductScreen(가격), CreateBookingScreen(가격) → validators.ts 중앙 함수 적용
+> - console.log 2건 제거 (golfCourses.ts) + .env.example 정리 (불필요 변수 제거: TOSS_SECRET_KEY, WEATHER_*, CLOUDFLARE_* 등)
+> - 채팅 메시지 알림 CF: sendChatNotification 신규 생성 (FCM 실제 푸시 + Firestore 기록), firebaseChat.ts createNotification → callFunction 전환
+> - 결제 내역 조회: paymentAPI.ts (getPaymentHistory/getPaymentDetail), PaymentHistoryScreen.tsx (FlatList, 상태 뱃지, 날짜/금액 포맷)
+> - Cloud Functions 12개 Firebase 배포 완료 (sendChatNotification 신규 1개)
+> - Functions 빌드 0 에러, TypeScript typecheck 0 에러, Jest 20/20 통과
+> - 전체 진행률: 94% → **95%**
+>
 > **알림/예약취소/공유/테스트 등 8개 기능 구현 13차 배치 (22개 파일, +11,812/-5,420줄)**
 > - 푸시 알림 딥링킹 완성: NotificationListScreen 전체 구현 (FlatList, 16종 아이콘, 읽음/미읽음, 모두 읽기), App.tsx FCM 초기화 + 미읽은 수 구독, useNotificationStore markAsRead Firestore 연동, firebaseMessaging 딥링크 3건 추가 (booking_cancelled/point_earned/coupon_issued)
 > - 예약 취소/탈퇴 Cloud Functions: bookingCancel(호스트 검증+일괄 취소+알림), bookingWithdraw(Transaction 참가자 제거+정원 롤백+호스트 알림), firebaseBooking.ts cancelBooking/withdrawFromBooking → CF 호출 전환
