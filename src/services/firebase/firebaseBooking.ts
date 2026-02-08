@@ -694,67 +694,27 @@ export const getApplicantProfile = async (
 };
 
 /**
- * 부킹 참가 취소
+ * 부킹 참가 취소 (Cloud Functions 경유)
+ * bookingWithdraw CF 재사용 - Transaction 기반 원자적 처리
  */
 export const leaveBooking = async (
   bookingId: string,
-  userId: string,
+  _userId: string,
 ): Promise<{
   success: boolean;
   message: string;
 }> => {
   try {
-    const bookingRef = firestore().collection('bookings').doc(bookingId);
-    const bookingDoc = await bookingRef.get();
-
-    if (!bookingDoc.exists) {
-      return {
-        success: false,
-        message: '존재하지 않는 부킹입니다.',
-      };
-    }
-
-    const bookingData = bookingDoc.data() as Booking;
-
-    // 호스트는 나갈 수 없음
-    if (bookingData.hostId === userId) {
-      return {
-        success: false,
-        message: '호스트는 부킹을 나갈 수 없습니다.',
-      };
-    }
-
-    // 참가자 제거
-    await bookingRef.update({
-      'participants.current': firestore.FieldValue.increment(-1),
-      'participants.list': firestore.FieldValue.arrayRemove(userId),
-      status: 'open', // 정원이 비었으므로 다시 open
-      updatedAt: FirestoreTimestamp.now(),
-    });
-
-    // 참가 기록 업데이트
-    const participantSnapshot = await firestore()
-      .collection('bookingParticipants')
-      .where('bookingId', '==', bookingId)
-      .where('userId', '==', userId)
-      .get();
-
-    if (!participantSnapshot.empty) {
-      await participantSnapshot.docs[0].ref.update({
-        status: 'cancelled',
-        cancelledAt: FirestoreTimestamp.now(),
-      });
-    }
-
-    return {
-      success: true,
-      message: '부킹에서 나갔습니다.',
-    };
-  } catch (error) {
+    const result = await callFunction<{ success: boolean; message: string }>(
+      'bookingWithdraw',
+      { bookingId },
+    );
+    return result;
+  } catch (error: any) {
     console.error('부킹 나가기 실패:', error);
     return {
       success: false,
-      message: '부킹 나가기에 실패했습니다.',
+      message: error.message || '부킹 나가기에 실패했습니다.',
     };
   }
 };
