@@ -3,6 +3,7 @@
 
 import firestore from '@react-native-firebase/firestore';
 import { FirestoreTimestamp } from './firebaseConfig';
+import { callFunction } from './firebaseFunctions';
 
 interface AttendanceRecord {
   userId: string;
@@ -29,10 +30,10 @@ export const checkTodayAttendance = async (userId: string): Promise<boolean> => 
 };
 
 /**
- * 출석 체크 실행
+ * 출석 체크 실행 (Cloud Functions 경유)
  */
 export const markAttendance = async (
-  userId: string,
+  _userId: string,
 ): Promise<{
   success: boolean;
   points: number;
@@ -40,12 +41,17 @@ export const markAttendance = async (
   message: string;
 }> => {
   try {
-    const today = new Date().toISOString().split('T')[0];
-    const timestamp = FirestoreTimestamp.now();
+    const result = await callFunction<{
+      success: boolean;
+      points: number;
+      consecutiveDays: number;
+      message: string;
+    }>('attendanceCheckIn');
 
-    // 이미 출석했는지 확인
-    const alreadyChecked = await checkTodayAttendance(userId);
-    if (alreadyChecked) {
+    return result;
+  } catch (error: any) {
+    // already-exists 에러는 중복 출석
+    if (error.message?.includes('이미 오늘')) {
       return {
         success: false,
         points: 0,
@@ -53,52 +59,6 @@ export const markAttendance = async (
         message: '이미 오늘 출석체크를 완료했습니다!',
       };
     }
-
-    // 연속 출석 일수 계산
-    const consecutiveDays = await getConsecutiveDays(userId);
-    const newConsecutiveDays = consecutiveDays + 1;
-
-    // 보너스 포인트 계산 (연속 출석)
-    let points = 100; // 기본 포인트
-    if (newConsecutiveDays === 7) {
-      points = 500; // 7일 연속 보너스
-    } else if (newConsecutiveDays === 30) {
-      points = 2000; // 30일 연속 보너스
-    } else if (newConsecutiveDays % 7 === 0) {
-      points = 300; // 7일 단위 보너스
-    }
-
-    // 출석 기록 저장
-    const attendanceRecord: AttendanceRecord = {
-      userId,
-      date: today,
-      timestamp,
-      points,
-      consecutiveDays: newConsecutiveDays,
-    };
-
-    await firestore().collection('attendance').doc(`${userId}_${today}`).set(attendanceRecord);
-
-    // 사용자 포인트 업데이트
-    await updateUserPoints(userId, points);
-
-    // 사용자 통계 업데이트
-    await firestore()
-      .collection('users')
-      .doc(userId)
-      .update({
-        'stats.totalAttendance': firestore.FieldValue.increment(1),
-        'stats.consecutiveAttendance': newConsecutiveDays,
-        'stats.lastAttendance': timestamp,
-      });
-
-    return {
-      success: true,
-      points,
-      consecutiveDays: newConsecutiveDays,
-      message: `+${points} 포인트 적립! (${newConsecutiveDays}일 연속)`,
-    };
-  } catch (error) {
     console.error('출석 체크 실패:', error);
     return {
       success: false,
@@ -106,69 +66,6 @@ export const markAttendance = async (
       consecutiveDays: 0,
       message: '출석 체크에 실패했습니다. 다시 시도해주세요.',
     };
-  }
-};
-
-/**
- * 연속 출석 일수 계산
- */
-const getConsecutiveDays = async (userId: string): Promise<number> => {
-  try {
-    const userDoc = await firestore().collection('users').doc(userId).get();
-
-    const userData = userDoc.data();
-    const lastAttendance = userData?.stats?.lastAttendance;
-
-    if (!lastAttendance) {
-      return 0; // 첫 출석
-    }
-
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-    const yesterdayDoc = await firestore()
-      .collection('attendance')
-      .doc(`${userId}_${yesterdayStr}`)
-      .get();
-
-    if (yesterdayDoc.exists) {
-      // 어제 출석했으면 연속
-      return userData?.stats?.consecutiveAttendance || 0;
-    } else {
-      // 어제 출석 안 했으면 초기화
-      return 0;
-    }
-  } catch (error) {
-    console.error('연속 출석 계산 실패:', error);
-    return 0;
-  }
-};
-
-/**
- * 사용자 포인트 업데이트
- */
-const updateUserPoints = async (userId: string, points: number): Promise<void> => {
-  try {
-    await firestore()
-      .collection('users')
-      .doc(userId)
-      .update({
-        'points.balance': firestore.FieldValue.increment(points),
-        'points.earned': firestore.FieldValue.increment(points),
-      });
-
-    // 포인트 내역 기록
-    await firestore().collection('pointHistory').add({
-      userId,
-      type: 'attendance',
-      amount: points,
-      timestamp: FirestoreTimestamp.now(),
-      description: '출석 체크 포인트',
-    });
-  } catch (error) {
-    console.error('포인트 업데이트 실패:', error);
-    throw error;
   }
 };
 

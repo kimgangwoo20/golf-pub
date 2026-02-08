@@ -13,12 +13,16 @@ import {
   Share,
   Modal,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CONDITION_LABELS } from '@/types/marketplace-types';
 import { marketplaceAPI } from '@/services/api/marketplaceAPI';
+import { firebaseChat } from '@/services/firebase/firebaseChat';
+import { useAuthStore } from '@/store/useAuthStore';
+import firestore from '@react-native-firebase/firestore';
 import { colors } from '@/styles/theme';
 import type { Product } from '@/types/marketplace-types';
 
@@ -35,6 +39,11 @@ export const ProductDetailScreen: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [moreMenuVisible, setMoreMenuVisible] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [offerModalVisible, setOfferModalVisible] = useState(false);
+  const [offerPrice, setOfferPrice] = useState('');
+  const [offerSubmitting, setOfferSubmitting] = useState(false);
+  const { user, userProfile } = useAuthStore();
 
   const loadProduct = useCallback(async () => {
     try {
@@ -129,18 +138,70 @@ export const ProductDetailScreen: React.FC = () => {
     );
   };
 
-  const handleChat = () => {
-    if (!product) return;
-    navigation.navigate(
-      'Chat' as any,
-      {
-        screen: 'ChatRoom',
-        params: {
-          chatId: `product_${product.id}`,
-          chatName: product.sellerName,
+  const handleChat = async () => {
+    if (!product || !user) return;
+    try {
+      setChatLoading(true);
+      // 판매자와 1:1 채팅방 생성 또는 기존 채팅방 가져오기
+      const chatId = await firebaseChat.createOrGetChatRoom(
+        user.uid,
+        product.sellerId,
+        {
+          name: userProfile?.nickname || user.displayName || '사용자',
+          photo: userProfile?.profileImage || user.photoURL || null,
         },
-      } as any,
-    );
+        {
+          name: product.sellerName,
+          photo: product.sellerImage || null,
+        },
+      );
+      navigation.navigate(
+        'Chat' as any,
+        {
+          screen: 'ChatRoom',
+          params: {
+            chatId,
+            chatName: product.sellerName,
+          },
+        } as any,
+      );
+    } catch (err: any) {
+      Alert.alert('오류', err.message || '채팅방을 생성할 수 없습니다.');
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  // 가격 제안 제출
+  const handleOfferSubmit = async () => {
+    if (!product || !user) return;
+    const price = Number(offerPrice);
+    if (!price || price <= 0) {
+      Alert.alert('알림', '올바른 가격을 입력해주세요.');
+      return;
+    }
+    try {
+      setOfferSubmitting(true);
+      await firestore()
+        .collection('products')
+        .doc(product.id)
+        .collection('offers')
+        .add({
+          userId: user.uid,
+          userName: userProfile?.nickname || user.displayName || '사용자',
+          offerPrice: price,
+          originalPrice: product.price,
+          status: 'PENDING',
+          createdAt: firestore.FieldValue.serverTimestamp(),
+        });
+      setOfferModalVisible(false);
+      setOfferPrice('');
+      Alert.alert('성공', '가격 제안이 전송되었습니다.');
+    } catch (err: any) {
+      Alert.alert('오류', err.message || '가격 제안에 실패했습니다.');
+    } finally {
+      setOfferSubmitting(false);
+    }
   };
 
   const handleSellerPress = () => {
@@ -314,10 +375,63 @@ export const ProductDetailScreen: React.FC = () => {
           <TouchableOpacity style={styles.likeButton} onPress={handleLike}>
             <Text style={styles.likeButtonIcon}>{isLiked ? '❤️' : '🤍'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.chatButton} onPress={handleChat}>
-            <Text style={styles.chatButtonText}>채팅하기</Text>
+          <TouchableOpacity
+            style={styles.offerButton}
+            onPress={() => setOfferModalVisible(true)}
+          >
+            <Text style={styles.offerButtonText}>가격 제안</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.chatButton, chatLoading && styles.chatButtonDisabled]}
+            onPress={handleChat}
+            disabled={chatLoading}
+          >
+            {chatLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.chatButtonText}>채팅하기</Text>
+            )}
           </TouchableOpacity>
         </View>
+
+        {/* 가격 제안 모달 */}
+        <Modal
+          visible={offerModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setOfferModalVisible(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setOfferModalVisible(false)}
+          >
+            <View style={styles.offerModalContainer}>
+              <Text style={styles.offerModalTitle}>가격 제안</Text>
+              <Text style={styles.offerModalOriginalPrice}>
+                현재 가격: {product?.price.toLocaleString()}원
+              </Text>
+              <TextInput
+                style={styles.offerInput}
+                placeholder="제안 가격을 입력하세요"
+                keyboardType="number-pad"
+                value={offerPrice}
+                onChangeText={setOfferPrice}
+              />
+              <TouchableOpacity
+                style={[styles.offerSubmitButton, offerSubmitting && styles.offerSubmitButtonDisabled]}
+                onPress={handleOfferSubmit}
+                disabled={offerSubmitting}
+              >
+                {offerSubmitting ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.offerSubmitButtonText}>제안하기</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
 
         {/* 더보기 메뉴 모달 */}
         <Modal
@@ -588,6 +702,21 @@ const styles = StyleSheet.create({
   likeButtonIcon: {
     fontSize: 24,
   },
+  offerButton: {
+    flex: 1,
+    height: 56,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  offerButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.primary,
+  },
   chatButton: {
     flex: 1,
     height: 56,
@@ -596,7 +725,52 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  chatButtonDisabled: {
+    opacity: 0.6,
+  },
   chatButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  offerModalContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  offerModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  offerModalOriginalPrice: {
+    fontSize: 14,
+    color: '#999',
+    marginBottom: 16,
+  },
+  offerInput: {
+    height: 48,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  offerSubmitButton: {
+    height: 48,
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  offerSubmitButtonDisabled: {
+    opacity: 0.6,
+  },
+  offerSubmitButtonText: {
     fontSize: 16,
     fontWeight: '700',
     color: '#fff',

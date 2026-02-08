@@ -52,7 +52,7 @@ export const ApplicantProfileScreen: React.FC = () => {
         style: 'destructive',
         onPress: async () => {
           try {
-            const result = await rejectBookingRequest(requestId);
+            const result = await rejectBookingRequest(requestId, bookingId, userId);
             if (result.success) {
               Alert.alert('완료', '신청이 거절되었습니다');
               navigation.goBack();

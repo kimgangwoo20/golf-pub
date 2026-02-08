@@ -78,16 +78,16 @@ export const BookingRequestsScreen: React.FC<{ navigation?: any }> = ({ navigati
     ]);
   };
 
-  const handleReject = (requestId: string) => {
+  const handleReject = (request: BookingRequest) => {
     Alert.alert('거절', '신청을 거절하시겠습니까?', [
       { text: '취소', style: 'cancel' },
       {
         text: '거절',
         style: 'destructive',
         onPress: async () => {
-          const result = await rejectBookingRequest(requestId);
+          const result = await rejectBookingRequest(request.id, bookingId, request.userId);
           if (result.success) {
-            setRequests((prev) => prev.filter((r) => r.id !== requestId));
+            setRequests((prev) => prev.filter((r) => r.id !== request.id));
             Alert.alert('완료', '신청이 거절되었습니다');
           } else {
             Alert.alert('오류', result.message);
@@ -123,7 +123,7 @@ export const BookingRequestsScreen: React.FC<{ navigation?: any }> = ({ navigati
         </View>
       </TouchableOpacity>
       <View style={styles.actions}>
-        <TouchableOpacity style={styles.rejectButton} onPress={() => handleReject(item.id)}>
+        <TouchableOpacity style={styles.rejectButton} onPress={() => handleReject(item)}>
           <Text style={styles.rejectText}>거절</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.approveButton} onPress={() => handleApprove(item)}>
