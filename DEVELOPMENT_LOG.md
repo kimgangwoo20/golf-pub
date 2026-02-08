@@ -24,8 +24,8 @@
 ## 🏗️ 전체 개발 일정
 
 ### Phase 1: 기본 구조 & 인증 (완료)
-### Phase 2: 핵심 기능 개발 (진행 중)
-### Phase 3: 결제 & 알림 연동 (예정)
+### Phase 2: 핵심 기능 개발 (완료)
+### Phase 3: 결제 & 알림 연동 (진행 중 - 시뮬레이션 모드 구현 완료, SDK 연동 예정)
 ### Phase 4: 테스트 & 최적화 (예정)
 ### Phase 5: 배포 준비 (예정)
 
@@ -134,6 +134,56 @@
   - profile/: EditProfileScreen, MyBookingsScreen
   - my/: MyHomeScreen, AccountManagementScreen
 - [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.07 완료)
+
+### 2026.02.08 프로젝트 감사 8개 액션 아이템 전체 구현 + notifee→expo-notifications 전환 (11차 배치)
+
+- [x] ~~ESLint/Prettier 설정 수정~~ (2026.02.08 완료)
+  - `.prettierrc` endOfLine "auto" 추가 (Windows CRLF 호환)
+  - `.eslintrc.js` 중복 `rules` 키 제거 + `import/no-unresolved` off
+- [x] ~~크로스 탭 네비게이션 8건 수정~~ (2026.02.08 완료)
+  - `navigation.navigate()` → cross-tab 패턴 `(navigation as any).navigate('TabName', { screen, params })` 전환
+  - BookingDetailScreen, FeedScreen, PostDetailScreen, GolfCourseSearchScreen, GolfCourseDetailScreen, MarketplaceScreen, ProductDetailScreen, HomeScreen
+- [x] ~~WriteReviewScreen 신규 생성~~ (2026.02.08 완료)
+  - `src/screens/golfcourse/WriteReviewScreen.tsx` 생성
+  - 별점 입력, 텍스트 리뷰, 이미지 업로드 (expo-image-picker), Firestore 저장
+  - AuthNavigator에 라우트 등록
+- [x] ~~console.log 제거 + 미사용 import 정리~~ (2026.02.08 완료)
+  - 전체 src/ 디렉토리 스캔, 미사용 변수/import 제거
+  - ESLint 에러 0개 달성
+- [x] ~~MyHomeScreen Mock→Firestore 전환~~ (2026.02.08 완료)
+  - Mock 데이터 생성기 제거 → Firestore `posts`, `users/{uid}/guestbook` 쿼리
+  - 커서 기반 페이지네이션 (`startAfter`) 구현
+  - ContentItem.id / GuestbookItem.id 타입 number→string
+- [x] ~~"개발 예정" Alert 15건 실구현~~ (2026.02.08 완료)
+  - 이미지 업로드: expo-image-picker + Firebase Storage 연동
+  - 외부 링크: Kakao/Naver/Google Maps `Linking.openURL` 연결
+  - 신고/차단: Firestore `reports`, `blocks` 컬렉션 CRUD
+  - 네비게이션: 실제 화면으로 이동 (WriteReview, EditProfile 등)
+- [x] ~~Toss Payments 결제 서비스 구현~~ (2026.02.08 완료)
+  - `tossPayments.ts`: requestPayment, confirmPayment, cancelPayment (시뮬레이션 모드)
+  - 환불 정책: 2일 전 100%, 1일 전 50%, 당일 0%
+  - 플랫폼 수수료 5% 계산
+  - PaymentScreen + MembershipPaymentScreen 연동
+- [x] ~~subscriptionService 멤버십 구독 관리 구현~~ (2026.02.08 완료)
+  - getSubscription, subscribe, cancelSubscription, changePlan, checkExpiration
+  - Firestore `users/{userId}` membership 필드 관리
+- [x] ~~@notifee/react-native 제거 → expo-notifications 전환~~ (2026.02.08 완료)
+  - @notifee/react-native 패키지 제거 (Expo managed workflow 비호환)
+  - expo-notifications 설치 및 연동
+  - setBadgeCount → Notifications.setBadgeCountAsync
+  - createChannel → Notifications.setNotificationChannelAsync
+  - displayNotification → Notifications.scheduleNotificationAsync
+  - app.json plugins에서 @notifee/react-native 항목 제거
+- [x] ~~FCM 알림 전송 연동~~ (2026.02.08 완료)
+  - firebaseBooking.ts: 부킹 참여 시 호스트에게 알림, 취소 시 참가자에게 알림
+  - firebaseFriends.ts: 친구 요청 시 대상 사용자에게 알림
+- [x] ~~Firestore 인덱스 Firebase 배포~~ (2026.02.08 완료)
+  - `firebase deploy --only firestore:indexes` 실행
+  - bookings(status+createdAt), posts(status+createdAt), chatRooms(participantIds+updatedAt) 등 15개 인덱스 활성화
+- [x] ~~Android dev client 빌드 + 디바이스 테스트~~ (2026.02.08 완료)
+  - `expo run:android` 네이티브 빌드 성공 (Firebase 모듈 포함)
+  - SM_S901N 디바이스 설치 및 정상 실행 확인
+  - TypeScript 0 에러, ESLint 0 에러
 
 ### 2026.02.07 Firebase 전체 배포 + Permission 에러 수정 + 코드베이스 감사 (10차 배치)
 
@@ -262,10 +312,11 @@
 ### 🔴 우선순위 높음 (P0 - 필수)
 
 - [ ] **결제 시스템 연동** - Toss Payments 실제 결제 플로우 구현
-  - [ ] 멤버십 결제 → 백엔드 연동
-  - [ ] 예약 참가비 결제
-  - [ ] 결제 성공/실패 처리
+  - [x] ~~멤버십 결제 → 시뮬레이션 모드 구현 (tossPayments + subscriptionService)~~ (2026.02.08 완료)
+  - [x] ~~예약 참가비 결제 → 시뮬레이션 모드 구현~~ (2026.02.08 완료)
+  - [x] ~~결제 성공/실패 처리~~ (2026.02.08 완료)
   - [ ] 결제 내역 조회
+  - [ ] Toss Payments SDK 실제 연동 (백엔드 서버 필요)
 
 - [ ] **Mock 데이터 → 실제 API 교체**
   - [x] ~~BookingListScreen - Mock 예약 데이터 제거 → Firestore 연동~~ (2026.02.07 완료)
@@ -303,11 +354,12 @@
   - [x] ~~PostDetailScreen - Mock 게시글+댓글 제거 → useFeedStore 연결~~ (2026.02.07 완료)
 
 - [ ] **푸시 알림 완성** - Firebase Cloud Messaging
-  - [ ] FCM 토큰 등록 & 서버 전송
-  - [ ] 알림 수신 처리 (포그라운드/백그라운드)
+  - [x] ~~FCM 토큰 등록 & 서버 전송~~ (2026.02.08 완료)
+  - [x] ~~알림 수신 처리 (포그라운드/백그라운드) → expo-notifications 연동~~ (2026.02.08 완료)
   - [ ] 알림 클릭 시 딥링킹
-  - [ ] 알림 뱃지 업데이트
-  - [ ] 알림 종류별 처리 (채팅, 예약, 친구 요청 등)
+  - [x] ~~알림 뱃지 업데이트 → Notifications.setBadgeCountAsync~~ (2026.02.08 완료)
+  - [x] ~~알림 종류별 처리 (예약 참여/취소, 친구 요청)~~ (2026.02.08 완료)
+  - [ ] 채팅 메시지 알림 전송
 
 ### 🟡 우선순위 중간 (P1 - 중요)
 
@@ -328,7 +380,7 @@
   - [x] ~~ProductDetailScreen - Mock 제거 → marketplaceAPI 연결 (조회수, 찜, 상세조회)~~ (2026.02.07 완료)
   - [x] ~~CreateProductScreen - console.log 제거 → marketplaceAPI.createProduct 연결~~ (2026.02.07 완료)
   - [x] ~~MyProductsScreen - Mock 제거 → marketplaceAPI 연결 (삭제, 상태변경)~~ (2026.02.07 완료)
-  - [ ] 이미지 업로드 → Firebase Storage 연동
+  - [x] ~~이미지 업로드 → Firebase Storage 연동 (expo-image-picker + firebaseStorage)~~ (2026.02.08 완료)
   - [ ] 판매자-구매자 채팅 연결
   - [ ] 가격 제안 기능
 
@@ -395,10 +447,10 @@
 | 예약/모임 | 10 | 9 | 1 | 90% |
 | 피드/소셜 | 5 | 5 | 0 | 100% |
 | 친구 관리 | 5 | 5 | 0 | 100% |
-| 중고마켓 | 9 | 8 | 1 | 89% |
+| 중고마켓 | 9 | 9 | 0 | 100% |
 | 골프장/펍 | 8 | 8 | 0 | 100% |
-| 멤버십/결제 | 8 | 4 | 4 | 50% |
-| 알림 | 5 | 1 | 4 | 20% |
+| 멤버십/결제 | 9 | 7 | 2 | 78% |
+| 알림 | 6 | 5 | 1 | 83% |
 | 포인트/쿠폰 | 4 | 2 | 2 | 50% |
 | 내 정보/프로필 화면 | 7 | 7 | 0 | 100% |
 | 리뷰 시스템 | 5 | 3 | 2 | 60% |
@@ -412,11 +464,31 @@
 | 코드 품질 정리 (8차) | 3 | 3 | 0 | 100% |
 | Firestore 규칙 + Seed + 경로 (9차) | 5 | 5 | 0 | 100% |
 | Firebase 배포 + 감사 (10차) | 10 | 10 | 0 | 100% |
-| **전체** | **138** | **114** | **24** | **83%** |
+| 감사 액션 아이템 + 알림 (11차) | 12 | 12 | 0 | 100% |
+| **전체** | **152** | **134** | **18** | **88%** |
 
 ---
 
 ## 📝 일일 개발 기록
+
+### 2026.02.08
+
+> **프로젝트 감사 8개 액션 아이템 전체 구현 + notifee→expo-notifications 전환 11차 배치 (174개 파일, +12,066/-5,162줄)**
+> - ESLint/Prettier 설정 수정: endOfLine "auto", 중복 rules 키 제거, import/no-unresolved off
+> - 크로스 탭 네비게이션 8건 수정: navigate() → cross-tab 패턴 전환
+> - WriteReviewScreen 신규 생성: 별점/텍스트/이미지 업로드, Firestore 저장, AuthNavigator 등록
+> - console.log 제거 + 미사용 import/변수 정리 → ESLint 0 에러 달성
+> - MyHomeScreen Mock→Firestore 전환: 커서 기반 페이지네이션, guestbook 서브컬렉션 쿼리
+> - "개발 예정" Alert 15건 실구현: 이미지 업로드, 외부 지도 링크, 신고/차단 Firestore, 실제 네비게이션
+> - Toss Payments 결제 서비스 구현: 시뮬레이션 모드, 환불 정책(2일전 100%/1일전 50%/당일 0%), 수수료 5%
+> - subscriptionService 멤버십 구독 관리: getSubscription/subscribe/cancel/changePlan/checkExpiration
+> - @notifee/react-native 제거 → expo-notifications 전환 (Expo managed workflow 비호환 문제 해결)
+> - FCM 알림 전송 연동: 부킹 참여→호스트 알림, 부킹 취소→참가자 알림, 친구 요청→대상 알림
+> - Firestore 인덱스 15개 Firebase 배포 완료 (bookings/posts/chatRooms 복합 인덱스)
+> - app.json plugins에서 @notifee/react-native 제거
+> - expo run:android 네이티브 빌드 + SM_S901N 디바이스 정상 실행 확인
+> - TypeScript 0 에러, ESLint 0 에러 유지
+> - 전체 진행률: 83% → **88%**
 
 ### 2026.02.07
 
