@@ -178,7 +178,9 @@ service cloud.firestore {
       match /messages/{messageId} {
         allow read: if isSignedIn();
         allow create: if isSignedIn();
-        allow update: if false;
+        // 읽음 처리(readBy) 업데이트 허용
+        allow update: if isSignedIn() &&
+                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy']);
         allow delete: if false;
       }
     }

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { firestore as firebaseFirestore } from '@/services/firebase/firebaseConfig';
+import { firestore as firebaseFirestore, FirestoreTimestamp } from '@/services/firebase/firebaseConfig';
 
 export interface ChatMessage {
   id: string;
@@ -144,7 +144,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
    */
   sendMessage: async (roomId, senderId, senderName, message, senderAvatar) => {
     try {
-      const now = new Date();
+      const now = FirestoreTimestamp.now();
       const messageData = {
         chatRoomId: roomId,
         senderId,
@@ -163,23 +163,23 @@ export const useChatStore = create<ChatState>((set, get) => ({
         .collection('messages')
         .add(messageData);
 
-      // 채팅방 업데이트 (마지막 메시지, 업데이트 시간)
+      // 채팅방 업데이트 (set+merge로 문서 없어도 생성됨)
       await firebaseFirestore
         .collection('chatRooms')
         .doc(roomId)
-        .update({
+        .set({
           lastMessage: {
             message,
             senderId,
             createdAt: now,
           },
           updatedAt: now,
-        });
+        }, { merge: true });
 
       // 로컬 상태 업데이트
       const { currentRoomMessages } = get();
       set({
-        currentRoomMessages: [...currentRoomMessages, { id: messageRef.id, ...messageData }],
+        currentRoomMessages: [...currentRoomMessages, { id: messageRef.id, ...messageData, createdAt: new Date() }],
       });
     } catch (error: any) {
       console.error('메시지 전송 실패:', error);
@@ -193,7 +193,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
    */
   sendImage: async (roomId, senderId, senderName, imageUrl, senderAvatar) => {
     try {
-      const now = new Date();
+      const now = FirestoreTimestamp.now();
       const messageData = {
         chatRoomId: roomId,
         senderId,
@@ -213,23 +213,23 @@ export const useChatStore = create<ChatState>((set, get) => ({
         .collection('messages')
         .add(messageData);
 
-      // 채팅방 업데이트
+      // 채팅방 업데이트 (set+merge로 문서 없어도 생성됨)
       await firebaseFirestore
         .collection('chatRooms')
         .doc(roomId)
-        .update({
+        .set({
           lastMessage: {
             message: '[사진]',
             senderId,
             createdAt: now,
           },
           updatedAt: now,
-        });
+        }, { merge: true });
 
       // 로컬 상태 업데이트
       const { currentRoomMessages } = get();
       set({
-        currentRoomMessages: [...currentRoomMessages, { id: messageRef.id, ...messageData }],
+        currentRoomMessages: [...currentRoomMessages, { id: messageRef.id, ...messageData, createdAt: new Date() }],
       });
     } catch (error: any) {
       console.error('이미지 전송 실패:', error);
@@ -243,7 +243,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
    */
   sendSystemMessage: async (roomId, message) => {
     try {
-      const now = new Date();
+      const now = FirestoreTimestamp.now();
       const messageData = {
         chatRoomId: roomId,
         senderId: 'system',
@@ -278,6 +278,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         .get();
 
       const batch = firebaseFirestore.batch();
+      let hasUpdates = false;
 
       messagesSnapshot.docs.forEach((doc) => {
         const readBy: string[] = doc.data().readBy || [];
@@ -285,18 +286,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
           batch.update(doc.ref, {
             readBy: [...readBy, userId],
           });
+          hasUpdates = true;
         }
       });
 
-      await batch.commit();
+      if (hasUpdates) {
+        await batch.commit();
+      }
 
-      // 채팅방의 unreadCount 업데이트
+      // 채팅방의 unreadCount 업데이트 (set+merge로 문서 없어도 안전)
       await firebaseFirestore
         .collection('chatRooms')
         .doc(roomId)
-        .update({
+        .set({
           [`unreadCount.${userId}`]: 0,
-        });
+        }, { merge: true });
     } catch (error: any) {
       console.error('읽음 처리 실패:', error);
     }
@@ -309,7 +313,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      const now = new Date();
+      const now = FirestoreTimestamp.now();
       const unreadCount: { [key: string]: number } = {};
       room.participants.forEach((p) => {
         unreadCount[p.uid] = 0;
@@ -329,8 +333,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       // 로컬 상태 업데이트
       const { chatRooms } = get();
+      const localNow = new Date();
       set({
-        chatRooms: [{ id: docRef.id, ...newRoom } as ChatRoom, ...chatRooms],
+        chatRooms: [{ id: docRef.id, ...newRoom, createdAt: localNow, updatedAt: localNow } as ChatRoom, ...chatRooms],
         loading: false,
       });
 
