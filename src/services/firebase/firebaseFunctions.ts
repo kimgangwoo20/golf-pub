@@ -9,7 +9,7 @@ export const callFunction = async <T = any>(
   data?: any,
 ): Promise<T> => {
   try {
-    const callable = functions().httpsCallable(name);
+    const callable = functions('asia-northeast3').httpsCallable(name);
     const result = await callable(data);
     return result.data as T;
   } catch (error: any) {
