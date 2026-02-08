@@ -25,7 +25,7 @@
 
 ### Phase 1: 기본 구조 & 인증 (완료)
 ### Phase 2: 핵심 기능 개발 (완료)
-### Phase 3: 결제 & 알림 연동 (진행 중 - 시뮬레이션 모드 구현 완료, SDK 연동 예정)
+### Phase 3: 결제 & 알림 연동 (진행 중 - Cloud Functions 구현 완료, Toss SDK 클라이언트 연동 예정)
 ### Phase 4: 테스트 & 최적화 (예정)
 ### Phase 5: 배포 준비 (예정)
 
@@ -134,6 +134,28 @@
   - profile/: EditProfileScreen, MyBookingsScreen
   - my/: MyHomeScreen, AccountManagementScreen
 - [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.07 완료)
+
+### 2026.02.08 Cloud Functions 전체 구현 + 클라이언트 연동 (12차 배치)
+
+- [x] ~~functions/ 프로젝트 초기화 (firebase-admin v12, firebase-functions v5, TypeScript)~~ (2026.02.08 완료)
+- [x] ~~firebase.json functions 섹션 + emulators.functions(port 5001) 추가~~ (2026.02.08 완료)
+- [x] ~~.firebaserc 생성 (project: golf-pub)~~ (2026.02.08 완료)
+- [x] ~~서버 공통 유틸리티 4개 생성 (requireAuth, adjustPoints, sendPushNotification, errors)~~ (2026.02.08 완료)
+- [x] ~~Cloud Functions 11개 구현~~ (2026.02.08 완료)
+  - kakaoToken: 카카오 토큰 검증 → Firebase Custom Token 발급
+  - attendanceCheckIn: 출석 체크 + 연속 보너스 포인트 (Transaction 기반)
+  - pointsEarn/pointsDeduct: 포인트 적립/차감 (runTransaction 원자적 처리)
+  - paymentConfirm/paymentCancel: Toss API 결제 확인/취소 (서버 사이드 검증)
+  - bookingApprove/bookingReject: 참가 승인/거절 (호스트 검증 + Transaction + 알림)
+  - couponIssue/couponRedeem: 쿠폰 발급(ADMIN)/사용 (유효성 검증)
+  - sendNotification: 범용 알림 전송 (ADMIN)
+- [x] ~~@react-native-firebase/functions 설치 + firebaseFunctions.ts 래퍼 생성~~ (2026.02.08 완료)
+- [x] ~~useAuthStore 카카오 로그인: Anonymous Auth → kakaoToken Cloud Function + Custom Token~~ (2026.02.08 완료)
+- [x] ~~firebaseAttendance markAttendance → attendanceCheckIn Cloud Function~~ (2026.02.08 완료)
+- [x] ~~profileAPI earnPoints/spendPoints → pointsEarn/pointsDeduct Cloud Function~~ (2026.02.08 완료)
+- [x] ~~tossPayments confirmPayment/cancelPayment → paymentConfirm/paymentCancel Cloud Function~~ (2026.02.08 완료)
+- [x] ~~firebaseBooking approve/rejectBookingRequest → bookingApprove/bookingReject Cloud Function~~ (2026.02.08 완료)
+- [x] ~~functions npm run build 0 에러, 클라이언트 typecheck 0 신규 에러~~ (2026.02.08 완료)
 
 ### 2026.02.08 프로젝트 감사 8개 액션 아이템 전체 구현 + notifee→expo-notifications 전환 (11차 배치)
 
@@ -315,8 +337,9 @@
   - [x] ~~멤버십 결제 → 시뮬레이션 모드 구현 (tossPayments + subscriptionService)~~ (2026.02.08 완료)
   - [x] ~~예약 참가비 결제 → 시뮬레이션 모드 구현~~ (2026.02.08 완료)
   - [x] ~~결제 성공/실패 처리~~ (2026.02.08 완료)
+  - [x] ~~결제 확인/취소 Cloud Functions 구현 (Toss API 서버 사이드 검증)~~ (2026.02.08 완료)
   - [ ] 결제 내역 조회
-  - [ ] Toss Payments SDK 실제 연동 (백엔드 서버 필요)
+  - [ ] Toss Payments SDK 클라이언트 위젯 연동 (@tosspayments/widget-sdk-react-native)
 
 - [ ] **Mock 데이터 → 실제 API 교체**
   - [x] ~~BookingListScreen - Mock 예약 데이터 제거 → Firestore 연동~~ (2026.02.07 완료)
@@ -385,9 +408,10 @@
   - [ ] 가격 제안 기능
 
 - [ ] **포인트 & 쿠폰 시스템**
-  - [ ] 포인트 적립/사용 로직 (출석, 예약, 리뷰 작성)
-  - [ ] 쿠폰 발급/사용 로직
+  - [x] ~~포인트 적립/사용 로직 → Cloud Functions (Transaction 기반 원자적 처리)~~ (2026.02.08 완료)
+  - [x] ~~쿠폰 발급/사용 로직 → Cloud Functions (ADMIN 발급, 유효성 검증 사용)~~ (2026.02.08 완료)
   - [x] ~~포인트/쿠폰 내역 Firestore 연동~~ (2026.02.07 완료)
+  - [x] ~~출석 체크 포인트 → Cloud Functions (중복 방지 + 연속 보너스)~~ (2026.02.08 완료)
 
 ### 🟢 우선순위 낮음 (P2 - 개선)
 
@@ -449,9 +473,9 @@
 | 친구 관리 | 5 | 5 | 0 | 100% |
 | 중고마켓 | 9 | 9 | 0 | 100% |
 | 골프장/펍 | 8 | 8 | 0 | 100% |
-| 멤버십/결제 | 9 | 7 | 2 | 78% |
+| 멤버십/결제 | 9 | 8 | 1 | 89% |
 | 알림 | 6 | 5 | 1 | 83% |
-| 포인트/쿠폰 | 4 | 2 | 2 | 50% |
+| 포인트/쿠폰 | 5 | 5 | 0 | 100% |
 | 내 정보/프로필 화면 | 7 | 7 | 0 | 100% |
 | 리뷰 시스템 | 5 | 3 | 2 | 60% |
 | 음악 | 4 | 0 | 4 | 0% |
@@ -465,7 +489,8 @@
 | Firestore 규칙 + Seed + 경로 (9차) | 5 | 5 | 0 | 100% |
 | Firebase 배포 + 감사 (10차) | 10 | 10 | 0 | 100% |
 | 감사 액션 아이템 + 알림 (11차) | 12 | 12 | 0 | 100% |
-| **전체** | **152** | **134** | **18** | **88%** |
+| Cloud Functions + 연동 (12차) | 14 | 14 | 0 | 100% |
+| **전체** | **167** | **150** | **17** | **90%** |
 
 ---
 
@@ -473,6 +498,30 @@
 
 ### 2026.02.08
 
+> **Cloud Functions 전체 구현 + 클라이언트 연동 12차 배치 (42개 파일, +2,287/-341줄)**
+> - functions/ 프로젝트 초기화: firebase-admin v12, firebase-functions v5, TypeScript, ESLint 설정
+> - firebase.json functions 섹션 + emulators.functions(port 5001) 추가, .firebaserc 생성
+> - 서버 공통 유틸 4개: requireAuth/requireAdmin(인증 검증), adjustPoints(runTransaction 원자적 포인트 처리), sendPushNotification(FCM+Firestore), errors(HttpsError 래핑)
+> - Cloud Functions 11개 구현 (asia-northeast3 리전):
+>   - kakaoToken: 카카오 API 토큰 검증 → admin.auth().createCustomToken() 발급 + Firestore 프로필 upsert
+>   - attendanceCheckIn: 중복 체크(attendance/{uid}_{today}) + 연속 출석 보너스(100/300/500/2000) + Transaction 기반 통계 업데이트
+>   - pointsEarn/pointsDeduct: runTransaction으로 잔액 검증 + 원자적 업데이트 + pointHistory 기록 (balanceBefore/After)
+>   - paymentConfirm: Toss API POST confirm + payments 컬렉션 생성 + booking 상태 연동
+>   - paymentCancel: 소유자 검증 + Toss API POST cancel + 부분 취소(PARTIAL_CANCELED) 지원
+>   - bookingApprove: 호스트 검증 + Transaction(정원 체크 + 참가자 추가 + full 상태) + 알림
+>   - bookingReject: 호스트 검증 + 상태 변경 + 알림
+>   - couponIssue(ADMIN): 쿠폰 생성 + 알림, couponRedeem: 유효성(미사용+미만료) 검증
+>   - sendNotification(ADMIN): 범용 알림 전송
+> - 클라이언트 연동: @react-native-firebase/functions 설치, firebaseFunctions.ts callFunction() 래퍼
+> - useAuthStore: signInAnonymously() → kakaoToken CF + signInWithCustomToken() 전환
+> - firebaseAttendance: 직접 Firestore 쓰기 → attendanceCheckIn CF (서버에서 중복/보너스 처리)
+> - profileAPI: earnPoints batch write → pointsEarn CF, spendPoints batch write → pointsDeduct CF
+> - tossPayments: 시뮬레이션 confirmPayment/cancelPayment → paymentConfirm/Cancel CF (실제 Toss API 서버 검증)
+> - firebaseBooking: 직접 Firestore update → bookingApprove/Reject CF (호스트 검증+Transaction+알림)
+> - BookingRequestsScreen/ApplicantProfileScreen: rejectBookingRequest 호출에 bookingId, userId 파라미터 추가
+> - functions build 0 에러, 클라이언트 typecheck 0 신규 에러
+> - 전체 진행률: 88% → **90%**
+>
 > **프로젝트 감사 8개 액션 아이템 전체 구현 + notifee→expo-notifications 전환 11차 배치 (174개 파일, +12,066/-5,162줄)**
 > - ESLint/Prettier 설정 수정: endOfLine "auto", 중복 rules 키 제거, import/no-unresolved off
 > - 크로스 탭 네비게이션 8건 수정: navigate() → cross-tab 패턴 전환
