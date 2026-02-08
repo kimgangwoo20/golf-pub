@@ -538,6 +538,25 @@ class FirebaseMessagingService {
         }
         break;
 
+      // 예약 취소 알림 → 부킹 상세
+      case 'booking_cancelled':
+        if (data.bookingId) {
+          navigate('Bookings', {
+            screen: 'BookingDetail',
+            params: { bookingId: data.bookingId },
+          });
+        }
+        break;
+
+      // 포인트/쿠폰/멤버십 → 해당 화면
+      case 'point_earned':
+        navigate('MyHome', { screen: 'PointHistory' });
+        break;
+
+      case 'coupon_issued':
+        navigate('MyHome', { screen: 'Coupons' });
+        break;
+
       // 기본: 알림 목록으로 이동
       default:
         navigate('Home', {

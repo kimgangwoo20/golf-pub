@@ -5,7 +5,7 @@ import firestore from '@react-native-firebase/firestore';
 import { FirestoreTimestamp } from './firebaseConfig';
 import { firebaseMessaging } from './firebaseMessaging';
 import { profileAPI } from '@/services/api/profileAPI';
-import { callFunction } from './firebaseFunctions';
+import { callFunction } from '@/services/firebase/firebaseFunctions';
 
 export interface Booking {
   id: string;
@@ -281,178 +281,54 @@ export const getMyJoinedBookings = async (userId: string): Promise<Booking[]> =>
 };
 
 /**
- * 부킹 취소 (호스트만 가능)
- * 상태를 CANCELLED로 변경하고 모든 참가자에게 알림 전송
+ * 부킹 취소 (호스트만 가능) - Cloud Functions 경유
+ * 호스트 검증 + 상태 변경 + 참가자 알림 전송
  */
 export const cancelBooking = async (
   bookingId: string,
-  userId: string,
+  _userId: string,
+  reason?: string,
 ): Promise<{
   success: boolean;
   message: string;
 }> => {
   try {
-    const bookingDoc = await firestore().collection('bookings').doc(bookingId).get();
-
-    if (!bookingDoc.exists) {
-      return {
-        success: false,
-        message: '존재하지 않는 부킹입니다.',
-      };
-    }
-
-    const bookingData = bookingDoc.data() as Booking;
-
-    if (bookingData.hostId !== userId) {
-      return {
-        success: false,
-        message: '호스트만 취소할 수 있습니다.',
-      };
-    }
-
-    // 상태를 CANCELLED로 변경
-    await firestore().collection('bookings').doc(bookingId).update({
-      status: 'CANCELLED',
-      updatedAt: FirestoreTimestamp.now(),
-    });
-
-    // 참가자들에게 취소 알림 전송
-    try {
-      const participantsList: string[] = bookingData.participants?.list || [];
-      for (const participantId of participantsList) {
-        if (participantId !== userId) {
-          await firebaseMessaging.createNotification(
-            participantId,
-            'booking_rejected',
-            '모임 취소 안내',
-            `"${bookingData.title}" 모임이 호스트에 의해 취소되었습니다.`,
-            { bookingId },
-          );
-        }
-      }
-    } catch {
-      // 알림 전송 실패 시 취소 처리에 영향 없음
-    }
-
-    return {
-      success: true,
-      message: '부킹이 취소되었습니다.',
-    };
-  } catch (error) {
+    const result = await callFunction<{ success: boolean; message: string }>(
+      'bookingCancel',
+      { bookingId, reason: reason || '' },
+    );
+    return result;
+  } catch (error: any) {
     console.error('부킹 취소 실패:', error);
     return {
       success: false,
-      message: '부킹 취소에 실패했습니다.',
+      message: error.message || '부킹 취소에 실패했습니다.',
     };
   }
 };
 
 /**
- * 부킹 참가 철회 (참가자용)
- * 참가자 목록에서 제거하고 호스트에게 알림 전송
+ * 부킹 참가 철회 (참가자용) - Cloud Functions 경유
+ * Transaction 기반 원자적 처리 + 호스트 알림 전송
  */
 export const withdrawFromBooking = async (
   bookingId: string,
-  userId: string,
+  _userId: string,
 ): Promise<{
   success: boolean;
   message: string;
 }> => {
   try {
-    const bookingRef = firestore().collection('bookings').doc(bookingId);
-    const bookingDoc = await bookingRef.get();
-
-    if (!bookingDoc.exists) {
-      return {
-        success: false,
-        message: '존재하지 않는 부킹입니다.',
-      };
-    }
-
-    const bookingData = bookingDoc.data() as Booking;
-
-    // 호스트는 참가 철회 불가 (cancelBooking 사용)
-    if (bookingData.hostId === userId) {
-      return {
-        success: false,
-        message: '호스트는 참가 철회가 불가합니다. 모임 취소를 이용해 주세요.',
-      };
-    }
-
-    // 참가자 목록에 있는지 확인
-    if (!bookingData.participants.list.includes(userId)) {
-      return {
-        success: false,
-        message: '참가 중인 부킹이 아닙니다.',
-      };
-    }
-
-    // 참가자 제거 및 인원 감소
-    const updateData: Record<string, any> = {
-      'participants.current': firestore.FieldValue.increment(-1),
-      'participants.list': firestore.FieldValue.arrayRemove(userId),
-      updatedAt: FirestoreTimestamp.now(),
-    };
-
-    // 참가자가 빠지면 정원 미달이므로 다시 open 상태로 변경
-    if (bookingData.participants.current <= bookingData.participants.max) {
-      updateData.status = 'open';
-    }
-
-    await bookingRef.update(updateData);
-
-    // 참가 기록 상태 업데이트
-    try {
-      const participantSnapshot = await firestore()
-        .collection('bookingParticipants')
-        .where('bookingId', '==', bookingId)
-        .where('userId', '==', userId)
-        .get();
-
-      if (!participantSnapshot.empty) {
-        await participantSnapshot.docs[0].ref.update({
-          status: 'withdrawn',
-          withdrawnAt: FirestoreTimestamp.now(),
-        });
-      }
-    } catch {
-      // 참가 기록 업데이트 실패 시 무시
-    }
-
-    // 사용자 통계 감소
-    try {
-      await firestore()
-        .collection('users')
-        .doc(userId)
-        .update({
-          'stats.joinedBookings': firestore.FieldValue.increment(-1),
-        });
-    } catch {
-      // 통계 업데이트 실패 시 무시
-    }
-
-    // 호스트에게 참가 철회 알림 전송
-    try {
-      await firebaseMessaging.createNotification(
-        bookingData.hostId,
-        'booking_rejected',
-        '참가 철회 알림',
-        `"${bookingData.title}" 모임에서 참가자가 철회하였습니다.`,
-        { bookingId },
-      );
-    } catch {
-      // 알림 전송 실패 시 철회 처리에 영향 없음
-    }
-
-    return {
-      success: true,
-      message: '참가가 철회되었습니다.',
-    };
-  } catch (error) {
+    const result = await callFunction<{ success: boolean; message: string }>(
+      'bookingWithdraw',
+      { bookingId },
+    );
+    return result;
+  } catch (error: any) {
     console.error('부킹 참가 철회 실패:', error);
     return {
       success: false,
-      message: '참가 철회에 실패했습니다.',
+      message: error.message || '참가 철회에 실패했습니다.',
     };
   }
 };

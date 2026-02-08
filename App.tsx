@@ -105,6 +105,10 @@ import { ChatSettingsScreen } from './src/screens/chat/ChatSettingsScreen';
 import { AuthNavigator } from './src/navigation/AuthNavigator';
 import { useAuthStore } from './src/store/useAuthStore';
 
+// 알림
+import { firebaseMessaging } from './src/services/firebase/firebaseMessaging';
+import { useNotificationStore } from './src/store/useNotificationStore';
+
 const Tab = createBottomTabNavigator();
 const HomeStack = createNativeStackNavigator();
 const BookingStack = createNativeStackNavigator();
@@ -343,11 +347,23 @@ function AppContent() {
 
 export default function App() {
   const { user, loading, initAuth } = useAuthStore();
+  const { subscribeToUnreadCount, unsubscribeFromUnreadCount } = useNotificationStore();
 
   useEffect(() => {
     const unsubscribe = initAuth();
     return unsubscribe;
   }, []);
+
+  // FCM 초기화 + 알림 구독 (로그인 후)
+  useEffect(() => {
+    if (user?.uid) {
+      firebaseMessaging.initialize(user.uid);
+      subscribeToUnreadCount(user.uid);
+    }
+    return () => {
+      unsubscribeFromUnreadCount();
+    };
+  }, [user?.uid]);
 
   if (loading) {
     return (

@@ -8,6 +8,7 @@ interface Notification {
   title: string;
   body: string;
   read: boolean;
+  data?: Record<string, any>;
   createdAt: string;
 }
 
@@ -18,7 +19,7 @@ interface NotificationState {
   unsubscribeFromNotifications: () => void;
   subscribeToUnreadCount: (userId: string) => void;
   unsubscribeFromUnreadCount: () => void;
-  markAsRead: (notificationId: string) => Promise<void>;
+  markAsRead: (notificationId: string, userId: string) => Promise<void>;
   markAllAsRead: (userId: string) => Promise<void>;
 }
 
@@ -43,12 +44,19 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       .limit(50)
       .onSnapshot(
         (snapshot) => {
-          const notifications = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-            createdAt:
-              doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
-          })) as Notification[];
+          const notifications = snapshot.docs.map((doc) => {
+            const docData = doc.data();
+            return {
+              id: doc.id,
+              type: docData.type || 'system_notice',
+              title: docData.title || '',
+              body: docData.body || '',
+              read: docData.read ?? docData.isRead ?? false,
+              data: docData.data,
+              createdAt:
+                docData.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+            };
+          }) as Notification[];
 
           set({ notifications });
         },
@@ -75,7 +83,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       .collection('users')
       .doc(userId)
       .collection('notifications')
-      .where('read', '==', false)
+      .where('isRead', '==', false)
       .onSnapshot(
         (snapshot) => {
           set({ unreadCount: snapshot.size });
@@ -93,21 +101,26 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     }
   },
 
-  markAsRead: async (notificationId: string) => {
+  markAsRead: async (notificationId: string, userId: string) => {
     try {
       const { notifications } = get();
       const notification = notifications.find((n) => n.id === notificationId);
       if (!notification || notification.read) return;
 
-      // Firestore에서 해당 알림의 userId를 찾아 업데이트
-      // 알림은 users/{userId}/notifications/{notificationId} 경로에 있음
-      // 현재 구독 중인 사용자의 알림이므로 로컬 상태만 업데이트하고
-      // Firestore는 onSnapshot이 자동 반영
+      // 로컬 상태 즉시 업데이트
       set({
         notifications: notifications.map((n) =>
           n.id === notificationId ? { ...n, read: true } : n,
         ),
       });
+
+      // Firestore 업데이트 (isRead 필드)
+      await firestore()
+        .collection('users')
+        .doc(userId)
+        .collection('notifications')
+        .doc(notificationId)
+        .update({ isRead: true, read: true });
     } catch (error) {
       // 알림 읽음 처리 실패 - 무시
     }
@@ -115,16 +128,23 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   markAllAsRead: async (userId: string) => {
     try {
+      // 로컬 상태 즉시 업데이트
+      const { notifications } = get();
+      set({
+        notifications: notifications.map((n) => ({ ...n, read: true })),
+      });
+
+      // Firestore 일괄 업데이트
       const snapshot = await firestore()
         .collection('users')
         .doc(userId)
         .collection('notifications')
-        .where('read', '==', false)
+        .where('isRead', '==', false)
         .get();
 
       const batch = firestore().batch();
       snapshot.docs.forEach((doc) => {
-        batch.update(doc.ref, { read: true });
+        batch.update(doc.ref, { isRead: true, read: true });
       });
 
       await batch.commit();
