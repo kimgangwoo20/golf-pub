@@ -93,7 +93,7 @@ export const BookingDetailScreen: React.FC = () => {
 
     Alert.alert(
       '참가 신청',
-      `${booking.course} 라운딩에 참가하시겠습니까?\n\n금액: ${booking.price.discount.toLocaleString()}원`,
+      `${booking.course} 라운딩에 참가하시겠습니까?\n\n금액: ${(booking.price.original || booking.price.discount).toLocaleString()}원`,
       [
         { text: '취소', style: 'cancel' as const },
         {
@@ -447,7 +447,7 @@ export const BookingDetailScreen: React.FC = () => {
       <View style={styles.bottomBar}>
         <View style={styles.priceContainer}>
           <Text style={styles.priceLabel}>1인당</Text>
-          <Text style={styles.price}>{booking.price.discount.toLocaleString()}원</Text>
+          <Text style={styles.price}>{(booking.price.original || booking.price.discount).toLocaleString()}원</Text>
         </View>
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.chatButton} onPress={handleChat}>
