@@ -19,6 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { kakaoLogin } from '@/services/kakao/kakaoLogin';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigation } from '@react-navigation/native';
+import { validators } from '@/utils/validators';
 
 const { height } = Dimensions.get('window');
 
@@ -58,6 +59,11 @@ export const LoginScreen: React.FC = () => {
   const handleEmailLogin = async () => {
     if (!email || !password) {
       Alert.alert('알림', '이메일과 비밀번호를 입력하세요.');
+      return;
+    }
+
+    if (!validators.isValidEmail(email)) {
+      Alert.alert('알림', '올바른 이메일 형식을 입력해주세요.');
       return;
     }
 

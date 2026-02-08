@@ -28,5 +28,8 @@ export { bookingWithdraw } from "./functions/booking/withdraw";
 export { couponIssue } from "./functions/coupons/issue";
 export { couponRedeem } from "./functions/coupons/redeem";
 
+// 채팅
+export { sendChatNotification } from "./functions/chat/sendChatNotification";
+
 // 알림
 export { sendNotification } from "./functions/notifications/send";

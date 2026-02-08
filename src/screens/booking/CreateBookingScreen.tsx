@@ -16,6 +16,7 @@ import { colors } from '@/styles/theme';
 import { SkillLevel } from '@/types/booking-types';
 import { useBookingStore } from '@/store/useBookingStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { validators } from '@/utils/validators';
 
 export const CreateBookingScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -64,8 +65,8 @@ export const CreateBookingScreen: React.FC = () => {
       Alert.alert('입력 오류', '시간을 입력해주세요.');
       return false;
     }
-    if (!price.trim() || isNaN(Number(price))) {
-      Alert.alert('입력 오류', '가격을 정확히 입력해주세요.');
+    if (!price.trim() || !validators.isValidAmount(Number(price))) {
+      Alert.alert('입력 오류', '가격을 정확히 입력해주세요. (양수만 가능)');
       return false;
     }
     if (hasPub && (!pubName.trim() || !pubTime.trim())) {

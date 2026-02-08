@@ -360,6 +360,3 @@ export const GOLF_COURSE_STATS = {
   },
 };
 
-// 콘솔 로그
-console.log(`✅ ${TOTAL_GOLF_COURSES}개 골프장 좌표 로드 완료`);
-console.log('지역별 골프장:', GOLF_COURSE_STATS.regions);
