@@ -227,7 +227,17 @@ export const pubAPI = {
         .where('pubId', '==', pubId)
         .get();
 
-      if (reviewsSnapshot.empty) return;
+      if (reviewsSnapshot.empty) {
+        // 리뷰가 없으면 평점 초기화
+        await firestore()
+          .collection(PUBS_COLLECTION)
+          .doc(pubId)
+          .update({
+            rating: 0,
+            reviewCount: 0,
+          });
+        return;
+      }
 
       let totalRating = 0;
       reviewsSnapshot.docs.forEach((doc) => {

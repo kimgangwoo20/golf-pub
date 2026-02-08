@@ -21,6 +21,8 @@ export { pointsDeduct } from "./functions/points/deduct";
 // 부킹
 export { bookingApprove } from "./functions/booking/approve";
 export { bookingReject } from "./functions/booking/reject";
+export { bookingCancel } from "./functions/booking/cancel";
+export { bookingWithdraw } from "./functions/booking/withdraw";
 
 // 쿠폰
 export { couponIssue } from "./functions/coupons/issue";
