@@ -11,10 +11,14 @@ import {
   StyleSheet,
   Alert,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
+import { useAuthStore } from '@/store/useAuthStore';
+import { firestore as firebaseFirestore, FirestoreTimestamp } from '@/services/firebase/firebaseConfig';
+import { firebaseStorage } from '@/services/firebase/firebaseStorage';
 
 const { width: _width } = Dimensions.get('window');
 const MAX_IMAGES = 10;
@@ -22,12 +26,14 @@ const MAX_TEXT_LENGTH = 500;
 
 export const CreatePostScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { user } = useAuthStore();
 
   const [content, setContent] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [location, setLocation] = useState('');
   const [visibility, setVisibility] = useState<'public' | 'friends'>('public');
   const [hashtags, setHashtags] = useState<string[]>([]);
+  const [publishing, setPublishing] = useState(false);
 
   const handleAddImage = async () => {
     if (images.length >= MAX_IMAGES) {
@@ -112,14 +118,56 @@ export const CreatePostScreen: React.FC = () => {
       return;
     }
 
+    if (!user) {
+      Alert.alert('알림', '로그인이 필요합니다.');
+      return;
+    }
+
     Alert.alert('게시물 등록', '게시물을 등록하시겠습니까?', [
       { text: '취소', style: 'cancel' },
       {
         text: '등록',
-        onPress: () => {
-          Alert.alert('완료', '게시물이 등록되었습니다.', [
-            { text: '확인', onPress: () => navigation.goBack() },
-          ]);
+        onPress: async () => {
+          try {
+            setPublishing(true);
+
+            // 이미지 업로드
+            let uploadedImageUrls: string[] = [];
+            if (images.length > 0) {
+              const tempPostId = `post_${Date.now()}`;
+              const results = await firebaseStorage.uploadMultipleImages(
+                images,
+                `posts/${tempPostId}`,
+              );
+              uploadedImageUrls = results.map((r) => r.url);
+            }
+
+            // Firestore에 게시물 저장
+            await firebaseFirestore.collection('posts').add({
+              author: {
+                id: user.uid,
+                name: user.displayName || '사용자',
+                image: user.photoURL || '',
+              },
+              content: content.trim(),
+              images: uploadedImageUrls,
+              hashtags,
+              location: location || null,
+              visibility,
+              likes: 0,
+              comments: 0,
+              status: 'published',
+              createdAt: FirestoreTimestamp.now(),
+            });
+
+            setPublishing(false);
+            Alert.alert('완료', '게시물이 등록되었습니다.', [
+              { text: '확인', onPress: () => navigation.goBack() },
+            ]);
+          } catch (error: any) {
+            setPublishing(false);
+            Alert.alert('오류', error.message || '게시물 등록에 실패했습니다.');
+          }
         },
       },
     ]);
@@ -287,12 +335,16 @@ export const CreatePostScreen: React.FC = () => {
           <TouchableOpacity
             style={[
               styles.publishButton,
-              content.trim().length === 0 && styles.publishButtonDisabled,
+              (content.trim().length === 0 || publishing) && styles.publishButtonDisabled,
             ]}
             onPress={handlePublish}
-            disabled={content.trim().length === 0}
+            disabled={content.trim().length === 0 || publishing}
           >
-            <Text style={styles.publishButtonText}>게시</Text>
+            {publishing ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.publishButtonText}>게시</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>

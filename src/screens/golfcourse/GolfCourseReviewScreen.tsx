@@ -39,9 +39,14 @@ export const GolfCourseReviewScreen: React.FC = () => {
   const currentUserId = user?.uid || '';
 
   // @ts-expect-error route.params 타입 미지정
-  const courseParam = route.params?.course as GolfCourse;
+  const courseParam = route.params?.course as GolfCourse | undefined;
+  // @ts-expect-error route.params 타입 미지정
+  const courseIdParam = route.params?.courseId as string | undefined;
   // @ts-expect-error route.params 타입 미지정
   const writeReviewParam = route.params?.writeReview as boolean;
+
+  // courseId: course 객체에서 추출하거나, courseId 파라미터에서 가져옴 (딥링킹 지원)
+  const courseId = courseParam?.id || courseIdParam || '';
 
   const [reviews, setReviews] = useState<GolfCourseReview[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,16 +65,17 @@ export const GolfCourseReviewScreen: React.FC = () => {
 
   // Firestore에서 리뷰 로드
   const loadReviews = useCallback(async () => {
+    if (!courseId) return;
     try {
       setLoading(true);
-      const data = await golfCourseAPI.getGolfCourseReviews(courseParam.id);
+      const data = await golfCourseAPI.getGolfCourseReviews(courseId);
       setReviews(data);
     } catch (error) {
       console.error('리뷰 로드 실패:', error);
     } finally {
       setLoading(false);
     }
-  }, [courseParam.id]);
+  }, [courseId]);
 
   useEffect(() => {
     loadReviews();
@@ -89,19 +95,40 @@ export const GolfCourseReviewScreen: React.FC = () => {
       ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
       : '0.0';
 
-  const handleLike = (reviewId: number | string) => {
+  const handleLike = async (reviewId: number | string) => {
+    const target = reviews.find((r) => r.id === reviewId);
+    if (!target) return;
+
+    const newIsLiked = !target.isLiked;
+    const newLikes = newIsLiked ? target.likes + 1 : target.likes - 1;
+
+    // 즉시 UI 업데이트 (낙관적 업데이트)
     setReviews(
-      reviews.map((review) => {
-        if (review.id === reviewId) {
-          return {
-            ...review,
-            isLiked: !review.isLiked,
-            likes: review.isLiked ? review.likes - 1 : review.likes + 1,
-          };
-        }
-        return review;
-      }),
+      reviews.map((review) =>
+        review.id === reviewId
+          ? { ...review, isLiked: newIsLiked, likes: newLikes }
+          : review,
+      ),
     );
+
+    // Firestore에 좋아요 수 저장
+    try {
+      await firebaseFirestore
+        .collection('golf_course_reviews')
+        .doc(String(reviewId))
+        .update({
+          likes: newLikes,
+        });
+    } catch (error) {
+      // 실패 시 롤백
+      setReviews(
+        reviews.map((review) =>
+          review.id === reviewId
+            ? { ...review, isLiked: target.isLiked, likes: target.likes }
+            : review,
+        ),
+      );
+    }
   };
 
   const handleFilter = (type: FilterType) => {
@@ -141,7 +168,7 @@ export const GolfCourseReviewScreen: React.FC = () => {
       if (editingReviewId) {
         // 리뷰 수정
         const result = await golfCourseAPI.updateGolfCourseReview(
-          courseParam.id,
+          courseId,
           editingReviewId,
           { rating, comment: reviewText },
         );
@@ -151,7 +178,7 @@ export const GolfCourseReviewScreen: React.FC = () => {
         }
       } else {
         // 리뷰 신규 작성
-        await golfCourseAPI.createGolfCourseReview(courseParam.id, {
+        await golfCourseAPI.createGolfCourseReview(courseId, {
           rating,
           courseRating,
           facilityRating,
@@ -237,7 +264,7 @@ export const GolfCourseReviewScreen: React.FC = () => {
                     style: 'destructive' as const,
                     onPress: async () => {
                       const result = await golfCourseAPI.deleteGolfCourseReview(
-                        courseParam.id,
+                        courseId,
                         String(review.id),
                       );
                       if (result.success) {

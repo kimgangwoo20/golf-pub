@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { firestore as firebaseFirestore } from '@/services/firebase/firebaseConfig';
+import { firestore as firebaseFirestore, FirestoreTimestamp } from '@/services/firebase/firebaseConfig';
 import { Product } from '@/types/marketplace-types';
 
 interface MarketplaceState {
@@ -70,11 +70,10 @@ export const useMarketplaceStore = create<MarketplaceState>((set) => ({
     try {
       set({ loading: true, error: null });
 
-      const now = new Date();
       await firebaseFirestore.collection('products').add({
         ...item,
-        createdAt: now,
-        updatedAt: now,
+        createdAt: FirestoreTimestamp.now(),
+        updatedAt: FirestoreTimestamp.now(),
       });
 
       set({ loading: false });
@@ -91,7 +90,7 @@ export const useMarketplaceStore = create<MarketplaceState>((set) => ({
         .doc(id)
         .update({
           ...data,
-          updatedAt: new Date(),
+          updatedAt: FirestoreTimestamp.now(),
         });
     } catch (error: any) {
       throw error;

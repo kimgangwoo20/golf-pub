@@ -72,10 +72,12 @@ export const sendFriendRequest = async (
   toUserId: string,
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    // 이미 친구인지 확인
+    // 이미 친구인지 확인 (서브컬렉션 경로)
     const existingFriend = await firestore()
+      .collection('users')
+      .doc(fromUserId)
       .collection('friends')
-      .doc(`${fromUserId}_${toUserId}`)
+      .doc(toUserId)
       .get();
 
     if (existingFriend.exists) {
@@ -139,20 +141,24 @@ export const acceptFriendRequest = async (
       acceptedAt: FirestoreTimestamp.now(),
     });
 
-    // 양방향 친구 관계 생성
+    // 양방향 친구 관계 생성 (서브컬렉션 경로)
     const batch = firestore().batch();
 
-    batch.set(firestore().collection('friends').doc(`${fromUserId}_${toUserId}`), {
-      userId: fromUserId,
-      friendId: toUserId,
-      createdAt: FirestoreTimestamp.now(),
-    });
+    batch.set(
+      firestore().collection('users').doc(fromUserId).collection('friends').doc(toUserId),
+      {
+        friendId: toUserId,
+        createdAt: FirestoreTimestamp.now(),
+      },
+    );
 
-    batch.set(firestore().collection('friends').doc(`${toUserId}_${fromUserId}`), {
-      userId: toUserId,
-      friendId: fromUserId,
-      createdAt: FirestoreTimestamp.now(),
-    });
+    batch.set(
+      firestore().collection('users').doc(toUserId).collection('friends').doc(fromUserId),
+      {
+        friendId: fromUserId,
+        createdAt: FirestoreTimestamp.now(),
+      },
+    );
 
     await batch.commit();
 
@@ -214,9 +220,14 @@ export const rejectFriendRequest = async (
  */
 export const getFriendsList = async (userId: string): Promise<Friend[]> => {
   try {
-    const snapshot = await firestore().collection('friends').where('userId', '==', userId).get();
+    // 서브컬렉션 경로: users/{userId}/friends
+    const snapshot = await firestore()
+      .collection('users')
+      .doc(userId)
+      .collection('friends')
+      .get();
 
-    const friendIds = snapshot.docs.map((doc) => doc.data().friendId);
+    const friendIds = snapshot.docs.map((doc) => doc.id);
 
     if (friendIds.length === 0) {
       return [];
@@ -342,10 +353,12 @@ export const getFriendProfile = async (
 
     const profileData = userDoc.data();
 
-    // 친구 관계 정보 조회
+    // 친구 관계 정보 조회 (서브컬렉션 경로)
     const friendDoc = await firestore()
+      .collection('users')
+      .doc(currentUserId)
       .collection('friends')
-      .doc(`${currentUserId}_${friendId}`)
+      .doc(friendId)
       .get();
 
     const friendshipInfo = friendDoc.exists ? friendDoc.data() : null;
@@ -403,13 +416,14 @@ export const getFriendProfile = async (
  */
 export const getSuggestedFriends = async (userId: string): Promise<Friend[]> => {
   try {
-    // 현재 친구 목록 가져오기
+    // 현재 친구 목록 가져오기 (서브컬렉션 경로)
     const friendsSnapshot = await firestore()
+      .collection('users')
+      .doc(userId)
       .collection('friends')
-      .where('userId', '==', userId)
       .get();
 
-    const friendIds = new Set(friendsSnapshot.docs.map((doc) => doc.data().friendId));
+    const friendIds = new Set(friendsSnapshot.docs.map((doc) => doc.id));
     friendIds.add(userId); // 자기 자신 제외
 
     // 최근 가입한 사용자 조회
@@ -453,11 +467,15 @@ export const removeFriend = async (
   friendId: string,
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    // 양방향 친구 관계 삭제
+    // 양방향 친구 관계 삭제 (서브컬렉션 경로)
     const batch = firestore().batch();
 
-    batch.delete(firestore().collection('friends').doc(`${userId}_${friendId}`));
-    batch.delete(firestore().collection('friends').doc(`${friendId}_${userId}`));
+    batch.delete(
+      firestore().collection('users').doc(userId).collection('friends').doc(friendId),
+    );
+    batch.delete(
+      firestore().collection('users').doc(friendId).collection('friends').doc(userId),
+    );
 
     await batch.commit();
 
