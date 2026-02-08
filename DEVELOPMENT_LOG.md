@@ -135,6 +135,22 @@
   - my/: MyHomeScreen, AccountManagementScreen
 - [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.07 완료)
 
+### 2026.02.08 Cloud Functions 전체 감사 - 3개 근본 원인 수정 (16차 핫픽스)
+
+- [x] ~~Cloud Functions 리전 미지정 수정 (firebaseFunctions.ts)~~ (2026.02.08 완료)
+  - `functions().httpsCallable(name)` → `functions('asia-northeast3').httpsCallable(name)`
+  - 모든 Cloud Functions 호출이 us-central1(기본값)로 전송되어 not_found 에러 발생하던 근본 원인 해결
+- [x] ~~adjustPoints 사용자 문서 미존재 시 자동 생성 (functions/src/utils/points.ts)~~ (2026.02.08 완료)
+  - 신규 사용자의 출석체크 시 user 문서가 없어 `HttpsError("not-found")` 발생하던 문제
+  - Transaction 내에서 기본값(points: 0, stats: {})으로 자동 생성
+- [x] ~~사용자 프로필 초기화 필드 보완 (authService.ts)~~ (2026.02.08 완료)
+  - `createUserProfile()`에 points, pointBalance, role('GENERAL'), stats(5개 카운터) 초기값 추가
+  - `set()` → `set({ merge: true })` 변경 (기존 데이터 보존)
+- [x] ~~Firestore 규칙 부킹 참가자 수정 허용 (firestore.rules)~~ (2026.02.08 완료)
+  - bookings update: 호스트만 수정 가능 → 로그인 사용자도 participants/status/updatedAt 필드 수정 가능
+  - users update: points 필드를 role/pointBalance와 함께 서버 전용 보호 필드에 추가
+- [x] ~~Cloud Functions 12개 재배포 + Firestore 규칙 배포 + 앱 재빌드~~ (2026.02.08 완료)
+
 ### 2026.02.08 가격제안/카카오맵/이미지압축/쿼리최적화/Lazy Loading/테스트 확장 (15차 배치)
 
 - [x] ~~가격 제안 기능 구현~~ (2026.02.08 완료)
@@ -587,7 +603,8 @@
 | 알림/예약취소/공유/테스트 (13차) | 10 | 10 | 0 | 100% |
 | Deep Linking/ErrorBoundary/Validation (14차) | 8 | 8 | 0 | 100% |
 | 가격제안/카카오맵/이미지압축/최적화/테스트 (15차) | 7 | 7 | 0 | 100% |
-| **전체** | **195** | **192** | **3** | **98%** |
+| Cloud Functions 전체 감사 핫픽스 (16차) | 5 | 5 | 0 | 100% |
+| **전체** | **200** | **197** | **3** | **98%** |
 
 ---
 
@@ -595,6 +612,15 @@
 
 ### 2026.02.08
 
+> **Cloud Functions 전체 감사 - 3개 근본 원인 수정 (16차 핫픽스)**
+> - firebaseFunctions.ts: Cloud Functions 리전 미지정 → `functions('asia-northeast3')` 명시 (모든 CF 호출이 us-central1로 가서 not_found 에러 발생하던 근본 원인)
+> - functions/src/utils/points.ts: 사용자 문서 미존재 시 `HttpsError("not-found")` throw → 기본값으로 자동 생성 (points: 0, stats: {})
+> - authService.ts: `createUserProfile()`에 points/pointBalance/role/stats 초기값 추가 + `set({ merge: true })` 적용
+> - firestore.rules: bookings update 규칙에 참가자(participants/status/updatedAt) 필드 수정 허용 추가 (부킹 참가 실패 해결)
+> - firestore.rules: users update에 points 보호 필드 추가 (role, pointBalance와 함께 서버 전용)
+> - Cloud Functions 12개 재배포 + Firestore 규칙 배포 완료
+> - 앱 재빌드 + SM_S901N 디바이스 설치 완료
+>
 > **디바이스 테스트 버그 3건 수정 + Firestore 인덱스 추가**
 > - LoginScreen: 카카오 accessToken이 login()에 전달되지 않던 문제 수정 (result.profile → { ...result.profile, accessToken: result.accessToken })
 > - RegisterScreen: Android KeyboardAvoidingView behavior undefined → 'height' 변경 + keyboardVerticalOffset 추가 (비밀번호 확인 입력 시 키보드가 화면 가림 해결)
