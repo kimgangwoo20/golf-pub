@@ -115,10 +115,10 @@ export const golfCourseAPI = {
         await firestore()
           .collection('golfCourses')
           .doc(String(courseId))
-          .update({
+          .set({
             rating: 0,
             reviewCount: 0,
-          });
+          }, { merge: true });
         return;
       }
 
@@ -132,10 +132,10 @@ export const golfCourseAPI = {
       await firestore()
         .collection('golfCourses')
         .doc(String(courseId))
-        .update({
+        .set({
           rating: Math.round(averageRating * 10) / 10, // 소수점 1자리
           reviewCount: reviewsSnapshot.size,
-        });
+        }, { merge: true });
     } catch (error: any) {
       console.error('골프장 평점 업데이트 실패:', error);
     }

@@ -25,6 +25,11 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useNotificationStore } from '@/store/useNotificationStore';
 import { useFeedStore } from '@/store/useFeedStore';
 import { colors } from '@/styles/theme';
+import firestore from '@react-native-firebase/firestore';
+import {
+  firestore as firebaseFirestore,
+  FirestoreTimestamp,
+} from '@/services/firebase/firebaseConfig';
 
 const { width: _width } = Dimensions.get('window');
 
@@ -132,11 +137,40 @@ export const FeedScreen: React.FC = () => {
     { id: 'following', label: '팔로잉' },
   ];
 
-  const handleLike = (feedId: string) => {
-    if (likedFeeds.includes(feedId)) {
+  const handleLike = async (feedId: string) => {
+    if (!user?.uid) return;
+    const isLiked = likedFeeds.includes(feedId);
+
+    // 낙관적 UI 업데이트
+    if (isLiked) {
       setLikedFeeds(likedFeeds.filter((id) => id !== feedId));
     } else {
       setLikedFeeds([...likedFeeds, feedId]);
+    }
+
+    // Firestore 영속화
+    try {
+      const postRef = firebaseFirestore.collection('posts').doc(feedId);
+      if (isLiked) {
+        // 좋아요 취소
+        await firebaseFirestore.collection('posts').doc(feedId).collection('likes').doc(user.uid).delete();
+        await postRef.set({ likes: firestore.FieldValue.increment(-1) } as any, { merge: true });
+      } else {
+        // 좋아요
+        await firebaseFirestore.collection('posts').doc(feedId).collection('likes').doc(user.uid).set({
+          userId: user.uid,
+          createdAt: FirestoreTimestamp.now(),
+        });
+        await postRef.set({ likes: firestore.FieldValue.increment(1) } as any, { merge: true });
+      }
+    } catch (error: any) {
+      // 실패 시 롤백
+      if (isLiked) {
+        setLikedFeeds([...likedFeeds, feedId]);
+      } else {
+        setLikedFeeds(likedFeeds.filter((id) => id !== feedId));
+      }
+      console.error('좋아요 처리 실패:', error);
     }
   };
 
@@ -145,8 +179,8 @@ export const FeedScreen: React.FC = () => {
     setCommentModalVisible(true);
   }, []);
 
-  const handleSubmitComment = () => {
-    if (!commentText.trim() || !selectedFeedId) return;
+  const handleSubmitComment = async () => {
+    if (!commentText.trim() || !selectedFeedId || !user?.uid) return;
 
     // 수정 모드인 경우
     if (editingComment) {
@@ -154,12 +188,14 @@ export const FeedScreen: React.FC = () => {
       return;
     }
 
+    const trimmedText = commentText.trim();
+
     const newComment: LocalComment = {
       id: String(Date.now()),
       feedId: selectedFeedId,
       userName: currentUserName,
       userImage: user?.photoURL || 'https://i.pravatar.cc/150?img=1',
-      content: commentText.trim(),
+      content: trimmedText,
       time: '방금 전',
       likes: 0,
     };
@@ -183,6 +219,29 @@ export const FeedScreen: React.FC = () => {
       setComments((prev) => [...prev, newComment]);
     }
     setCommentText('');
+
+    // Firestore 영속화 (서브컬렉션에 댓글 저장 + 댓글 수 증가)
+    try {
+      await firebaseFirestore.collection('posts').doc(selectedFeedId).collection('comments').add({
+        author: {
+          id: user.uid,
+          name: currentUserName,
+          image: user.photoURL || '',
+        },
+        content: trimmedText,
+        likes: 0,
+        isLiked: false,
+        replies: [],
+        parentId: replyTarget?.commentId || null,
+        createdAt: FirestoreTimestamp.now(),
+      });
+      // 게시글 댓글 수 증가
+      await firebaseFirestore.collection('posts').doc(selectedFeedId).set({
+        comments: firestore.FieldValue.increment(1),
+      } as any, { merge: true });
+    } catch (error: any) {
+      console.error('댓글 저장 실패:', error);
+    }
   };
 
   // 댓글 좋아요

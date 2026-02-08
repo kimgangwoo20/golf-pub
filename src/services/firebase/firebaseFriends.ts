@@ -162,20 +162,20 @@ export const acceptFriendRequest = async (
 
     await batch.commit();
 
-    // 사용자 통계 업데이트
+    // 사용자 통계 업데이트 (set+merge로 문서 없어도 안전)
     await firestore()
       .collection('users')
       .doc(fromUserId)
-      .update({
+      .set({
         'stats.friendsCount': firestore.FieldValue.increment(1),
-      });
+      }, { merge: true });
 
     await firestore()
       .collection('users')
       .doc(toUserId)
-      .update({
+      .set({
         'stats.friendsCount': firestore.FieldValue.increment(1),
-      });
+      }, { merge: true });
 
     return {
       success: true,
@@ -479,20 +479,20 @@ export const removeFriend = async (
 
     await batch.commit();
 
-    // 사용자 통계 업데이트
+    // 사용자 통계 업데이트 (set+merge로 문서 없어도 안전)
     await firestore()
       .collection('users')
       .doc(userId)
-      .update({
+      .set({
         'stats.friendsCount': firestore.FieldValue.increment(-1),
-      });
+      }, { merge: true });
 
     await firestore()
       .collection('users')
       .doc(friendId)
-      .update({
+      .set({
         'stats.friendsCount': firestore.FieldValue.increment(-1),
-      });
+      }, { merge: true });
 
     return {
       success: true,

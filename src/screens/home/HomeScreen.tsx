@@ -121,7 +121,7 @@ export const HomeScreen: React.FC = () => {
     if (navigation) {
       navigation.navigate('Bookings', {
         screen: 'BookingDetail',
-        params: { booking },
+        params: { bookingId: booking.id },
       });
     } else {
       Alert.alert('알림', '부킹 상세 화면으로 이동합니다.');

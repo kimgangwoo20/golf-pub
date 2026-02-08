@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { firestore as firebaseFirestore } from '@/services/firebase/firebaseConfig';
+import { firestore as firebaseFirestore, FirestoreTimestamp } from '@/services/firebase/firebaseConfig';
 import { Booking } from '@/types/booking-types';
 
 interface BookingState {
@@ -137,19 +137,19 @@ export const useBookingStore = create<BookingState>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      const now = new Date();
-      const newBooking = {
+      const firestoreData = {
         ...booking,
-        createdAt: now,
-        updatedAt: now,
+        createdAt: FirestoreTimestamp.now(),
+        updatedAt: FirestoreTimestamp.now(),
       };
 
-      const docRef = await firebaseFirestore.collection('bookings').add(newBooking);
+      const docRef = await firebaseFirestore.collection('bookings').add(firestoreData);
 
-      // 로컬 상태 업데이트
+      // 로컬 상태 업데이트 (Date 타입으로)
+      const localNow = new Date();
       const { bookings } = get();
       set({
-        bookings: [{ id: docRef.id, ...newBooking } as Booking, ...bookings],
+        bookings: [{ id: docRef.id, ...booking, createdAt: localNow, updatedAt: localNow } as Booking, ...bookings],
         loading: false,
       });
     } catch (error: any) {
@@ -174,7 +174,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
         .doc(id)
         .update({
           ...data,
-          updatedAt: new Date(),
+          updatedAt: FirestoreTimestamp.now(),
         });
 
       // 로컬 상태 업데이트
@@ -228,32 +228,30 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       set({ loading: true, error: null });
 
       const bookingRef = firebaseFirestore.collection('bookings').doc(bookingId);
-      const booking = await bookingRef.get();
 
-      if (!booking.exists) {
-        throw new Error('부킹을 찾을 수 없습니다');
-      }
+      // Firestore 트랜잭션으로 원자적 업데이트 (경쟁 조건 방지)
+      await firebaseFirestore.runTransaction(async (transaction) => {
+        const bookingSnapshot = await transaction.get(bookingRef);
+        if (!bookingSnapshot.exists) {
+          throw new Error('부킹을 찾을 수 없습니다');
+        }
+        const latestData = bookingSnapshot.data() as Booking;
 
-      const bookingData = booking.data() as Booking;
+        if (latestData.participants.current >= latestData.participants.max) {
+          throw new Error('이미 정원이 마감되었습니다');
+        }
+        if (latestData.participants.members.some((m) => m.uid === userId)) {
+          throw new Error('이미 참가한 부킹입니다');
+        }
 
-      // 정원 확인
-      if (bookingData.participants.current >= bookingData.participants.max) {
-        throw new Error('이미 정원이 마감되었습니다');
-      }
-
-      // 이미 참가했는지 확인
-      if (bookingData.participants.members.some((m) => m.uid === userId)) {
-        throw new Error('이미 참가한 부킹입니다');
-      }
-
-      // Firestore 업데이트
-      await bookingRef.update({
-        'participants.current': bookingData.participants.current + 1,
-        'participants.members': [
-          ...bookingData.participants.members,
-          { uid: userId, name: userName, role: 'member' },
-        ],
-        updatedAt: new Date(),
+        transaction.update(bookingRef, {
+          'participants.current': latestData.participants.current + 1,
+          'participants.members': [
+            ...latestData.participants.members,
+            { uid: userId, name: userName, role: 'member' },
+          ],
+          updatedAt: FirestoreTimestamp.now(),
+        });
       });
 
       // 로컬 상태 업데이트
@@ -294,24 +292,24 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       set({ loading: true, error: null });
 
       const bookingRef = firebaseFirestore.collection('bookings').doc(bookingId);
-      const booking = await bookingRef.get();
 
-      if (!booking.exists) {
-        throw new Error('부킹을 찾을 수 없습니다');
-      }
+      // Firestore 트랜잭션으로 원자적 업데이트 (경쟁 조건 방지)
+      await firebaseFirestore.runTransaction(async (transaction) => {
+        const bookingSnapshot = await transaction.get(bookingRef);
+        if (!bookingSnapshot.exists) {
+          throw new Error('부킹을 찾을 수 없습니다');
+        }
+        const bookingData = bookingSnapshot.data() as Booking;
 
-      const bookingData = booking.data() as Booking;
+        if (bookingData.hostId === userId) {
+          throw new Error('호스트는 부킹을 나갈 수 없습니다');
+        }
 
-      // 호스트는 나갈 수 없음
-      if (bookingData.hostId === userId) {
-        throw new Error('호스트는 부킹을 나갈 수 없습니다');
-      }
-
-      // Firestore 업데이트
-      await bookingRef.update({
-        'participants.current': Math.max(1, bookingData.participants.current - 1),
-        'participants.members': bookingData.participants.members.filter((m) => m.uid !== userId),
-        updatedAt: new Date(),
+        transaction.update(bookingRef, {
+          'participants.current': Math.max(1, bookingData.participants.current - 1),
+          'participants.members': bookingData.participants.members.filter((m) => m.uid !== userId),
+          updatedAt: FirestoreTimestamp.now(),
+        });
       });
 
       // 로컬 상태 업데이트

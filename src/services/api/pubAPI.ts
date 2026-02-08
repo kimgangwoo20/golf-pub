@@ -232,10 +232,10 @@ export const pubAPI = {
         await firestore()
           .collection(PUBS_COLLECTION)
           .doc(pubId)
-          .update({
+          .set({
             rating: 0,
             reviewCount: 0,
-          });
+          }, { merge: true });
         return;
       }
 
@@ -249,10 +249,10 @@ export const pubAPI = {
       await firestore()
         .collection(PUBS_COLLECTION)
         .doc(pubId)
-        .update({
+        .set({
           rating: Math.round(averageRating * 10) / 10, // 소수점 1자리
           reviewCount: reviewsSnapshot.size,
-        });
+        }, { merge: true });
     } catch (error: any) {
       console.error('❌ 퍼블릭 평점 업데이트 실패:', error);
     }
