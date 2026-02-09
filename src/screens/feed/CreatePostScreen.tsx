@@ -28,8 +28,9 @@ export const CreatePostScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { user } = useAuthStore();
-  const routeParams = (route.params as any) || {};
-  const postType: string = routeParams.type || 'photo';
+  // 사진첩 카테고리 제거 후 모든 게시물은 diary 타입
+  const _routeParams = (route.params as any) || {};
+  const postType = 'diary';
 
   const [content, setContent] = useState('');
   const [images, setImages] = useState<string[]>([]);

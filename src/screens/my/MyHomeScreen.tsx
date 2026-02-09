@@ -66,13 +66,11 @@ const mapPostDocToContentItem = (doc: any): ContentItem => {
   const images: string[] = data.images || [];
   const hasVideo = data.mediaType === 'video' || data.type === 'video';
 
-  // 게시글 타입 결정 (diary, photo, video)
-  let type = data.type || 'photo';
-  if (hasVideo) type = 'video';
-  else if (!data.type && images.length > 0) type = 'photo';
+  // 게시글 타입: 사진첩 카테고리 제거로 모두 다이어리로 통합 (video만 별도)
+  const type = hasVideo ? 'video' : 'diary';
 
   // 타입별 아이콘
-  const iconMap: Record<string, string> = { diary: '📖', photo: '📷', video: '🎥' };
+  const iconMap: Record<string, string> = { diary: '📖', video: '🎥' };
 
   return {
     id: doc.id,
@@ -275,30 +273,12 @@ export const MyHomeScreen: React.FC = () => {
     }
   };
 
-  // 탭별 Firestore 쿼리 빌더
-  const buildPostsQuery = (tab: string) => {
-    let query: any = firebaseFirestore
+  // 탭별 Firestore 쿼리 빌더 (사진첩 제거 후: all과 diary 모두 전체 게시물)
+  const buildPostsQuery = (_tab: string) => {
+    return firebaseFirestore
       .collection('posts')
       .where('author.id', '==', user?.uid)
       .orderBy('createdAt', 'desc');
-
-    // 탭별 추가 필터 (diary, photo/video)
-    if (tab === 'diary') {
-      query = firebaseFirestore
-        .collection('posts')
-        .where('author.id', '==', user?.uid)
-        .where('type', '==', 'diary')
-        .orderBy('createdAt', 'desc');
-    }
-
-    return query;
-  };
-
-  // 로컬 탭 필터 (FeedViewer 등에서 사용)
-  const _filterByTab = (items: ContentItem[], tab: string) => {
-    if (tab === 'all') return items;
-    if (tab === 'diary') return items.filter((item) => item.type === 'diary');
-    return items;
   };
 
   // 더 많은 데이터 로드 (무한 스크롤 - Firestore startAfter 페이지네이션)
