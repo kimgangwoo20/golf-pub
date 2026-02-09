@@ -124,6 +124,10 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
         phone: phone.trim(),
         handicap: handicapNum,
       });
+      // 스토어 갱신 → MyHomeScreen 등에 즉시 반영
+      if (user?.uid) {
+        await refreshProfileStore(user.uid);
+      }
       Alert.alert('저장 완료', '프로필이 수정되었습니다!', [
         { text: '확인', onPress: () => navigation?.goBack() },
       ]);
