@@ -39,6 +39,7 @@ export interface UserProfile {
     gamesPlayed: number;
     attendance: number;
   };
+  backgroundMedia?: { url: string; type: 'image' | 'video'; order: number }[];
 }
 
 interface ProfileState {

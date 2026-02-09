@@ -104,7 +104,10 @@
       "Bash(del \"C:\\\\Projects\\\\golf-pub-app\\\\src\\\\utils\\\\dateUtils.ts\")",
       "Bash(del \"C:\\\\Projects\\\\golf-pub-app\\\\src\\\\utils\\\\membershipGate.ts\")",
       "Bash(git restore:*)",
-      "Bash(npm run lint:fix:*)"
+      "Bash(npm run lint:fix:*)",
+      "Bash(firebase projects:list:*)",
+      "Bash(cmd //c \"taskkill /PID 9776 /F\")",
+      "Bash(xargs -I{} cmd //c \"taskkill /PID {} /F\")"
     ]
   }
 }
