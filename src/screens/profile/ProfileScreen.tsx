@@ -124,7 +124,6 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
   const location = profile?.location || '서울';
   const totalRounds = profile?.totalRounds || profile?.stats?.gamesPlayed || 0;
   const averageScore = profile?.stats?.averageScore || 0;
-  const bestScore = profile?.stats?.bestScore || 0;
   const favoriteCourses = profile?.favoriteCourses || [];
 
   return (
@@ -382,7 +381,10 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>라운딩 스타일</Text>
           <View style={styles.tagWrap}>
-            {['🌅 새벽 티업', '🍻 에프터 필수', '😄 즐골파'].map((tag, i) => (
+            {((profile as any)?.roundingStyles?.length > 0
+              ? (profile as any).roundingStyles
+              : ['🌅 새벽 티업', '🍻 에프터 좋아함', '😄 즐골파']
+            ).map((tag: string, i: number) => (
               <View key={i} style={styles.styleTag}>
                 <Text style={styles.styleTagText}>{tag}</Text>
               </View>
@@ -390,27 +392,20 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
           </View>
         </View>
 
-        {/* 베스트 스코어 카드 */}
-        <TouchableOpacity activeOpacity={0.9} style={{ marginBottom: spacing.lg }}>
-          <LinearGradient
-            colors={[pc.greenDeep, pc.greenMain]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.scoreCard}
-          >
-            <View>
-              <Text style={styles.scoreLabel}>BEST SCORE</Text>
-              <Text style={styles.scoreNum}>{bestScore > 0 ? bestScore : 86}</Text>
-              <Text style={styles.scoreSub}>올해 목표: 80대 안착</Text>
-            </View>
-            <View style={styles.scoreRight}>
-              <View style={styles.scoreBadge}>
-                <Text style={{ fontSize: 24 }}>🏆</Text>
+        {/* 내 관심사 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>내 관심사</Text>
+          <View style={styles.tagWrap}>
+            {((profile as any)?.interests?.length > 0
+              ? (profile as any).interests
+              : ['✈️ 여행', '🍽️ 맛집탐방', '🎵 음악']
+            ).map((tag: string, i: number) => (
+              <View key={i} style={styles.interestTag}>
+                <Text style={styles.interestTagText}>{tag}</Text>
               </View>
-              <Text style={styles.scoreBadgeLabel}>골프왕</Text>
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
+            ))}
+          </View>
+        </View>
 
         {/* 메뉴 (본인 프로필) */}
         {isOwnProfile && (
@@ -850,45 +845,19 @@ const styles = StyleSheet.create({
     color: pc.gold,
   },
 
-  // 베스트 스코어 카드
-  scoreCard: {
+  // 관심사 태그
+  interestTag: {
+    paddingVertical: 7,
+    paddingHorizontal: 14,
     borderRadius: 20,
-    padding: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    backgroundColor: '#fff5f0',
+    borderWidth: 1,
+    borderColor: '#fcd5c0',
   },
-  scoreLabel: {
-    fontSize: 11,
-    color: pc.greenPale,
+  interestTagText: {
+    fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    letterSpacing: 0.5,
-  },
-  scoreNum: {
-    fontSize: 32,
-    fontWeight: fontWeight.bold,
-    color: '#fff',
-    marginVertical: 2,
-  },
-  scoreSub: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.6)',
-  },
-  scoreRight: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  scoreBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scoreBadgeLabel: {
-    fontSize: 11,
-    color: pc.greenPale,
+    color: '#d97706',
   },
 
   // 메뉴
