@@ -1555,113 +1555,119 @@ export const MyHomeScreen: React.FC = () => {
         </TouchableOpacity>
       </Modal>
 
-      {/* 관심사 선택 모달 */}
+      {/* 관심사 선택 모달 (하단 시트) */}
       <Modal
         visible={interestModalVisible}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setInterestModalVisible(false)}
       >
         <KeyboardAvoidingView
-          style={styles.contentMenuOverlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.guestbookModalWrapper}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
           <TouchableOpacity
-            style={styles.contentMenuOverlay}
+            style={styles.guestbookModalOverlay}
             activeOpacity={1}
             onPress={() => setInterestModalVisible(false)}
-          >
-            <View style={styles.styleModalContainer}>
-              <Text style={styles.contentMenuTitle}>내 관심사 선택</Text>
-              <Text style={{ fontSize: 12, color: '#999', textAlign: 'center', marginBottom: 16 }}>
-                최대 7개까지 선택 가능
-              </Text>
-              <ScrollView style={{ maxHeight: 240 }} showsVerticalScrollIndicator={false}>
-                <View style={styles.styleOptionsGrid}>
-                  {INTEREST_OPTIONS.map((interest, i) => (
-                    <TouchableOpacity
-                      key={i}
+          />
+          <View style={styles.interestModalContainer}>
+            <View style={styles.guestbookModalHeader}>
+              <Text style={styles.guestbookModalTitle}>내 관심사 선택</Text>
+              <TouchableOpacity onPress={() => setInterestModalVisible(false)}>
+                <Text style={styles.guestbookModalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.interestModalSubtitle}>최대 7개까지 선택 가능</Text>
+            <ScrollView
+              style={styles.interestModalScroll}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.styleOptionsGrid}>
+                {INTEREST_OPTIONS.map((interest, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={[
+                      styles.styleOptionChip,
+                      selectedInterests.includes(interest) && styles.interestOptionChipActive,
+                    ]}
+                    onPress={() => handleToggleInterest(interest)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
                       style={[
-                        styles.styleOptionChip,
-                        selectedInterests.includes(interest) && styles.interestOptionChipActive,
+                        styles.styleOptionChipText,
+                        selectedInterests.includes(interest) && styles.interestOptionChipTextActive,
                       ]}
-                      onPress={() => handleToggleInterest(interest)}
+                    >
+                      {interest}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+                {/* 직접 입력으로 추가된 커스텀 관심사 (프리셋에 없는 것만) */}
+                {selectedInterests
+                  .filter((s) => !INTEREST_OPTIONS.includes(s))
+                  .map((custom, i) => (
+                    <TouchableOpacity
+                      key={`custom-${i}`}
+                      style={[styles.styleOptionChip, styles.interestOptionChipActive]}
+                      onPress={() => handleToggleInterest(custom)}
                       activeOpacity={0.7}
                     >
                       <Text
-                        style={[
-                          styles.styleOptionChipText,
-                          selectedInterests.includes(interest) &&
-                            styles.interestOptionChipTextActive,
-                        ]}
+                        style={[styles.styleOptionChipText, styles.interestOptionChipTextActive]}
                       >
-                        {interest}
+                        {custom}
                       </Text>
                     </TouchableOpacity>
                   ))}
-                  {/* 직접 입력으로 추가된 커스텀 관심사 (프리셋에 없는 것만) */}
-                  {selectedInterests
-                    .filter((s) => !INTEREST_OPTIONS.includes(s))
-                    .map((custom, i) => (
-                      <TouchableOpacity
-                        key={`custom-${i}`}
-                        style={[styles.styleOptionChip, styles.interestOptionChipActive]}
-                        onPress={() => handleToggleInterest(custom)}
-                        activeOpacity={0.7}
-                      >
-                        <Text
-                          style={[styles.styleOptionChipText, styles.interestOptionChipTextActive]}
-                        >
-                          {custom}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                </View>
-              </ScrollView>
-              {/* 직접 입력 */}
-              <View style={styles.customInterestRow}>
-                <TextInput
-                  style={styles.customInterestInput}
-                  placeholder="직접 입력 (예: 서핑)"
-                  placeholderTextColor="#999"
-                  maxLength={10}
-                  value={customInterestText}
-                  onChangeText={setCustomInterestText}
-                  onSubmitEditing={handleAddCustomInterest}
-                  returnKeyType="done"
-                />
-                <TouchableOpacity
-                  style={[
-                    styles.customInterestAddBtn,
-                    !customInterestText.trim() && { opacity: 0.4 },
-                  ]}
-                  onPress={handleAddCustomInterest}
-                  disabled={!customInterestText.trim()}
-                >
-                  <Text style={styles.customInterestAddBtnText}>추가</Text>
-                </TouchableOpacity>
               </View>
-              <View style={styles.styleModalActions}>
-                <TouchableOpacity
-                  style={styles.styleModalCancel}
-                  onPress={() => setInterestModalVisible(false)}
-                >
-                  <Text style={styles.styleModalCancelText}>취소</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.styleModalSave, interestSubmitting && { opacity: 0.6 }]}
-                  onPress={handleSaveInterests}
-                  disabled={interestSubmitting}
-                >
-                  {interestSubmitting ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
-                    <Text style={styles.styleModalSaveText}>저장</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
+            </ScrollView>
+            {/* 직접 입력 */}
+            <View style={styles.customInterestRow}>
+              <TextInput
+                style={styles.customInterestInput}
+                placeholder="직접 입력 (예: 서핑)"
+                placeholderTextColor="#999"
+                maxLength={10}
+                value={customInterestText}
+                onChangeText={setCustomInterestText}
+                onSubmitEditing={handleAddCustomInterest}
+                returnKeyType="done"
+              />
+              <TouchableOpacity
+                style={[
+                  styles.customInterestAddBtn,
+                  !customInterestText.trim() && { opacity: 0.4 },
+                ]}
+                onPress={handleAddCustomInterest}
+                disabled={!customInterestText.trim()}
+              >
+                <Text style={styles.customInterestAddBtnText}>추가</Text>
+              </TouchableOpacity>
             </View>
-          </TouchableOpacity>
+            <View style={styles.styleModalActions}>
+              <TouchableOpacity
+                style={styles.styleModalCancel}
+                onPress={() => setInterestModalVisible(false)}
+              >
+                <Text style={styles.styleModalCancelText}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.styleModalSave, interestSubmitting && { opacity: 0.6 }]}
+                onPress={handleSaveInterests}
+                disabled={interestSubmitting}
+              >
+                {interestSubmitting ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.styleModalSaveText}>저장</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
         </KeyboardAvoidingView>
       </Modal>
 
@@ -2108,6 +2114,26 @@ const styles = StyleSheet.create({
   interestOptionChipTextActive: {
     color: '#92400e',
     fontWeight: '600',
+  },
+
+  // 관심사 모달 (하단 시트)
+  interestModalContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 48,
+    maxHeight: '80%',
+  },
+  interestModalSubtitle: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'center',
+    marginBottom: 12,
+    marginTop: -4,
+  },
+  interestModalScroll: {
+    maxHeight: 260,
+    paddingBottom: 4,
   },
 
   // 직접 입력 관심사
