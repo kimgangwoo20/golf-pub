@@ -135,6 +135,30 @@
   - my/: MyHomeScreen, AccountManagementScreen
 - [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.07 완료)
 
+### 2026.02.10 코드 감사 기반 버그 일괄 수정 (CRITICAL → LOW)
+
+- [x] ~~3-에이전트 병렬 코드 감사 수행 (Navigation/State, API/Firebase, UI/UX)~~ (2026.02.10 완료)
+- [x] **CRITICAL**: ~~bookingAPI `getMyApplications` 무제한 컬렉션 스캔 → `collectionGroup` 쿼리 + `limit(100)` 적용~~ (2026.02.10 완료)
+  - 기존: 전체 bookings 컬렉션 스캔 후 N+1 subcollection 쿼리
+  - 수정: `collectionGroup('applications')` + `where('userId', '==', uid)` + `limit(100)` + `parent.parent` 참조
+- [x] **CRITICAL**: ~~profileAPI 배경미디어 배열 업데이트 race condition → `firestore().runTransaction()` 적용~~ (2026.02.10 완료)
+  - `addBackgroundMedia`, `removeBackgroundMedia` 두 함수 모두 트랜잭션으로 원자적 업데이트
+- [x] **HIGH**: ~~LoginScreen Android 키보드 동작 수정 (`undefined` → `'height'`)~~ (2026.02.10 완료)
+- [x] **HIGH**: ~~BookingListScreen `useFocusEffect` 의존성 누락 수정 (`[loadBookings]`)~~ (2026.02.10 완료)
+- [x] **HIGH**: ~~firebaseChat 4개 silent catch 블록에 `console.warn` 추가~~ (2026.02.10 완료)
+  - `markMessageAsRead`, `markAllMessagesAsRead`, `setTypingStatus`, 채팅 알림 전송
+- [x] **HIGH**: ~~firebaseBooking N+1 호스트 쿼리 → batch `where...in` 쿼리~~ (2026.02.10 완료)
+  - `getPopularBookings`, `getRecommendedBookings`: 개별 `.get()` → `FieldPath.documentId()` 배치 (10개 단위)
+- [x] **HIGH**: ~~firebaseMessaging FCM 리스너 누수 → `_unsubscribers` 배열 추적/정리~~ (2026.02.10 완료)
+  - `initialize()` 호출 시 기존 리스너 정리 후 새로 등록
+- [x] **MEDIUM**: ~~profileAPI `console.error` 15개에 error 객체 누락 수정~~ (2026.02.10 완료)
+- [x] **MEDIUM**: ~~ForgotPasswordScreen, CreateBookingScreen, CreateProductScreen에 `KeyboardAvoidingView` 추가~~ (2026.02.10 완료)
+- [x] **MEDIUM**: ~~8개 컴포넌트 Image `onError` 폴백 처리 추가~~ (2026.02.10 완료)
+  - Avatar, BookingCard, ProfileCard, ChatListItem, FriendCard, ApplicantCard, PubCard, ProductCard
+  - 이미지 로드 실패 시 이니셜/아이콘 플레이스홀더로 자동 전환
+- [x] **LOW**: ~~ChatListScreen, NotificationListScreen FlatList에 `getItemLayout` 추가~~ (2026.02.10 완료)
+- [x] ~~TypeScript 0 에러 유지~~ (2026.02.10 완료)
+
 ### 2026.02.10 BackgroundMediaEditor 모달 버그 수정 + 스토어 미갱신 일괄 수정
 
 - [x] ~~BackgroundMediaEditor 바텀시트 Android에서 콘텐츠 보이지 않는 버그 수정~~ (2026.02.10 완료)
