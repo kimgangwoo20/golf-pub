@@ -67,6 +67,7 @@ export interface FeedPost {
   time: string;
   content: string;
   image?: string;
+  images?: string[];
   likes: number;
   comments: number;
   location?: string;
