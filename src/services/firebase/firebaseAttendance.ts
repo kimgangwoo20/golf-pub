@@ -2,16 +2,7 @@
 // 사용자의 일일 출석 체크 및 포인트 적립 관리
 
 import firestore from '@react-native-firebase/firestore';
-import { FirestoreTimestamp } from './firebaseConfig';
 import { callFunction } from './firebaseFunctions';
-
-interface AttendanceRecord {
-  userId: string;
-  date: string; // YYYY-MM-DD 형식
-  timestamp: ReturnType<typeof FirestoreTimestamp.now>;
-  points: number;
-  consecutiveDays: number;
-}
 
 /**
  * 오늘 출석 체크 여부 확인

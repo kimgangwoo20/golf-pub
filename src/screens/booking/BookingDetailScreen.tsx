@@ -1,5 +1,5 @@
 // BookingDetailScreen.tsx - 부킹 상세 화면
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -286,10 +286,7 @@ export const BookingDetailScreen: React.FC = () => {
                   {bookingImages.map((_, index) => (
                     <View
                       key={index}
-                      style={[
-                        styles.imageDot,
-                        activeImageIndex === index && styles.imageDotActive,
-                      ]}
+                      style={[styles.imageDot, activeImageIndex === index && styles.imageDotActive]}
                     />
                   ))}
                 </View>
@@ -447,7 +444,9 @@ export const BookingDetailScreen: React.FC = () => {
       <View style={styles.bottomBar}>
         <View style={styles.priceContainer}>
           <Text style={styles.priceLabel}>1인당</Text>
-          <Text style={styles.price}>{(booking.price.original || booking.price.discount).toLocaleString()}원</Text>
+          <Text style={styles.price}>
+            {(booking.price.original || booking.price.discount).toLocaleString()}원
+          </Text>
         </View>
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.chatButton} onPress={handleChat}>
