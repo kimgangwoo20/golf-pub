@@ -72,13 +72,13 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
     setLikeCount(profile?.likeCount || 0);
   }, [profile?.likeCount]);
 
-  // 좋아요 상태 확인
+  // 좋아요 상태 확인 (타인 프로필만)
   useEffect(() => {
     const targetUid = targetUserId || user?.uid;
-    if (targetUid && user?.uid) {
+    if (!isOwnProfile && targetUid && user?.uid) {
       checkProfileLiked(targetUid, user.uid).then(setLiked);
     }
-  }, [targetUserId, user?.uid, checkProfileLiked]);
+  }, [isOwnProfile, targetUserId, user?.uid, checkProfileLiked]);
 
   useEffect(() => {
     Animated.spring(cardAnim, {
@@ -108,6 +108,7 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
   };
 
   const handleLike = async () => {
+    if (isOwnProfile) return; // 본인 프로필 좋아요 불가
     const targetUid = targetUserId || user?.uid;
     if (!targetUid || !user?.uid) return;
 
@@ -295,15 +296,23 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
               <Text style={styles.metaText}>{location}</Text>
             </View>
           </View>
-          <TouchableOpacity
-            style={[styles.likeBox, liked && styles.likeBoxLiked]}
-            onPress={handleLike}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.likeHeart}>{liked ? '❤️' : '🧡'}</Text>
-            <Text style={styles.likeNum}>{likeCount}</Text>
-            <Text style={styles.likeUnit}>개</Text>
-          </TouchableOpacity>
+          {isOwnProfile ? (
+            <View style={styles.likeBox}>
+              <Text style={styles.likeHeart}>🧡</Text>
+              <Text style={styles.likeNum}>{likeCount}</Text>
+              <Text style={styles.likeUnit}>개</Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[styles.likeBox, liked && styles.likeBoxLiked]}
+              onPress={handleLike}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.likeHeart}>{liked ? '❤️' : '🧡'}</Text>
+              <Text style={styles.likeNum}>{likeCount}</Text>
+              <Text style={styles.likeUnit}>개</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* 소개 */}
