@@ -13,6 +13,7 @@ import {
 import { profileAPI } from '@/services/api/profileAPI';
 import { showImagePickerOptions } from '@/utils/imageUtils';
 import { validators } from '@/utils/validators';
+import { ImageCropModal } from '@/components/common/ImageCropModal';
 
 export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -23,6 +24,8 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [cropImageUri, setCropImageUri] = useState<string | null>(null);
+  const [cropModalVisible, setCropModalVisible] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -48,17 +51,30 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
   const handleChangeProfileImage = async () => {
     const uri = await showImagePickerOptions();
     if (uri) {
-      setIsUploadingImage(true);
-      try {
-        const downloadURL = await profileAPI.uploadProfileImage(uri);
-        setProfileImage(downloadURL);
-        Alert.alert('완료', '프로필 이미지가 변경되었습니다.');
-      } catch (error: any) {
-        Alert.alert('오류', error.message || '이미지 업로드에 실패했습니다.');
-      } finally {
-        setIsUploadingImage(false);
-      }
+      // 크롭 미리보기 모달 표시
+      setCropImageUri(uri);
+      setCropModalVisible(true);
     }
+  };
+
+  const handleCropConfirm = async (uri: string) => {
+    setCropModalVisible(false);
+    setCropImageUri(null);
+    setIsUploadingImage(true);
+    try {
+      const downloadURL = await profileAPI.uploadProfileImage(uri);
+      setProfileImage(downloadURL);
+      Alert.alert('완료', '프로필 이미지가 변경되었습니다.');
+    } catch (error: any) {
+      Alert.alert('오류', error.message || '이미지 업로드에 실패했습니다.');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleCropCancel = () => {
+    setCropModalVisible(false);
+    setCropImageUri(null);
   };
 
   const handleSave = async () => {
@@ -203,6 +219,13 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
           )}
         </TouchableOpacity>
       </View>
+
+      <ImageCropModal
+        visible={cropModalVisible}
+        imageUri={cropImageUri}
+        onConfirm={handleCropConfirm}
+        onCancel={handleCropCancel}
+      />
     </ScrollView>
   );
 };

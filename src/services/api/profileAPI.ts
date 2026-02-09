@@ -172,9 +172,8 @@ export const profileAPI = {
         throw new Error('로그인이 필요합니다.');
       }
 
-      // Storage에 업로드
-      const filename = `profile_${currentUser.uid}_${Date.now()}.jpg`;
-      const reference = storage().ref(`profiles/${filename}`);
+      // Storage에 업로드 (storage.rules: profiles/{userId}/{fileName})
+      const reference = storage().ref(`profiles/${currentUser.uid}/${Date.now()}.jpg`);
 
       await reference.putFile(imageUri);
       const downloadURL = await reference.getDownloadURL();
