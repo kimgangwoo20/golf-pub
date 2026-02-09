@@ -46,6 +46,9 @@ export interface NotificationData {
  * Firebase Messaging Service
  */
 class FirebaseMessagingService {
+  // FCM 리스너 해제 함수 관리 (메모리 누수 방지)
+  private _unsubscribers: (() => void)[] = [];
+
   /**
    * FCM 권한 요청 (iOS)
    *
@@ -584,24 +587,33 @@ class FirebaseMessagingService {
         await this.saveToken(userId, token);
       }
 
+      // 기존 리스너 정리
+      if (this._unsubscribers) {
+        this._unsubscribers.forEach((unsub) => unsub());
+      }
+      this._unsubscribers = [];
+
       // 토큰 갱신 리스너
-      messaging.onTokenRefresh(async (newToken) => {
+      const unsubToken = messaging.onTokenRefresh(async (newToken) => {
         await this.saveToken(userId, newToken);
       });
+      this._unsubscribers.push(unsubToken);
 
       // 포그라운드 메시지 수신 시 로컬 알림 표시
-      this.onForegroundMessage(async (remoteMessage) => {
+      const unsubForeground = this.onForegroundMessage(async (remoteMessage) => {
         await this.displayLocalNotification(remoteMessage);
       });
+      this._unsubscribers.push(unsubForeground);
 
       // 알림 탭 시 딥링킹 네비게이션 처리
-      this.onNotificationOpened((remoteMessage) => {
+      const unsubOpened = this.onNotificationOpened((remoteMessage) => {
         if (remoteMessage.data) {
           this.handleNotificationNavigation(remoteMessage.data);
         }
       });
+      this._unsubscribers.push(unsubOpened);
     } catch (error) {
-      // FCM 초기화 실패 - 무시
+      console.warn('FCM 초기화 실패:', error);
     }
   }
 }

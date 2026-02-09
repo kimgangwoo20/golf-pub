@@ -92,7 +92,7 @@ export const LoginScreen: React.FC = () => {
       <LinearGradient colors={['#10b981', '#1B5E20']} style={styles.gradient}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <ScrollView
             contentContainerStyle={styles.scrollContent}

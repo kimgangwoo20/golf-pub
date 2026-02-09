@@ -191,8 +191,9 @@ class FirebaseChatService {
 
           await Promise.all(notificationPromises);
         }
-      } catch {
-        // 알림 전송 실패 시 메시지 전송에 영향 없도록 무시
+      } catch (notifyError) {
+        // 알림 전송 실패 시 메시지 전송에 영향 없도록 무시 (로그만 기록)
+        console.warn('채팅 알림 전송 실패:', notifyError);
       }
 
       return messageId;
@@ -227,7 +228,7 @@ class FirebaseChatService {
         await messageRef.update({ readBy });
       }
     } catch (error) {
-      // 에러 무시
+      console.warn('메시지 읽음 처리 실패:', error);
     }
   }
 
@@ -268,7 +269,7 @@ class FirebaseChatService {
       // 읽지 않은 메시지 카운트 0으로 설정
       await database.ref(`chatRooms/${roomId}/unreadCount/${userId}`).set(0);
     } catch (error) {
-      // 에러 무시
+      console.warn('전체 메시지 읽음 처리 실패:', error);
     }
   }
 
@@ -371,7 +372,7 @@ class FirebaseChatService {
         await typingRef.remove();
       }
     } catch (error) {
-      // 에러 무시
+      console.warn('타이핑 상태 설정 실패:', error);
     }
   }
 

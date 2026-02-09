@@ -30,7 +30,7 @@ export const BookingListScreen: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       loadBookings();
-    }, []),
+    }, [loadBookings]),
   );
 
   useEffect(() => {

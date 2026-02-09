@@ -73,7 +73,7 @@ export const profileAPI = {
       // 프로필 조회 성공
       return profile;
     } catch (error: any) {
-      console.error('프로필 조회 실패');
+      console.error('프로필 조회 실패:', error);
       throw new Error(error.message || '프로필을 불러오는데 실패했습니다.');
     }
   },
@@ -111,7 +111,7 @@ export const profileAPI = {
 
       // 프로필 생성 성공
     } catch (error: any) {
-      console.error('프로필 생성 실패');
+      console.error('프로필 생성 실패:', error);
       throw new Error(error.message || '프로필 생성에 실패했습니다.');
     }
   },
@@ -155,7 +155,7 @@ export const profileAPI = {
 
       // 프로필 수정 성공
     } catch (error: any) {
-      console.error('프로필 수정 실패');
+      console.error('프로필 수정 실패:', error);
       throw new Error(error.message || '프로필 수정에 실패했습니다.');
     }
   },
@@ -202,7 +202,7 @@ export const profileAPI = {
       // 프로필 이미지 업로드 성공
       return downloadURL;
     } catch (error: any) {
-      console.error('프로필 이미지 업로드 실패');
+      console.error('프로필 이미지 업로드 실패:', error);
       throw new Error(error.message || '이미지 업로드에 실패했습니다.');
     }
   },
@@ -237,7 +237,7 @@ export const profileAPI = {
       // 포인트 내역 조회 성공
       return points;
     } catch (error: any) {
-      console.error('포인트 내역 조회 실패');
+      console.error('포인트 내역 조회 실패:', error);
       throw new Error(error.message || '포인트 내역을 불러오는데 실패했습니다.');
     }
   },
@@ -274,7 +274,7 @@ export const profileAPI = {
         targetUserId,
       });
     } catch (error: any) {
-      console.error('포인트 적립 실패');
+      console.error('포인트 적립 실패:', error);
       throw new Error(error.message || '포인트 적립에 실패했습니다.');
     }
   },
@@ -289,7 +289,7 @@ export const profileAPI = {
     try {
       await callFunction('pointsDeduct', { amount, description });
     } catch (error: any) {
-      console.error('포인트 사용 실패');
+      console.error('포인트 사용 실패:', error);
       throw new Error(error.message || '포인트 사용에 실패했습니다.');
     }
   },
@@ -322,7 +322,7 @@ export const profileAPI = {
       // 쿠폰 목록 조회 성공
       return coupons;
     } catch (error: any) {
-      console.error('쿠폰 목록 조회 실패');
+      console.error('쿠폰 목록 조회 실패:', error);
       throw new Error(error.message || '쿠폰 목록을 불러오는데 실패했습니다.');
     }
   },
@@ -354,7 +354,7 @@ export const profileAPI = {
 
       return reviews;
     } catch (error: any) {
-      console.error('리뷰 목록 조회 실패');
+      console.error('리뷰 목록 조회 실패:', error);
       throw new Error(error.message || '리뷰 목록을 불러오는데 실패했습니다.');
     }
   },
@@ -388,7 +388,7 @@ export const profileAPI = {
 
       return { success: true, message: '쿠폰이 발급되었습니다.' };
     } catch (error: any) {
-      console.error('쿠폰 발급 실패');
+      console.error('쿠폰 발급 실패:', error);
       return { success: false, message: error.message || '쿠폰 발급에 실패했습니다.' };
     }
   },
@@ -409,7 +409,7 @@ export const profileAPI = {
 
       return { success: true, message: '쿠폰이 사용되었습니다.' };
     } catch (error: any) {
-      console.error('쿠폰 사용 실패');
+      console.error('쿠폰 사용 실패:', error);
       return { success: false, message: error.message || '쿠폰 사용에 실패했습니다.' };
     }
   },
@@ -446,7 +446,7 @@ export const profileAPI = {
       // 사용자 프로필 조회 성공
       return profile;
     } catch (error: any) {
-      console.error('사용자 프로필 조회 실패');
+      console.error('사용자 프로필 조회 실패:', error);
       throw new Error(error.message || '프로필을 불러오는데 실패했습니다.');
     }
   },
@@ -474,23 +474,22 @@ export const profileAPI = {
       await reference.putFile(uploadUri);
       const downloadURL = await reference.getDownloadURL();
 
-      // 기존 배경 미디어 배열 가져오기
-      const userDoc = await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).get();
-      const existing: any[] = userDoc.data()?.backgroundMedia || [];
+      // Firestore Transaction으로 원자적 배열 업데이트 (동시 요청 시 데이터 손실 방지)
+      await firestore().runTransaction(async (transaction) => {
+        const userRef = firestore().collection(USERS_COLLECTION).doc(currentUser.uid);
+        const userDoc = await transaction.get(userRef);
+        const existing: any[] = userDoc.data()?.backgroundMedia || [];
 
-      // 새 항목 추가 (order는 기존 길이)
-      const newMedia = { url: downloadURL, type, order: existing.length };
-      await firestore()
-        .collection(USERS_COLLECTION)
-        .doc(currentUser.uid)
-        .update({
+        const newMedia = { url: downloadURL, type, order: existing.length };
+        transaction.update(userRef, {
           backgroundMedia: [...existing, newMedia],
           updatedAt: firestore.FieldValue.serverTimestamp(),
         });
+      });
 
       return downloadURL;
     } catch (error: any) {
-      console.error('배경 미디어 추가 실패');
+      console.error('배경 미디어 추가 실패:', error);
       throw new Error(error.message || '배경 미디어 추가에 실패했습니다.');
     }
   },
@@ -515,19 +514,22 @@ export const profileAPI = {
         // 이미 삭제된 경우 무시
       }
 
-      // Firestore 배열에서 제거 + 순서 재정렬
-      const userDoc = await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).get();
-      const existing: any[] = userDoc.data()?.backgroundMedia || [];
-      const filtered = existing
-        .filter((m: any) => m.url !== url)
-        .map((m: any, i: number) => ({ ...m, order: i }));
+      // Firestore Transaction으로 원자적 배열 제거 + 순서 재정렬
+      await firestore().runTransaction(async (transaction) => {
+        const userRef = firestore().collection(USERS_COLLECTION).doc(currentUser.uid);
+        const userDoc = await transaction.get(userRef);
+        const existing: any[] = userDoc.data()?.backgroundMedia || [];
+        const filtered = existing
+          .filter((m: any) => m.url !== url)
+          .map((m: any, i: number) => ({ ...m, order: i }));
 
-      await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).update({
-        backgroundMedia: filtered,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        transaction.update(userRef, {
+          backgroundMedia: filtered,
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+        });
       });
     } catch (error: any) {
-      console.error('배경 미디어 삭제 실패');
+      console.error('배경 미디어 삭제 실패:', error);
       throw new Error(error.message || '배경 미디어 삭제에 실패했습니다.');
     }
   },
@@ -552,7 +554,7 @@ export const profileAPI = {
         updatedAt: firestore.FieldValue.serverTimestamp(),
       });
     } catch (error: any) {
-      console.error('배경 미디어 순서 변경 실패');
+      console.error('배경 미디어 순서 변경 실패:', error);
       throw new Error(error.message || '순서 변경에 실패했습니다.');
     }
   },

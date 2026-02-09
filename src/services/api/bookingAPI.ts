@@ -534,45 +534,52 @@ export const bookingAPI = {
         throw new Error('로그인이 필요합니다.');
       }
 
-      // 모든 부킹의 신청 내역 조회
-      const bookingsSnapshot = await firestore().collection(BOOKINGS_COLLECTION).get();
+      // collectionGroup 쿼리로 모든 부킹의 applications 서브컬렉션에서 내 신청만 조회
+      const myApplicationsSnapshot = await firestore()
+        .collectionGroup(APPLICATIONS_COLLECTION)
+        .where('userId', '==', currentUser.uid)
+        .limit(100)
+        .get();
 
-      const applicationsPromises = bookingsSnapshot.docs.map(async (bookingDoc) => {
-        const applicationSnapshot = await firestore()
-          .collection(BOOKINGS_COLLECTION)
-          .doc(bookingDoc.id)
-          .collection(APPLICATIONS_COLLECTION)
-          .where('userId', '==', currentUser.uid)
-          .get();
+      if (myApplicationsSnapshot.empty) {
+        return [];
+      }
 
-        if (applicationSnapshot.empty) {
+      // 부모 부킹 문서 가져오기
+      const bookingPromises = myApplicationsSnapshot.docs.map(async (appDoc) => {
+        const bookingRef = appDoc.ref.parent.parent;
+        if (!bookingRef) return null;
+
+        try {
+          const bookingDoc = await bookingRef.get();
+          if (!bookingDoc.exists) return null;
+
+          return {
+            booking: {
+              id: bookingDoc.id,
+              ...bookingDoc.data(),
+              createdAt:
+                bookingDoc.data()?.createdAt?.toDate?.()?.toISOString?.() ||
+                new Date().toISOString(),
+              updatedAt:
+                bookingDoc.data()?.updatedAt?.toDate?.()?.toISOString?.() ||
+                new Date().toISOString(),
+            } as Booking,
+            applicationStatus: appDoc.data().status,
+          };
+        } catch {
           return null;
         }
-
-        const application = applicationSnapshot.docs[0];
-        return {
-          booking: {
-            id: bookingDoc.id,
-            ...bookingDoc.data(),
-            createdAt:
-              bookingDoc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
-            updatedAt:
-              bookingDoc.data().updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
-          } as Booking,
-          applicationStatus: application.data().status,
-        };
       });
 
-      const applications = (await Promise.all(applicationsPromises)).filter(
+      const applications = (await Promise.all(bookingPromises)).filter(
         (app) => app !== null,
       ) as { booking: Booking; applicationStatus: string }[];
 
-      const result = applications.map((app) => ({
+      return applications.map((app) => ({
         ...app.booking,
         applicationStatus: app.applicationStatus,
       }));
-
-      return result;
     } catch (error: any) {
       console.error('❌ 신청한 부킹 목록 조회 실패:', error);
       throw new Error(error.message || '신청한 부킹 목록을 불러오는데 실패했습니다.');

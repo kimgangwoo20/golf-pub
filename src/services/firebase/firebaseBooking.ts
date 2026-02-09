@@ -495,33 +495,42 @@ export const getPopularBookings = async (
 
     if (snapshot.empty) return [];
 
-    const bookings = await Promise.all(
-      snapshot.docs.map(async (doc) => {
-        const data = doc.data();
-        let organizerName = '알 수 없음';
+    // 호스트 ID 수집 후 배치 쿼리 (N+1 방지)
+    const hostIds = [
+      ...new Set(snapshot.docs.map((doc) => doc.data().hostId).filter(Boolean)),
+    ];
+    const hostMap: Record<string, string> = {};
 
-        if (data.hostId) {
-          try {
-            const hostDoc = await firestore().collection('users').doc(data.hostId).get();
-            const hostData = hostDoc.data();
-            organizerName = hostData?.name || hostData?.displayName || '알 수 없음';
-          } catch {
-            // 호스트 정보 조회 실패 시 기본값 사용
-          }
-        }
+    // Firestore 'in' 쿼리는 최대 10개씩
+    for (let i = 0; i < hostIds.length; i += 10) {
+      const chunk = hostIds.slice(i, i + 10);
+      try {
+        const hostsSnapshot = await firestore()
+          .collection('users')
+          .where(firestore.FieldPath.documentId(), 'in', chunk)
+          .get();
+        hostsSnapshot.docs.forEach((doc) => {
+          const data = doc.data();
+          hostMap[doc.id] = data?.name || data?.displayName || '알 수 없음';
+        });
+      } catch {
+        // 호스트 배치 조회 실패 시 기본값 유지
+      }
+    }
 
-        return {
-          id: doc.id,
-          course: data.course || '',
-          date: data.date || '',
-          time: data.time || '',
-          organizer: organizerName,
-          participants: data.participants?.current || 0,
-          maxParticipants: data.participants?.max || 4,
-          hostId: data.hostId || '',
-        };
-      }),
-    );
+    const bookings = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        course: data.course || '',
+        date: data.date || '',
+        time: data.time || '',
+        organizer: hostMap[data.hostId] || '알 수 없음',
+        participants: data.participants?.current || 0,
+        maxParticipants: data.participants?.max || 4,
+        hostId: data.hostId || '',
+      };
+    });
 
     // 참가자 많은 순으로 정렬
     return bookings.sort((a, b) => b.participants - a.participants);
@@ -559,36 +568,45 @@ export const getRecommendedBookings = async (
 
     if (snapshot.empty) return [];
 
-    const bookings = await Promise.all(
-      snapshot.docs
-        .filter((doc) => doc.data().hostId !== userId)
-        .slice(0, limitCount)
-        .map(async (doc) => {
+    const filteredDocs = snapshot.docs
+      .filter((doc) => doc.data().hostId !== userId)
+      .slice(0, limitCount);
+
+    // 호스트 ID 수집 후 배치 쿼리 (N+1 방지)
+    const hostIds = [
+      ...new Set(filteredDocs.map((doc) => doc.data().hostId).filter(Boolean)),
+    ];
+    const hostMap: Record<string, string> = {};
+
+    for (let i = 0; i < hostIds.length; i += 10) {
+      const chunk = hostIds.slice(i, i + 10);
+      try {
+        const hostsSnapshot = await firestore()
+          .collection('users')
+          .where(firestore.FieldPath.documentId(), 'in', chunk)
+          .get();
+        hostsSnapshot.docs.forEach((doc) => {
           const data = doc.data();
-          let organizerName = '알 수 없음';
+          hostMap[doc.id] = data?.name || data?.displayName || '알 수 없음';
+        });
+      } catch {
+        // 호스트 배치 조회 실패 시 기본값 유지
+      }
+    }
 
-          if (data.hostId) {
-            try {
-              const hostDoc = await firestore().collection('users').doc(data.hostId).get();
-              const hostData = hostDoc.data();
-              organizerName = hostData?.name || hostData?.displayName || '알 수 없음';
-            } catch {
-              // 호스트 정보 조회 실패 시 기본값 사용
-            }
-          }
-
-          return {
-            id: doc.id,
-            course: data.course || '',
-            date: data.date || '',
-            time: data.time || '',
-            organizer: organizerName,
-            participants: data.participants?.current || 0,
-            maxParticipants: data.participants?.max || 4,
-            hostId: data.hostId || '',
-          };
-        }),
-    );
+    const bookings = filteredDocs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        course: data.course || '',
+        date: data.date || '',
+        time: data.time || '',
+        organizer: hostMap[data.hostId] || '알 수 없음',
+        participants: data.participants?.current || 0,
+        maxParticipants: data.participants?.max || 4,
+        hostId: data.hostId || '',
+      };
+    });
 
     return bookings;
   } catch (error) {
