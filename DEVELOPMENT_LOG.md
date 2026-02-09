@@ -135,6 +135,28 @@
   - my/: MyHomeScreen, AccountManagementScreen
 - [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.07 완료)
 
+### 2026.02.10 BackgroundMediaEditor 모달 버그 수정 + 스토어 미갱신 일괄 수정
+
+- [x] ~~BackgroundMediaEditor 바텀시트 Android에서 콘텐츠 보이지 않는 버그 수정~~ (2026.02.10 완료)
+  - 원인: `container`(maxHeight:'85%')의 자식 `SafeAreaView`(flex:1)가 Android에서 높이 순환 참조 → 0px 렌더링
+  - SafeAreaView 래핑 제거 → 콘텐츠가 직접 container 높이 결정
+  - `maxHeight`를 퍼센트 → `Dimensions` 기반 숫자값(`SHEET_MAX_HEIGHT`)으로 변경
+  - FlatList에 `maxHeight`(`LIST_MAX_HEIGHT`) 추가하여 스크롤 영역 바운딩
+- [x] ~~BackgroundMediaEditor 하단 버튼 잘림 수정 (paddingBottom 34→56)~~ (2026.02.10 완료)
+- [x] ~~배경 이미지 업로드 속도 개선 — 업로드 전 이미지 압축 추가~~ (2026.02.10 완료)
+- [x] ~~배경 스와이프 스냅백 버그 수정~~ (2026.02.10 완료)
+  - 원인: `ListHeaderComponent`를 함수 컴포넌트(() => JSX)로 전달 → 매 렌더마다 새 함수 참조 → FlatList 헤더 리마운트 → ScrollView 스크롤 위치 리셋
+  - JSX 엘리먼트 변수(`const listHeader = <JSX />`)로 변경하여 reconciliation만 수행
+- [x] ~~프로필 수정 후 닉네임 즉시 반영 안 되는 버그 수정~~ (2026.02.10 완료)
+  - EditProfileScreen: 저장 후 `refreshProfileStore(user.uid)` 호출 추가
+  - MyHomeScreen: 닉네임을 `profile?.displayName` (스토어) 우선으로 읽도록 변경
+- [x] ~~API 호출 후 스토어 미갱신 버그 일괄 수정 (7개 화면)~~ (2026.02.10 완료)
+  - **HIGH**: CreateProductScreen (상품 생성 후 `loadItems()`), CreatePostScreen (게시글 생성 후 `loadPosts()`), ChatListScreen (`useEffect`→`useFocusEffect`), FriendsScreen (`useEffect`→`useFocusEffect`), MyProductsScreen (`useEffect`→`useFocusEffect`)
+  - **MEDIUM**: CreateBookingScreen (모임 생성 후 `loadBookings()`), FriendRequestsScreen (`useEffect`→`useFocusEffect`)
+- [x] ~~HANDOFF.md 인수인계 문서 생성~~ (2026.02.10 완료)
+- [x] ~~ImageViewerModal, BackgroundMediaEditor 컴포넌트 신규 추가~~ (2026.02.10 완료)
+- [x] ~~TypeScript 0 에러 유지~~ (2026.02.10 완료)
+
 ### 2026.02.09 프로필 좋아요 Firestore 연동 (26차 배치)
 
 - [x] ~~useProfileStore에 `likeCount` 필드 + 좋아요 액션 추가 (useProfileStore.ts)~~ (2026.02.09 완료)
