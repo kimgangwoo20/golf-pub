@@ -22,6 +22,7 @@ export const SettingsScreen: React.FC = () => {
   const [showWithdrawalConfirm, setShowWithdrawalConfirm] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
 
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const appVersion = require('../../../../app.json').expo.version;
 
   const handleAccountManagement = () => {
@@ -55,7 +56,10 @@ export const SettingsScreen: React.FC = () => {
             await firestore().clearPersistence();
             Alert.alert('완료', '캐시가 삭제되었습니다. 앱을 재시작해주세요.');
           } catch {
-            Alert.alert('알림', '캐시 삭제 중 오류가 발생했지만 일부 캐시가 정리되었을 수 있습니다.');
+            Alert.alert(
+              '알림',
+              '캐시 삭제 중 오류가 발생했지만 일부 캐시가 정리되었을 수 있습니다.',
+            );
           }
         },
       },

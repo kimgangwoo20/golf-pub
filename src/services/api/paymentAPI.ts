@@ -1,6 +1,6 @@
 // 결제 내역 조회 API
 
-import { firestore, FirestoreTimestamp } from '@/services/firebase/firebaseConfig';
+import { firestore } from '@/services/firebase/firebaseConfig';
 import auth from '@react-native-firebase/auth';
 
 // 결제 내역 인터페이스
