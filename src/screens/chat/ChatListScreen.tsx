@@ -1,5 +1,5 @@
 // ChatListScreen.tsx - 채팅 목록 (Firestore 연동)
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore, ChatRoom } from '@/store/useChatStore';
 import { DEFAULT_AVATAR } from '@/constants/images';
@@ -39,11 +39,13 @@ export const ChatListScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    if (user?.uid) {
-      loadChatRooms(user.uid);
-    }
-  }, [user?.uid, loadChatRooms]);
+  useFocusEffect(
+    useCallback(() => {
+      if (user?.uid) {
+        loadChatRooms(user.uid);
+      }
+    }, [user?.uid, loadChatRooms]),
+  );
 
   const handleRefresh = useCallback(async () => {
     if (!user?.uid) return;

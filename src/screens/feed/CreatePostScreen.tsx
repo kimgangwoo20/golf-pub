@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useFeedStore } from '@/store/useFeedStore';
 import {
   firestore as firebaseFirestore,
   FirestoreTimestamp,
@@ -168,6 +169,8 @@ export const CreatePostScreen: React.FC = () => {
               createdAt: FirestoreTimestamp.now(),
             });
 
+            // 피드 스토어 갱신
+            await useFeedStore.getState().loadPosts();
             setPublishing(false);
             Alert.alert('완료', '게시물이 등록되었습니다.', [
               { text: '확인', onPress: () => navigation.goBack() },

@@ -237,6 +237,8 @@ export const CreateBookingScreen: React.FC = () => {
             }
 
             await useBookingStore.getState().createBooking(bookingData as any);
+            // 모임 목록 스토어 갱신
+            await useBookingStore.getState().loadBookings();
 
             Alert.alert('등록 완료', '모집글이 등록되었습니다!', [
               {

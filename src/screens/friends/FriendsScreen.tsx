@@ -1,6 +1,6 @@
 // FriendsScreen.tsx - 친구 목록 화면 (Firestore 연동)
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuthStore } from '@/store/useAuthStore';
 import { getFriendsList, getPendingRequests } from '@/services/firebase/firebaseFriends';
 import { Friend } from '@/services/firebase/firebaseFriends';
@@ -46,9 +46,11 @@ export const FriendsScreen: React.FC = () => {
     }
   }, [user?.uid]);
 
-  useEffect(() => {
-    loadFriends();
-  }, [loadFriends]);
+  useFocusEffect(
+    useCallback(() => {
+      loadFriends();
+    }, [loadFriends]),
+  );
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);

@@ -1,6 +1,6 @@
 // FriendRequestsScreen.tsx - 친구 요청 화면 (Firestore 연동)
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuthStore } from '@/store/useAuthStore';
 import {
   getPendingRequests,
@@ -100,9 +100,11 @@ export const FriendRequestsScreen: React.FC = () => {
     }
   }, [user?.uid]);
 
-  useEffect(() => {
-    loadRequests();
-  }, [loadRequests]);
+  useFocusEffect(
+    useCallback(() => {
+      loadRequests();
+    }, [loadRequests]),
+  );
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);

@@ -1,6 +1,6 @@
 // MyProductsScreen.tsx - 내 판매 상품 화면
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Product, ProductStatus } from '@/types/marketplace-types';
 import { marketplaceAPI } from '@/services/api/marketplaceAPI';
 import { colors } from '@/styles/theme';
@@ -38,9 +38,11 @@ export const MyProductsScreen: React.FC = () => {
     }
   }, []);
 
-  useEffect(() => {
-    loadProducts();
-  }, [loadProducts]);
+  useFocusEffect(
+    useCallback(() => {
+      loadProducts();
+    }, [loadProducts]),
+  );
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);

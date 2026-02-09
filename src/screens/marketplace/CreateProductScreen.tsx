@@ -22,6 +22,7 @@ import {
 } from '@/types/marketplace-types';
 import { marketplaceAPI } from '@/services/api/marketplaceAPI';
 import { firebaseStorage } from '@/services/firebase/firebaseStorage';
+import { useMarketplaceStore } from '@/store/useMarketplaceStore';
 import { colors } from '@/styles/theme';
 import * as ImagePicker from 'expo-image-picker';
 import { validators } from '@/utils/validators';
@@ -145,6 +146,8 @@ export const CreateProductScreen: React.FC = () => {
               images: imageUrls,
               location: location.trim(),
             });
+            // 마켓플레이스 스토어 갱신
+            await useMarketplaceStore.getState().loadItems();
             Alert.alert('완료', '상품이 등록되었습니다.', [
               { text: '확인', onPress: () => navigation.goBack() },
             ]);
