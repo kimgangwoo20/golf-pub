@@ -1,22 +1,8 @@
 // 📷 이미지 선택 및 업로드 유틸리티
-// expo-image-picker 또는 react-native-image-picker 사용
 
-import { Alert } from 'react-native';
+import { Alert, Linking } from 'react-native';
 import storage from '@react-native-firebase/storage';
-import { requestCameraPermission, requestStoragePermission } from './devicePermissions';
-
-// expo-image-picker 타입 (설치 후 사용)
-interface ImagePickerResult {
-  canceled: boolean;
-  assets?: {
-    uri: string;
-    width: number;
-    height: number;
-    type?: string;
-    fileName?: string;
-    fileSize?: number;
-  }[];
-}
+import * as ImagePicker from 'expo-image-picker';
 
 /**
  * 이미지 선택 옵션
@@ -38,27 +24,22 @@ export const pickImageFromGallery = async (
   options?: ImagePickerOptions,
 ): Promise<string | null> => {
   try {
-    // 권한 확인
-    const hasPermission = await requestStoragePermission();
-    if (!hasPermission) {
-      return null;
-    }
-
-    // expo-image-picker 동적 import
-    let ImagePicker;
-    try {
-      ImagePicker = require('expo-image-picker');
-    } catch (e) {
+    // expo 내장 권한 API 사용
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
       Alert.alert(
-        '기능 사용 불가',
-        '이미지 선택을 위해 expo-image-picker 설치가 필요합니다.\n\nnpx expo install expo-image-picker',
+        '갤러리 권한 필요',
+        '사진을 선택하려면 갤러리 접근 권한이 필요합니다.',
+        [
+          { text: '취소', style: 'cancel' },
+          { text: '설정으로 이동', onPress: () => Linking.openSettings() },
+        ],
       );
-      console.error('expo-image-picker가 설치되지 않았습니다.');
       return null;
     }
 
-    const result: ImagePickerResult = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
       allowsEditing: options?.allowsEditing ?? true,
       aspect: options?.aspect ?? [1, 1],
       quality: options?.quality ?? 0.8,
@@ -81,24 +62,21 @@ export const pickImageFromGallery = async (
  */
 export const pickMultipleImages = async (options?: ImagePickerOptions): Promise<string[]> => {
   try {
-    const hasPermission = await requestStoragePermission();
-    if (!hasPermission) {
-      return [];
-    }
-
-    let ImagePicker;
-    try {
-      ImagePicker = require('expo-image-picker');
-    } catch (e) {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
       Alert.alert(
-        '기능 사용 불가',
-        '이미지 선택을 위해 expo-image-picker 설치가 필요합니다.\n\nnpx expo install expo-image-picker',
+        '갤러리 권한 필요',
+        '사진을 선택하려면 갤러리 접근 권한이 필요합니다.',
+        [
+          { text: '취소', style: 'cancel' },
+          { text: '설정으로 이동', onPress: () => Linking.openSettings() },
+        ],
       );
       return [];
     }
 
-    const result: ImagePickerResult = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
       allowsMultipleSelection: true,
       selectionLimit: options?.selectionLimit ?? 10,
       quality: options?.quality ?? 0.8,
@@ -121,24 +99,21 @@ export const pickMultipleImages = async (options?: ImagePickerOptions): Promise<
  */
 export const takePhoto = async (options?: ImagePickerOptions): Promise<string | null> => {
   try {
-    const hasPermission = await requestCameraPermission();
-    if (!hasPermission) {
-      return null;
-    }
-
-    let ImagePicker;
-    try {
-      ImagePicker = require('expo-image-picker');
-    } catch (e) {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
       Alert.alert(
-        '기능 사용 불가',
-        '카메라 사용을 위해 expo-image-picker 설치가 필요합니다.\n\nnpx expo install expo-image-picker',
+        '카메라 권한 필요',
+        '사진을 촬영하려면 카메라 접근 권한이 필요합니다.',
+        [
+          { text: '취소', style: 'cancel' },
+          { text: '설정으로 이동', onPress: () => Linking.openSettings() },
+        ],
       );
       return null;
     }
 
-    const result: ImagePickerResult = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
       allowsEditing: options?.allowsEditing ?? true,
       aspect: options?.aspect ?? [1, 1],
       quality: options?.quality ?? 0.8,
