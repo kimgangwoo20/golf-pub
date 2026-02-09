@@ -11,11 +11,15 @@ import {
   Image,
 } from 'react-native';
 import { profileAPI } from '@/services/api/profileAPI';
-import { showImagePickerOptions } from '@/utils/imageUtils';
+import { showImagePickerOptions, compressImage } from '@/utils/imageUtils';
 import { validators } from '@/utils/validators';
 import { ImageCropModal } from '@/components/common/ImageCropModal';
+import { useProfileStore } from '@/store/useProfileStore';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
+  const { user } = useAuthStore();
+  const { loadProfile: refreshProfileStore } = useProfileStore();
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [phone, setPhone] = useState('');
@@ -49,8 +53,8 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
   };
 
   const handleChangeProfileImage = async () => {
-    // 시스템 크롭(allowsEditing) → 앱 확인 모달 표시
-    const uri = await showImagePickerOptions();
+    // 시스템 크롭 비활성화 → 앱 자체 확인 모달 사용, quality 낮춰 용량 절감
+    const uri = await showImagePickerOptions({ allowsEditing: false, quality: 0.5 });
     if (uri) {
       setCropImageUri(uri);
       setCropModalVisible(true);
@@ -62,8 +66,14 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
     setCropImageUri(null);
     setIsUploadingImage(true);
     try {
-      const downloadURL = await profileAPI.uploadProfileImage(uri);
+      // 업로드 전 이미지 압축 (프로필용 600px, 네이티브 모듈 없으면 원본 반환)
+      const compressed = await compressImage(uri, 600, 0.7);
+      const downloadURL = await profileAPI.uploadProfileImage(compressed);
       setProfileImage(downloadURL);
+      // Zustand 스토어 갱신 → ProfileScreen, MyHomeScreen에 즉시 반영
+      if (user?.uid) {
+        await refreshProfileStore(user.uid);
+      }
       Alert.alert('완료', '프로필 이미지가 변경되었습니다.');
     } catch (error: any) {
       Alert.alert('오류', error.message || '이미지 업로드에 실패했습니다.');
