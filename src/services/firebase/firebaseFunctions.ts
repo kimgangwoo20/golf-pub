@@ -5,10 +5,7 @@ import '@react-native-firebase/functions';
 /**
  * Cloud Function 호출 공통 헬퍼
  */
-export const callFunction = async <T = any>(
-  name: string,
-  data?: any,
-): Promise<T> => {
+export const callFunction = async <T = any>(name: string, data?: any): Promise<T> => {
   try {
     const callable = firebase.app().functions('asia-northeast3').httpsCallable(name);
     const result = await callable(data);

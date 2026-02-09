@@ -1,5 +1,8 @@
 import { create } from 'zustand';
-import { firestore as firebaseFirestore, FirestoreTimestamp } from '@/services/firebase/firebaseConfig';
+import {
+  firestore as firebaseFirestore,
+  FirestoreTimestamp,
+} from '@/services/firebase/firebaseConfig';
 import { Booking } from '@/types/booking-types';
 
 interface BookingState {
@@ -149,7 +152,10 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       const localNow = new Date();
       const { bookings } = get();
       set({
-        bookings: [{ id: docRef.id, ...booking, createdAt: localNow, updatedAt: localNow } as Booking, ...bookings],
+        bookings: [
+          { id: docRef.id, ...booking, createdAt: localNow, updatedAt: localNow } as Booking,
+          ...bookings,
+        ],
         loading: false,
       });
     } catch (error: any) {

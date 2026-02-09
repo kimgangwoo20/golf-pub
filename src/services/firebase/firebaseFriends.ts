@@ -178,16 +178,22 @@ export const acceptFriendRequest = async (
     await firestore()
       .collection('users')
       .doc(fromUserId)
-      .set({
-        'stats.friendsCount': firestore.FieldValue.increment(1),
-      }, { merge: true });
+      .set(
+        {
+          'stats.friendsCount': firestore.FieldValue.increment(1),
+        },
+        { merge: true },
+      );
 
     await firestore()
       .collection('users')
       .doc(toUserId)
-      .set({
-        'stats.friendsCount': firestore.FieldValue.increment(1),
-      }, { merge: true });
+      .set(
+        {
+          'stats.friendsCount': firestore.FieldValue.increment(1),
+        },
+        { merge: true },
+      );
 
     return {
       success: true,
@@ -233,11 +239,7 @@ export const rejectFriendRequest = async (
 export const getFriendsList = async (userId: string): Promise<Friend[]> => {
   try {
     // 서브컬렉션 경로: users/{userId}/friends
-    const snapshot = await firestore()
-      .collection('users')
-      .doc(userId)
-      .collection('friends')
-      .get();
+    const snapshot = await firestore().collection('users').doc(userId).collection('friends').get();
 
     const friendIds = snapshot.docs.map((doc) => doc.id);
 
@@ -482,12 +484,8 @@ export const removeFriend = async (
     // 양방향 친구 관계 삭제 (서브컬렉션 경로)
     const batch = firestore().batch();
 
-    batch.delete(
-      firestore().collection('users').doc(userId).collection('friends').doc(friendId),
-    );
-    batch.delete(
-      firestore().collection('users').doc(friendId).collection('friends').doc(userId),
-    );
+    batch.delete(firestore().collection('users').doc(userId).collection('friends').doc(friendId));
+    batch.delete(firestore().collection('users').doc(friendId).collection('friends').doc(userId));
 
     await batch.commit();
 
@@ -495,16 +493,22 @@ export const removeFriend = async (
     await firestore()
       .collection('users')
       .doc(userId)
-      .set({
-        'stats.friendsCount': firestore.FieldValue.increment(-1),
-      }, { merge: true });
+      .set(
+        {
+          'stats.friendsCount': firestore.FieldValue.increment(-1),
+        },
+        { merge: true },
+      );
 
     await firestore()
       .collection('users')
       .doc(friendId)
-      .set({
-        'stats.friendsCount': firestore.FieldValue.increment(-1),
-      }, { merge: true });
+      .set(
+        {
+          'stats.friendsCount': firestore.FieldValue.increment(-1),
+        },
+        { merge: true },
+      );
 
     return {
       success: true,

@@ -240,7 +240,6 @@ class TossPaymentService {
       message: '결제가 완료되었습니다. (시뮬레이션)',
     };
   }
-
 }
 
 // 싱글톤 인스턴스 export

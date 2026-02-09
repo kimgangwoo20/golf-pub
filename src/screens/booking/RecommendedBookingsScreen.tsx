@@ -101,28 +101,28 @@ export const RecommendedBookingsScreen: React.FC = () => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
       <View style={styles.container}>
-      <View style={styles.notice}>
-        <Text style={styles.noticeText}>회원님의 레벨과 선호도를 기반으로 추천해드립니다</Text>
-      </View>
-      <FlatList
-        data={bookings}
-        renderItem={renderBooking}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor="#10b981"
-            colors={['#10b981']}
-          />
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>✨</Text>
-            <Text style={styles.emptyText}>추천 부킹이 없습니다</Text>
-          </View>
-        }
+        <View style={styles.notice}>
+          <Text style={styles.noticeText}>회원님의 레벨과 선호도를 기반으로 추천해드립니다</Text>
+        </View>
+        <FlatList
+          data={bookings}
+          renderItem={renderBooking}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#10b981"
+              colors={['#10b981']}
+            />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyIcon}>✨</Text>
+              <Text style={styles.emptyText}>추천 부킹이 없습니다</Text>
+            </View>
+          }
         />
       </View>
     </SafeAreaView>

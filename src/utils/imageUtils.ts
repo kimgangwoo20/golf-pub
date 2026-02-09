@@ -27,14 +27,10 @@ export const pickImageFromGallery = async (
     // expo 내장 권한 API 사용
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert(
-        '갤러리 권한 필요',
-        '사진을 선택하려면 갤러리 접근 권한이 필요합니다.',
-        [
-          { text: '취소', style: 'cancel' },
-          { text: '설정으로 이동', onPress: () => Linking.openSettings() },
-        ],
-      );
+      Alert.alert('갤러리 권한 필요', '사진을 선택하려면 갤러리 접근 권한이 필요합니다.', [
+        { text: '취소', style: 'cancel' },
+        { text: '설정으로 이동', onPress: () => Linking.openSettings() },
+      ]);
       return null;
     }
 
@@ -64,14 +60,10 @@ export const pickMultipleImages = async (options?: ImagePickerOptions): Promise<
   try {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert(
-        '갤러리 권한 필요',
-        '사진을 선택하려면 갤러리 접근 권한이 필요합니다.',
-        [
-          { text: '취소', style: 'cancel' },
-          { text: '설정으로 이동', onPress: () => Linking.openSettings() },
-        ],
-      );
+      Alert.alert('갤러리 권한 필요', '사진을 선택하려면 갤러리 접근 권한이 필요합니다.', [
+        { text: '취소', style: 'cancel' },
+        { text: '설정으로 이동', onPress: () => Linking.openSettings() },
+      ]);
       return [];
     }
 
@@ -101,14 +93,10 @@ export const takePhoto = async (options?: ImagePickerOptions): Promise<string | 
   try {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert(
-        '카메라 권한 필요',
-        '사진을 촬영하려면 카메라 접근 권한이 필요합니다.',
-        [
-          { text: '취소', style: 'cancel' },
-          { text: '설정으로 이동', onPress: () => Linking.openSettings() },
-        ],
-      );
+      Alert.alert('카메라 권한 필요', '사진을 촬영하려면 카메라 접근 권한이 필요합니다.', [
+        { text: '취소', style: 'cancel' },
+        { text: '설정으로 이동', onPress: () => Linking.openSettings() },
+      ]);
       return null;
     }
 
@@ -188,11 +176,10 @@ export const compressImage = async (
       return uri;
     }
 
-    const result = await ImageManipulator.manipulateAsync(
-      uri,
-      [{ resize: { width: maxWidth } }],
-      { compress: quality, format: ImageManipulator.SaveFormat.JPEG },
-    );
+    const result = await ImageManipulator.manipulateAsync(uri, [{ resize: { width: maxWidth } }], {
+      compress: quality,
+      format: ImageManipulator.SaveFormat.JPEG,
+    });
 
     return result.uri;
   } catch {
@@ -208,10 +195,7 @@ export const compressImage = async (
  * @param size 썸네일 크기 (기본: 200)
  * @returns 썸네일 URI
  */
-export const createThumbnail = async (
-  uri: string,
-  size: number = 200,
-): Promise<string> => {
+export const createThumbnail = async (uri: string, size: number = 200): Promise<string> => {
   return compressImage(uri, size, 0.6);
 };
 

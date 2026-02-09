@@ -17,7 +17,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuthStore } from '@/store/useAuthStore';
-import { firestore as firebaseFirestore, FirestoreTimestamp } from '@/services/firebase/firebaseConfig';
+import {
+  firestore as firebaseFirestore,
+  FirestoreTimestamp,
+} from '@/services/firebase/firebaseConfig';
 import { firebaseStorage } from '@/services/firebase/firebaseStorage';
 
 const { width: _width } = Dimensions.get('window');

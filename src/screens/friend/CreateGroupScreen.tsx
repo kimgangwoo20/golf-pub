@@ -20,9 +20,7 @@ export const CreateGroupScreen: React.FC = () => {
         <Text style={styles.emoji}>👥</Text>
         <Text style={styles.title}>그룹 만들기</Text>
         <Text style={styles.subtitle}>곧 출시됩니다</Text>
-        <Text style={styles.description}>
-          친구들과 그룹을 만들어 함께 라운딩을 즐겨보세요.
-        </Text>
+        <Text style={styles.description}>친구들과 그룹을 만들어 함께 라운딩을 즐겨보세요.</Text>
       </View>
     </SafeAreaView>
   );

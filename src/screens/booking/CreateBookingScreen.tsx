@@ -263,7 +263,13 @@ export const CreateBookingScreen: React.FC = () => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>모집글 작성</Text>
         <TouchableOpacity onPress={handleSubmit} disabled={submitting}>
-          <Text style={[styles.headerButton, styles.headerButtonPrimary, submitting && styles.headerButtonDisabled]}>
+          <Text
+            style={[
+              styles.headerButton,
+              styles.headerButtonPrimary,
+              submitting && styles.headerButtonDisabled,
+            ]}
+          >
             {submitting ? '등록 중...' : '등록'}
           </Text>
         </TouchableOpacity>
@@ -463,7 +469,9 @@ export const CreateBookingScreen: React.FC = () => {
 
         {/* 이미지 */}
         <View style={styles.section}>
-          <Text style={styles.label}>사진 ({images.length}/{MAX_IMAGES})</Text>
+          <Text style={styles.label}>
+            사진 ({images.length}/{MAX_IMAGES})
+          </Text>
           <View style={styles.imageRow}>
             {images.map((uri, index) => (
               <View key={index} style={styles.imageWrapper}>

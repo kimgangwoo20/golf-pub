@@ -1,14 +1,7 @@
 // NotificationListScreen.tsx - 알림 목록 화면
 
 import React, { useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  FlatList,
-  RefreshControl,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
@@ -152,10 +145,7 @@ export const NotificationListScreen: React.FC = () => {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const renderItem = ({ item }: { item: (typeof notifications)[0] }) => (
-    <NotificationItem
-      {...item}
-      onPress={() => handleNotificationPress(item)}
-    />
+    <NotificationItem {...item} onPress={() => handleNotificationPress(item)} />
   );
 
   const renderEmpty = () => (
@@ -191,7 +181,11 @@ export const NotificationListScreen: React.FC = () => {
           keyExtractor={(item) => item.id}
           ListEmptyComponent={renderEmpty}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[colors.primary]}
+            />
           }
           contentContainerStyle={notifications.length === 0 ? styles.emptyList : undefined}
           ItemSeparatorComponent={() => <View style={styles.separator} />}

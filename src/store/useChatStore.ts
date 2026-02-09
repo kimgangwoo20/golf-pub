@@ -1,5 +1,8 @@
 import { create } from 'zustand';
-import { firestore as firebaseFirestore, FirestoreTimestamp } from '@/services/firebase/firebaseConfig';
+import {
+  firestore as firebaseFirestore,
+  FirestoreTimestamp,
+} from '@/services/firebase/firebaseConfig';
 
 export interface ChatMessage {
   id: string;
@@ -167,19 +170,25 @@ export const useChatStore = create<ChatState>((set, get) => ({
       await firebaseFirestore
         .collection('chatRooms')
         .doc(roomId)
-        .set({
-          lastMessage: {
-            message,
-            senderId,
-            createdAt: now,
+        .set(
+          {
+            lastMessage: {
+              message,
+              senderId,
+              createdAt: now,
+            },
+            updatedAt: now,
           },
-          updatedAt: now,
-        }, { merge: true });
+          { merge: true },
+        );
 
       // 로컬 상태 업데이트
       const { currentRoomMessages } = get();
       set({
-        currentRoomMessages: [...currentRoomMessages, { id: messageRef.id, ...messageData, createdAt: new Date() }],
+        currentRoomMessages: [
+          ...currentRoomMessages,
+          { id: messageRef.id, ...messageData, createdAt: new Date() },
+        ],
       });
     } catch (error: any) {
       console.error('메시지 전송 실패:', error);
@@ -217,19 +226,25 @@ export const useChatStore = create<ChatState>((set, get) => ({
       await firebaseFirestore
         .collection('chatRooms')
         .doc(roomId)
-        .set({
-          lastMessage: {
-            message: '[사진]',
-            senderId,
-            createdAt: now,
+        .set(
+          {
+            lastMessage: {
+              message: '[사진]',
+              senderId,
+              createdAt: now,
+            },
+            updatedAt: now,
           },
-          updatedAt: now,
-        }, { merge: true });
+          { merge: true },
+        );
 
       // 로컬 상태 업데이트
       const { currentRoomMessages } = get();
       set({
-        currentRoomMessages: [...currentRoomMessages, { id: messageRef.id, ...messageData, createdAt: new Date() }],
+        currentRoomMessages: [
+          ...currentRoomMessages,
+          { id: messageRef.id, ...messageData, createdAt: new Date() },
+        ],
       });
     } catch (error: any) {
       console.error('이미지 전송 실패:', error);
@@ -298,9 +313,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
       await firebaseFirestore
         .collection('chatRooms')
         .doc(roomId)
-        .set({
-          [`unreadCount.${userId}`]: 0,
-        }, { merge: true });
+        .set(
+          {
+            [`unreadCount.${userId}`]: 0,
+          },
+          { merge: true },
+        );
     } catch (error: any) {
       console.error('읽음 처리 실패:', error);
     }
@@ -335,7 +353,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const { chatRooms } = get();
       const localNow = new Date();
       set({
-        chatRooms: [{ id: docRef.id, ...newRoom, createdAt: localNow, updatedAt: localNow } as ChatRoom, ...chatRooms],
+        chatRooms: [
+          { id: docRef.id, ...newRoom, createdAt: localNow, updatedAt: localNow } as ChatRoom,
+          ...chatRooms,
+        ],
         loading: false,
       });
 

@@ -151,10 +151,7 @@ export const PubReviewsScreen: React.FC = () => {
   const renderReview = ({ item }: { item: PubReview }) => (
     <View style={styles.reviewCard}>
       <View style={styles.reviewHeader}>
-        <Image
-          source={{ uri: item.userImage || DEFAULT_AVATAR }}
-          style={styles.avatar}
-        />
+        <Image source={{ uri: item.userImage || DEFAULT_AVATAR }} style={styles.avatar} />
         <View style={styles.userInfo}>
           <Text style={styles.userName}>{item.userName}</Text>
           <View style={styles.ratingRow}>

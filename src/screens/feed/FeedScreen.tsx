@@ -164,14 +164,24 @@ export const FeedScreen: React.FC = () => {
       const postRef = firebaseFirestore.collection('posts').doc(feedId);
       if (isLiked) {
         // 좋아요 취소
-        await firebaseFirestore.collection('posts').doc(feedId).collection('likes').doc(user.uid).delete();
+        await firebaseFirestore
+          .collection('posts')
+          .doc(feedId)
+          .collection('likes')
+          .doc(user.uid)
+          .delete();
         await postRef.set({ likes: firestore.FieldValue.increment(-1) } as any, { merge: true });
       } else {
         // 좋아요
-        await firebaseFirestore.collection('posts').doc(feedId).collection('likes').doc(user.uid).set({
-          userId: user.uid,
-          createdAt: FirestoreTimestamp.now(),
-        });
+        await firebaseFirestore
+          .collection('posts')
+          .doc(feedId)
+          .collection('likes')
+          .doc(user.uid)
+          .set({
+            userId: user.uid,
+            createdAt: FirestoreTimestamp.now(),
+          });
         await postRef.set({ likes: firestore.FieldValue.increment(1) } as any, { merge: true });
       }
     } catch (error: any) {
@@ -233,23 +243,33 @@ export const FeedScreen: React.FC = () => {
 
     // Firestore 영속화 (서브컬렉션에 댓글 저장 + 댓글 수 증가)
     try {
-      await firebaseFirestore.collection('posts').doc(selectedFeedId).collection('comments').add({
-        author: {
-          id: user.uid,
-          name: currentUserName,
-          image: user.photoURL || '',
-        },
-        content: trimmedText,
-        likes: 0,
-        isLiked: false,
-        replies: [],
-        parentId: replyTarget?.commentId || null,
-        createdAt: FirestoreTimestamp.now(),
-      });
+      await firebaseFirestore
+        .collection('posts')
+        .doc(selectedFeedId)
+        .collection('comments')
+        .add({
+          author: {
+            id: user.uid,
+            name: currentUserName,
+            image: user.photoURL || '',
+          },
+          content: trimmedText,
+          likes: 0,
+          isLiked: false,
+          replies: [],
+          parentId: replyTarget?.commentId || null,
+          createdAt: FirestoreTimestamp.now(),
+        });
       // 게시글 댓글 수 증가
-      await firebaseFirestore.collection('posts').doc(selectedFeedId).set({
-        comments: firestore.FieldValue.increment(1),
-      } as any, { merge: true });
+      await firebaseFirestore
+        .collection('posts')
+        .doc(selectedFeedId)
+        .set(
+          {
+            comments: firestore.FieldValue.increment(1),
+          } as any,
+          { merge: true },
+        );
     } catch (error: any) {
       console.error('댓글 저장 실패:', error);
     }
@@ -411,10 +431,7 @@ export const FeedScreen: React.FC = () => {
         {/* Witty 스타일 헤더 */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Image
-              source={{ uri: user?.photoURL || DEFAULT_AVATAR }}
-              style={styles.headerAvatar}
-            />
+            <Image source={{ uri: user?.photoURL || DEFAULT_AVATAR }} style={styles.headerAvatar} />
             <Text style={styles.headerName}>{user?.displayName || '사용자'}</Text>
           </View>
 
@@ -475,7 +492,12 @@ export const FeedScreen: React.FC = () => {
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} colors={[colors.primary]} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
           }
         >
           {/* 스토리 섹션 */}
@@ -557,13 +579,22 @@ export const FeedScreen: React.FC = () => {
                       showsHorizontalScrollIndicator={false}
                       style={styles.feedImageScroll}
                       onScroll={(e) => {
-                        const page = Math.round(e.nativeEvent.contentOffset.x / Dimensions.get('window').width);
-                        setImageIndices((prev) => prev[feed.id] === page ? prev : { ...prev, [feed.id]: page });
+                        const page = Math.round(
+                          e.nativeEvent.contentOffset.x / Dimensions.get('window').width,
+                        );
+                        setImageIndices((prev) =>
+                          prev[feed.id] === page ? prev : { ...prev, [feed.id]: page },
+                        );
                       }}
                       scrollEventThrottle={200}
                     >
                       {feed.images.map((img, idx) => (
-                        <Image key={idx} source={{ uri: img }} style={styles.feedImage} resizeMode="cover" />
+                        <Image
+                          key={idx}
+                          source={{ uri: img }}
+                          style={styles.feedImage}
+                          resizeMode="cover"
+                        />
                       ))}
                     </ScrollView>
                     <View style={styles.imageCountBadge}>

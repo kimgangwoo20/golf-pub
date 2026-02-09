@@ -42,10 +42,7 @@ export const ChatListScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
           });
         }}
       >
-        <Image
-          source={{ uri: otherParticipant?.avatar || DEFAULT_AVATAR }}
-          style={styles.avatar}
-        />
+        <Image source={{ uri: otherParticipant?.avatar || DEFAULT_AVATAR }} style={styles.avatar} />
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
             <Text style={styles.chatName}>{chatName}</Text>

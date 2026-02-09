@@ -58,9 +58,7 @@ const PaymentItem: React.FC<{ item: PaymentRecord }> = ({ item }) => {
         <Text style={styles.cancelAmount}>환불: -{formatAmount(item.cancelAmount)}</Text>
       )}
       <Text style={styles.paymentDate}>{formatDate(item.createdAt)}</Text>
-      {item.cancelReason && (
-        <Text style={styles.cancelReason}>취소 사유: {item.cancelReason}</Text>
-      )}
+      {item.cancelReason && <Text style={styles.cancelReason}>취소 사유: {item.cancelReason}</Text>}
     </View>
   );
 };
@@ -128,7 +126,11 @@ export const PaymentHistoryScreen: React.FC = () => {
           keyExtractor={(item) => item.id}
           ListEmptyComponent={renderEmpty}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[colors.primary]}
+            />
           }
           contentContainerStyle={payments.length === 0 ? styles.emptyList : undefined}
           ItemSeparatorComponent={() => <View style={styles.separator} />}

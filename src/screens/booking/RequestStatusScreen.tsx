@@ -103,62 +103,62 @@ export const RequestStatusScreen: React.FC = () => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
       <ScrollView style={styles.container}>
-      {/* 상태 */}
-      <View style={[styles.statusSection, { backgroundColor: `${statusConfig.color}15` }]}>
-        <Text style={styles.statusIcon}>{statusConfig.icon}</Text>
-        <Text style={[styles.statusTitle, { color: statusConfig.color }]}>
-          {statusConfig.title}
-        </Text>
-        <Text style={styles.statusMessage}>{statusConfig.message}</Text>
-      </View>
+        {/* 상태 */}
+        <View style={[styles.statusSection, { backgroundColor: `${statusConfig.color}15` }]}>
+          <Text style={styles.statusIcon}>{statusConfig.icon}</Text>
+          <Text style={[styles.statusTitle, { color: statusConfig.color }]}>
+            {statusConfig.title}
+          </Text>
+          <Text style={styles.statusMessage}>{statusConfig.message}</Text>
+        </View>
 
-      {/* 부킹 정보 */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>부킹 정보</Text>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>골프장</Text>
-          <Text style={styles.value}>{request.course}</Text>
+        {/* 부킹 정보 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>부킹 정보</Text>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>골프장</Text>
+            <Text style={styles.value}>{request.course}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>날짜</Text>
+            <Text style={styles.value}>{request.date}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>시간</Text>
+            <Text style={styles.value}>{request.time}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>주최자</Text>
+            <Text style={styles.value}>{request.organizer}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>신청일</Text>
+            <Text style={styles.value}>{formatDate(request.appliedAt)}</Text>
+          </View>
         </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>날짜</Text>
-          <Text style={styles.value}>{request.date}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>시간</Text>
-          <Text style={styles.value}>{request.time}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>주최자</Text>
-          <Text style={styles.value}>{request.organizer}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>신청일</Text>
-          <Text style={styles.value}>{formatDate(request.appliedAt)}</Text>
-        </View>
-      </View>
 
-      {/* 액션 버튼 */}
-      {request.status === 'approved' && (
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={styles.detailButton}
-            onPress={() => navigation.navigate('BookingDetail', { bookingId: request.bookingId })}
-          >
-            <Text style={styles.detailButtonText}>부킹 상세보기</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        {/* 액션 버튼 */}
+        {request.status === 'approved' && (
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={styles.detailButton}
+              onPress={() => navigation.navigate('BookingDetail', { bookingId: request.bookingId })}
+            >
+              <Text style={styles.detailButtonText}>부킹 상세보기</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
-      {request.status === 'rejected' && (
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={styles.searchButton}
-            onPress={() => navigation.navigate('BookingList')}
-          >
-            <Text style={styles.searchButtonText}>다른 부킹 찾기</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        {request.status === 'rejected' && (
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={styles.searchButton}
+              onPress={() => navigation.navigate('BookingList')}
+            >
+              <Text style={styles.searchButtonText}>다른 부킹 찾기</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

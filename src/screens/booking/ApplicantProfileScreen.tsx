@@ -142,10 +142,7 @@ export const ApplicantProfileScreen: React.FC = () => {
       <ScrollView style={styles.container}>
         {/* 프로필 헤더 */}
         <View style={styles.profileSection}>
-          <Image
-            source={{ uri: applicant.avatar || DEFAULT_AVATAR }}
-            style={styles.avatar}
-          />
+          <Image source={{ uri: applicant.avatar || DEFAULT_AVATAR }} style={styles.avatar} />
           <Text style={styles.name}>{applicant.name}</Text>
           <Text style={styles.level}>
             ⭐ {applicant.rating} • {applicant.level}
