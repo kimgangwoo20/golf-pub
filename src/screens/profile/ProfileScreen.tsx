@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,28 +8,93 @@ import {
   Image,
   Alert,
   RefreshControl,
+  Dimensions,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+  Animated,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useProfileStore } from '@/store/useProfileStore';
-import { colors } from '@/styles/theme';
+import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
 
-export const ProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const HERO_HEIGHT = 480;
+
+// 프로필 전용 컬러 팔레트 (클래식 골프 느낌 + 앱 테마 조화)
+const pc = {
+  greenDeep: '#1a472a',
+  greenMain: '#2d6a4f',
+  greenLight: '#40916c',
+  greenAccent: colors.primary, // #10b981 앱 메인 컬러
+  greenPale: '#b7e4c7',
+  greenMist: '#d8f3dc',
+  gold: '#c9a96e',
+  goldLight: '#e8d5a8',
+  cream: '#faf8f2',
+  heart: '#ff6b6b',
+};
+
+export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({ navigation, route }) => {
   const { user, signOut } = useAuthStore();
-  const { profile, loading: _profileLoading, loadProfile } = useProfileStore();
+  const { profile, loadProfile } = useProfileStore();
   const [refreshing, setRefreshing] = useState(false);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(42);
+  const photoScrollRef = useRef<ScrollView>(null);
+  const cardAnim = useRef(new Animated.Value(0)).current;
+
+  // 본인 프로필인지 다른 유저 프로필인지
+  const targetUserId = route?.params?.userId;
+  const isOwnProfile = !targetUserId || targetUserId === user?.uid;
+
+  // 사진 목록 (여러 장 또는 프로필 사진 1장)
+  const photoList: (string | null)[] =
+    (profile as any)?.photos?.length > 0
+      ? (profile as any).photos
+      : profile?.photoURL
+        ? [profile.photoURL]
+        : [null, null]; // 사진 없으면 그라데이션 플레이스홀더
 
   useEffect(() => {
-    if (user?.uid) {
-      loadProfile(user.uid);
+    const uid = targetUserId || user?.uid;
+    if (uid) {
+      loadProfile(uid);
     }
-  }, [user?.uid, loadProfile]);
+  }, [targetUserId, user?.uid, loadProfile]);
+
+  useEffect(() => {
+    Animated.spring(cardAnim, {
+      toValue: 1,
+      tension: 50,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
   const handleRefresh = useCallback(async () => {
-    if (!user?.uid) return;
+    const uid = targetUserId || user?.uid;
+    if (!uid) return;
     setRefreshing(true);
-    await loadProfile(user.uid);
+    await loadProfile(uid);
     setRefreshing(false);
-  }, [user?.uid, loadProfile]);
+  }, [targetUserId, user?.uid, loadProfile]);
+
+  const handlePhotoScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const idx = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+    if (idx !== currentPhotoIndex) setCurrentPhotoIndex(idx);
+  };
+
+  const goToSlide = (idx: number) => {
+    photoScrollRef.current?.scrollTo({ x: idx * SCREEN_WIDTH, animated: true });
+    setCurrentPhotoIndex(idx);
+  };
+
+  const handleLike = () => {
+    setLiked(prev => !prev);
+    setLikeCount(prev => (liked ? prev - 1 : prev + 1));
+  };
 
   const handleLogout = () => {
     Alert.alert('로그아웃', '정말 로그아웃 하시겠습니까?', [
@@ -40,8 +105,7 @@ export const ProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) =>
         onPress: async () => {
           try {
             await signOut();
-            Alert.alert('완료', '로그아웃 되었습니다.');
-          } catch (error) {
+          } catch {
             Alert.alert('오류', '로그아웃에 실패했습니다.');
           }
         },
@@ -49,15 +113,14 @@ export const ProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) =>
     ]);
   };
 
-  const handleEditAvatar = () => {
-    Alert.alert('프로필 사진', '프로필 사진 변경은 프로필 수정에서 가능합니다.', [
-      { text: '취소', style: 'cancel' },
-      { text: '프로필 수정', onPress: () => navigation?.navigate('EditProfile') },
-    ]);
-  };
-
+  // 프로필 데이터
+  const displayName = profile?.displayName || user?.displayName || '골퍼';
+  const bio = profile?.bio || '골프를 사랑하는 골퍼입니다 🏌️\n함께 라운딩 갈 골프 친구 찾고 있어요!\n편하게 골친 신청 주세요 😊';
+  const location = profile?.location || '서울';
   const totalRounds = profile?.totalRounds || profile?.stats?.gamesPlayed || 0;
-  const rating = profile?.rating || 0;
+  const averageScore = profile?.stats?.averageScore || 0;
+  const bestScore = profile?.stats?.bestScore || 0;
+  const favoriteCourses = profile?.favoriteCourses || [];
 
   return (
     <ScrollView
@@ -70,144 +133,793 @@ export const ProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) =>
           colors={[colors.primary]}
         />
       }
+      showsVerticalScrollIndicator={false}
     >
-      <View style={styles.header}>
-        <View style={styles.avatarContainer}>
-          <View style={styles.avatar}>
+      {/* ── Photo Hero ── */}
+      <View style={styles.heroWrap}>
+        <ScrollView
+          ref={photoScrollRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={handlePhotoScroll}
+          scrollEventThrottle={16}
+        >
+          {photoList.map((photo, i) => (
+            <View key={i} style={styles.slide}>
+              {photo ? (
+                <Image source={{ uri: photo }} style={styles.slideImage} resizeMode="cover" />
+              ) : (
+                <LinearGradient
+                  colors={
+                    i === 0
+                      ? [pc.greenMain, pc.greenLight, pc.greenAccent, pc.greenMist]
+                      : [pc.greenDeep, pc.greenMain, pc.greenAccent]
+                  }
+                  start={{ x: 0.1, y: 0 }}
+                  end={{ x: 0.9, y: 1 }}
+                  style={styles.slideGradient}
+                >
+                  <Text style={styles.slidePlaceholder}>{i === 0 ? '🏌️' : '⛳'}</Text>
+                </LinearGradient>
+              )}
+            </View>
+          ))}
+        </ScrollView>
+
+        {/* 상단 네비게이션 */}
+        <LinearGradient
+          colors={['rgba(0,0,0,0.45)', 'transparent']}
+          style={styles.navOverlay}
+          pointerEvents="box-none"
+        >
+          <View style={styles.navRow}>
+            {!isOwnProfile ? (
+              <TouchableOpacity style={styles.navBtn} onPress={() => navigation?.goBack()}>
+                <Text style={styles.navBtnText}>‹</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={{ width: 36 }} />
+            )}
+            <Text style={styles.navTitle}>프로필</Text>
+            <View style={styles.navRightGroup}>
+              <View style={styles.photoCounter}>
+                <Text style={styles.counterText}>
+                  {currentPhotoIndex + 1}/{photoList.length}
+                </Text>
+                <Text style={{ fontSize: 13 }}>📷</Text>
+              </View>
+              {isOwnProfile && (
+                <TouchableOpacity
+                  style={styles.navBtn}
+                  onPress={() => navigation?.navigate('Settings')}
+                >
+                  <Text style={{ fontSize: 16 }}>⚙️</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </LinearGradient>
+
+        {/* 신고 버튼 (타인 프로필) */}
+        {!isOwnProfile && (
+          <TouchableOpacity style={styles.reportBtn}>
+            <Text style={styles.reportText}>🚩 신고하기</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* 슬라이드 인디케이터 */}
+        {photoList.length > 1 && (
+          <View style={styles.dotsRow}>
+            {photoList.map((_, i) => (
+              <TouchableOpacity
+                key={i}
+                style={[styles.dot, currentPhotoIndex === i && styles.dotActive]}
+                onPress={() => goToSlide(i)}
+              />
+            ))}
+          </View>
+        )}
+      </View>
+
+      {/* ── Profile Card (사진 위로 겹침) ── */}
+      <Animated.View
+        style={[
+          styles.card,
+          {
+            opacity: cardAnim,
+            transform: [
+              {
+                translateY: cardAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [30, 0],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        {/* 아바타 (카드 위에 떠있는 형태) */}
+        <View style={styles.avatarWrap}>
+          <View style={styles.avatarBox}>
             {profile?.photoURL || user?.photoURL ? (
               <Image
                 source={{ uri: profile?.photoURL || user?.photoURL || '' }}
-                style={styles.avatarImage}
+                style={styles.avatarImg}
               />
             ) : (
-              <Text style={styles.avatarText}>👤</Text>
+              <LinearGradient
+                colors={[pc.greenPale, pc.greenMist]}
+                style={styles.avatarFallback}
+              >
+                <Text style={{ fontSize: 28 }}>⛳</Text>
+              </LinearGradient>
             )}
           </View>
-          <TouchableOpacity style={styles.editAvatarBtn} onPress={handleEditAvatar}>
-            <Text>✏️</Text>
+          <View style={styles.onlineDot} />
+        </View>
+
+        {/* 이름 + 좋아요 */}
+        <View style={styles.infoHeader}>
+          <View style={styles.infoLeft}>
+            <Text style={styles.userName}>{displayName}</Text>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaPin}>📍</Text>
+              <Text style={styles.metaText}>{location}</Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            style={[styles.likeBox, liked && styles.likeBoxLiked]}
+            onPress={handleLike}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.likeHeart}>{liked ? '❤️' : '🧡'}</Text>
+            <Text style={styles.likeNum}>{likeCount}</Text>
+            <Text style={styles.likeUnit}>개</Text>
           </TouchableOpacity>
         </View>
-        <Text style={styles.name}>{profile?.displayName || user?.displayName || '사용자'}</Text>
-        <Text style={styles.email}>{user?.email || ''}</Text>
-        <View style={styles.membershipBadge}>
-          <Text style={styles.membershipText}>👑 프리미엄 회원</Text>
-        </View>
-      </View>
 
-      <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>
-            {(profile?.pointBalance || (user as any)?.pointBalance || 0).toLocaleString()}
-          </Text>
-          <Text style={styles.statLabel}>포인트</Text>
+        {/* 소개 */}
+        <View style={styles.bioBox}>
+          <Text style={styles.bioText}>{bio}</Text>
+          {isOwnProfile && (
+            <TouchableOpacity
+              style={styles.bioEditBtn}
+              onPress={() => navigation?.navigate('EditProfile')}
+            >
+              <Text style={styles.bioEditText}>✏️ 소개 수정</Text>
+            </TouchableOpacity>
+          )}
         </View>
-        <View style={styles.divider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>{totalRounds}</Text>
-          <Text style={styles.statLabel}>부킹 참가</Text>
-        </View>
-        <View style={styles.divider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>{rating > 0 ? `${rating.toFixed(1)}★` : '-'}</Text>
-          <Text style={styles.statLabel}>평점</Text>
-        </View>
-      </View>
 
-      <View style={styles.menuContainer}>
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => navigation?.navigate('EditProfile')}
-        >
-          <Text style={styles.menuIcon}>✏️</Text>
-          <Text style={styles.menuText}>프로필 수정</Text>
-          <Text style={styles.menuArrow}>›</Text>
+        {/* 액션 버튼 */}
+        <View style={styles.actionRow}>
+          {isOwnProfile ? (
+            <>
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.actionOutline]}
+                onPress={() => navigation?.navigate('EditProfile')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.actionOutlineText}>✏️  프로필 수정</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.actionFill]}
+                onPress={() => navigation?.navigate('MyHomeMain')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.actionFillText}>🏠  My홈피</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <TouchableOpacity style={[styles.actionBtn, styles.actionOutline]} activeOpacity={0.7}>
+                <Text style={styles.actionOutlineText}>👥  골친 신청</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.actionBtn, styles.actionFill]} activeOpacity={0.7}>
+                <Text style={styles.actionFillText}>💬  메세지</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+
+        {/* Today / Total */}
+        <View style={styles.ttBox}>
+          <View style={styles.ttItem}>
+            <Text style={styles.ttLabel}>TODAY</Text>
+            <Text style={styles.ttValue}>3</Text>
+          </View>
+          <View style={styles.ttDivider} />
+          <View style={styles.ttItem}>
+            <Text style={styles.ttLabel}>TOTAL</Text>
+            <Text style={styles.ttValue}>{totalRounds > 0 ? totalRounds : 128}</Text>
+          </View>
+        </View>
+
+        {/* 골프 스탯 */}
+        <View style={styles.statsGrid}>
+          {[
+            { emoji: '🎯', label: '평균타수', value: averageScore > 0 ? `${averageScore}` : '90-100' },
+            { emoji: '📅', label: '골프경력', value: '4-5년' },
+            { emoji: '⛳', label: '월라운드', value: '2-3회' },
+            { emoji: '✈️', label: '해외골프', value: '1-2회' },
+          ].map((stat, i) => (
+            <View key={i} style={styles.statChip}>
+              <Text style={styles.statEmoji}>{stat.emoji}</Text>
+              <Text style={styles.statChipLabel}>{stat.label}</Text>
+              <Text style={styles.statChipValue}>{stat.value}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* 자주 가는 골프장 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>자주 가는 골프장</Text>
+          <View style={styles.tagWrap}>
+            {(favoriteCourses.length > 0
+              ? favoriteCourses
+              : [{ name: '남서울CC' }, { name: '블루원 용인' }, { name: '이스트밸리' }]
+            ).map((course, i) => (
+              <TouchableOpacity key={i} style={styles.favTag} activeOpacity={0.7}>
+                <Text style={styles.favTagText}>{typeof course === 'string' ? course : course.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* 라운딩 스타일 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>라운딩 스타일</Text>
+          <View style={styles.tagWrap}>
+            {['🌅 새벽 티업', '🍻 에프터 필수', '😄 즐골파'].map((tag, i) => (
+              <View key={i} style={styles.styleTag}>
+                <Text style={styles.styleTagText}>{tag}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* 베스트 스코어 카드 */}
+        <TouchableOpacity activeOpacity={0.9} style={{ marginBottom: spacing.lg }}>
+          <LinearGradient
+            colors={[pc.greenDeep, pc.greenMain]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.scoreCard}
+          >
+            <View>
+              <Text style={styles.scoreLabel}>BEST SCORE</Text>
+              <Text style={styles.scoreNum}>{bestScore > 0 ? bestScore : 86}</Text>
+              <Text style={styles.scoreSub}>올해 목표: 80대 안착</Text>
+            </View>
+            <View style={styles.scoreRight}>
+              <View style={styles.scoreBadge}>
+                <Text style={{ fontSize: 24 }}>🏆</Text>
+              </View>
+              <Text style={styles.scoreBadgeLabel}>골프왕</Text>
+            </View>
+          </LinearGradient>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => navigation?.navigate('MyBookings')}
-        >
-          <Text style={styles.menuIcon}>⛳</Text>
-          <Text style={styles.menuText}>내 부킹 목록</Text>
-          <Text style={styles.menuArrow}>›</Text>
-        </TouchableOpacity>
+        {/* 메뉴 (본인 프로필) */}
+        {isOwnProfile && (
+          <View style={styles.menuBox}>
+            {[
+              { icon: '⛳', label: '내 부킹 목록', screen: 'MyBookings' },
+              { icon: '👑', label: '멤버십 관리', screen: 'MembershipManage' },
+              { icon: '💰', label: '포인트 내역', screen: 'PointHistory' },
+            ].map((item, i) => (
+              <TouchableOpacity
+                key={i}
+                style={[styles.menuItem, i > 0 && styles.menuItemBorder]}
+                onPress={() => navigation?.navigate(item.screen)}
+                activeOpacity={0.6}
+              >
+                <Text style={styles.menuIcon}>{item.icon}</Text>
+                <Text style={styles.menuLabel}>{item.label}</Text>
+                <Text style={styles.menuArrow}>›</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => navigation?.navigate('MembershipManage')}
-        >
-          <Text style={styles.menuIcon}>👑</Text>
-          <Text style={styles.menuText}>멤버십 관리</Text>
-          <Text style={styles.menuArrow}>›</Text>
-        </TouchableOpacity>
+        {/* 로그아웃 */}
+        {isOwnProfile && (
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.7}>
+            <Text style={styles.logoutText}>로그아웃</Text>
+          </TouchableOpacity>
+        )}
 
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation?.navigate('Settings')}>
-          <Text style={styles.menuIcon}>⚙️</Text>
-          <Text style={styles.menuText}>설정</Text>
-          <Text style={styles.menuArrow}>›</Text>
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutText}>로그아웃</Text>
-      </TouchableOpacity>
+        <View style={{ height: 40 }} />
+      </Animated.View>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
-  header: { alignItems: 'center', padding: 24, backgroundColor: '#fff', marginBottom: 12 },
-  avatarContainer: { position: 'relative', marginBottom: 16 },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#E3F2FD',
-    alignItems: 'center',
-    justifyContent: 'center',
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+
+  // ── Photo Hero ──
+  heroWrap: {
+    position: 'relative',
+    width: SCREEN_WIDTH,
+    height: HERO_HEIGHT,
+    backgroundColor: '#1a1a1a',
     overflow: 'hidden',
   },
-  avatarImage: { width: 100, height: 100, borderRadius: 50 },
-  avatarText: { fontSize: 40 },
-  editAvatarBtn: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: colors.primary,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  slide: {
+    width: SCREEN_WIDTH,
+    height: HERO_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  slideImage: {
+    width: '100%',
+    height: '100%',
+  },
+  slideGradient: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  slidePlaceholder: {
+    fontSize: 80,
+    opacity: 0.35,
+  },
+
+  // 상단 내비게이션
+  navOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingTop: 52,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: 40,
+  },
+  navRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  navBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navBtnText: {
+    fontSize: 22,
+    color: '#fff',
+    fontWeight: fontWeight.bold,
+    marginTop: -2,
+  },
+  navTitle: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: '#fff',
+  },
+  navRightGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  photoCounter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  counterText: {
+    fontSize: 12,
+    fontWeight: fontWeight.medium,
+    color: '#fff',
+  },
+
+  // 신고
+  reportBtn: {
+    position: 'absolute',
+    top: 110,
+    right: 16,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  reportText: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.8)',
+  },
+
+  // 슬라이드 인디케이터
+  dotsRow: {
+    position: 'absolute',
+    bottom: 100,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.4)',
+  },
+  dotActive: {
+    width: 20,
+    borderRadius: 4,
+    backgroundColor: '#fff',
+  },
+
+  // ── Profile Card ──
+  card: {
+    marginTop: -80,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    minHeight: 400,
+  },
+
+  // 아바타
+  avatarWrap: {
+    position: 'absolute',
+    top: -30,
+    left: 20,
+    zIndex: 10,
+  },
+  avatarBox: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
     borderWidth: 3,
     borderColor: '#fff',
+    overflow: 'hidden',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
   },
-  name: { fontSize: 24, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 4 },
-  email: { fontSize: 14, color: '#666', marginBottom: 12 },
-  membershipBadge: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+  avatarImg: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarFallback: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  onlineDot: {
+    position: 'absolute',
+    bottom: -1,
+    right: -1,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#22c55e',
+    borderWidth: 2.5,
+    borderColor: '#fff',
+  },
+
+  // 이름 + 좋아요
+  infoHeader: {
+    paddingTop: 46,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 6,
+  },
+  infoLeft: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 22,
+    fontWeight: fontWeight.bold,
+    color: colors.textPrimary,
+    letterSpacing: -0.5,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 3,
+  },
+  metaPin: {
+    fontSize: 14,
+    color: pc.greenAccent,
+  },
+  metaText: {
+    fontSize: fontSize.sm,
+    color: colors.textTertiary,
+  },
+  likeBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     borderRadius: 20,
+    backgroundColor: '#fff0f0',
   },
-  membershipText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  statsContainer: { flexDirection: 'row', backgroundColor: '#fff', padding: 20, marginBottom: 12 },
-  statItem: { flex: 1, alignItems: 'center' },
-  statValue: { fontSize: 20, fontWeight: 'bold', color: colors.primary, marginBottom: 4 },
-  statLabel: { fontSize: 12, color: '#666' },
-  divider: { width: 1, backgroundColor: '#e0e0e0' },
-  menuContainer: { backgroundColor: '#fff', marginBottom: 12 },
+  likeBoxLiked: {
+    backgroundColor: '#ffe0e0',
+  },
+  likeHeart: {
+    fontSize: 18,
+  },
+  likeNum: {
+    fontSize: 16,
+    fontWeight: fontWeight.bold,
+    color: pc.heart,
+  },
+  likeUnit: {
+    fontSize: 12,
+    color: pc.heart,
+    opacity: 0.7,
+  },
+
+  // 소개
+  bioBox: {
+    marginTop: 14,
+    marginBottom: 18,
+    padding: 14,
+    paddingLeft: 16,
+    backgroundColor: '#fafafa',
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: pc.greenAccent,
+  },
+  bioText: {
+    fontSize: 14,
+    lineHeight: 23,
+    color: colors.textSecondary,
+  },
+  bioEditBtn: {
+    marginTop: 8,
+  },
+  bioEditText: {
+    fontSize: 12,
+    color: pc.greenMain,
+    fontWeight: fontWeight.medium,
+  },
+
+  // 액션 버튼
+  actionRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 18,
+  },
+  actionBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionOutline: {
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: pc.greenMain,
+  },
+  actionOutlineText: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: pc.greenMain,
+  },
+  actionFill: {
+    backgroundColor: pc.greenMain,
+    borderWidth: 1.5,
+    borderColor: pc.greenMain,
+  },
+  actionFillText: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: '#fff',
+  },
+
+  // Today / Total
+  ttBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fafafa',
+    borderRadius: 12,
+    paddingVertical: 16,
+    marginBottom: 18,
+  },
+  ttItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  ttLabel: {
+    fontSize: 12,
+    color: '#a3a3a3',
+    fontWeight: fontWeight.medium,
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  ttValue: {
+    fontSize: 26,
+    fontWeight: fontWeight.bold,
+    color: pc.greenMain,
+  },
+  ttDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: '#e8e8e8',
+  },
+
+  // 골프 스탯 그리드
+  statsGrid: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 18,
+  },
+  statChip: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderWidth: 1.2,
+    borderColor: '#e8e8e8',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+  },
+  statEmoji: {
+    fontSize: 22,
+    marginBottom: 6,
+  },
+  statChipLabel: {
+    fontSize: 11,
+    color: colors.textTertiary,
+    fontWeight: fontWeight.medium,
+    marginBottom: 4,
+  },
+  statChipValue: {
+    fontSize: 14,
+    fontWeight: fontWeight.bold,
+    color: colors.textPrimary,
+  },
+
+  // 섹션 공통
+  section: {
+    marginBottom: 18,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: fontWeight.semibold,
+    color: colors.textPrimary,
+    marginBottom: 10,
+  },
+  tagWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+
+  // 자주 가는 골프장 태그
+  favTag: {
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: pc.greenMist,
+    borderWidth: 1,
+    borderColor: pc.greenPale,
+  },
+  favTagText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    color: pc.greenDeep,
+  },
+
+  // 라운딩 스타일 태그
+  styleTag: {
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: pc.cream,
+    borderWidth: 1,
+    borderColor: pc.goldLight,
+  },
+  styleTagText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    color: pc.gold,
+  },
+
+  // 베스트 스코어 카드
+  scoreCard: {
+    borderRadius: 20,
+    padding: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  scoreLabel: {
+    fontSize: 11,
+    color: pc.greenPale,
+    fontWeight: fontWeight.medium,
+    letterSpacing: 0.5,
+  },
+  scoreNum: {
+    fontSize: 32,
+    fontWeight: fontWeight.bold,
+    color: '#fff',
+    marginVertical: 2,
+  },
+  scoreSub: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.6)',
+  },
+  scoreRight: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  scoreBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scoreBadgeLabel: {
+    fontSize: 11,
+    color: pc.greenPale,
+  },
+
+  // 메뉴
+  menuBox: {
+    backgroundColor: '#fafafa',
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 18,
+  },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
   },
-  menuIcon: { fontSize: 24, marginRight: 16 },
-  menuText: { flex: 1, fontSize: 16, color: '#1a1a1a' },
-  menuArrow: { fontSize: 24, color: '#ccc' },
-  logoutButton: { backgroundColor: '#fff', padding: 20, alignItems: 'center', marginBottom: 40 },
-  logoutText: { fontSize: 16, color: '#FF3B30', fontWeight: '600' },
+  menuItemBorder: {
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  menuIcon: {
+    fontSize: 20,
+    marginRight: 12,
+  },
+  menuLabel: {
+    flex: 1,
+    fontSize: fontSize.md,
+    color: colors.textPrimary,
+    fontWeight: fontWeight.medium,
+  },
+  menuArrow: {
+    fontSize: 22,
+    color: '#ccc',
+  },
+
+  // 로그아웃
+  logoutBtn: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  logoutText: {
+    fontSize: fontSize.md,
+    color: colors.danger,
+    fontWeight: fontWeight.semibold,
+  },
 });

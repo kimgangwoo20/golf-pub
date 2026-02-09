@@ -5,6 +5,12 @@ import {
   FirestoreTimestamp,
 } from '@/services/firebase/firebaseConfig';
 
+export interface FavoriteCourse {
+  name: string;
+  id?: string;
+  location?: { lat: number; lng: number };
+}
+
 export interface UserProfile {
   uid: string;
   email: string | null;
@@ -14,7 +20,11 @@ export interface UserProfile {
   level: 'beginner' | 'intermediate' | 'advanced';
   bio: string;
   location: string;
-  favoriteCourses: string[];
+  favoriteCourses: FavoriteCourse[];
+  roundingStyles: string[];
+  golfExperience: string;
+  monthlyRounds: string;
+  overseasGolf: string;
   totalRounds: number;
   rating: number;
   reviews: number;
