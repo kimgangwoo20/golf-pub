@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
-import * as ImageManipulator from 'expo-image-manipulator';
+import { compressImage } from '@/utils/imageUtils';
 import { colors, spacing, fontWeight } from '@/styles/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -42,16 +42,9 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
     if (!imageUri) return;
     setLoading(true);
     try {
-      // expo-image-manipulator로 리사이즈 + 압축
-      const result = await ImageManipulator.manipulateAsync(
-        imageUri,
-        [{ resize: { width: 800 } }],
-        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG },
-      );
-      onConfirm(result.uri);
-    } catch {
-      // 실패 시 원본 사용
-      onConfirm(imageUri);
+      // 이미지 압축 (expo-image-manipulator 없으면 원본 반환)
+      const compressed = await compressImage(imageUri, 800, 0.8);
+      onConfirm(compressed);
     } finally {
       setLoading(false);
     }
