@@ -11,7 +11,7 @@ import {
   Image,
 } from 'react-native';
 import { profileAPI } from '@/services/api/profileAPI';
-import { pickImageFromGallery, takePhoto } from '@/utils/imageUtils';
+import { showImagePickerOptions } from '@/utils/imageUtils';
 import { validators } from '@/utils/validators';
 import { ImageCropModal } from '@/components/common/ImageCropModal';
 
@@ -48,31 +48,13 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
     }
   };
 
-  const handleChangeProfileImage = () => {
-    // 시스템 크롭 UI 없이 이미지 선택 → 앱 자체 크롭 화면 사용
-    Alert.alert('이미지 추가', '이미지를 가져올 방법을 선택하세요', [
-      {
-        text: '카메라',
-        onPress: async () => {
-          const uri = await takePhoto({ allowsEditing: false });
-          if (uri) {
-            setCropImageUri(uri);
-            setCropModalVisible(true);
-          }
-        },
-      },
-      {
-        text: '갤러리',
-        onPress: async () => {
-          const uri = await pickImageFromGallery({ allowsEditing: false });
-          if (uri) {
-            setCropImageUri(uri);
-            setCropModalVisible(true);
-          }
-        },
-      },
-      { text: '취소', style: 'cancel' },
-    ]);
+  const handleChangeProfileImage = async () => {
+    // 시스템 크롭(allowsEditing) → 앱 확인 모달 표시
+    const uri = await showImagePickerOptions();
+    if (uri) {
+      setCropImageUri(uri);
+      setCropModalVisible(true);
+    }
   };
 
   const handleCropConfirm = async (uri: string) => {
