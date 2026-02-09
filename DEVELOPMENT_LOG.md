@@ -8,17 +8,17 @@
 
 ## 📋 기술 스택
 
-| 구분 | 기술 |
-|------|------|
-| 프레임워크 | React Native 0.81.5 + Expo 54.0.0 |
-| 언어 | TypeScript 5.9.2 |
-| 네비게이션 | React Navigation 7.x |
-| 상태관리 | Zustand 5.0.2 |
-| 백엔드 | Firebase (Firestore, Realtime DB, Auth, Storage, FCM) |
-| 소셜 로그인 | 카카오 로그인 (@react-native-seoul/kakao-login) |
-| 결제 | Toss Payments |
-| 날씨 API | Open-Meteo |
-
+| 구분     | 기술                                                |
+|--------|---------------------------------------------------|
+| 프레임워크  | React Native 0.81.5 + Expo 54.0.0                 |
+| 언어     | TypeScript 5.9.2                                  |
+| 네비게이션  | React Navigation 7.x                              |
+| 상태관리   | Zustand 5.0.2                                     |
+| 백엔드    | Firebase (Firestore, Realtime DB, Auth, Storage, FCM) |
+| 소셜 로그인 | 카카오 로그인 (@react-native-seoul/kakao-login)         |
+| 결제     | Toss Payments                                     |
+| 날씨 API | Open-Meteo                                        |
+| 지도 API | 카카오 지도                                            |
 ---
 
 ## 🏗️ 전체 개발 일정
@@ -134,6 +134,29 @@
   - profile/: EditProfileScreen, MyBookingsScreen
   - my/: MyHomeScreen, AccountManagementScreen
 - [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.07 완료)
+
+### 2026.02.09 My 홈피 다이어리 & 방명록 기능 구현 (22차 배치)
+
+- [x] ~~MyHomeScreen 사진첩 탭 제거 → 탭 구조 3개로 변경 (전체/다이어리/방명록) (MyHomeScreen.tsx)~~ (2026.02.09 완료)
+  - tabs 배열에서 `{ id: 'photo' }` 제거
+  - `buildPostsQuery()`의 `photo` 분기 제거
+  - `_filterByTab()`의 `photo` 분기 제거
+  - 다이어리 탭이 글+이미지+위치를 통합하여 사진첩 역할도 겸함
+- [x] ~~MyHomeScreen FAB 플로팅 액션 버튼 추가 (MyHomeScreen.tsx)~~ (2026.02.09 완료)
+  - 우측 하단 FAB 버튼 (FeedScreen의 fabButton 패턴 재활용)
+  - all/diary 탭: `navigation.navigate('Feed', { screen: 'CreatePost', params: { type: 'diary' } })`
+  - guestbook 탭: 방명록 작성 모달 열기
+- [x] ~~MyHomeScreen 방명록 작성 모달 구현 (MyHomeScreen.tsx)~~ (2026.02.09 완료)
+  - 바텀시트 스타일 모달 (KeyboardAvoidingView 적용)
+  - TextInput 멀티라인, 최대 200자, 글자 수 카운터
+  - Firestore `users/{uid}/guestbook/` 저장 (authorId, authorName, authorImage, content, createdAt)
+  - 등록 버튼 비활성/활성/로딩 상태 처리
+  - 성공 후 방명록 리스트 자동 갱신
+- [x] ~~MyHomeScreen 기존 "개발 예정" 방명록 버튼 제거 → FAB로 대체 (MyHomeScreen.tsx)~~ (2026.02.09 완료)
+- [x] ~~CreatePostScreen type 파라미터 수신 및 Firestore 저장 (CreatePostScreen.tsx)~~ (2026.02.09 완료)
+  - `useRoute()`로 route params 수신
+  - `type: routeParams.type || 'photo'` 필드를 Firestore 게시물에 추가
+- [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.09 완료)
 
 ### 2026.02.08 전체 코드베이스 감사 - 8개 버그 카테고리 일괄 수정 (20차 배치)
 
@@ -703,11 +726,22 @@
 | 채팅 전송/읽음 핫픽스 (19차) | 5 | 5 | 0 | 100% |
 | 전체 코드베이스 감사 일괄 수정 (20차) | 9 | 9 | 0 | 100% |
 | Cloud Functions 클라이언트 전환 완료 (21차) | 3 | 3 | 0 | 100% |
-| **전체** | **229** | **226** | **3** | **99%** |
+| My 홈피 다이어리 & 방명록 구현 (22차) | 6 | 6 | 0 | 100% |
+| **전체** | **235** | **232** | **3** | **99%** |
 
 ---
 
 ## 📝 일일 개발 기록
+
+### 2026.02.09
+
+> **My 홈피 다이어리 & 방명록 기능 구현 22차 배치 (2개 파일, +213/-42줄)**
+> - MyHomeScreen 사진첩 탭 제거 → 3탭 구조(전체/다이어리/방명록)로 변경. 다이어리가 글+이미지+위치 통합하여 사진첩 역할 겸함
+> - FAB 플로팅 액션 버튼 추가: all/diary 탭에서는 CreatePost(type='diary')로 이동, guestbook 탭에서는 방명록 작성 모달 오픈
+> - 방명록 작성 바텀시트 모달 구현: TextInput(200자), KeyboardAvoidingView, Firestore `users/{uid}/guestbook/` 저장, 등록 후 리스트 자동 갱신
+> - 기존 "개발 예정" Alert 방명록 버튼 제거 → FAB로 대체
+> - CreatePostScreen: `useRoute()`로 type 파라미터 수신, Firestore 게시물에 `type` 필드 추가
+> - TypeScript typecheck 0 에러 유지
 
 ### 2026.02.08
 
