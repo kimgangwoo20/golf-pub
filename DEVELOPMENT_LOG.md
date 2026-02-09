@@ -135,6 +135,38 @@
   - my/: MyHomeScreen, AccountManagementScreen
 - [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.07 완료)
 
+### 2026.02.09 My홈피 프로필 인터랙티브 기능 + 전체 lint 정리 (25차 배치)
+
+- [x] ~~UserProfile 타입 확장 (useProfileStore.ts)~~ (2026.02.09 완료)
+  - `FavoriteCourse` 인터페이스 추가: `{ name: string, id?: string, location?: { lat, lng } }`
+  - `favoriteCourses` 타입 변경: `string[]` → `FavoriteCourse[]`
+  - 새 필드 추가: `roundingStyles`, `golfExperience`, `monthlyRounds`, `overseasGolf`
+- [x] ~~MyHomeScreen 골프 스탯 터치 편집 기능 (MyHomeScreen.tsx)~~ (2026.02.09 완료)
+  - 스탯 칩 `View` → `TouchableOpacity` 전환, 터치 시 편집 모달 오픈
+  - `STAT_OPTIONS` 상수: 평균타수/골프경력/월라운드/해외골프별 선택 옵션
+  - 스탯 편집 모달: 옵션 선택 버튼 + 평균타수 직접 입력 → Firestore 저장
+- [x] ~~MyHomeScreen 자주 가는 골프장 추가/삭제 기능 (MyHomeScreen.tsx)~~ (2026.02.09 완료)
+  - 섹션 제목 옆 `+` 버튼 → 골프장 입력 모달 (slide 애니메이션)
+  - 태그 롱프레스 → Alert 확인 → Firestore에서 삭제
+  - `normalizeCourses()` 마이그레이션 헬퍼: `string[]` → `FavoriteCourse[]` 호환
+- [x] ~~MyHomeScreen 라운딩 스타일 토글 선택 기능 (MyHomeScreen.tsx)~~ (2026.02.09 완료)
+  - `ROUNDING_STYLE_OPTIONS` 12개 미리 정의 옵션
+  - 스타일 선택 모달: 칩 토글 (최대 5개) → Firestore 저장
+  - `userData.roundingStyles` Firestore 연동 (기존 하드코딩 대체)
+- [x] ~~ProfileScreen favoriteCourses 호환성 수정 (ProfileScreen.tsx)~~ (2026.02.09 완료)
+  - `FavoriteCourse` 객체 타입 대응: `typeof course === 'string' ? course : course.name`
+- [x] ~~피드 다중 이미지 지원 (useFeedStore.ts, feed-types.ts)~~ (2026.02.09 완료)
+  - `FeedPost` 타입에 `images?: string[]` 필드 추가
+  - `useFeedStore` 매핑에서 `images` 배열 처리 추가
+- [x] ~~Firestore bookings 복합 인덱스 추가 (firestore.indexes.json)~~ (2026.02.09 완료)
+  - `participants.members` (CONTAINS) + `createdAt` (DESC) 복합 인덱스
+- [x] ~~전체 ESLint 자동 수정 + 미사용 import 제거~~ (2026.02.09 완료)
+  - `npm run lint:fix` 전체 적용: prettier 포맷팅 384개 에러 자동 수정
+  - 미사용 import 수동 제거: BookingDetailScreen(`useRef`), paymentAPI(`FirestoreTimestamp`), firebaseAttendance(`AttendanceRecord`), MyHomeScreen(`spacing`, `fs`)
+  - SettingsScreen `require` eslint-disable 주석 추가
+  - `functions/lib/` .gitignore 추가
+  - 최종 결과: **TypeScript 0 에러, ESLint 0 에러** (532 warnings만 잔존 - 기존 `any` 타입)
+
 ### 2026.02.09 My 홈피 다이어리 & 방명록 기능 구현 (22차 배치)
 
 - [x] ~~MyHomeScreen 사진첩 탭 제거 → 탭 구조 3개로 변경 (전체/다이어리/방명록) (MyHomeScreen.tsx)~~ (2026.02.09 완료)
@@ -779,6 +811,15 @@
 ## 📝 일일 개발 기록
 
 ### 2026.02.09
+
+> **My홈피 프로필 인터랙티브 기능 + 전체 lint 정리 25차 배치 (10개 파일)**
+> - useProfileStore.ts: `FavoriteCourse` 인터페이스 추가, `favoriteCourses` string[]→FavoriteCourse[] 전환, roundingStyles/golfExperience/monthlyRounds/overseasGolf 필드 추가
+> - MyHomeScreen.tsx: 골프 스탯 터치 편집 모달, 골프장 추가/롱프레스 삭제, 라운딩 스타일 12개 옵션 토글 선택 → Firestore CRUD 연동 (3개 모달, 7개 핸들러, 10개 state, ~15개 스타일 추가)
+> - ProfileScreen.tsx: FavoriteCourse 객체 타입 호환성 수정
+> - feed-types.ts + useFeedStore.ts: FeedPost에 images 필드 추가, 다중 이미지 매핑 처리
+> - firestore.indexes.json: bookings 복합 인덱스 (participants.members + createdAt)
+> - 전체 ESLint --fix 적용: prettier 384개 에러 자동 수정 + 미사용 import 4건 수동 제거
+> - 최종: **TypeScript 0 에러, ESLint 0 에러** (532 warnings - 기존 any 타입)
 
 > **프로필 사진 권한 수정 + My홈피 프로필 UI 최적화 24차 배치 (4개 파일)**
 > - app.json: expo-image-picker 플러그인 추가 (빌드 시 네이티브 권한 자동 설정)
