@@ -90,10 +90,13 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       await firebaseFirestore
         .collection('users')
         .doc(uid)
-        .set({
-          ...data,
-          updatedAt: FirestoreTimestamp.now(),
-        }, { merge: true });
+        .set(
+          {
+            ...data,
+            updatedAt: FirestoreTimestamp.now(),
+          },
+          { merge: true },
+        );
 
       const { profile } = get();
       if (profile) {
@@ -125,10 +128,13 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       const url = await reference.getDownloadURL();
 
       // Firestore 업데이트
-      await firebaseFirestore.collection('users').doc(uid).set({
-        photoURL: url,
-        updatedAt: FirestoreTimestamp.now(),
-      }, { merge: true });
+      await firebaseFirestore.collection('users').doc(uid).set(
+        {
+          photoURL: url,
+          updatedAt: FirestoreTimestamp.now(),
+        },
+        { merge: true },
+      );
 
       // 로컬 상태 업데이트
       const { profile } = get();

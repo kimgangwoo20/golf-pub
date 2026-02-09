@@ -35,7 +35,10 @@ const pc = {
   heart: '#ff6b6b',
 };
 
-export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({ navigation, route }) => {
+export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
+  navigation,
+  route,
+}) => {
   const { user, signOut } = useAuthStore();
   const { profile, loadProfile } = useProfileStore();
   const [refreshing, setRefreshing] = useState(false);
@@ -92,8 +95,8 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({ nav
   };
 
   const handleLike = () => {
-    setLiked(prev => !prev);
-    setLikeCount(prev => (liked ? prev - 1 : prev + 1));
+    setLiked((prev) => !prev);
+    setLikeCount((prev) => (liked ? prev - 1 : prev + 1));
   };
 
   const handleLogout = () => {
@@ -115,7 +118,9 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({ nav
 
   // 프로필 데이터
   const displayName = profile?.displayName || user?.displayName || '골퍼';
-  const bio = profile?.bio || '골프를 사랑하는 골퍼입니다 🏌️\n함께 라운딩 갈 골프 친구 찾고 있어요!\n편하게 골친 신청 주세요 😊';
+  const bio =
+    profile?.bio ||
+    '골프를 사랑하는 골퍼입니다 🏌️\n함께 라운딩 갈 골프 친구 찾고 있어요!\n편하게 골친 신청 주세요 😊';
   const location = profile?.location || '서울';
   const totalRounds = profile?.totalRounds || profile?.stats?.gamesPlayed || 0;
   const averageScore = profile?.stats?.averageScore || 0;
@@ -248,10 +253,7 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({ nav
                 style={styles.avatarImg}
               />
             ) : (
-              <LinearGradient
-                colors={[pc.greenPale, pc.greenMist]}
-                style={styles.avatarFallback}
-              >
+              <LinearGradient colors={[pc.greenPale, pc.greenMist]} style={styles.avatarFallback}>
                 <Text style={{ fontSize: 28 }}>⛳</Text>
               </LinearGradient>
             )}
@@ -301,23 +303,26 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({ nav
                 onPress={() => navigation?.navigate('EditProfile')}
                 activeOpacity={0.7}
               >
-                <Text style={styles.actionOutlineText}>✏️  프로필 수정</Text>
+                <Text style={styles.actionOutlineText}>✏️ 프로필 수정</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.actionBtn, styles.actionFill]}
                 onPress={() => navigation?.navigate('MyHomeMain')}
                 activeOpacity={0.7}
               >
-                <Text style={styles.actionFillText}>🏠  My홈피</Text>
+                <Text style={styles.actionFillText}>🏠 My홈피</Text>
               </TouchableOpacity>
             </>
           ) : (
             <>
-              <TouchableOpacity style={[styles.actionBtn, styles.actionOutline]} activeOpacity={0.7}>
-                <Text style={styles.actionOutlineText}>👥  골친 신청</Text>
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.actionOutline]}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.actionOutlineText}>👥 골친 신청</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.actionBtn, styles.actionFill]} activeOpacity={0.7}>
-                <Text style={styles.actionFillText}>💬  메세지</Text>
+                <Text style={styles.actionFillText}>💬 메세지</Text>
               </TouchableOpacity>
             </>
           )}
@@ -339,7 +344,11 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({ nav
         {/* 골프 스탯 */}
         <View style={styles.statsGrid}>
           {[
-            { emoji: '🎯', label: '평균타수', value: averageScore > 0 ? `${averageScore}` : '90-100' },
+            {
+              emoji: '🎯',
+              label: '평균타수',
+              value: averageScore > 0 ? `${averageScore}` : '90-100',
+            },
             { emoji: '📅', label: '골프경력', value: '4-5년' },
             { emoji: '⛳', label: '월라운드', value: '2-3회' },
             { emoji: '✈️', label: '해외골프', value: '1-2회' },
@@ -361,7 +370,9 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({ nav
               : [{ name: '남서울CC' }, { name: '블루원 용인' }, { name: '이스트밸리' }]
             ).map((course, i) => (
               <TouchableOpacity key={i} style={styles.favTag} activeOpacity={0.7}>
-                <Text style={styles.favTagText}>{typeof course === 'string' ? course : course.name}</Text>
+                <Text style={styles.favTagText}>
+                  {typeof course === 'string' ? course : course.name}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
