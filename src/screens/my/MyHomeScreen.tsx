@@ -1,6 +1,6 @@
 // MyHomeScreen.tsx - Witty 스타일 My 홈피 (무한 스크롤)
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -31,6 +31,8 @@ import {
   FirestoreTimestamp,
 } from '@/services/firebase/firebaseConfig';
 import { DEFAULT_AVATAR } from '@/constants/images';
+import { ImageViewerModal } from '@/components/common/ImageViewerModal';
+import { BackgroundMediaEditor } from '@/components/common/BackgroundMediaEditor';
 import { colors, fontWeight as fw } from '@/styles/theme';
 
 const { width } = Dimensions.get('window');
@@ -177,6 +179,68 @@ const formatRelativeTime = (date: Date): string => {
   return date.toLocaleDateString('ko-KR');
 };
 
+// 히어로 영상 슬라이드 (expo-video 사용, 로드 실패 시 썸네일 폴백)
+let VideoView: any = null;
+let useVideoPlayer: any = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const expoVideo = require('expo-video');
+  VideoView = expoVideo.VideoView;
+  useVideoPlayer = expoVideo.useVideoPlayer;
+} catch {
+  // expo-video 네이티브 모듈 미사용 가능 시 폴백
+}
+
+const HeroVideoSlide: React.FC<{ uri: string; shouldPlay: boolean }> = ({ uri, shouldPlay }) => {
+  // expo-video 사용 가능하면 VideoView, 아니면 썸네일+재생 아이콘
+  if (useVideoPlayer && VideoView) {
+    return <HeroVideoPlayer uri={uri} shouldPlay={shouldPlay} />;
+  }
+  // 폴백: 정적 썸네일 + 재생 아이콘
+  return (
+    <View style={{ width, height: HERO_HEIGHT, backgroundColor: '#000' }}>
+      <Image source={{ uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+      <View
+        style={{
+          ...StyleSheet.absoluteFillObject,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'rgba(0,0,0,0.3)',
+        }}
+      >
+        <Text style={{ fontSize: 48 }}>▶️</Text>
+      </View>
+    </View>
+  );
+};
+
+// expo-video 기반 비디오 재생 컴포넌트
+const HeroVideoPlayer: React.FC<{ uri: string; shouldPlay: boolean }> = ({ uri, shouldPlay }) => {
+  const player = useVideoPlayer(uri, (p: any) => {
+    p.loop = true;
+    p.muted = true;
+    if (shouldPlay) p.play();
+  });
+
+  useEffect(() => {
+    if (!player) return;
+    if (shouldPlay) {
+      player.play();
+    } else {
+      player.pause();
+    }
+  }, [shouldPlay, player]);
+
+  return (
+    <VideoView
+      player={player}
+      style={{ width, height: HERO_HEIGHT }}
+      contentFit="cover"
+      nativeControls={false}
+    />
+  );
+};
+
 export const MyHomeScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { user, userProfile } = useAuthStore();
@@ -193,9 +257,6 @@ export const MyHomeScreen: React.FC = () => {
     name: user?.displayName || '골퍼',
     email: user?.email || '',
     profileImage: user?.photoURL || DEFAULT_AVATAR,
-    backgroundImage:
-      profileData?.backgroundImage ||
-      'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=800',
     phone: user?.phoneNumber || '',
     points: profileData?.points || 0,
     membership: profileData?.membership || 'FREE',
@@ -216,13 +277,13 @@ export const MyHomeScreen: React.FC = () => {
     interests: (profile as any)?.interests || [],
   };
 
-  // 사진 목록
+  // 배경 미디어 목록 (프로필 이미지와 분리)
+  const backgroundMedia: { url: string; type: 'image' | 'video'; order: number }[] = profile
+    ?.backgroundMedia?.length
+    ? profile.backgroundMedia
+    : [];
   const photoList: (string | null)[] =
-    (profile as any)?.photos?.length > 0
-      ? (profile as any).photos
-      : user?.photoURL
-        ? [user.photoURL]
-        : [null, null];
+    backgroundMedia.length > 0 ? backgroundMedia.map((m) => m.url) : [null];
 
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedTab, setSelectedTab] = useState('all');
@@ -271,6 +332,13 @@ export const MyHomeScreen: React.FC = () => {
   const [editingStat, setEditingStat] = useState<{ label: string; key: string } | null>(null);
   const [statInputValue, setStatInputValue] = useState('');
   const [statSubmitting, setStatSubmitting] = useState(false);
+
+  // 프로필 이미지 확대 뷰어 상태
+  const [viewerVisible, setViewerVisible] = useState(false);
+  const [viewerImageUri, setViewerImageUri] = useState<string | null>(null);
+
+  // 배경 미디어 편집기 상태
+  const [bgEditorVisible, setBgEditorVisible] = useState(false);
 
   // 현재 사용자 ID
   const currentUserId = user?.uid || '';
@@ -826,48 +894,6 @@ export const MyHomeScreen: React.FC = () => {
     }
   };
 
-  // 컨텐츠 카드 렌더링
-  const renderContentItem = ({ item, index }: { item: ContentItem; index: number }) => (
-    <TouchableOpacity
-      style={[
-        styles.contentCard,
-        index % 2 === 0 ? styles.contentCardLeft : styles.contentCardRight,
-      ]}
-      onPress={() => handleContentPress(item, index)}
-      onLongPress={() => handleContentLongPress(item)} // 롱프레스로 관리 메뉴
-      activeOpacity={0.9}
-    >
-      <Image source={{ uri: item.image }} style={styles.contentImage} />
-      <View style={styles.contentOverlay}>
-        <Text style={styles.contentIcon}>{item.icon}</Text>
-      </View>
-      {/* 공개 범위 표시 */}
-      <View style={styles.visibilityBadge}>
-        <Text style={styles.visibilityIcon}>{getVisibilityIcon(item.visibility)}</Text>
-      </View>
-      {item.mediaType === 'video' && (
-        <View style={styles.playIconOverlay}>
-          <Text style={styles.playIcon}>▶️</Text>
-        </View>
-      )}
-      <View style={styles.contentInfo}>
-        <Text style={styles.contentTitle} numberOfLines={1}>
-          {item.title}
-        </Text>
-        <View style={styles.contentStats}>
-          <View style={styles.contentStatItem}>
-            <Text style={styles.contentStatIcon}>❤️</Text>
-            <Text style={styles.contentStatText}>{item.likes}</Text>
-          </View>
-          <View style={styles.contentStatItem}>
-            <Text style={styles.contentStatIcon}>💬</Text>
-            <Text style={styles.contentStatText}>{item.comments}</Text>
-          </View>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-
   // 방명록 카드 렌더링
   const renderGuestbookItem = ({ item }: { item: GuestbookItem }) => {
     const isMyEntry = item.authorId === currentUserId; // 본인이 쓴 방명록인지 확인
@@ -910,8 +936,102 @@ export const MyHomeScreen: React.FC = () => {
     );
   };
 
+  // 단일 FlatList용 통합 데이터: 탭에 따라 데이터와 렌더링 분기
+  // 컨텐츠 탭(all/diary)은 2개씩 묶어 행 단위로 표시
+  type ContentRow = { key: string; items: ContentItem[] };
+  const contentRows: ContentRow[] = useMemo(() => {
+    const rows: ContentRow[] = [];
+    for (let i = 0; i < contents.length; i += 2) {
+      const rowItems = contents.slice(i, i + 2);
+      rows.push({ key: `row-${i}`, items: rowItems });
+    }
+    return rows;
+  }, [contents]);
+
+  // 통합 리스트 데이터 (타입 구분을 위해 any 사용)
+  const unifiedData: any[] = useMemo(() => {
+    if (selectedTab === 'guestbook') {
+      return guestbook;
+    }
+    return contentRows;
+  }, [selectedTab, guestbook, contentRows]);
+
+  // 통합 renderItem
+  const renderUnifiedItem = useCallback(
+    ({ item, index }: { item: any; index: number }) => {
+      if (selectedTab === 'guestbook') {
+        return renderGuestbookItem({ item });
+      }
+      // 컨텐츠 행 렌더링 (2개씩 가로 배치)
+      const row = item as ContentRow;
+      return (
+        <View style={styles.contentRow}>
+          {row.items.map((contentItem: ContentItem, colIndex: number) => {
+            const globalIndex = index * 2 + colIndex;
+            return (
+              <TouchableOpacity
+                key={contentItem.id}
+                style={[
+                  styles.contentCard,
+                  colIndex === 0 ? styles.contentCardLeft : styles.contentCardRight,
+                ]}
+                onPress={() => handleContentPress(contentItem, globalIndex)}
+                onLongPress={() => handleContentLongPress(contentItem)}
+                activeOpacity={0.9}
+              >
+                <Image source={{ uri: contentItem.image }} style={styles.contentImage} />
+                <View style={styles.contentOverlay}>
+                  <Text style={styles.contentIcon}>{contentItem.icon}</Text>
+                </View>
+                <View style={styles.visibilityBadge}>
+                  <Text style={styles.visibilityIcon}>
+                    {getVisibilityIcon(contentItem.visibility)}
+                  </Text>
+                </View>
+                {contentItem.mediaType === 'video' && (
+                  <View style={styles.playIconOverlay}>
+                    <Text style={styles.playIcon}>▶️</Text>
+                  </View>
+                )}
+                <View style={styles.contentInfo}>
+                  <Text style={styles.contentTitle} numberOfLines={1}>
+                    {contentItem.title}
+                  </Text>
+                  <View style={styles.contentStats}>
+                    <View style={styles.contentStatItem}>
+                      <Text style={styles.contentStatIcon}>❤️</Text>
+                      <Text style={styles.contentStatText}>{contentItem.likes}</Text>
+                    </View>
+                    <View style={styles.contentStatItem}>
+                      <Text style={styles.contentStatIcon}>💬</Text>
+                      <Text style={styles.contentStatText}>{contentItem.comments}</Text>
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+          {/* 홀수 개일 때 빈 공간 채우기 */}
+          {row.items.length === 1 && (
+            <View style={[styles.contentCard, styles.contentCardRight, { opacity: 0 }]} />
+          )}
+        </View>
+      );
+    },
+    [selectedTab, handleContentPress, handleContentLongPress, getVisibilityIcon],
+  );
+
+  // 통합 keyExtractor
+  const unifiedKeyExtractor = useCallback(
+    (item: any) => {
+      if (selectedTab === 'guestbook') return item.id?.toString();
+      return (item as ContentRow).key;
+    },
+    [selectedTab],
+  );
+
   // 헤더 컴포넌트 (프로필 히어로 + 프로필 카드 + 탭)
-  const ListHeader = () => (
+  const ListHeaderContent = () => (
     <>
       {/* ── Photo Hero ── */}
       <View style={styles.heroWrap}>
@@ -923,26 +1043,38 @@ export const MyHomeScreen: React.FC = () => {
           onMomentumScrollEnd={handlePhotoScroll}
           scrollEventThrottle={16}
         >
-          {photoList.map((photo, i) => (
-            <View key={i} style={styles.heroSlide}>
-              {photo ? (
-                <Image source={{ uri: photo }} style={styles.heroSlideImage} resizeMode="cover" />
-              ) : (
-                <LinearGradient
-                  colors={
-                    i === 0
-                      ? [pc.greenMain, pc.greenLight, pc.greenAccent, pc.greenMist]
-                      : [pc.greenDeep, pc.greenMain, pc.greenAccent]
-                  }
-                  start={{ x: 0.1, y: 0 }}
-                  end={{ x: 0.9, y: 1 }}
-                  style={styles.heroSlideGradient}
-                >
-                  <Text style={styles.heroPlaceholder}>{i === 0 ? '🏌️' : '⛳'}</Text>
-                </LinearGradient>
-              )}
-            </View>
-          ))}
+          {photoList.map((photo, i) => {
+            const mediaItem = backgroundMedia[i];
+            const isVideo = mediaItem?.type === 'video';
+            return (
+              <View key={i} style={styles.heroSlide}>
+                {photo ? (
+                  isVideo ? (
+                    <HeroVideoSlide uri={photo} shouldPlay={currentPhotoIndex === i} />
+                  ) : (
+                    <Image
+                      source={{ uri: photo }}
+                      style={styles.heroSlideImage}
+                      resizeMode="cover"
+                    />
+                  )
+                ) : (
+                  <LinearGradient
+                    colors={
+                      i === 0
+                        ? [pc.greenMain, pc.greenLight, pc.greenAccent, pc.greenMist]
+                        : [pc.greenDeep, pc.greenMain, pc.greenAccent]
+                    }
+                    start={{ x: 0.1, y: 0 }}
+                    end={{ x: 0.9, y: 1 }}
+                    style={styles.heroSlideGradient}
+                  >
+                    <Text style={styles.heroPlaceholder}>{i === 0 ? '🏌️' : '⛳'}</Text>
+                  </LinearGradient>
+                )}
+              </View>
+            );
+          })}
         </ScrollView>
 
         {/* 상단 네비게이션 오버레이 */}
@@ -960,6 +1092,9 @@ export const MyHomeScreen: React.FC = () => {
                 </Text>
                 <Text style={{ fontSize: 13 }}>📷</Text>
               </View>
+              <TouchableOpacity style={styles.heroNavBtn} onPress={() => setBgEditorVisible(true)}>
+                <Text style={{ fontSize: 16, color: '#fff' }}>🖼️</Text>
+              </TouchableOpacity>
               <TouchableOpacity style={styles.heroNavBtn} onPress={() => setDrawerVisible(true)}>
                 <Text style={styles.heroHamburger}>☰</Text>
               </TouchableOpacity>
@@ -983,8 +1118,17 @@ export const MyHomeScreen: React.FC = () => {
 
       {/* ── Profile Card (히어로 위로 겹침) ── */}
       <Animated.View style={[styles.heroCard]}>
-        {/* 아바타 */}
-        <View style={styles.heroAvatarWrap}>
+        {/* 아바타 (탭하여 확대 보기) */}
+        <TouchableOpacity
+          style={styles.heroAvatarWrap}
+          activeOpacity={0.8}
+          onPress={() => {
+            if (userData.profileImage && userData.profileImage !== DEFAULT_AVATAR) {
+              setViewerImageUri(userData.profileImage);
+              setViewerVisible(true);
+            }
+          }}
+        >
           <View style={styles.heroAvatarBox}>
             {userData.profileImage && userData.profileImage !== DEFAULT_AVATAR ? (
               <Image source={{ uri: userData.profileImage }} style={styles.heroAvatarImg} />
@@ -998,7 +1142,7 @@ export const MyHomeScreen: React.FC = () => {
             )}
           </View>
           <View style={styles.heroOnlineDot} />
-        </View>
+        </TouchableOpacity>
 
         {/* 이름 + 좋아요 */}
         <View style={styles.heroInfoHeader}>
@@ -1210,43 +1354,31 @@ export const MyHomeScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* 방명록 탭이면 방명록 리스트, 아니면 컨텐츠 그리드 */}
-      {selectedTab === 'guestbook' ? (
-        <FlatList
-          key="guestbook-list"
-          data={guestbook}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderGuestbookItem}
-          ListHeaderComponent={ListHeader}
-          ListFooterComponent={() => <View style={styles.bottomSpacing} />}
-          contentContainerStyle={styles.guestbookSection}
-          showsVerticalScrollIndicator={false}
-        />
-      ) : (
-        <FlatList
-          key="content-grid"
-          data={contents}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderContentItem}
-          numColumns={2}
-          columnWrapperStyle={styles.contentRow}
-          ListHeaderComponent={ListHeader}
-          ListFooterComponent={ListFooter}
-          ListEmptyComponent={ListEmpty}
-          onEndReached={loadMoreData}
-          onEndReachedThreshold={0.3}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor="#10b981"
-              colors={['#10b981']}
-            />
-          }
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.contentContainer}
-        />
-      )}
+      {/* 단일 FlatList (탭 전환 시 스크롤 위치 유지) */}
+      <FlatList
+        data={unifiedData}
+        keyExtractor={unifiedKeyExtractor}
+        renderItem={renderUnifiedItem}
+        ListHeaderComponent={ListHeaderContent}
+        ListFooterComponent={
+          selectedTab === 'guestbook' ? () => <View style={styles.bottomSpacing} /> : ListFooter
+        }
+        ListEmptyComponent={selectedTab !== 'guestbook' ? ListEmpty : undefined}
+        onEndReached={selectedTab !== 'guestbook' ? loadMoreData : undefined}
+        onEndReachedThreshold={0.3}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#10b981"
+            colors={['#10b981']}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={
+          selectedTab === 'guestbook' ? styles.guestbookSection : styles.contentContainer
+        }
+      />
 
       {/* 인스타그램 스타일 피드 뷰어 */}
       <FeedViewer
@@ -1665,6 +1797,27 @@ export const MyHomeScreen: React.FC = () => {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* 프로필 이미지 확대 뷰어 */}
+      <ImageViewerModal
+        visible={viewerVisible}
+        imageUri={viewerImageUri}
+        onClose={() => {
+          setViewerVisible(false);
+          setViewerImageUri(null);
+        }}
+      />
+
+      {/* 배경 미디어 편집기 */}
+      <BackgroundMediaEditor
+        visible={bgEditorVisible}
+        media={backgroundMedia}
+        onClose={() => setBgEditorVisible(false)}
+        onUpdate={() => {
+          // 프로필 재로드하여 배경 미디어 갱신
+          if (user?.uid) loadProfile(user.uid);
+        }}
+      />
 
       {/* 스탯 편집 모달 */}
       <Modal

@@ -52,7 +52,8 @@
       "expo-camera",
       "expo-image-picker",
       "./plugins/withKakaoMaven",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": false

@@ -14,7 +14,7 @@ import auth from '@react-native-firebase/auth';
 import { profileAPI } from '@/services/api/profileAPI';
 import { showImagePickerOptions } from '@/utils/imageUtils';
 import { validators } from '@/utils/validators';
-import { ImageCropModal } from '@/components/common/ImageCropModal';
+import { ImageCropModal, CropData } from '@/components/common/ImageCropModal';
 import { useProfileStore } from '@/store/useProfileStore';
 import { useAuthStore } from '@/store/useAuthStore';
 
@@ -56,8 +56,7 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
   const handleChangeProfileImage = async () => {
     // 시스템 크롭(1:1 정사각형)으로 이미지 축소 + 앱 확인 모달 표시
     const uri = await showImagePickerOptions({
-      allowsEditing: true,
-      aspect: [1, 1],
+      allowsEditing: false,
       quality: 0.5,
     });
     if (uri) {
@@ -66,12 +65,12 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
     }
   };
 
-  const handleCropConfirm = async (uri: string) => {
+  const handleCropConfirm = async (uri: string, cropData?: CropData) => {
     setCropModalVisible(false);
     setCropImageUri(null);
     setIsUploadingImage(true);
     try {
-      const downloadURL = await profileAPI.uploadProfileImage(uri);
+      const downloadURL = await profileAPI.uploadProfileImage(uri, cropData);
       setProfileImage(downloadURL);
 
       // Firebase Auth 유저 객체 갱신 → MyHomeScreen user?.photoURL 반영

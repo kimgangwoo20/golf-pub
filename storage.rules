@@ -21,6 +21,12 @@ service firebase.storage {
     function isImage() {
       return request.resource.contentType.matches('image/.*');
     }
+
+    // 이미지 또는 동영상 파일 확인
+    function isMedia() {
+      return request.resource.contentType.matches('image/.*') ||
+             request.resource.contentType.matches('video/.*');
+    }
     
     // ========================================
     // 1. 프로필 사진 (profiles/)
@@ -196,6 +202,31 @@ service firebase.storage {
                        request.auth.uid == userId;
     }
     
+    // ========================================
+    // 9. 배경 미디어 (backgrounds/)
+    // 코드 경로: backgrounds/{userId}/{fileName}
+    // ========================================
+    match /backgrounds/{userId}/{fileName} {
+      // 읽기: 로그인한 모든 사용자
+      allow read: if isSignedIn();
+
+      // 업로드: 본인만, 이미지/동영상만, 10MB 이하
+      allow create: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isMedia() &&
+                       isValidSize();
+
+      // 수정: 본인만, 이미지/동영상만
+      allow update: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isMedia() &&
+                       isValidSize();
+
+      // 삭제: 본인만
+      allow delete: if isSignedIn() &&
+                       request.auth.uid == userId;
+    }
+
     // ========================================
     // 기타: 모든 다른 경로 차단
     // ========================================

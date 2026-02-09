@@ -163,9 +163,13 @@ export const profileAPI = {
    * 프로필 이미지 업로드
    *
    * @param imageUri 이미지 URI
+   * @param cropData 크롭 메타데이터 (scale, translateX, translateY)
    * @returns 업로드된 이미지 URL
    */
-  uploadProfileImage: async (imageUri: string): Promise<string> => {
+  uploadProfileImage: async (
+    imageUri: string,
+    cropData?: { scale: number; translateX: number; translateY: number },
+  ): Promise<string> => {
     try {
       const currentUser = auth().currentUser;
       if (!currentUser) {
@@ -178,12 +182,16 @@ export const profileAPI = {
       await reference.putFile(imageUri);
       const downloadURL = await reference.getDownloadURL();
 
-      // Firestore 업데이트
-      await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).update({
+      // Firestore 업데이트 (크롭 데이터 포함)
+      const updateData: Record<string, any> = {
         photoURL: downloadURL,
         profileImage: downloadURL,
         updatedAt: firestore.FieldValue.serverTimestamp(),
-      });
+      };
+      if (cropData) {
+        updateData.profileImageCrop = cropData;
+      }
+      await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).update(updateData);
 
       // Firebase Auth 업데이트
       await currentUser.updateProfile({
@@ -439,6 +447,109 @@ export const profileAPI = {
     } catch (error: any) {
       console.error('사용자 프로필 조회 실패');
       throw new Error(error.message || '프로필을 불러오는데 실패했습니다.');
+    }
+  },
+
+  /**
+   * 배경 미디어 추가
+   *
+   * @param uri 미디어 URI (로컬)
+   * @param type 미디어 타입 (image | video)
+   * @returns 업로드된 미디어 URL
+   */
+  addBackgroundMedia: async (uri: string, type: 'image' | 'video' = 'image'): Promise<string> => {
+    try {
+      const currentUser = auth().currentUser;
+      if (!currentUser) {
+        throw new Error('로그인이 필요합니다.');
+      }
+
+      // Storage에 업로드
+      const ext = type === 'video' ? 'mp4' : 'jpg';
+      const reference = storage().ref(`backgrounds/${currentUser.uid}/${Date.now()}.${ext}`);
+      await reference.putFile(uri);
+      const downloadURL = await reference.getDownloadURL();
+
+      // 기존 배경 미디어 배열 가져오기
+      const userDoc = await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).get();
+      const existing: any[] = userDoc.data()?.backgroundMedia || [];
+
+      // 새 항목 추가 (order는 기존 길이)
+      const newMedia = { url: downloadURL, type, order: existing.length };
+      await firestore()
+        .collection(USERS_COLLECTION)
+        .doc(currentUser.uid)
+        .update({
+          backgroundMedia: [...existing, newMedia],
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+        });
+
+      return downloadURL;
+    } catch (error: any) {
+      console.error('배경 미디어 추가 실패');
+      throw new Error(error.message || '배경 미디어 추가에 실패했습니다.');
+    }
+  },
+
+  /**
+   * 배경 미디어 삭제
+   *
+   * @param url 삭제할 미디어 URL
+   */
+  removeBackgroundMedia: async (url: string): Promise<void> => {
+    try {
+      const currentUser = auth().currentUser;
+      if (!currentUser) {
+        throw new Error('로그인이 필요합니다.');
+      }
+
+      // Storage에서 삭제
+      try {
+        const reference = storage().refFromURL(url);
+        await reference.delete();
+      } catch {
+        // 이미 삭제된 경우 무시
+      }
+
+      // Firestore 배열에서 제거 + 순서 재정렬
+      const userDoc = await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).get();
+      const existing: any[] = userDoc.data()?.backgroundMedia || [];
+      const filtered = existing
+        .filter((m: any) => m.url !== url)
+        .map((m: any, i: number) => ({ ...m, order: i }));
+
+      await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).update({
+        backgroundMedia: filtered,
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (error: any) {
+      console.error('배경 미디어 삭제 실패');
+      throw new Error(error.message || '배경 미디어 삭제에 실패했습니다.');
+    }
+  },
+
+  /**
+   * 배경 미디어 순서 변경
+   *
+   * @param media 정렬된 배경 미디어 배열
+   */
+  reorderBackgroundMedia: async (
+    media: { url: string; type: 'image' | 'video'; order: number }[],
+  ): Promise<void> => {
+    try {
+      const currentUser = auth().currentUser;
+      if (!currentUser) {
+        throw new Error('로그인이 필요합니다.');
+      }
+
+      const reordered = media.map((m, i) => ({ ...m, order: i }));
+      await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).update({
+        backgroundMedia: reordered,
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (error: any) {
+      console.error('배경 미디어 순서 변경 실패');
+      throw new Error(error.message || '순서 변경에 실패했습니다.');
     }
   },
 };
