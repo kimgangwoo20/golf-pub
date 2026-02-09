@@ -22,7 +22,7 @@ export const SettingsScreen: React.FC = () => {
   const [showWithdrawalConfirm, setShowWithdrawalConfirm] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
 
-  const appVersion = '1.0.0';
+  const appVersion = require('../../../../app.json').expo.version;
 
   const handleAccountManagement = () => {
     navigation.navigate('AccountManagement');
@@ -55,7 +55,7 @@ export const SettingsScreen: React.FC = () => {
             await firestore().clearPersistence();
             Alert.alert('완료', '캐시가 삭제되었습니다. 앱을 재시작해주세요.');
           } catch {
-            Alert.alert('완료', '캐시가 삭제되었습니다.');
+            Alert.alert('알림', '캐시 삭제 중 오류가 발생했지만 일부 캐시가 정리되었을 수 있습니다.');
           }
         },
       },
@@ -262,7 +262,7 @@ export const SettingsScreen: React.FC = () => {
           <View style={styles.infoCard}>
             <Text style={styles.infoTitle}>골프 Pub</Text>
             <Text style={styles.infoText}>골프 모임 & 중고거래 플랫폼</Text>
-            <Text style={styles.infoText}>© 2025 Golf Pub. All rights reserved.</Text>
+            <Text style={styles.infoText}>© 2026 Golf Pub. All rights reserved.</Text>
           </View>
 
           {/* 하단 여백 */}

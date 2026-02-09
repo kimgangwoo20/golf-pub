@@ -14,6 +14,7 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { pubAPI, Pub } from '@/services/api/pubAPI';
 import { KakaoMapService } from '@/services/kakao/kakaoMap';
+import { DEFAULT_PUB_IMAGE } from '@/constants/images';
 
 export const PubDetailScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -117,7 +118,7 @@ export const PubDetailScreen: React.FC = () => {
     <ScrollView style={styles.container}>
       {/* 이미지 */}
       <Image
-        source={{ uri: pub.images?.[0] || 'https://i.pravatar.cc/400' }}
+        source={{ uri: pub.images?.[0] || DEFAULT_PUB_IMAGE }}
         style={styles.image}
       />
       {pub.features?.includes('제휴') && (

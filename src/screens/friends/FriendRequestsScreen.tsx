@@ -24,6 +24,7 @@ import {
 } from '@/services/firebase/firebaseFriends';
 import { FriendRequest } from '@/services/firebase/firebaseFriends';
 import firestore from '@react-native-firebase/firestore';
+import { DEFAULT_AVATAR } from '@/constants/images';
 
 type TabType = 'received' | 'sent';
 
@@ -259,7 +260,7 @@ export const FriendRequestsScreen: React.FC = () => {
               displayRequests.map((request) => (
                 <View key={request.id} style={styles.requestCard}>
                   <Image
-                    source={{ uri: request.userImage || 'https://i.pravatar.cc/150' }}
+                    source={{ uri: request.userImage || DEFAULT_AVATAR }}
                     style={styles.userImage}
                   />
 

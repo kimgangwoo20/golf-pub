@@ -18,6 +18,7 @@ import {
   firestore as firebaseFirestore,
   FirestoreTimestamp,
 } from '@/services/firebase/firebaseConfig';
+import { DEFAULT_AVATAR } from '@/constants/images';
 
 export const PubReviewsScreen: React.FC = () => {
   const route = useRoute<any>();
@@ -151,7 +152,7 @@ export const PubReviewsScreen: React.FC = () => {
     <View style={styles.reviewCard}>
       <View style={styles.reviewHeader}>
         <Image
-          source={{ uri: item.userImage || 'https://i.pravatar.cc/150' }}
+          source={{ uri: item.userImage || DEFAULT_AVATAR }}
           style={styles.avatar}
         />
         <View style={styles.userInfo}>

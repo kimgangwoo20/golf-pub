@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { pubAPI, Pub } from '@/services/api/pubAPI';
+import { DEFAULT_PUB_IMAGE } from '@/constants/images';
 
 export const BestPubsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -60,7 +61,7 @@ export const BestPubsScreen: React.FC = () => {
       onPress={() => navigation.navigate('PubDetail', { pubId: item.id })}
     >
       <Image
-        source={{ uri: item.images?.[0] || 'https://i.pravatar.cc/300' }}
+        source={{ uri: item.images?.[0] || DEFAULT_PUB_IMAGE }}
         style={styles.pubImage}
       />
       {item.features?.includes('제휴') && (

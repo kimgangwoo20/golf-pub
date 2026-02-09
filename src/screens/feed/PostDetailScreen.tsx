@@ -25,6 +25,7 @@ import {
   firestore as firebaseFirestore,
   FirestoreTimestamp,
 } from '@/services/firebase/firebaseConfig';
+import { DEFAULT_AVATAR } from '@/constants/images';
 
 const { width } = Dimensions.get('window');
 
@@ -159,7 +160,7 @@ export const PostDetailScreen: React.FC = () => {
     const authorData = {
       id: currentUserId,
       name: user?.displayName || '사용자',
-      image: user?.photoURL || 'https://i.pravatar.cc/150?img=1',
+      image: user?.photoURL || DEFAULT_AVATAR,
     };
 
     if (replyingTo) {

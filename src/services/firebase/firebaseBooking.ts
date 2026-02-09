@@ -87,61 +87,60 @@ export const joinBooking = async (
 }> => {
   try {
     const bookingRef = firestore().collection('bookings').doc(bookingId);
-    const bookingDoc = await bookingRef.get();
 
-    if (!bookingDoc.exists) {
-      return {
-        success: false,
-        message: '존재하지 않는 부킹입니다.',
+    // 트랜잭션으로 동시 참가 경합 조건 방지
+    const result = await firestore().runTransaction(async (transaction) => {
+      const bookingDoc = await transaction.get(bookingRef);
+
+      if (!bookingDoc.exists) {
+        return { success: false, message: '존재하지 않는 부킹입니다.' };
+      }
+
+      const bookingData = bookingDoc.data() as Booking;
+
+      // 이미 참가 중인지 확인
+      if (bookingData.participants.list.includes(userId)) {
+        return { success: false, message: '이미 참가 중입니다.' };
+      }
+
+      // 정원 확인
+      if (bookingData.participants.current >= bookingData.participants.max) {
+        return { success: false, message: '정원이 마감되었습니다.' };
+      }
+
+      // 부킹 상태 확인
+      if (bookingData.status !== 'open') {
+        return { success: false, message: '참가할 수 없는 부킹입니다.' };
+      }
+
+      const newCurrent = bookingData.participants.current + 1;
+      const updateData: Record<string, any> = {
+        'participants.current': newCurrent,
+        'participants.list': firestore.FieldValue.arrayUnion(userId),
+        updatedAt: FirestoreTimestamp.now(),
       };
-    }
 
-    const bookingData = bookingDoc.data() as Booking;
+      // 정원이 찼으면 상태도 함께 변경
+      if (newCurrent >= bookingData.participants.max) {
+        updateData.status = 'full';
+      }
 
-    // 이미 참가 중인지 확인
-    if (bookingData.participants.list.includes(userId)) {
-      return {
-        success: false,
-        message: '이미 참가 중입니다.',
-      };
-    }
+      transaction.update(bookingRef, updateData);
 
-    // 정원 확인
-    if (bookingData.participants.current >= bookingData.participants.max) {
-      return {
-        success: false,
-        message: '정원이 마감되었습니다.',
-      };
-    }
-
-    // 부킹 상태 확인
-    if (bookingData.status !== 'open') {
-      return {
-        success: false,
-        message: '참가할 수 없는 부킹입니다.',
-      };
-    }
-
-    // 참가자 추가
-    await bookingRef.update({
-      'participants.current': firestore.FieldValue.increment(1),
-      'participants.list': firestore.FieldValue.arrayUnion(userId),
-      updatedAt: FirestoreTimestamp.now(),
+      return { success: true, message: '참가 신청이 완료되었습니다!', hostId: bookingData.hostId, title: bookingData.title };
     });
 
-    // 정원이 찼으면 상태 변경
-    if (bookingData.participants.current + 1 >= bookingData.participants.max) {
-      await bookingRef.update({
-        status: 'full',
-      });
+    if (!result.success) {
+      return { success: result.success, message: result.message };
     }
 
+    // 트랜잭션 외부: 부수 효과 (실패해도 참가 처리에 영향 없음)
     // 참가 기록 생성
     await firestore().collection('bookingParticipants').add({
       bookingId,
       userId,
-      hostId: bookingData.hostId,
-      status: 'pending', // pending, approved, rejected
+      hostId: (result as any).hostId,
+      status: 'pending',
       joinedAt: FirestoreTimestamp.now(),
     });
 
@@ -156,17 +155,17 @@ export const joinBooking = async (
     // 호스트에게 알림 전송
     try {
       await firebaseMessaging.createNotification(
-        bookingData.hostId,
+        (result as any).hostId,
         'booking_join',
         '새 참가 신청',
-        `"${bookingData.title}" 모임에 새로운 참가 신청이 있습니다.`,
+        `"${(result as any).title}" 모임에 새로운 참가 신청이 있습니다.`,
         { bookingId },
       );
     } catch {
       // 알림 전송 실패 시 참가 처리에 영향 없음
     }
 
-    // 모임 참가 포인트 적립 (실패해도 참가 처리에 영향 없음)
+    // 모임 참가 포인트 적립
     try {
       await profileAPI.earnPoints(userId, 100, '골프 모임 참가');
     } catch {

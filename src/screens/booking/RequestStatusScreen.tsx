@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { getRequestStatus } from '@/services/firebase/firebaseBooking';
 
@@ -70,33 +71,38 @@ export const RequestStatusScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#10b981" />
-          <Text style={styles.loadingText}>신청 상태를 확인하는 중...</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
+        <View style={styles.container}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#10b981" />
+            <Text style={styles.loadingText}>신청 상태를 확인하는 중...</Text>
+          </View>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (!request) {
     return (
-      <View style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.emptyIcon}>📋</Text>
-          <Text style={styles.emptyText}>신청 정보를 찾을 수 없습니다</Text>
-          <TouchableOpacity style={styles.goBackButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.goBackButtonText}>돌아가기</Text>
-          </TouchableOpacity>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
+        <View style={styles.container}>
+          <View style={styles.loadingContainer}>
+            <Text style={styles.emptyIcon}>📋</Text>
+            <Text style={styles.emptyText}>신청 정보를 찾을 수 없습니다</Text>
+            <TouchableOpacity style={styles.goBackButton} onPress={() => navigation.goBack()}>
+              <Text style={styles.goBackButtonText}>돌아가기</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   const statusConfig = getStatusConfig();
 
   return (
-    <ScrollView style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
+      <ScrollView style={styles.container}>
       {/* 상태 */}
       <View style={[styles.statusSection, { backgroundColor: `${statusConfig.color}15` }]}>
         <Text style={styles.statusIcon}>{statusConfig.icon}</Text>
@@ -153,7 +159,8 @@ export const RequestStatusScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       )}
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

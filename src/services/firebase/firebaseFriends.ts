@@ -4,6 +4,7 @@
 import firestore from '@react-native-firebase/firestore';
 import { FirestoreTimestamp } from './firebaseConfig';
 import { firebaseMessaging } from './firebaseMessaging';
+import { DEFAULT_AVATAR } from '@/constants/images';
 
 export interface Friend {
   id: string;
@@ -47,7 +48,7 @@ export const searchFriends = async (query: string, currentUserId: string): Promi
         friends.push({
           id: doc.id,
           name: data.name,
-          avatar: data.avatar || 'https://i.pravatar.cc/150',
+          avatar: data.avatar || DEFAULT_AVATAR,
           handicap: data.handicap || 0,
           location: data.location || '미등록',
           mutualFriends: 0, // 공통 친구 수: 성능상 목록 조회에서는 0으로 두고, 프로필 상세에서 개별 계산
@@ -135,34 +136,45 @@ export const acceptFriendRequest = async (
   toUserId: string,
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    // 친구 요청 상태 업데이트
-    await firestore().collection('friendRequests').doc(requestId).update({
-      status: 'accepted',
-      acceptedAt: FirestoreTimestamp.now(),
+    const requestRef = firestore().collection('friendRequests').doc(requestId);
+
+    // 트랜잭션으로 중복 수락 방지
+    const result = await firestore().runTransaction(async (transaction) => {
+      const requestDoc = await transaction.get(requestRef);
+      if (!requestDoc.exists) {
+        return { success: false, message: '존재하지 않는 요청입니다.' };
+      }
+
+      const requestData = requestDoc.data();
+      if (requestData?.status === 'accepted') {
+        return { success: false, message: '이미 수락된 요청입니다.' };
+      }
+
+      // 친구 요청 상태 업데이트
+      transaction.update(requestRef, {
+        status: 'accepted',
+        acceptedAt: FirestoreTimestamp.now(),
+      });
+
+      // 양방향 친구 관계 생성
+      transaction.set(
+        firestore().collection('users').doc(fromUserId).collection('friends').doc(toUserId),
+        { friendId: toUserId, createdAt: FirestoreTimestamp.now() },
+      );
+
+      transaction.set(
+        firestore().collection('users').doc(toUserId).collection('friends').doc(fromUserId),
+        { friendId: fromUserId, createdAt: FirestoreTimestamp.now() },
+      );
+
+      return { success: true, message: '친구가 되었습니다!' };
     });
 
-    // 양방향 친구 관계 생성 (서브컬렉션 경로)
-    const batch = firestore().batch();
+    if (!result.success) {
+      return result;
+    }
 
-    batch.set(
-      firestore().collection('users').doc(fromUserId).collection('friends').doc(toUserId),
-      {
-        friendId: toUserId,
-        createdAt: FirestoreTimestamp.now(),
-      },
-    );
-
-    batch.set(
-      firestore().collection('users').doc(toUserId).collection('friends').doc(fromUserId),
-      {
-        friendId: fromUserId,
-        createdAt: FirestoreTimestamp.now(),
-      },
-    );
-
-    await batch.commit();
-
-    // 사용자 통계 업데이트 (set+merge로 문서 없어도 안전)
+    // 트랜잭션 외부: 통계 업데이트 (실패해도 친구 관계에 영향 없음)
     await firestore()
       .collection('users')
       .doc(fromUserId)
@@ -249,7 +261,7 @@ export const getFriendsList = async (userId: string): Promise<Friend[]> => {
         friends.push({
           id: doc.id,
           name: data.name,
-          avatar: data.avatar || 'https://i.pravatar.cc/150',
+          avatar: data.avatar || DEFAULT_AVATAR,
           handicap: data.handicap || 0,
           location: data.location || '미등록',
           mutualFriends: 0,

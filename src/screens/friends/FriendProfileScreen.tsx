@@ -16,6 +16,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuthStore } from '@/store/useAuthStore';
 import { getFriendProfile, removeFriend } from '@/services/firebase/firebaseFriends';
+import { DEFAULT_AVATAR } from '@/constants/images';
 
 export const FriendProfileScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -157,7 +158,7 @@ export const FriendProfileScreen: React.FC = () => {
           {/* 프로필 정보 */}
           <View style={styles.profileSection}>
             <Image
-              source={{ uri: profile.avatar || 'https://i.pravatar.cc/150' }}
+              source={{ uri: profile.avatar || DEFAULT_AVATAR }}
               style={styles.profileImage}
             />
 

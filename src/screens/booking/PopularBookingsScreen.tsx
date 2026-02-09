@@ -9,6 +9,7 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { getPopularBookings } from '@/services/firebase/firebaseBooking';
 
@@ -80,18 +81,21 @@ export const PopularBookingsScreen: React.FC = () => {
 
   if (loading && bookings.length === 0) {
     return (
-      <View style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#10b981" />
-          <Text style={styles.loadingText}>인기 부킹을 불러오는 중...</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
+        <View style={styles.container}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#10b981" />
+            <Text style={styles.loadingText}>인기 부킹을 불러오는 중...</Text>
+          </View>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <FlatList
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
+      <View style={styles.container}>
+        <FlatList
         data={bookings}
         renderItem={renderBooking}
         keyExtractor={(item) => item.id}
@@ -110,8 +114,9 @@ export const PopularBookingsScreen: React.FC = () => {
             <Text style={styles.emptyText}>인기 부킹이 없습니다</Text>
           </View>
         }
-      />
-    </View>
+        />
+      </View>
+    </SafeAreaView>
   );
 };
 

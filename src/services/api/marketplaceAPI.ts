@@ -395,35 +395,28 @@ export const marketplaceAPI = {
         throw new Error('로그인이 필요합니다.');
       }
 
-      // 이미 찜했는지 확인
-      const existingLike = await firestore()
-        .collection(PRODUCT_LIKES_COLLECTION)
-        .where('userId', '==', currentUser.uid)
-        .where('productId', '==', productId)
-        .get();
+      // 결정적 문서 ID로 중복 찜 방지
+      const likeDocId = `${currentUser.uid}_${productId}`;
+      const likeRef = firestore().collection(PRODUCT_LIKES_COLLECTION).doc(likeDocId);
 
-      if (!existingLike.empty) {
-        return;
-      }
+      // 트랜잭션으로 중복 방지
+      await firestore().runTransaction(async (transaction) => {
+        const likeDoc = await transaction.get(likeRef);
+        if (likeDoc.exists) {
+          return; // 이미 찜함
+        }
 
-      // Batch 업데이트
-      const batch = firestore().batch();
+        transaction.set(likeRef, {
+          userId: currentUser.uid,
+          productId,
+          createdAt: firestore.FieldValue.serverTimestamp(),
+        });
 
-      // 찜 추가
-      const likeRef = firestore().collection(PRODUCT_LIKES_COLLECTION).doc();
-      batch.set(likeRef, {
-        userId: currentUser.uid,
-        productId,
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        const productRef = firestore().collection(PRODUCTS_COLLECTION).doc(productId);
+        transaction.update(productRef, {
+          likeCount: firestore.FieldValue.increment(1),
+        });
       });
-
-      // 찜 개수 증가
-      const productRef = firestore().collection(PRODUCTS_COLLECTION).doc(productId);
-      batch.update(productRef, {
-        likeCount: firestore.FieldValue.increment(1),
-      });
-
-      await batch.commit();
     } catch (error: any) {
       console.error('❌ 상품 찜하기 실패:', error);
       throw new Error(error.message || '상품 찜하기에 실패했습니다.');
@@ -442,30 +435,24 @@ export const marketplaceAPI = {
         throw new Error('로그인이 필요합니다.');
       }
 
-      const likeSnapshot = await firestore()
-        .collection(PRODUCT_LIKES_COLLECTION)
-        .where('userId', '==', currentUser.uid)
-        .where('productId', '==', productId)
-        .get();
+      // 결정적 문서 ID 사용
+      const likeDocId = `${currentUser.uid}_${productId}`;
+      const likeRef = firestore().collection(PRODUCT_LIKES_COLLECTION).doc(likeDocId);
 
-      if (likeSnapshot.empty) {
-        return;
-      }
+      // 트랜잭션으로 안전하게 삭제
+      await firestore().runTransaction(async (transaction) => {
+        const likeDoc = await transaction.get(likeRef);
+        if (!likeDoc.exists) {
+          return; // 이미 삭제됨
+        }
 
-      // Batch 업데이트
-      const batch = firestore().batch();
+        transaction.delete(likeRef);
 
-      // 찜 삭제
-      const likeRef = firestore().collection(PRODUCT_LIKES_COLLECTION).doc(likeSnapshot.docs[0].id);
-      batch.delete(likeRef);
-
-      // 찜 개수 감소
-      const productRef = firestore().collection(PRODUCTS_COLLECTION).doc(productId);
-      batch.update(productRef, {
-        likeCount: firestore.FieldValue.increment(-1),
+        const productRef = firestore().collection(PRODUCTS_COLLECTION).doc(productId);
+        transaction.update(productRef, {
+          likeCount: firestore.FieldValue.increment(-1),
+        });
       });
-
-      await batch.commit();
     } catch (error: any) {
       console.error('❌ 상품 찜 취소 실패:', error);
       throw new Error(error.message || '상품 찜 취소에 실패했습니다.');
