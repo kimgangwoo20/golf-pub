@@ -14,12 +14,15 @@ import {
   ActivityIndicator,
   RefreshControl,
   ScrollView,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '@/store/useAuthStore';
 import { FeedViewer } from '@/components/media';
-import { firestore as firebaseFirestore } from '@/services/firebase/firebaseConfig';
+import { firestore as firebaseFirestore, FirestoreTimestamp } from '@/services/firebase/firebaseConfig';
 
 const { width } = Dimensions.get('window');
 const ITEMS_PER_PAGE = 6;
@@ -144,6 +147,11 @@ export const MyHomeScreen: React.FC = () => {
   // 방명록 상태
   const [guestbook, setGuestbook] = useState<GuestbookItem[]>([]);
 
+  // 방명록 작성 모달 상태
+  const [guestbookModalVisible, setGuestbookModalVisible] = useState(false);
+  const [guestbookText, setGuestbookText] = useState('');
+  const [guestbookSubmitting, setGuestbookSubmitting] = useState(false);
+
   // 컨텐츠 관리 모달 상태
   const [contentMenuVisible, setContentMenuVisible] = useState(false);
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
@@ -183,6 +191,52 @@ export const MyHomeScreen: React.FC = () => {
       setGuestbook(entries);
     } catch (error: any) {
       console.error('방명록 로드 실패:', error);
+    }
+  };
+
+  // 방명록 작성 제출
+  const handleSubmitGuestbook = async () => {
+    if (!guestbookText.trim() || !user?.uid) return;
+
+    setGuestbookSubmitting(true);
+    try {
+      await firebaseFirestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('guestbook')
+        .add({
+          authorId: user.uid,
+          authorName: user.displayName || '익명',
+          authorImage: user.photoURL || '',
+          content: guestbookText.trim(),
+          createdAt: FirestoreTimestamp.now(),
+        });
+
+      setGuestbookText('');
+      setGuestbookModalVisible(false);
+      await loadGuestbook();
+      Alert.alert('완료', '방명록이 등록되었습니다.');
+    } catch (error: any) {
+      Alert.alert('오류', error.message || '방명록 등록에 실패했습니다.');
+    } finally {
+      setGuestbookSubmitting(false);
+    }
+  };
+
+  // FAB 버튼 핸들러
+  const handleFabPress = () => {
+    if (selectedTab === 'guestbook') {
+      if (!user?.uid) {
+        Alert.alert('알림', '로그인이 필요합니다.');
+        return;
+      }
+      setGuestbookModalVisible(true);
+    } else {
+      // all, diary 탭 → CreatePost 화면으로 이동 (diary 타입)
+      (navigation as any).navigate('Feed', {
+        screen: 'CreatePost',
+        params: { type: 'diary' },
+      });
     }
   };
 
@@ -234,13 +288,6 @@ export const MyHomeScreen: React.FC = () => {
         .where('author.id', '==', user?.uid)
         .where('type', '==', 'diary')
         .orderBy('createdAt', 'desc');
-    } else if (tab === 'photo') {
-      // photo 탭: photo + video 타입 (Firestore에서 in 쿼리 사용)
-      query = firebaseFirestore
-        .collection('posts')
-        .where('author.id', '==', user?.uid)
-        .where('type', 'in', ['photo', 'video'])
-        .orderBy('createdAt', 'desc');
     }
 
     return query;
@@ -250,8 +297,6 @@ export const MyHomeScreen: React.FC = () => {
   const _filterByTab = (items: ContentItem[], tab: string) => {
     if (tab === 'all') return items;
     if (tab === 'diary') return items.filter((item) => item.type === 'diary');
-    if (tab === 'photo')
-      return items.filter((item) => item.type === 'photo' || item.type === 'video');
     return items;
   };
 
@@ -469,7 +514,6 @@ export const MyHomeScreen: React.FC = () => {
   const tabs = [
     { id: 'all', icon: '🔥', label: '전체' },
     { id: 'diary', icon: '📖', label: '다이어리' },
-    { id: 'photo', icon: '📷', label: '사진첩' },
     { id: 'guestbook', icon: '💬', label: '방명록' },
   ];
 
@@ -671,16 +715,6 @@ export const MyHomeScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* 방명록 작성 버튼 (방명록 탭일 때만) */}
-      {selectedTab === 'guestbook' && (
-        <TouchableOpacity
-          style={styles.writeGuestbookButton}
-          onPress={() => Alert.alert('방명록', '방명록 작성 기능은 개발 예정입니다.')}
-        >
-          <Text style={styles.writeGuestbookIcon}>✏️</Text>
-          <Text style={styles.writeGuestbookText}>방명록 남기기</Text>
-        </TouchableOpacity>
-      )}
     </>
   );
 
@@ -805,6 +839,66 @@ export const MyHomeScreen: React.FC = () => {
               </ScrollView>
             </View>
           </TouchableOpacity>
+        </Modal>
+
+        {/* FAB 버튼 */}
+        <TouchableOpacity style={styles.fabButton} onPress={handleFabPress}>
+          <Text style={styles.fabIcon}>✏️</Text>
+        </TouchableOpacity>
+
+        {/* 방명록 작성 모달 */}
+        <Modal
+          visible={guestbookModalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setGuestbookModalVisible(false)}
+        >
+          <KeyboardAvoidingView
+            style={styles.guestbookModalWrapper}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          >
+            <TouchableOpacity
+              style={styles.guestbookModalOverlay}
+              activeOpacity={1}
+              onPress={() => setGuestbookModalVisible(false)}
+            />
+            <View style={styles.guestbookModalContainer}>
+              <View style={styles.guestbookModalHeader}>
+                <Text style={styles.guestbookModalTitle}>방명록 남기기</Text>
+                <TouchableOpacity onPress={() => setGuestbookModalVisible(false)}>
+                  <Text style={styles.guestbookModalClose}>✕</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.guestbookModalBody}>
+                <TextInput
+                  style={styles.guestbookModalInput}
+                  placeholder="방명록을 남겨주세요..."
+                  placeholderTextColor="#999"
+                  multiline
+                  maxLength={200}
+                  value={guestbookText}
+                  onChangeText={setGuestbookText}
+                />
+                <Text style={styles.guestbookModalCharCount}>
+                  {guestbookText.length} / 200
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[
+                  styles.guestbookModalSubmit,
+                  (!guestbookText.trim() || guestbookSubmitting) && styles.guestbookModalSubmitDisabled,
+                ]}
+                onPress={handleSubmitGuestbook}
+                disabled={!guestbookText.trim() || guestbookSubmitting}
+              >
+                {guestbookSubmitting ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.guestbookModalSubmitText}>등록</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
         </Modal>
 
         {/* 컨텐츠 관리 모달 (롱프레스 시 표시) */}
@@ -1257,26 +1351,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#666',
   },
-  writeGuestbookButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#10b981',
-    padding: 16,
-    marginHorizontal: 16,
-    marginTop: 12,
-    borderRadius: 12,
-  },
-  writeGuestbookIcon: {
-    fontSize: 20,
-    marginRight: 8,
-  },
-  writeGuestbookText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#fff',
-  },
-
   // 로딩 & 빈 상태
   loadingFooter: {
     flexDirection: 'row',
@@ -1514,5 +1588,98 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#333',
+  },
+
+  // FAB 버튼
+  fabButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#10b981',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  fabIcon: {
+    fontSize: 28,
+  },
+
+  // 방명록 작성 모달
+  guestbookModalWrapper: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  guestbookModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  guestbookModalContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 32,
+  },
+  guestbookModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+  },
+  guestbookModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1A1A1A',
+  },
+  guestbookModalClose: {
+    fontSize: 24,
+    color: '#666',
+    padding: 4,
+  },
+  guestbookModalBody: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  guestbookModalInput: {
+    fontSize: 15,
+    color: '#1A1A1A',
+    lineHeight: 22,
+    minHeight: 100,
+    textAlignVertical: 'top',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    padding: 16,
+  },
+  guestbookModalCharCount: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'right',
+    marginTop: 8,
+  },
+  guestbookModalSubmit: {
+    marginHorizontal: 20,
+    marginTop: 16,
+    height: 50,
+    backgroundColor: '#10b981',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  guestbookModalSubmitDisabled: {
+    backgroundColor: '#E5E5E5',
+  },
+  guestbookModalSubmitText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
   },
 });

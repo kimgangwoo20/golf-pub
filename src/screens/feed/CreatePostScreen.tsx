@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuthStore } from '@/store/useAuthStore';
 import { firestore as firebaseFirestore, FirestoreTimestamp } from '@/services/firebase/firebaseConfig';
@@ -26,7 +26,10 @@ const MAX_TEXT_LENGTH = 500;
 
 export const CreatePostScreen: React.FC = () => {
   const navigation = useNavigation();
+  const route = useRoute();
   const { user } = useAuthStore();
+  const routeParams = (route.params as any) || {};
+  const postType: string = routeParams.type || 'photo';
 
   const [content, setContent] = useState('');
   const [images, setImages] = useState<string[]>([]);
@@ -149,6 +152,7 @@ export const CreatePostScreen: React.FC = () => {
                 name: user.displayName || '사용자',
                 image: user.photoURL || '',
               },
+              type: postType,
               content: content.trim(),
               images: uploadedImageUrls,
               hashtags,
