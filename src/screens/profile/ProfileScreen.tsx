@@ -331,12 +331,12 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
         <View style={styles.ttBox}>
           <View style={styles.ttItem}>
             <Text style={styles.ttLabel}>TODAY</Text>
-            <Text style={styles.ttValue}>3</Text>
+            <Text style={styles.ttValue}>{(profile as any)?.stats?.todayVisits || 0}</Text>
           </View>
           <View style={styles.ttDivider} />
           <View style={styles.ttItem}>
             <Text style={styles.ttLabel}>TOTAL</Text>
-            <Text style={styles.ttValue}>{totalRounds > 0 ? totalRounds : 128}</Text>
+            <Text style={styles.ttValue}>{totalRounds > 0 ? totalRounds : 0}</Text>
           </View>
         </View>
 
@@ -348,9 +348,23 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
               label: '평균타수',
               value: averageScore > 0 ? `${averageScore}` : '90-100',
             },
-            { emoji: '📅', label: '골프경력', value: '4-5년' },
-            { emoji: '⛳', label: '월라운드', value: '2-3회' },
-            { emoji: '✈️', label: '해외골프', value: '1-2회' },
+            {
+              emoji: '📅',
+              label: '골프경력',
+              value: (profile as any)?.golfExperience || '4-5년',
+            },
+            {
+              emoji: '⛳',
+              label: '월라운드',
+              value: (profile as any)?.monthlyRounds
+                ? `${(profile as any).monthlyRounds}회`
+                : '2-3회',
+            },
+            {
+              emoji: '✈️',
+              label: '해외골프',
+              value: (profile as any)?.overseasGolf || '1-2회',
+            },
           ].map((stat, i) => (
             <View key={i} style={styles.statChip}>
               <Text style={styles.statEmoji}>{stat.emoji}</Text>
