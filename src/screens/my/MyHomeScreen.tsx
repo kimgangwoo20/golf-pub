@@ -180,7 +180,8 @@ const formatRelativeTime = (date: Date): string => {
 export const MyHomeScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { user, userProfile } = useAuthStore();
-  const { profile, loadProfile, updateProfile } = useProfileStore();
+  const { profile, loadProfile, updateProfile, toggleProfileLike, checkProfileLiked } =
+    useProfileStore();
 
   // 프로필 로드
   useEffect(() => {
@@ -278,7 +279,7 @@ export const MyHomeScreen: React.FC = () => {
   // 포토 히어로 상태
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(42);
+  const [likeCount, setLikeCount] = useState(0);
   const photoScrollRef = useRef<ScrollView>(null);
   const handlePhotoScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const idx = Math.round(e.nativeEvent.contentOffset.x / width);
@@ -290,9 +291,33 @@ export const MyHomeScreen: React.FC = () => {
     setCurrentPhotoIndex(idx);
   };
 
-  const handleLikeToggle = () => {
-    setLiked((prev) => !prev);
-    setLikeCount((prev) => (liked ? prev - 1 : prev + 1));
+  // 프로필 likeCount 동기화
+  useEffect(() => {
+    setLikeCount(profile?.likeCount || 0);
+  }, [profile?.likeCount]);
+
+  // 좋아요 상태 확인
+  useEffect(() => {
+    if (currentUserId) {
+      checkProfileLiked(currentUserId, currentUserId).then(setLiked);
+    }
+  }, [currentUserId, checkProfileLiked]);
+
+  const handleLikeToggle = async () => {
+    if (!currentUserId) return;
+
+    // 낙관적 UI
+    const prevLiked = liked;
+    setLiked(!prevLiked);
+    setLikeCount((prev) => (prevLiked ? Math.max(0, prev - 1) : prev + 1));
+
+    try {
+      await toggleProfileLike(currentUserId, currentUserId);
+    } catch {
+      // 실패 시 롤백
+      setLiked(prevLiked);
+      setLikeCount((prev) => (prevLiked ? prev + 1 : Math.max(0, prev - 1)));
+    }
   };
 
   // 방명록 Firestore 로드

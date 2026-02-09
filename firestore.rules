@@ -40,8 +40,11 @@ service cloud.firestore {
       allow create: if isOwner(userId);
 
       // 수정: 본인만 (단, role, points, pointBalance는 서버에서만)
-      allow update: if isOwner(userId) &&
-                       !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'points', 'pointBalance']);
+      // 예외: likeCount 필드만 변경하는 경우 인증된 사용자 허용
+      allow update: if (isOwner(userId) &&
+                       !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'points', 'pointBalance'])) ||
+                       (isSignedIn() &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount']));
 
       // 삭제: 본인만
       allow delete: if isOwner(userId);
@@ -195,6 +198,16 @@ service cloud.firestore {
                        request.resource.data.userId == request.auth.uid;
       allow update: if false;
       allow delete: if isOwner(resource.data.userId);
+    }
+
+    // ========================================
+    // 5-1. 프로필 좋아요 (profileLikes)
+    // ========================================
+    match /profileLikes/{likeId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow delete: if isSignedIn() && resource.data.likerUid == request.auth.uid;
+      allow update: if false;
     }
 
     // ========================================
