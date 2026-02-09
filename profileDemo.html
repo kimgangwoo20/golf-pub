@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Golf Pub - Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+          --green-deep: #1a472a;
+          --green-main: #2d6a4f;
+          --green-light: #40916c;
+          --green-accent: #52b788;
+          --green-pale: #b7e4c7;
+          --green-mist: #d8f3dc;
+          --gold: #c9a96e;
+          --gold-light: #e8d5a8;
+          --cream: #faf8f2;
+          --white: #ffffff;
+          --gray-50: #fafafa;
+          --gray-100: #f5f5f5;
+          --gray-200: #e8e8e8;
+          --gray-300: #d4d4d4;
+          --gray-400: #a3a3a3;
+          --gray-500: #737373;
+          --gray-600: #525252;
+          --gray-800: #262626;
+          --heart: #ff6b6b;
+          --radius: 20px;
+          --radius-sm: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+          font-family: 'Noto Sans KR', sans-serif;
+          background: var(--gray-100);
+          color: var(--gray-800);
+          max-width: 430px;
+          margin: 0 auto;
+          min-height: 100vh;
+          overflow-x: hidden;
+          -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Photo Hero ── */
+        .photo-hero {
+          position: relative;
+          width: 100%;
+          height: 520px;
+          background: #1a1a1a;
+          overflow: hidden;
+        }
+        .photo-slider {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .photo-slide {
+          min-width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+        }
+        /* 사진 대신 그라데이션 플레이스홀더 */
+        .photo-slide:nth-child(1) {
+          background: linear-gradient(160deg, #2d6a4f 0%, #40916c 40%, #95d5b2 80%, #d8f3dc 100%);
+        }
+        .photo-slide:nth-child(1)::after {
+          content: '🏌️';
+          font-size: 80px;
+          opacity: 0.4;
+        }
+        .photo-slide:nth-child(2) {
+          background: linear-gradient(160deg, #1a472a 0%, #2d6a4f 50%, #52b788 100%);
+        }
+        .photo-slide:nth-child(2)::after {
+          content: '⛳';
+          font-size: 80px;
+          opacity: 0.4;
+        }
+
+        /* Top Navigation */
+        .photo-nav {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 52px 16px 12px;
+          background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%);
+          z-index: 20;
+        }
+        .nav-back {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.15);
+          backdrop-filter: blur(8px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        .nav-back:active { background: rgba(255,255,255,0.3); }
+        .nav-back svg { width: 20px; height: 20px; color: white; }
+        .nav-title {
+          font-size: 15px;
+          font-weight: 600;
+          color: white;
+          text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        }
+        .nav-right {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .photo-counter {
+          padding: 5px 10px;
+          border-radius: 14px;
+          background: rgba(0,0,0,0.4);
+          backdrop-filter: blur(8px);
+          font-size: 12px;
+          font-weight: 500;
+          color: white;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+        }
+        .photo-counter svg { width: 14px; height: 14px; }
+
+        /* Slide indicators */
+        .slide-dots {
+          position: absolute;
+          bottom: 100px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 6px;
+          z-index: 20;
+        }
+        .slide-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.4);
+          transition: all 0.3s;
+          cursor: pointer;
+        }
+        .slide-dot.active {
+          width: 20px;
+          border-radius: 4px;
+          background: white;
+        }
+
+        /* Report button */
+        .report-btn {
+          position: absolute;
+          top: 110px;
+          right: 16px;
+          padding: 5px 12px;
+          border-radius: 14px;
+          background: rgba(0,0,0,0.3);
+          backdrop-filter: blur(8px);
+          font-size: 11px;
+          color: rgba(255,255,255,0.8);
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          cursor: pointer;
+          z-index: 20;
+        }
+
+        /* ── Profile Card (overlaps photo) ── */
+        .profile-card {
+          position: relative;
+          margin-top: -80px;
+          background: var(--white);
+          border-radius: 28px 28px 0 0;
+          padding: 0 20px 20px;
+          z-index: 30;
+          min-height: 400px;
+        }
+
+        /* Avatar thumbnail */
+        .avatar-float {
+          position: absolute;
+          top: -30px;
+          left: 20px;
+          z-index: 31;
+        }
+        .avatar-thumb {
+          width: 64px;
+          height: 64px;
+          border-radius: 16px;
+          border: 3px solid var(--white);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+          background: linear-gradient(135deg, var(--green-pale), var(--green-mist));
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 28px;
+          overflow: hidden;
+        }
+        .avatar-online {
+          position: absolute;
+          bottom: -1px;
+          right: -1px;
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          background: #22c55e;
+          border: 2.5px solid white;
+        }
+
+        /* Name & Info Row */
+        .info-header {
+          padding-top: 46px;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 6px;
+        }
+        .info-left {}
+        .user-name {
+          font-size: 22px;
+          font-weight: 700;
+          letter-spacing: -0.5px;
+          line-height: 1.3;
+        }
+        .user-meta {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-top: 3px;
+          font-size: 13px;
+          color: var(--gray-500);
+        }
+        .user-meta .pin { color: var(--green-accent); font-size: 14px; }
+
+        /* Like count */
+        .like-box {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          padding: 6px 12px;
+          border-radius: 20px;
+          background: #fff0f0;
+          cursor: pointer;
+          transition: transform 0.15s;
+        }
+        .like-box:active { transform: scale(0.95); }
+        .like-heart { font-size: 18px; color: var(--heart); }
+        .like-count {
+          font-family: 'Playfair Display', serif;
+          font-size: 16px;
+          font-weight: 700;
+          color: var(--heart);
+        }
+        .like-unit {
+          font-size: 12px;
+          color: var(--heart);
+          opacity: 0.7;
+        }
+
+        /* Bio */
+        .bio-section {
+          margin: 14px 0 18px;
+          padding: 14px 16px;
+          background: var(--gray-50);
+          border-radius: var(--radius-sm);
+          border-left: 3px solid var(--green-accent);
+        }
+        .bio-text {
+          font-size: 14px;
+          line-height: 1.65;
+          color: var(--gray-600);
+        }
+        .bio-edit {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          margin-top: 8px;
+          font-size: 12px;
+          color: var(--green-main);
+          font-weight: 500;
+          cursor: pointer;
+        }
+
+        /* ── Inline Action Buttons ── */
+        .inline-actions {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 18px;
+        }
+
+        /* ── Today / Total ── */
+        .today-total {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--gray-50);
+          border-radius: var(--radius-sm);
+          padding: 16px 0;
+          margin-bottom: 18px;
+        }
+        .tt-item {
+          flex: 1;
+          text-align: center;
+        }
+        .tt-label {
+          font-size: 12px;
+          color: var(--gray-400);
+          font-weight: 500;
+          margin-bottom: 4px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .tt-value {
+          font-family: 'Playfair Display', serif;
+          font-size: 26px;
+          font-weight: 700;
+          color: var(--green-main);
+        }
+        .tt-divider {
+          width: 1px;
+          height: 36px;
+          background: var(--gray-200);
+        }
+
+        /* ── Golf Stats Row ── */
+        .stats-row {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 8px;
+          margin-bottom: 18px;
+        }
+        .stat-chip {
+          background: var(--white);
+          border: 1.2px solid var(--gray-200);
+          border-radius: var(--radius-sm);
+          padding: 12px 6px;
+          text-align: center;
+          transition: all 0.2s;
+        }
+        .stat-chip:active {
+          border-color: var(--green-accent);
+          background: var(--green-mist);
+        }
+        .stat-chip .label {
+          font-size: 11px;
+          color: var(--gray-500);
+          font-weight: 500;
+          margin-bottom: 4px;
+        }
+        .stat-chip .value {
+          font-size: 14px;
+          font-weight: 700;
+          color: var(--gray-800);
+        }
+        .stat-emoji {
+          font-size: 22px;
+          margin-bottom: 6px;
+        }
+
+        /* ── Favorite Courses ── */
+        .fav-section {
+          margin-bottom: 18px;
+        }
+        .fav-title {
+          font-size: 14px;
+          font-weight: 600;
+          margin-bottom: 10px;
+          color: var(--gray-800);
+        }
+        .fav-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .fav-tag {
+          padding: 7px 14px;
+          border-radius: 20px;
+          background: var(--green-mist);
+          border: 1px solid var(--green-pale);
+          font-size: 13px;
+          font-weight: 500;
+          color: var(--green-deep);
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+        .fav-tag:active {
+          background: var(--green-pale);
+          transform: scale(0.96);
+        }
+
+        /* ── My Round Style ── */
+        .style-section {
+          margin-bottom: 18px;
+        }
+        .style-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .style-tag {
+          padding: 7px 14px;
+          border-radius: 20px;
+          background: var(--cream);
+          border: 1px solid var(--gold-light);
+          font-size: 13px;
+          font-weight: 500;
+          color: var(--gold);
+        }
+
+        /* ── Score Card Mini ── */
+        .score-mini {
+          background: linear-gradient(135deg, var(--green-deep) 0%, var(--green-main) 100%);
+          border-radius: var(--radius);
+          padding: 18px;
+          margin-bottom: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          cursor: pointer;
+          transition: transform 0.15s;
+        }
+        .score-mini:active { transform: scale(0.98); }
+        .score-left {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+        .score-label {
+          font-size: 11px;
+          color: var(--green-pale);
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .score-val {
+          font-family: 'Playfair Display', serif;
+          font-size: 32px;
+          font-weight: 700;
+          color: white;
+        }
+        .score-sub {
+          font-size: 12px;
+          color: rgba(255,255,255,0.6);
+        }
+        .score-right {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+        }
+        .score-badge {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.12);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+        }
+        .score-badge-text {
+          font-size: 11px;
+          color: var(--green-pale);
+        }
+
+        /* ── Buttons ── */
+        .btn {
+          flex: 1;
+          padding: 14px;
+          border-radius: 14px;
+          font-family: 'Noto Sans KR', sans-serif;
+          font-size: 15px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          border: none;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-outline {
+          background: var(--white);
+          border: 1.5px solid var(--green-main);
+          color: var(--green-main);
+        }
+        .btn-fill {
+          background: var(--green-main);
+          color: white;
+          border: 1.5px solid var(--green-main);
+        }
+        .btn-fill:active { background: var(--green-deep); }
+
+        /* ── Animations ── */
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .profile-card { animation: slideUp 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+
+        @keyframes popIn {
+          from { opacity: 0; transform: scale(0.8); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        .avatar-float { animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both; }
+        .like-box { animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both; }
+
+        /* Tap zones for photo swipe */
+        .swipe-zone {
+          position: absolute;
+          top: 0;
+          bottom: 80px;
+          z-index: 15;
+          cursor: pointer;
+        }
+        .swipe-left { left: 0; width: 40%; }
+        .swipe-right { right: 0; width: 40%; }
+    </style>
+</head>
+<body>
+
+<!-- Photo Hero -->
+<div class="photo-hero" id="photoHero">
+    <div class="photo-slider" id="photoSlider">
+        <div class="photo-slide"></div>
+        <div class="photo-slide"></div>
+    </div>
+
+    <!-- Nav -->
+    <div class="photo-nav">
+        <div class="nav-back">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </div>
+        <div class="nav-title">대표사진</div>
+        <div class="nav-right">
+            <div class="photo-counter">
+                <span id="photoIdx">1</span>/2
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-btn">🚩 신고하기</div>
+
+    <!-- Slide dots -->
+    <div class="slide-dots">
+        <div class="slide-dot active" data-idx="0"></div>
+        <div class="slide-dot" data-idx="1"></div>
+    </div>
+
+    <!-- Tap to switch photo -->
+    <div class="swipe-zone swipe-left" onclick="goSlide(0)"></div>
+    <div class="swipe-zone swipe-right" onclick="goSlide(1)"></div>
+</div>
+
+<!-- Profile Card -->
+<div class="profile-card">
+
+    <!-- Avatar thumbnail -->
+    <div class="avatar-float">
+        <div class="avatar-thumb">⛳</div>
+        <div class="avatar-online"></div>
+    </div>
+
+    <!-- Name + Like -->
+    <div class="info-header">
+        <div class="info-left">
+            <div class="user-name">골퍼</div>
+            <div class="user-meta">
+                <span class="pin">📍</span>
+                <span>남 · 35 · 서울 강남구</span>
+            </div>
+        </div>
+        <div class="like-box" id="likeBox">
+            <span class="like-heart">🧡</span>
+            <span class="like-count" id="likeCount">42</span>
+            <span class="like-unit">개</span>
+        </div>
+    </div>
+
+    <!-- Bio -->
+    <div class="bio-section">
+        <div class="bio-text">
+            주말 골퍼입니다 🏌️ 함께 라운딩 갈 골프 친구 찾고 있어요!<br>
+            베스트 스코어 86타, 올해 목표는 80대 안착 🎯<br>
+            편하게 골친 신청 주세요 😊
+        </div>
+    </div>
+
+    <!-- Action Buttons (inline) -->
+    <div class="inline-actions">
+        <button class="btn btn-outline" style="flex:1;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            골친 신청
+        </button>
+        <button class="btn btn-fill" style="flex:1;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            메세지
+        </button>
+    </div>
+
+    <!-- Today / Total -->
+    <div class="today-total">
+        <div class="tt-item">
+            <div class="tt-label">Today</div>
+            <div class="tt-value">3</div>
+        </div>
+        <div class="tt-divider"></div>
+        <div class="tt-item">
+            <div class="tt-label">Total</div>
+            <div class="tt-value">128</div>
+        </div>
+    </div>
+
+    <!-- Golf Stats -->
+    <div class="stats-row">
+        <div class="stat-chip">
+            <div class="stat-emoji">🎯</div>
+            <div class="label">평균타수</div>
+            <div class="value">90-100</div>
+        </div>
+        <div class="stat-chip">
+            <div class="stat-emoji">📅</div>
+            <div class="label">골프경력</div>
+            <div class="value">4-5년</div>
+        </div>
+        <div class="stat-chip">
+            <div class="stat-emoji">⛳</div>
+            <div class="label">월라운드</div>
+            <div class="value">2-3회</div>
+        </div>
+        <div class="stat-chip">
+            <div class="stat-emoji">✈️</div>
+            <div class="label">해외골프</div>
+            <div class="value">1-2회</div>
+        </div>
+    </div>
+
+    <!-- Favorite Courses -->
+    <div class="fav-section">
+        <div class="fav-title">자주 가는 골프장</div>
+        <div class="fav-tags">
+            <div class="fav-tag">남서울CC</div>
+            <div class="fav-tag">블루원 용인</div>
+            <div class="fav-tag">이스트밸리</div>
+        </div>
+    </div>
+
+    <!-- Play Style -->
+    <div class="style-section">
+        <div class="fav-title">라운딩 스타일</div>
+        <div class="style-tags">
+            <div class="style-tag">🌅 새벽 티업</div>
+            <div class="style-tag">🍻 에프터 필수</div>
+            <div class="style-tag">😄 즐골파</div>
+        </div>
+    </div>
+
+
+</div>
+
+
+
+
+
+<script>
+    // Photo slider
+    let currentSlide = 0;
+    function goSlide(idx) {
+      currentSlide = idx;
+      document.getElementById('photoSlider').style.transform = `translateX(-${idx * 100}%)`;
+      document.getElementById('photoIdx').textContent = idx + 1;
+      document.querySelectorAll('.slide-dot').forEach((d, i) => {
+        d.classList.toggle('active', i === idx);
+      });
+    }
+    // Dot click
+    document.querySelectorAll('.slide-dot').forEach(dot => {
+      dot.addEventListener('click', () => goSlide(parseInt(dot.dataset.idx)));
+    });
+
+    // Like animation
+    const likeBox = document.getElementById('likeBox');
+    const likeCount = document.getElementById('likeCount');
+    let liked = false;
+    likeBox.addEventListener('click', () => {
+      liked = !liked;
+      const heart = likeBox.querySelector('.like-heart');
+      let count = parseInt(likeCount.textContent);
+      if (liked) {
+        count++;
+        heart.textContent = '❤️';
+        likeBox.style.background = '#ffe0e0';
+      } else {
+        count--;
+        heart.textContent = '🧡';
+        likeBox.style.background = '#fff0f0';
+      }
+      likeCount.textContent = count;
+      likeBox.style.transform = 'scale(1.15)';
+      setTimeout(() => likeBox.style.transform = 'scale(1)', 200);
+    });
+</script>
+</body>
+</html>
