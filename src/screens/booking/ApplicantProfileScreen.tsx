@@ -17,6 +17,7 @@ import {
   approveBookingRequest,
   rejectBookingRequest,
 } from '@/services/firebase/firebaseBooking';
+import { DEFAULT_AVATAR } from '@/constants/images';
 
 export const ApplicantProfileScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -142,7 +143,7 @@ export const ApplicantProfileScreen: React.FC = () => {
         {/* 프로필 헤더 */}
         <View style={styles.profileSection}>
           <Image
-            source={{ uri: applicant.avatar || 'https://i.pravatar.cc/150' }}
+            source={{ uri: applicant.avatar || DEFAULT_AVATAR }}
             style={styles.avatar}
           />
           <Text style={styles.name}>{applicant.name}</Text>

@@ -18,6 +18,7 @@ import {
   TouchableWithoutFeedback,
   Animated,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -30,6 +31,7 @@ import {
   firestore as firebaseFirestore,
   FirestoreTimestamp,
 } from '@/services/firebase/firebaseConfig';
+import { DEFAULT_AVATAR } from '@/constants/images';
 
 const { width: _width } = Dimensions.get('window');
 
@@ -77,6 +79,8 @@ export const FeedScreen: React.FC = () => {
     null,
   );
   const [unreadMessages, _setUnreadMessages] = useState(0);
+  const [imageIndices, setImageIndices] = useState<Record<string, number>>({});
+  const [refreshing, setRefreshing] = useState(false);
 
   // Instagram/YouTube 스타일 키보드 처리
   const keyboardHeight = useRef(new Animated.Value(0)).current;
@@ -100,6 +104,13 @@ export const FeedScreen: React.FC = () => {
       };
     }, [user?.uid]),
   );
+
+  // 풀 투 리프레시
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([loadPosts(), loadStories()]);
+    setRefreshing(false);
+  }, [loadPosts, loadStories]);
 
   useEffect(() => {
     const keyboardWillShow = Keyboard.addListener(
@@ -194,7 +205,7 @@ export const FeedScreen: React.FC = () => {
       id: String(Date.now()),
       feedId: selectedFeedId,
       userName: currentUserName,
-      userImage: user?.photoURL || 'https://i.pravatar.cc/150?img=1',
+      userImage: user?.photoURL || DEFAULT_AVATAR,
       content: trimmedText,
       time: '방금 전',
       likes: 0,
@@ -401,7 +412,7 @@ export const FeedScreen: React.FC = () => {
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Image
-              source={{ uri: user?.photoURL || 'https://i.pravatar.cc/150?img=1' }}
+              source={{ uri: user?.photoURL || DEFAULT_AVATAR }}
               style={styles.headerAvatar}
             />
             <Text style={styles.headerName}>{user?.displayName || '사용자'}</Text>
@@ -460,7 +471,13 @@ export const FeedScreen: React.FC = () => {
           </ScrollView>
         </View>
 
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} colors={[colors.primary]} />
+          }
+        >
           {/* 스토리 섹션 */}
           {stories.length > 0 && (
             <View style={styles.storySection}>
@@ -532,7 +549,32 @@ export const FeedScreen: React.FC = () => {
                 <Text style={styles.feedContent}>{feed.content}</Text>
 
                 {/* 피드 이미지 */}
-                {feed.image && <Image source={{ uri: feed.image }} style={styles.feedImage} />}
+                {feed.images && feed.images.length > 1 ? (
+                  <View style={styles.feedImageContainer}>
+                    <ScrollView
+                      horizontal
+                      pagingEnabled
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.feedImageScroll}
+                      onScroll={(e) => {
+                        const page = Math.round(e.nativeEvent.contentOffset.x / Dimensions.get('window').width);
+                        setImageIndices((prev) => prev[feed.id] === page ? prev : { ...prev, [feed.id]: page });
+                      }}
+                      scrollEventThrottle={200}
+                    >
+                      {feed.images.map((img, idx) => (
+                        <Image key={idx} source={{ uri: img }} style={styles.feedImage} resizeMode="cover" />
+                      ))}
+                    </ScrollView>
+                    <View style={styles.imageCountBadge}>
+                      <Text style={styles.imageCountText}>
+                        {(imageIndices[feed.id] || 0) + 1}/{feed.images.length}
+                      </Text>
+                    </View>
+                  </View>
+                ) : feed.image ? (
+                  <Image source={{ uri: feed.image }} style={styles.feedImage} />
+                ) : null}
 
                 {/* 위치 */}
                 {feed.location && (
@@ -1053,8 +1095,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 12,
   },
+  feedImageContainer: {
+    position: 'relative',
+  },
+  feedImageScroll: {
+    height: 400,
+  },
+  imageCountBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  imageCountText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
   feedImage: {
-    width: '100%',
+    width: Dimensions.get('window').width,
     height: 400,
     backgroundColor: '#E5E5E5',
   },

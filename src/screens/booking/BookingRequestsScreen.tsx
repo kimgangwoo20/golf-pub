@@ -11,6 +11,7 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute } from '@react-navigation/native';
 import { colors } from '@/styles/theme';
 import {
@@ -136,17 +137,20 @@ export const BookingRequestsScreen: React.FC<{ navigation?: any }> = ({ navigati
   // 로딩 상태
   if (loading) {
     return (
-      <View style={styles.container}>
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
+        <View style={styles.container}>
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <FlatList
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
+      <View style={styles.container}>
+        <FlatList
         data={requests}
         renderItem={renderRequest}
         keyExtractor={(item) => item.id}
@@ -164,8 +168,9 @@ export const BookingRequestsScreen: React.FC<{ navigation?: any }> = ({ navigati
             <Text style={styles.emptyText}>신청이 없습니다</Text>
           </View>
         }
-      />
-    </View>
+        />
+      </View>
+    </SafeAreaView>
   );
 };
 

@@ -69,12 +69,12 @@ export const SupportScreen: React.FC = () => {
             <View style={styles.contactCards}>
               <TouchableOpacity
                 style={styles.contactCard}
-                onPress={() => Linking.openURL('tel:1588-0000')}
+                onPress={() => Linking.openURL('mailto:support@golfpub.kr')}
               >
-                <Text style={styles.contactIcon}>📞</Text>
-                <Text style={styles.contactLabel}>전화 문의</Text>
-                <Text style={styles.contactInfo}>1588-0000</Text>
-                <Text style={styles.contactTime}>평일 09:00 - 18:00</Text>
+                <Text style={styles.contactIcon}>💬</Text>
+                <Text style={styles.contactLabel}>문의하기</Text>
+                <Text style={styles.contactInfo}>support@golfpub.kr</Text>
+                <Text style={styles.contactTime}>24시간 접수</Text>
               </TouchableOpacity>
 
               <TouchableOpacity

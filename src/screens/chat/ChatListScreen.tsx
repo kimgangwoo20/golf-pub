@@ -11,9 +11,11 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore, ChatRoom } from '@/store/useChatStore';
+import { DEFAULT_AVATAR } from '@/constants/images';
 
 // 채팅 시간 포맷팅
 const formatChatTime = (date: Date | undefined) => {
@@ -81,7 +83,7 @@ export const ChatListScreen: React.FC = () => {
         }}
       >
         <Image
-          source={{ uri: other.avatar || 'https://i.pravatar.cc/150' }}
+          source={{ uri: other.avatar || DEFAULT_AVATAR }}
           style={styles.avatar}
         />
         <View style={styles.chatInfo}>
@@ -106,8 +108,9 @@ export const ChatListScreen: React.FC = () => {
 
   if (loading && chatRooms.length === 0) {
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
+        <View style={styles.container}>
+          <View style={styles.header}>
           <Text style={styles.headerTitle}>채팅</Text>
           <View style={styles.headerButtons}>
             <TouchableOpacity
@@ -118,16 +121,18 @@ export const ChatListScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#10b981" />
-          <Text style={styles.loadingText}>채팅 목록을 불러오는 중...</Text>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#10b981" />
+            <Text style={styles.loadingText}>채팅 목록을 불러오는 중...</Text>
+          </View>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
+      <View style={styles.container}>
       {/* 헤더 */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>채팅</Text>
@@ -175,8 +180,9 @@ export const ChatListScreen: React.FC = () => {
             <Text style={styles.emptySubtext}>새 채팅을 시작해보세요!</Text>
           </View>
         }
-      />
-    </View>
+        />
+      </View>
+    </SafeAreaView>
   );
 };
 

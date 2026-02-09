@@ -20,7 +20,7 @@ export const LocationTermsScreen: React.FC = () => {
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           <View style={styles.content}>
-            <Text style={styles.updateDate}>최종 업데이트: 2025년 1월 1일</Text>
+            <Text style={styles.updateDate}>최종 업데이트: 2026년 2월 9일</Text>
 
             <Text style={styles.sectionTitle}>제1조 (목적)</Text>
             <Text style={styles.bodyText}>
@@ -55,9 +55,9 @@ export const LocationTermsScreen: React.FC = () => {
             </Text>
 
             <Text style={styles.sectionTitle}>제6조 (위치정보관리책임자)</Text>
-            <Text style={styles.bodyText}>성명: 홍길동</Text>
-            <Text style={styles.bodyText}>이메일: location@golfpub.kr</Text>
-            <Text style={styles.bodyText}>전화: 1588-0000</Text>
+            <Text style={styles.bodyText}>성명: 김강우</Text>
+            <Text style={styles.bodyText}>이메일: support@golfpub.kr</Text>
+            <Text style={styles.bodyText}>연락처: support@golfpub.kr</Text>
           </View>
           <View style={{ height: 40 }} />
         </ScrollView>

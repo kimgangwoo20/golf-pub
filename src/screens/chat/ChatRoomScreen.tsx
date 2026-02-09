@@ -18,6 +18,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useChatStore, ChatMessage } from '@/store/useChatStore';
+import { DEFAULT_AVATAR } from '@/constants/images';
 import * as ImagePicker from 'expo-image-picker';
 
 export const ChatRoomScreen: React.FC = () => {
@@ -186,7 +187,7 @@ export const ChatRoomScreen: React.FC = () => {
       <View style={[styles.messageContainer, isMine && styles.myMessageContainer]}>
         {!isMine && (
           <Image
-            source={{ uri: item.senderAvatar || 'https://i.pravatar.cc/150' }}
+            source={{ uri: item.senderAvatar || DEFAULT_AVATAR }}
             style={styles.senderAvatar}
           />
         )}

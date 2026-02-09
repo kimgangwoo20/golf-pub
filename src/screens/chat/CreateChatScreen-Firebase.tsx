@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFriendStore } from '@/store/useFriendStore';
 import { useChatStore } from '@/store/useChatStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { DEFAULT_AVATAR } from '@/constants/images';
 
 export const CreateChatScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const { user } = useAuthStore();
@@ -67,7 +68,7 @@ export const CreateChatScreen: React.FC<{ navigation?: any }> = ({ navigation })
   const renderFriendItem = ({ item }: { item: any }) => (
     <TouchableOpacity style={styles.friendItem} onPress={() => handleSelectFriend(item)}>
       <Image
-        source={{ uri: item.friendAvatar || 'https://i.pravatar.cc/150' }}
+        source={{ uri: item.friendAvatar || DEFAULT_AVATAR }}
         style={styles.avatar}
       />
       <View style={styles.friendInfo}>

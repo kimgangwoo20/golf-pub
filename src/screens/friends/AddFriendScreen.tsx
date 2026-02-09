@@ -24,6 +24,7 @@ import {
 } from '@/services/firebase/firebaseFriends';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Friend } from '@/services/firebase/firebaseFriends';
+import { DEFAULT_AVATAR } from '@/constants/images';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -216,7 +217,7 @@ export const AddFriendScreen: React.FC = () => {
   const renderUserCard = (userItem: Friend, _isSearch: boolean = false) => (
     <View key={userItem.id} style={styles.userCard}>
       <Image
-        source={{ uri: userItem.avatar || 'https://i.pravatar.cc/150' }}
+        source={{ uri: userItem.avatar || DEFAULT_AVATAR }}
         style={styles.userImage}
       />
 

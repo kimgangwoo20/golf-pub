@@ -513,7 +513,7 @@ export const GolfCourseReviewScreen: React.FC = () => {
         </ScrollView>
 
         {/* 리뷰 작성 모달 */}
-        <Modal visible={showWriteModal} animationType="slide" presentationStyle="pageSheet">
+        <Modal visible={showWriteModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowWriteModal(false)}>
           <SafeAreaView style={styles.modalSafeArea} edges={['top']}>
             <View style={styles.modalContainer}>
               {/* 모달 헤더 */}

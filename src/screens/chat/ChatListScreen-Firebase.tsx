@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, TextInput } 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useChatStore } from '@/store/useChatStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { DEFAULT_AVATAR } from '@/constants/images';
 
 export const ChatListScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const { user } = useAuthStore();
@@ -42,7 +43,7 @@ export const ChatListScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
         }}
       >
         <Image
-          source={{ uri: otherParticipant?.avatar || 'https://i.pravatar.cc/150' }}
+          source={{ uri: otherParticipant?.avatar || DEFAULT_AVATAR }}
           style={styles.avatar}
         />
         <View style={styles.chatInfo}>

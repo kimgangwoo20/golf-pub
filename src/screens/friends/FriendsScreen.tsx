@@ -17,6 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '@/store/useAuthStore';
 import { getFriendsList, getPendingRequests } from '@/services/firebase/firebaseFriends';
 import { Friend } from '@/services/firebase/firebaseFriends';
+import { DEFAULT_AVATAR } from '@/constants/images';
 
 export const FriendsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -164,7 +165,7 @@ export const FriendsScreen: React.FC = () => {
                   onPress={() => handleFriendPress(friend.id)}
                 >
                   <Image
-                    source={{ uri: friend.avatar || 'https://i.pravatar.cc/150' }}
+                    source={{ uri: friend.avatar || DEFAULT_AVATAR }}
                     style={styles.friendImage}
                   />
 

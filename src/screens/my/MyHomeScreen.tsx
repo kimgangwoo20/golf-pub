@@ -23,6 +23,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '@/store/useAuthStore';
 import { FeedViewer } from '@/components/media';
 import { firestore as firebaseFirestore, FirestoreTimestamp } from '@/services/firebase/firebaseConfig';
+import { DEFAULT_AVATAR } from '@/constants/images';
 
 const { width } = Dimensions.get('window');
 const ITEMS_PER_PAGE = 6;
@@ -115,7 +116,7 @@ export const MyHomeScreen: React.FC = () => {
   const userData = {
     name: user?.displayName || '골퍼',
     email: user?.email || '',
-    profileImage: user?.photoURL || 'https://i.pravatar.cc/150?img=12',
+    profileImage: user?.photoURL || DEFAULT_AVATAR,
     backgroundImage:
       profileData?.backgroundImage ||
       'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=800',
@@ -533,7 +534,7 @@ export const MyHomeScreen: React.FC = () => {
     } else if (screen === 'Profile') {
       navigation.navigate('Profile' as any);
     } else {
-      Alert.alert(screen, `${screen} 화면은 개발 예정입니다.`);
+      Alert.alert(screen, `${screen} 기능은 곧 출시됩니다.`);
     }
   };
 
@@ -613,7 +614,7 @@ export const MyHomeScreen: React.FC = () => {
         <View style={styles.guestbookFooter}>
           <TouchableOpacity
             style={styles.replyButton}
-            onPress={() => Alert.alert('답글', '답글 기능은 개발 예정입니다.')}
+            onPress={() => Alert.alert('답글', '답글 기능은 곧 출시됩니다.')}
           >
             <Text style={styles.replyButtonText}>답글쓰기</Text>
           </TouchableOpacity>

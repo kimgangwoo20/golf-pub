@@ -9,6 +9,7 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '@/store/useAuthStore';
 import { getRecommendedBookings } from '@/services/firebase/firebaseBooking';
@@ -86,17 +87,20 @@ export const RecommendedBookingsScreen: React.FC = () => {
 
   if (loading && bookings.length === 0) {
     return (
-      <View style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#10b981" />
-          <Text style={styles.loadingText}>추천 부킹을 불러오는 중...</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
+        <View style={styles.container}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#10b981" />
+            <Text style={styles.loadingText}>추천 부킹을 불러오는 중...</Text>
+          </View>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
+      <View style={styles.container}>
       <View style={styles.notice}>
         <Text style={styles.noticeText}>회원님의 레벨과 선호도를 기반으로 추천해드립니다</Text>
       </View>
@@ -119,8 +123,9 @@ export const RecommendedBookingsScreen: React.FC = () => {
             <Text style={styles.emptyText}>추천 부킹이 없습니다</Text>
           </View>
         }
-      />
-    </View>
+        />
+      </View>
+    </SafeAreaView>
   );
 };
 
