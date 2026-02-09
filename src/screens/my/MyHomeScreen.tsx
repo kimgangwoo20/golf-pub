@@ -26,9 +26,12 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useProfileStore, FavoriteCourse } from '@/store/useProfileStore';
 import { FeedViewer } from '@/components/media';
-import { firestore as firebaseFirestore, FirestoreTimestamp } from '@/services/firebase/firebaseConfig';
+import {
+  firestore as firebaseFirestore,
+  FirestoreTimestamp,
+} from '@/services/firebase/firebaseConfig';
 import { DEFAULT_AVATAR } from '@/constants/images';
-import { colors, spacing, fontSize as fs, fontWeight as fw } from '@/styles/theme';
+import { colors, fontWeight as fw } from '@/styles/theme';
 
 const { width } = Dimensions.get('window');
 const ITEMS_PER_PAGE = 6;
@@ -50,25 +53,32 @@ const pc = {
 
 // 라운딩 스타일 옵션
 const ROUNDING_STYLE_OPTIONS = [
-  '🌅 새벽 티업', '🍻 에프터 필수', '😄 즐골파', '🏆 진지한 경기',
-  '🚗 원정 라운딩', '👥 단체 라운딩', '🎓 레슨 라운딩', '🌙 야간 라운딩',
-  '⛳ 숏게임 위주', '🏌️ 드라이버 장타', '🧘 힐링 라운딩', '📸 골프 브이로그',
+  '🌅 새벽 티업',
+  '🍻 에프터 필수',
+  '😄 즐골파',
+  '🏆 진지한 경기',
+  '🚗 원정 라운딩',
+  '👥 단체 라운딩',
+  '🎓 레슨 라운딩',
+  '🌙 야간 라운딩',
+  '⛳ 숏게임 위주',
+  '🏌️ 드라이버 장타',
+  '🧘 힐링 라운딩',
+  '📸 골프 브이로그',
 ];
 
 // 스탯별 선택 옵션
 const STAT_OPTIONS: Record<string, string[]> = {
-  '평균타수': ['70대', '80-90', '90-100', '100-110', '110-120', '120+'],
-  '골프경력': ['1년 미만', '1-2년', '2-3년', '4-5년', '5-10년', '10년 이상'],
-  '월라운드': ['1회 미만', '1-2회', '2-3회', '4회 이상', '주 1회 이상'],
-  '해외골프': ['없음', '1-2회', '3-5회', '5회 이상', '매년'],
+  평균타수: ['70대', '80-90', '90-100', '100-110', '110-120', '120+'],
+  골프경력: ['1년 미만', '1-2년', '2-3년', '4-5년', '5-10년', '10년 이상'],
+  월라운드: ['1회 미만', '1-2회', '2-3회', '4회 이상', '주 1회 이상'],
+  해외골프: ['없음', '1-2회', '3-5회', '5회 이상', '매년'],
 };
 
 // string[] → FavoriteCourse[] 마이그레이션 헬퍼
 const normalizeCourses = (courses: any[]): FavoriteCourse[] => {
   if (!courses || courses.length === 0) return [];
-  return courses.map((c: any) =>
-    typeof c === 'string' ? { name: c } : c,
-  );
+  return courses.map((c: any) => (typeof c === 'string' ? { name: c } : c));
 };
 
 // 공개 범위 타입
@@ -245,8 +255,6 @@ export const MyHomeScreen: React.FC = () => {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(42);
   const photoScrollRef = useRef<ScrollView>(null);
-  const cardAnim = useRef(new Animated.Value(1)).current;
-
   const handlePhotoScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const idx = Math.round(e.nativeEvent.contentOffset.x / width);
     if (idx !== currentPhotoIndex) setCurrentPhotoIndex(idx);
@@ -258,8 +266,8 @@ export const MyHomeScreen: React.FC = () => {
   };
 
   const handleLikeToggle = () => {
-    setLiked(prev => !prev);
-    setLikeCount(prev => (liked ? prev - 1 : prev + 1));
+    setLiked((prev) => !prev);
+    setLikeCount((prev) => (liked ? prev - 1 : prev + 1));
   };
 
   // 방명록 Firestore 로드
@@ -545,7 +553,10 @@ export const MyHomeScreen: React.FC = () => {
         friends: '친구만',
         private: '나만 보기',
       };
-      Alert.alert('변경 완료', `공개 범위가 "${visibilityLabels[newVisibility]}"로 변경되었습니다.`);
+      Alert.alert(
+        '변경 완료',
+        `공개 범위가 "${visibilityLabels[newVisibility]}"로 변경되었습니다.`,
+      );
     } catch (error: any) {
       Alert.alert('오류', error.message || '변경에 실패했습니다.');
     }
@@ -680,7 +691,9 @@ export const MyHomeScreen: React.FC = () => {
     setSelectedStyles((prev) =>
       prev.includes(style)
         ? prev.filter((s) => s !== style)
-        : prev.length < 5 ? [...prev, style] : prev,
+        : prev.length < 5
+          ? [...prev, style]
+          : prev,
     );
   };
 
@@ -874,10 +887,7 @@ export const MyHomeScreen: React.FC = () => {
                 </Text>
                 <Text style={{ fontSize: 13 }}>📷</Text>
               </View>
-              <TouchableOpacity
-                style={styles.heroNavBtn}
-                onPress={() => setDrawerVisible(true)}
-              >
+              <TouchableOpacity style={styles.heroNavBtn} onPress={() => setDrawerVisible(true)}>
                 <Text style={styles.heroHamburger}>☰</Text>
               </TouchableOpacity>
             </View>
@@ -906,7 +916,10 @@ export const MyHomeScreen: React.FC = () => {
             {userData.profileImage && userData.profileImage !== DEFAULT_AVATAR ? (
               <Image source={{ uri: userData.profileImage }} style={styles.heroAvatarImg} />
             ) : (
-              <LinearGradient colors={[pc.greenPale, pc.greenMist]} style={styles.heroAvatarFallback}>
+              <LinearGradient
+                colors={[pc.greenPale, pc.greenMist]}
+                style={styles.heroAvatarFallback}
+              >
                 <Text style={{ fontSize: 28 }}>⛳</Text>
               </LinearGradient>
             )}
@@ -951,14 +964,14 @@ export const MyHomeScreen: React.FC = () => {
             onPress={handleEditProfile}
             activeOpacity={0.7}
           >
-            <Text style={styles.heroActionOutlineText}>✏️  프로필 수정</Text>
+            <Text style={styles.heroActionOutlineText}>✏️ 프로필 수정</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.heroActionBtn, styles.heroActionFill]}
             onPress={() => navigation.navigate('Friends' as any)}
             activeOpacity={0.7}
           >
-            <Text style={styles.heroActionFillText}>👥  골프친구</Text>
+            <Text style={styles.heroActionFillText}>👥 골프친구</Text>
           </TouchableOpacity>
         </View>
 
@@ -978,10 +991,32 @@ export const MyHomeScreen: React.FC = () => {
         {/* 골프 스탯 4칸 (터치하여 편집) */}
         <View style={styles.heroStatsGrid}>
           {[
-            { emoji: '🎯', label: '평균타수', key: 'averageScore', value: userData.averageScore > 0 ? `${userData.averageScore}` : '90-100' },
-            { emoji: '📅', label: '골프경력', key: 'golfExperience', value: userData.golfExperience || '4-5년' },
-            { emoji: '⛳', label: '월라운드', key: 'monthlyRounds', value: userData.monthlyRounds ? `${userData.monthlyRounds}회` : `${userData.roundCount || '2-3'}회` },
-            { emoji: '✈️', label: '해외골프', key: 'overseasGolf', value: userData.overseasGolf || '1-2회' },
+            {
+              emoji: '🎯',
+              label: '평균타수',
+              key: 'averageScore',
+              value: userData.averageScore > 0 ? `${userData.averageScore}` : '90-100',
+            },
+            {
+              emoji: '📅',
+              label: '골프경력',
+              key: 'golfExperience',
+              value: userData.golfExperience || '4-5년',
+            },
+            {
+              emoji: '⛳',
+              label: '월라운드',
+              key: 'monthlyRounds',
+              value: userData.monthlyRounds
+                ? `${userData.monthlyRounds}회`
+                : `${userData.roundCount || '2-3'}회`,
+            },
+            {
+              emoji: '✈️',
+              label: '해외골프',
+              key: 'overseasGolf',
+              value: userData.overseasGolf || '1-2회',
+            },
           ].map((stat, i) => (
             <TouchableOpacity
               key={i}
@@ -1013,7 +1048,9 @@ export const MyHomeScreen: React.FC = () => {
                 key={i}
                 style={styles.heroFavTag}
                 activeOpacity={0.7}
-                onLongPress={() => userData.favoriteCourses.length > 0 && handleDeleteCourse(course, i)}
+                onLongPress={() =>
+                  userData.favoriteCourses.length > 0 && handleDeleteCourse(course, i)
+                }
               >
                 <Text style={styles.heroFavTagText}>{course.name}</Text>
               </TouchableOpacity>
@@ -1051,7 +1088,9 @@ export const MyHomeScreen: React.FC = () => {
           >
             <View>
               <Text style={styles.heroScoreLabel}>BEST SCORE</Text>
-              <Text style={styles.heroScoreNum}>{userData.bestScore > 0 ? userData.bestScore : 86}</Text>
+              <Text style={styles.heroScoreNum}>
+                {userData.bestScore > 0 ? userData.bestScore : 86}
+              </Text>
               <Text style={styles.heroScoreSub}>올해 목표: 80대 안착</Text>
             </View>
             <View style={{ alignItems: 'center', gap: 4 }}>
@@ -1106,424 +1145,421 @@ export const MyHomeScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-        {/* 방명록 탭이면 방명록 리스트, 아니면 컨텐츠 그리드 */}
-        {selectedTab === 'guestbook' ? (
-          <FlatList
-            key="guestbook-list"
-            data={guestbook}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderGuestbookItem}
-            ListHeaderComponent={ListHeader}
-            ListFooterComponent={() => <View style={styles.bottomSpacing} />}
-            contentContainerStyle={styles.guestbookSection}
-            showsVerticalScrollIndicator={false}
-          />
-        ) : (
-          <FlatList
-            key={`content-grid-${selectedTab}`}
-            data={contents}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderContentItem}
-            numColumns={2}
-            columnWrapperStyle={styles.contentRow}
-            ListHeaderComponent={ListHeader}
-            ListFooterComponent={ListFooter}
-            ListEmptyComponent={ListEmpty}
-            onEndReached={loadMoreData}
-            onEndReachedThreshold={0.3}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={handleRefresh}
-                tintColor="#10b981"
-                colors={['#10b981']}
-              />
-            }
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.contentContainer}
-          />
-        )}
-
-        {/* 인스타그램 스타일 피드 뷰어 */}
-        <FeedViewer
-          visible={feedViewerVisible}
-          items={contents}
-          initialIndex={selectedIndex}
-          onClose={handleFeedViewerClose}
-          onLike={handleLike}
-          onComment={handleComment}
-          authorName={userData.name}
-          authorImage={userData.profileImage}
+      {/* 방명록 탭이면 방명록 리스트, 아니면 컨텐츠 그리드 */}
+      {selectedTab === 'guestbook' ? (
+        <FlatList
+          key="guestbook-list"
+          data={guestbook}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderGuestbookItem}
+          ListHeaderComponent={ListHeader}
+          ListFooterComponent={() => <View style={styles.bottomSpacing} />}
+          contentContainerStyle={styles.guestbookSection}
+          showsVerticalScrollIndicator={false}
         />
+      ) : (
+        <FlatList
+          key={`content-grid-${selectedTab}`}
+          data={contents}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderContentItem}
+          numColumns={2}
+          columnWrapperStyle={styles.contentRow}
+          ListHeaderComponent={ListHeader}
+          ListFooterComponent={ListFooter}
+          ListEmptyComponent={ListEmpty}
+          onEndReached={loadMoreData}
+          onEndReachedThreshold={0.3}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#10b981"
+              colors={['#10b981']}
+            />
+          }
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.contentContainer}
+        />
+      )}
 
-        {/* 햄버거 드로어 메뉴 */}
-        <Modal
-          visible={drawerVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setDrawerVisible(false)}
+      {/* 인스타그램 스타일 피드 뷰어 */}
+      <FeedViewer
+        visible={feedViewerVisible}
+        items={contents}
+        initialIndex={selectedIndex}
+        onClose={handleFeedViewerClose}
+        onLike={handleLike}
+        onComment={handleComment}
+        authorName={userData.name}
+        authorImage={userData.profileImage}
+      />
+
+      {/* 햄버거 드로어 메뉴 */}
+      <Modal
+        visible={drawerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDrawerVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.drawerOverlay}
+          activeOpacity={1}
+          onPress={() => setDrawerVisible(false)}
         >
-          <TouchableOpacity
-            style={styles.drawerOverlay}
-            activeOpacity={1}
-            onPress={() => setDrawerVisible(false)}
-          >
-            <View style={styles.drawerContainer}>
-              <View style={styles.drawerHeader}>
-                <Text style={styles.drawerTitle}>메뉴</Text>
-                <TouchableOpacity onPress={() => setDrawerVisible(false)}>
-                  <Text style={styles.drawerClose}>✕</Text>
-                </TouchableOpacity>
-              </View>
-
-              <ScrollView style={styles.drawerScrollView} showsVerticalScrollIndicator={false}>
-                <View style={styles.drawerContent}>
-                  {drawerItems.map((item, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={styles.drawerItem}
-                      onPress={() => handleDrawerItemPress(item.screen)}
-                    >
-                      <Text style={styles.drawerItemIcon}>{item.icon}</Text>
-                      <Text style={styles.drawerItemLabel}>{item.label}</Text>
-                      <Text style={styles.drawerItemArrow}>›</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                <View style={styles.drawerBottomSpacing} />
-              </ScrollView>
+          <View style={styles.drawerContainer}>
+            <View style={styles.drawerHeader}>
+              <Text style={styles.drawerTitle}>메뉴</Text>
+              <TouchableOpacity onPress={() => setDrawerVisible(false)}>
+                <Text style={styles.drawerClose}>✕</Text>
+              </TouchableOpacity>
             </View>
-          </TouchableOpacity>
-        </Modal>
 
-        {/* FAB 버튼 */}
-        <TouchableOpacity style={styles.fabButton} onPress={handleFabPress}>
-          <Text style={styles.fabIcon}>✏️</Text>
+            <ScrollView style={styles.drawerScrollView} showsVerticalScrollIndicator={false}>
+              <View style={styles.drawerContent}>
+                {drawerItems.map((item, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.drawerItem}
+                    onPress={() => handleDrawerItemPress(item.screen)}
+                  >
+                    <Text style={styles.drawerItemIcon}>{item.icon}</Text>
+                    <Text style={styles.drawerItemLabel}>{item.label}</Text>
+                    <Text style={styles.drawerItemArrow}>›</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <View style={styles.drawerBottomSpacing} />
+            </ScrollView>
+          </View>
         </TouchableOpacity>
+      </Modal>
 
-        {/* 방명록 작성 모달 */}
-        <Modal
-          visible={guestbookModalVisible}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setGuestbookModalVisible(false)}
+      {/* FAB 버튼 */}
+      <TouchableOpacity style={styles.fabButton} onPress={handleFabPress}>
+        <Text style={styles.fabIcon}>✏️</Text>
+      </TouchableOpacity>
+
+      {/* 방명록 작성 모달 */}
+      <Modal
+        visible={guestbookModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setGuestbookModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          style={styles.guestbookModalWrapper}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          <KeyboardAvoidingView
-            style={styles.guestbookModalWrapper}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          >
+          <TouchableOpacity
+            style={styles.guestbookModalOverlay}
+            activeOpacity={1}
+            onPress={() => setGuestbookModalVisible(false)}
+          />
+          <View style={styles.guestbookModalContainer}>
+            <View style={styles.guestbookModalHeader}>
+              <Text style={styles.guestbookModalTitle}>방명록 남기기</Text>
+              <TouchableOpacity onPress={() => setGuestbookModalVisible(false)}>
+                <Text style={styles.guestbookModalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.guestbookModalBody}>
+              <TextInput
+                style={styles.guestbookModalInput}
+                placeholder="방명록을 남겨주세요..."
+                placeholderTextColor="#999"
+                multiline
+                maxLength={200}
+                value={guestbookText}
+                onChangeText={setGuestbookText}
+              />
+              <Text style={styles.guestbookModalCharCount}>{guestbookText.length} / 200</Text>
+            </View>
             <TouchableOpacity
-              style={styles.guestbookModalOverlay}
-              activeOpacity={1}
-              onPress={() => setGuestbookModalVisible(false)}
-            />
-            <View style={styles.guestbookModalContainer}>
-              <View style={styles.guestbookModalHeader}>
-                <Text style={styles.guestbookModalTitle}>방명록 남기기</Text>
-                <TouchableOpacity onPress={() => setGuestbookModalVisible(false)}>
-                  <Text style={styles.guestbookModalClose}>✕</Text>
+              style={[
+                styles.guestbookModalSubmit,
+                (!guestbookText.trim() || guestbookSubmitting) &&
+                  styles.guestbookModalSubmitDisabled,
+              ]}
+              onPress={handleSubmitGuestbook}
+              disabled={!guestbookText.trim() || guestbookSubmitting}
+            >
+              {guestbookSubmitting ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.guestbookModalSubmitText}>등록</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* 컨텐츠 관리 모달 (롱프레스 시 표시) */}
+      <Modal
+        visible={contentMenuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setContentMenuVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.contentMenuOverlay}
+          activeOpacity={1}
+          onPress={() => setContentMenuVisible(false)}
+        >
+          <View style={styles.contentMenuContainer}>
+            <Text style={styles.contentMenuTitle}>게시물 관리</Text>
+
+            {/* 수정 */}
+            <TouchableOpacity style={styles.contentMenuItem} onPress={handleEditContent}>
+              <Text style={styles.contentMenuIcon}>✏️</Text>
+              <Text style={styles.contentMenuText}>수정</Text>
+            </TouchableOpacity>
+
+            {/* 공개 범위 변경 */}
+            <View style={styles.visibilitySection}>
+              <Text style={styles.visibilitySectionTitle}>공개 범위</Text>
+              <View style={styles.visibilityOptions}>
+                <TouchableOpacity
+                  style={[
+                    styles.visibilityOption,
+                    selectedContent?.visibility === 'public' && styles.visibilityOptionActive,
+                  ]}
+                  onPress={() => handleChangeVisibility('public')}
+                >
+                  <Text style={styles.visibilityOptionIcon}>🌐</Text>
+                  <Text style={styles.visibilityOptionText}>전체</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.visibilityOption,
+                    selectedContent?.visibility === 'friends' && styles.visibilityOptionActive,
+                  ]}
+                  onPress={() => handleChangeVisibility('friends')}
+                >
+                  <Text style={styles.visibilityOptionIcon}>👥</Text>
+                  <Text style={styles.visibilityOptionText}>친구만</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.visibilityOption,
+                    selectedContent?.visibility === 'private' && styles.visibilityOptionActive,
+                  ]}
+                  onPress={() => handleChangeVisibility('private')}
+                >
+                  <Text style={styles.visibilityOptionIcon}>🔒</Text>
+                  <Text style={styles.visibilityOptionText}>나만</Text>
                 </TouchableOpacity>
               </View>
-              <View style={styles.guestbookModalBody}>
-                <TextInput
-                  style={styles.guestbookModalInput}
-                  placeholder="방명록을 남겨주세요..."
-                  placeholderTextColor="#999"
-                  multiline
-                  maxLength={200}
-                  value={guestbookText}
-                  onChangeText={setGuestbookText}
-                />
-                <Text style={styles.guestbookModalCharCount}>
-                  {guestbookText.length} / 200
-                </Text>
-              </View>
+            </View>
+
+            {/* 삭제 */}
+            <TouchableOpacity style={styles.contentMenuItemDanger} onPress={handleDeleteContent}>
+              <Text style={styles.contentMenuIcon}>🗑️</Text>
+              <Text style={styles.contentMenuTextDanger}>삭제</Text>
+            </TouchableOpacity>
+
+            {/* 취소 */}
+            <TouchableOpacity
+              style={styles.contentMenuCancel}
+              onPress={() => setContentMenuVisible(false)}
+            >
+              <Text style={styles.contentMenuCancelText}>취소</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* 골프장 추가 모달 */}
+      <Modal
+        visible={courseModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setCourseModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          style={styles.guestbookModalWrapper}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <TouchableOpacity
+            style={styles.guestbookModalOverlay}
+            activeOpacity={1}
+            onPress={() => setCourseModalVisible(false)}
+          />
+          <View style={styles.courseModalContainer}>
+            <View style={styles.guestbookModalHeader}>
+              <Text style={styles.guestbookModalTitle}>골프장 추가</Text>
+              <TouchableOpacity onPress={() => setCourseModalVisible(false)}>
+                <Text style={styles.guestbookModalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.guestbookModalBody}>
+              <TextInput
+                style={styles.courseModalInput}
+                placeholder="골프장 이름을 입력하세요"
+                placeholderTextColor="#999"
+                maxLength={30}
+                value={courseInputText}
+                onChangeText={setCourseInputText}
+                autoFocus
+              />
+            </View>
+            <TouchableOpacity
+              style={[
+                styles.guestbookModalSubmit,
+                (!courseInputText.trim() || courseSubmitting) &&
+                  styles.guestbookModalSubmitDisabled,
+              ]}
+              onPress={handleAddCourse}
+              disabled={!courseInputText.trim() || courseSubmitting}
+            >
+              {courseSubmitting ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.guestbookModalSubmitText}>추가</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* 라운딩 스타일 선택 모달 */}
+      <Modal
+        visible={styleModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setStyleModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.contentMenuOverlay}
+          activeOpacity={1}
+          onPress={() => setStyleModalVisible(false)}
+        >
+          <View style={styles.styleModalContainer}>
+            <Text style={styles.contentMenuTitle}>라운딩 스타일 선택</Text>
+            <Text style={{ fontSize: 12, color: '#999', textAlign: 'center', marginBottom: 16 }}>
+              최대 5개까지 선택 가능
+            </Text>
+            <View style={styles.styleOptionsGrid}>
+              {ROUNDING_STYLE_OPTIONS.map((style, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={[
+                    styles.styleOptionChip,
+                    selectedStyles.includes(style) && styles.styleOptionChipActive,
+                  ]}
+                  onPress={() => handleToggleStyle(style)}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.styleOptionChipText,
+                      selectedStyles.includes(style) && styles.styleOptionChipTextActive,
+                    ]}
+                  >
+                    {style}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={styles.styleModalActions}>
               <TouchableOpacity
-                style={[
-                  styles.guestbookModalSubmit,
-                  (!guestbookText.trim() || guestbookSubmitting) && styles.guestbookModalSubmitDisabled,
-                ]}
-                onPress={handleSubmitGuestbook}
-                disabled={!guestbookText.trim() || guestbookSubmitting}
+                style={styles.styleModalCancel}
+                onPress={() => setStyleModalVisible(false)}
               >
-                {guestbookSubmitting ? (
-                  <ActivityIndicator color="#fff" />
+                <Text style={styles.styleModalCancelText}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.styleModalSave, styleSubmitting && { opacity: 0.6 }]}
+                onPress={handleSaveStyles}
+                disabled={styleSubmitting}
+              >
+                {styleSubmitting ? (
+                  <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <Text style={styles.guestbookModalSubmitText}>등록</Text>
+                  <Text style={styles.styleModalSaveText}>저장</Text>
                 )}
               </TouchableOpacity>
             </View>
-          </KeyboardAvoidingView>
-        </Modal>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
-        {/* 컨텐츠 관리 모달 (롱프레스 시 표시) */}
-        <Modal
-          visible={contentMenuVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setContentMenuVisible(false)}
+      {/* 스탯 편집 모달 */}
+      <Modal
+        visible={statModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setStatModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.contentMenuOverlay}
+          activeOpacity={1}
+          onPress={() => setStatModalVisible(false)}
         >
-          <TouchableOpacity
-            style={styles.contentMenuOverlay}
-            activeOpacity={1}
-            onPress={() => setContentMenuVisible(false)}
-          >
-            <View style={styles.contentMenuContainer}>
-              <Text style={styles.contentMenuTitle}>게시물 관리</Text>
-
-              {/* 수정 */}
-              <TouchableOpacity style={styles.contentMenuItem} onPress={handleEditContent}>
-                <Text style={styles.contentMenuIcon}>✏️</Text>
-                <Text style={styles.contentMenuText}>수정</Text>
-              </TouchableOpacity>
-
-              {/* 공개 범위 변경 */}
-              <View style={styles.visibilitySection}>
-                <Text style={styles.visibilitySectionTitle}>공개 범위</Text>
-                <View style={styles.visibilityOptions}>
-                  <TouchableOpacity
-                    style={[
-                      styles.visibilityOption,
-                      selectedContent?.visibility === 'public' && styles.visibilityOptionActive,
-                    ]}
-                    onPress={() => handleChangeVisibility('public')}
-                  >
-                    <Text style={styles.visibilityOptionIcon}>🌐</Text>
-                    <Text style={styles.visibilityOptionText}>전체</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.visibilityOption,
-                      selectedContent?.visibility === 'friends' && styles.visibilityOptionActive,
-                    ]}
-                    onPress={() => handleChangeVisibility('friends')}
-                  >
-                    <Text style={styles.visibilityOptionIcon}>👥</Text>
-                    <Text style={styles.visibilityOptionText}>친구만</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.visibilityOption,
-                      selectedContent?.visibility === 'private' && styles.visibilityOptionActive,
-                    ]}
-                    onPress={() => handleChangeVisibility('private')}
-                  >
-                    <Text style={styles.visibilityOptionIcon}>🔒</Text>
-                    <Text style={styles.visibilityOptionText}>나만</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* 삭제 */}
-              <TouchableOpacity style={styles.contentMenuItemDanger} onPress={handleDeleteContent}>
-                <Text style={styles.contentMenuIcon}>🗑️</Text>
-                <Text style={styles.contentMenuTextDanger}>삭제</Text>
-              </TouchableOpacity>
-
-              {/* 취소 */}
-              <TouchableOpacity
-                style={styles.contentMenuCancel}
-                onPress={() => setContentMenuVisible(false)}
-              >
-                <Text style={styles.contentMenuCancelText}>취소</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </Modal>
-
-        {/* 골프장 추가 모달 */}
-        <Modal
-          visible={courseModalVisible}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setCourseModalVisible(false)}
-        >
-          <KeyboardAvoidingView
-            style={styles.guestbookModalWrapper}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          >
-            <TouchableOpacity
-              style={styles.guestbookModalOverlay}
-              activeOpacity={1}
-              onPress={() => setCourseModalVisible(false)}
-            />
-            <View style={styles.courseModalContainer}>
-              <View style={styles.guestbookModalHeader}>
-                <Text style={styles.guestbookModalTitle}>골프장 추가</Text>
-                <TouchableOpacity onPress={() => setCourseModalVisible(false)}>
-                  <Text style={styles.guestbookModalClose}>✕</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.guestbookModalBody}>
-                <TextInput
-                  style={styles.courseModalInput}
-                  placeholder="골프장 이름을 입력하세요"
-                  placeholderTextColor="#999"
-                  maxLength={30}
-                  value={courseInputText}
-                  onChangeText={setCourseInputText}
-                  autoFocus
-                />
-              </View>
-              <TouchableOpacity
-                style={[
-                  styles.guestbookModalSubmit,
-                  (!courseInputText.trim() || courseSubmitting) && styles.guestbookModalSubmitDisabled,
-                ]}
-                onPress={handleAddCourse}
-                disabled={!courseInputText.trim() || courseSubmitting}
-              >
-                {courseSubmitting ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.guestbookModalSubmitText}>추가</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </KeyboardAvoidingView>
-        </Modal>
-
-        {/* 라운딩 스타일 선택 모달 */}
-        <Modal
-          visible={styleModalVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setStyleModalVisible(false)}
-        >
-          <TouchableOpacity
-            style={styles.contentMenuOverlay}
-            activeOpacity={1}
-            onPress={() => setStyleModalVisible(false)}
-          >
-            <View style={styles.styleModalContainer}>
-              <Text style={styles.contentMenuTitle}>라운딩 스타일 선택</Text>
-              <Text style={{ fontSize: 12, color: '#999', textAlign: 'center', marginBottom: 16 }}>
-                최대 5개까지 선택 가능
-              </Text>
-              <View style={styles.styleOptionsGrid}>
-                {ROUNDING_STYLE_OPTIONS.map((style, i) => (
+          <View style={styles.statModalContainer}>
+            <Text style={styles.contentMenuTitle}>{editingStat?.label || ''} 수정</Text>
+            {editingStat && STAT_OPTIONS[editingStat.label] ? (
+              <View style={styles.statOptionsGrid}>
+                {STAT_OPTIONS[editingStat.label].map((option, i) => (
                   <TouchableOpacity
                     key={i}
                     style={[
-                      styles.styleOptionChip,
-                      selectedStyles.includes(style) && styles.styleOptionChipActive,
+                      styles.statOptionChip,
+                      statInputValue === option && styles.statOptionChipActive,
                     ]}
-                    onPress={() => handleToggleStyle(style)}
+                    onPress={() => setStatInputValue(option)}
                     activeOpacity={0.7}
                   >
                     <Text
                       style={[
-                        styles.styleOptionChipText,
-                        selectedStyles.includes(style) && styles.styleOptionChipTextActive,
+                        styles.statOptionChipText,
+                        statInputValue === option && styles.statOptionChipTextActive,
                       ]}
                     >
-                      {style}
+                      {option}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
-              <View style={styles.styleModalActions}>
-                <TouchableOpacity
-                  style={styles.styleModalCancel}
-                  onPress={() => setStyleModalVisible(false)}
-                >
-                  <Text style={styles.styleModalCancelText}>취소</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.styleModalSave,
-                    styleSubmitting && { opacity: 0.6 },
-                  ]}
-                  onPress={handleSaveStyles}
-                  disabled={styleSubmitting}
-                >
-                  {styleSubmitting ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
-                    <Text style={styles.styleModalSaveText}>저장</Text>
-                  )}
-                </TouchableOpacity>
+            ) : null}
+            {editingStat?.label === '평균타수' && (
+              <View style={{ paddingHorizontal: 20, marginTop: 8 }}>
+                <TextInput
+                  style={styles.courseModalInput}
+                  placeholder="직접 입력 (숫자)"
+                  placeholderTextColor="#999"
+                  keyboardType="number-pad"
+                  maxLength={3}
+                  value={statInputValue}
+                  onChangeText={setStatInputValue}
+                />
               </View>
+            )}
+            <View style={styles.styleModalActions}>
+              <TouchableOpacity
+                style={styles.styleModalCancel}
+                onPress={() => setStatModalVisible(false)}
+              >
+                <Text style={styles.styleModalCancelText}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.styleModalSave,
+                  (!statInputValue || statSubmitting) && { opacity: 0.6 },
+                ]}
+                onPress={() => handleSaveStat(statInputValue)}
+                disabled={!statInputValue || statSubmitting}
+              >
+                {statSubmitting ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.styleModalSaveText}>저장</Text>
+                )}
+              </TouchableOpacity>
             </View>
-          </TouchableOpacity>
-        </Modal>
-
-        {/* 스탯 편집 모달 */}
-        <Modal
-          visible={statModalVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setStatModalVisible(false)}
-        >
-          <TouchableOpacity
-            style={styles.contentMenuOverlay}
-            activeOpacity={1}
-            onPress={() => setStatModalVisible(false)}
-          >
-            <View style={styles.statModalContainer}>
-              <Text style={styles.contentMenuTitle}>{editingStat?.label || ''} 수정</Text>
-              {editingStat && STAT_OPTIONS[editingStat.label] ? (
-                <View style={styles.statOptionsGrid}>
-                  {STAT_OPTIONS[editingStat.label].map((option, i) => (
-                    <TouchableOpacity
-                      key={i}
-                      style={[
-                        styles.statOptionChip,
-                        statInputValue === option && styles.statOptionChipActive,
-                      ]}
-                      onPress={() => setStatInputValue(option)}
-                      activeOpacity={0.7}
-                    >
-                      <Text
-                        style={[
-                          styles.statOptionChipText,
-                          statInputValue === option && styles.statOptionChipTextActive,
-                        ]}
-                      >
-                        {option}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              ) : null}
-              {editingStat?.label === '평균타수' && (
-                <View style={{ paddingHorizontal: 20, marginTop: 8 }}>
-                  <TextInput
-                    style={styles.courseModalInput}
-                    placeholder="직접 입력 (숫자)"
-                    placeholderTextColor="#999"
-                    keyboardType="number-pad"
-                    maxLength={3}
-                    value={statInputValue}
-                    onChangeText={setStatInputValue}
-                  />
-                </View>
-              )}
-              <View style={styles.styleModalActions}>
-                <TouchableOpacity
-                  style={styles.styleModalCancel}
-                  onPress={() => setStatModalVisible(false)}
-                >
-                  <Text style={styles.styleModalCancelText}>취소</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.styleModalSave,
-                    (!statInputValue || statSubmitting) && { opacity: 0.6 },
-                  ]}
-                  onPress={() => handleSaveStat(statInputValue)}
-                  disabled={!statInputValue || statSubmitting}
-                >
-                  {statSubmitting ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
-                    <Text style={styles.styleModalSaveText}>저장</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-          </TouchableOpacity>
-        </Modal>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
