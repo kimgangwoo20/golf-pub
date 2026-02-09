@@ -180,8 +180,7 @@ const formatRelativeTime = (date: Date): string => {
 export const MyHomeScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { user, userProfile } = useAuthStore();
-  const { profile, loadProfile, updateProfile, toggleProfileLike, checkProfileLiked } =
-    useProfileStore();
+  const { profile, loadProfile, updateProfile } = useProfileStore();
 
   // 프로필 로드
   useEffect(() => {
@@ -278,7 +277,6 @@ export const MyHomeScreen: React.FC = () => {
 
   // 포토 히어로 상태
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-  const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const photoScrollRef = useRef<ScrollView>(null);
   const handlePhotoScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -295,30 +293,6 @@ export const MyHomeScreen: React.FC = () => {
   useEffect(() => {
     setLikeCount(profile?.likeCount || 0);
   }, [profile?.likeCount]);
-
-  // 좋아요 상태 확인
-  useEffect(() => {
-    if (currentUserId) {
-      checkProfileLiked(currentUserId, currentUserId).then(setLiked);
-    }
-  }, [currentUserId, checkProfileLiked]);
-
-  const handleLikeToggle = async () => {
-    if (!currentUserId) return;
-
-    // 낙관적 UI
-    const prevLiked = liked;
-    setLiked(!prevLiked);
-    setLikeCount((prev) => (prevLiked ? Math.max(0, prev - 1) : prev + 1));
-
-    try {
-      await toggleProfileLike(currentUserId, currentUserId);
-    } catch {
-      // 실패 시 롤백
-      setLiked(prevLiked);
-      setLikeCount((prev) => (prevLiked ? prev + 1 : Math.max(0, prev - 1)));
-    }
-  };
 
   // 방명록 Firestore 로드
   useEffect(() => {
@@ -1035,15 +1009,11 @@ export const MyHomeScreen: React.FC = () => {
               <Text style={styles.heroMetaText}>{userData.location}</Text>
             </View>
           </View>
-          <TouchableOpacity
-            style={[styles.heroLikeBox, liked && styles.heroLikeBoxLiked]}
-            onPress={handleLikeToggle}
-            activeOpacity={0.8}
-          >
-            <Text style={{ fontSize: 18 }}>{liked ? '❤️' : '🧡'}</Text>
+          <View style={styles.heroLikeBox}>
+            <Text style={{ fontSize: 18 }}>🧡</Text>
             <Text style={styles.heroLikeNum}>{likeCount}</Text>
             <Text style={styles.heroLikeUnit}>개</Text>
-          </TouchableOpacity>
+          </View>
         </View>
 
         {/* 소개 */}
@@ -1963,9 +1933,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 20,
     backgroundColor: '#fff0f0',
-  },
-  heroLikeBoxLiked: {
-    backgroundColor: '#ffe0e0',
   },
   heroLikeNum: {
     fontSize: 16,
