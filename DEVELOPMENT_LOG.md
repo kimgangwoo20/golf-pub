@@ -135,6 +135,26 @@
   - my/: MyHomeScreen, AccountManagementScreen
 - [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.07 완료)
 
+### 2026.02.09 프로필 좋아요 Firestore 연동 (26차 배치)
+
+- [x] ~~useProfileStore에 `likeCount` 필드 + 좋아요 액션 추가 (useProfileStore.ts)~~ (2026.02.09 완료)
+  - `UserProfile`에 `likeCount: number` 필드 추가
+  - `toggleProfileLike(targetUid, likerUid)`: 트랜잭션 기반 좋아요 토글 (결정적 문서 ID `profileLikes/{targetUid}_{likerUid}` + `users/{uid}.likeCount` increment/decrement)
+  - `checkProfileLiked(targetUid, likerUid)`: 좋아요 상태 확인
+  - marketplace `likeProduct/unlikeProduct` 트랜잭션 패턴 재사용
+- [x] ~~MyHomeScreen 좋아요 하드코딩 제거 → Firestore 연동 (MyHomeScreen.tsx)~~ (2026.02.09 완료)
+  - `useState(42)` → `profile?.likeCount || 0` 동기화
+  - `handleLikeToggle` → `toggleProfileLike` 호출 + 낙관적 UI + 실패 시 롤백
+  - `useEffect`에서 `checkProfileLiked` 호출하여 초기 liked 상태 설정
+- [x] ~~ProfileScreen 좋아요 하드코딩 제거 → Firestore 연동 (ProfileScreen.tsx)~~ (2026.02.09 완료)
+  - 동일 패턴: `useState(42)` → `profile?.likeCount || 0`
+  - `handleLike` → async + `toggleProfileLike` + 낙관적 UI + 롤백
+  - 타인 프로필 좋아요 토글 지원 (`targetUserId` 활용)
+- [x] ~~Firestore 보안 규칙 업데이트 (firestore.rules)~~ (2026.02.09 완료)
+  - `users/{userId}` update 규칙에 `likeCount` 필드 예외 추가 (인증된 사용자 허용)
+  - `profileLikes/{likeId}` 컬렉션 규칙 추가: read/create(인증), delete(본인만), update(불가)
+- [x] ~~TypeScript 0 에러, ESLint 0 에러 확인~~ (2026.02.09 완료)
+
 ### 2026.02.09 My홈피 프로필 인터랙티브 기능 + 전체 lint 정리 (25차 배치)
 
 - [x] ~~UserProfile 타입 확장 (useProfileStore.ts)~~ (2026.02.09 완료)
@@ -811,6 +831,13 @@
 ## 📝 일일 개발 기록
 
 ### 2026.02.09
+
+> **프로필 좋아요 Firestore 연동 26차 배치 (4개 파일, +137/-12줄)**
+> - useProfileStore.ts: `likeCount` 필드 추가, `toggleProfileLike`/`checkProfileLiked` 액션 구현 (트랜잭션 기반, marketplace 패턴 재사용)
+> - MyHomeScreen.tsx: `useState(42)` → Firestore `profile.likeCount` 동기화, 낙관적 UI + 롤백
+> - ProfileScreen.tsx: 동일 패턴 적용, 타인 프로필 좋아요 토글 지원
+> - firestore.rules: `profileLikes` 컬렉션 규칙 추가, `users` likeCount 예외 허용
+> - 최종: **TypeScript 0 에러, ESLint 0 에러** (544 warnings - 기존 any 타입)
 
 > **My홈피 프로필 인터랙티브 기능 + 전체 lint 정리 25차 배치 (10개 파일)**
 > - useProfileStore.ts: `FavoriteCourse` 인터페이스 추가, `favoriteCourses` string[]→FavoriteCourse[] 전환, roundingStyles/golfExperience/monthlyRounds/overseasGolf 필드 추가
