@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import firestoreModule from '@react-native-firebase/firestore';
 import {
   firestore as firebaseFirestore,
   storage as firebaseStorage,
@@ -27,6 +28,7 @@ export interface UserProfile {
   monthlyRounds: string;
   overseasGolf: string;
   totalRounds: number;
+  likeCount: number;
   rating: number;
   reviews: number;
   pointBalance: number;
@@ -50,6 +52,8 @@ interface ProfileState {
   uploadProfileImage: (uid: string, imageUri: string) => Promise<string>;
   addPoints: (uid: string, points: number, reason: string) => Promise<void>;
   subtractPoints: (uid: string, points: number, reason: string) => Promise<void>;
+  toggleProfileLike: (targetUid: string, likerUid: string) => Promise<boolean>;
+  checkProfileLiked: (targetUid: string, likerUid: string) => Promise<boolean>;
 }
 
 export const useProfileStore = create<ProfileState>((set, get) => ({
@@ -247,5 +251,62 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       console.error('포인트 차감 실패:', error);
       throw error;
     }
+  },
+
+  /**
+   * 프로필 좋아요 토글 (트랜잭션)
+   * @returns liked 여부 (true = 좋아요됨, false = 취소됨)
+   */
+  toggleProfileLike: async (targetUid, likerUid) => {
+    const likeDocId = `${targetUid}_${likerUid}`;
+    const likeRef = firebaseFirestore.collection('profileLikes').doc(likeDocId);
+    const userRef = firebaseFirestore.collection('users').doc(targetUid);
+
+    const liked = await firebaseFirestore.runTransaction(async (transaction) => {
+      const likeDoc = await transaction.get(likeRef);
+
+      if (likeDoc.exists) {
+        // 좋아요 취소
+        transaction.delete(likeRef);
+        transaction.update(userRef, {
+          likeCount: firestoreModule.FieldValue.increment(-1),
+        });
+        return false;
+      } else {
+        // 좋아요 추가
+        transaction.set(likeRef, {
+          targetUid,
+          likerUid,
+          createdAt: FirestoreTimestamp.now(),
+        });
+        transaction.update(userRef, {
+          likeCount: firestoreModule.FieldValue.increment(1),
+        });
+        return true;
+      }
+    });
+
+    // 로컬 상태 업데이트
+    const { profile } = get();
+    if (profile && profile.uid === targetUid) {
+      const currentCount = profile.likeCount || 0;
+      set({
+        profile: {
+          ...profile,
+          likeCount: liked ? currentCount + 1 : Math.max(0, currentCount - 1),
+        },
+      });
+    }
+
+    return liked;
+  },
+
+  /**
+   * 프로필 좋아요 상태 확인
+   */
+  checkProfileLiked: async (targetUid, likerUid) => {
+    const likeDocId = `${targetUid}_${likerUid}`;
+    const doc = await firebaseFirestore.collection('profileLikes').doc(likeDocId).get();
+    return doc.exists;
   },
 }));

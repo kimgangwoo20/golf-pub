@@ -40,11 +40,11 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
   route,
 }) => {
   const { user, signOut } = useAuthStore();
-  const { profile, loadProfile } = useProfileStore();
+  const { profile, loadProfile, toggleProfileLike, checkProfileLiked } = useProfileStore();
   const [refreshing, setRefreshing] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(42);
+  const [likeCount, setLikeCount] = useState(0);
   const photoScrollRef = useRef<ScrollView>(null);
   const cardAnim = useRef(new Animated.Value(0)).current;
 
@@ -66,6 +66,19 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
       loadProfile(uid);
     }
   }, [targetUserId, user?.uid, loadProfile]);
+
+  // 프로필 likeCount 동기화
+  useEffect(() => {
+    setLikeCount(profile?.likeCount || 0);
+  }, [profile?.likeCount]);
+
+  // 좋아요 상태 확인
+  useEffect(() => {
+    const targetUid = targetUserId || user?.uid;
+    if (targetUid && user?.uid) {
+      checkProfileLiked(targetUid, user.uid).then(setLiked);
+    }
+  }, [targetUserId, user?.uid, checkProfileLiked]);
 
   useEffect(() => {
     Animated.spring(cardAnim, {
@@ -94,9 +107,22 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
     setCurrentPhotoIndex(idx);
   };
 
-  const handleLike = () => {
-    setLiked((prev) => !prev);
-    setLikeCount((prev) => (liked ? prev - 1 : prev + 1));
+  const handleLike = async () => {
+    const targetUid = targetUserId || user?.uid;
+    if (!targetUid || !user?.uid) return;
+
+    // 낙관적 UI
+    const prevLiked = liked;
+    setLiked(!prevLiked);
+    setLikeCount((prev) => (prevLiked ? Math.max(0, prev - 1) : prev + 1));
+
+    try {
+      await toggleProfileLike(targetUid, user.uid);
+    } catch {
+      // 실패 시 롤백
+      setLiked(prevLiked);
+      setLikeCount((prev) => (prevLiked ? prev + 1 : Math.max(0, prev - 1)));
+    }
   };
 
   const handleLogout = () => {
