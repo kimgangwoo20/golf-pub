@@ -54,7 +54,7 @@ const pc = {
 // 라운딩 스타일 옵션
 const ROUNDING_STYLE_OPTIONS = [
   '🌅 새벽 티업',
-  '🍻 에프터 필수',
+  '🍻 에프터 좋아함',
   '😄 즐골파',
   '🏆 진지한 경기',
   '🚗 원정 라운딩',
@@ -64,7 +64,26 @@ const ROUNDING_STYLE_OPTIONS = [
   '⛳ 숏게임 위주',
   '🏌️ 드라이버 장타',
   '🧘 힐링 라운딩',
-  '📸 골프 브이로그',
+];
+
+// 관심사 옵션 (골프 외 라이프스타일)
+const INTEREST_OPTIONS = [
+  '✈️ 여행',
+  '🍷 와인',
+  '🍽️ 맛집탐방',
+  '🎣 낚시',
+  '⛰️ 등산',
+  '🏕️ 캠핑',
+  '🚴 자전거',
+  '🎵 음악',
+  '📚 독서',
+  '🎬 영화',
+  '📸 사진',
+  '🐾 반려동물',
+  '💪 헬스',
+  '🍳 요리',
+  '🎾 테니스',
+  '🏊 수영',
 ];
 
 // 스탯별 선택 옵션
@@ -193,8 +212,8 @@ export const MyHomeScreen: React.FC = () => {
     golfExperience: (profile as any)?.golfExperience || '',
     monthlyRounds: (profile as any)?.monthlyRounds || '',
     overseasGolf: (profile as any)?.overseasGolf || '',
-    bestScore: profile?.stats?.bestScore || 0,
     averageScore: profile?.stats?.averageScore || 0,
+    interests: (profile as any)?.interests || [],
   };
 
   // 사진 목록
@@ -240,6 +259,11 @@ export const MyHomeScreen: React.FC = () => {
   const [styleModalVisible, setStyleModalVisible] = useState(false);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [styleSubmitting, setStyleSubmitting] = useState(false);
+
+  // 관심사 모달 상태
+  const [interestModalVisible, setInterestModalVisible] = useState(false);
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [interestSubmitting, setInterestSubmitting] = useState(false);
 
   // 스탯 편집 모달 상태
   const [statModalVisible, setStatModalVisible] = useState(false);
@@ -712,6 +736,38 @@ export const MyHomeScreen: React.FC = () => {
     }
   };
 
+  // 관심사 모달 열기
+  const handleOpenInterestModal = () => {
+    setSelectedInterests(userData.interests.length > 0 ? [...userData.interests] : []);
+    setInterestModalVisible(true);
+  };
+
+  // 관심사 토글 (최대 7개)
+  const handleToggleInterest = (interest: string) => {
+    setSelectedInterests((prev) =>
+      prev.includes(interest)
+        ? prev.filter((s) => s !== interest)
+        : prev.length < 7
+          ? [...prev, interest]
+          : prev,
+    );
+  };
+
+  // 관심사 저장
+  const handleSaveInterests = async () => {
+    if (!user?.uid) return;
+    setInterestSubmitting(true);
+    try {
+      await updateProfile(user.uid, { interests: selectedInterests } as any);
+      setInterestModalVisible(false);
+      Alert.alert('완료', '관심사가 저장되었습니다.');
+    } catch (error: any) {
+      Alert.alert('오류', error.message || '저장에 실패했습니다.');
+    } finally {
+      setInterestSubmitting(false);
+    }
+  };
+
   // 스탯 편집 모달 열기
   const handleOpenStatEdit = (label: string, key: string, currentValue: string) => {
     setEditingStat({ label, key });
@@ -1069,7 +1125,7 @@ export const MyHomeScreen: React.FC = () => {
           <View style={styles.heroTagWrap}>
             {(userData.roundingStyles.length > 0
               ? userData.roundingStyles
-              : ['🌅 새벽 티업', '🍻 에프터 필수', '😄 즐골파']
+              : ['🌅 새벽 티업', '🍻 에프터 좋아함', '😄 즐골파']
             ).map((tag: string, i: number) => (
               <View key={i} style={styles.heroStyleTag}>
                 <Text style={styles.heroStyleTagText}>{tag}</Text>
@@ -1078,29 +1134,25 @@ export const MyHomeScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* 베스트 스코어 카드 */}
-        <TouchableOpacity activeOpacity={0.9} style={{ marginBottom: 18 }}>
-          <LinearGradient
-            colors={[pc.greenDeep, pc.greenMain]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.heroScoreCard}
-          >
-            <View>
-              <Text style={styles.heroScoreLabel}>BEST SCORE</Text>
-              <Text style={styles.heroScoreNum}>
-                {userData.bestScore > 0 ? userData.bestScore : 86}
-              </Text>
-              <Text style={styles.heroScoreSub}>올해 목표: 80대 안착</Text>
-            </View>
-            <View style={{ alignItems: 'center', gap: 4 }}>
-              <View style={styles.heroScoreBadge}>
-                <Text style={{ fontSize: 24 }}>🏆</Text>
+        {/* 내 관심사 */}
+        <View style={{ marginBottom: 18 }}>
+          <View style={styles.heroSectionTitleRow}>
+            <Text style={styles.heroSectionTitle}>내 관심사</Text>
+            <TouchableOpacity style={styles.heroAddBtn} onPress={handleOpenInterestModal}>
+              <Text style={styles.heroAddBtnText}>+</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.heroTagWrap}>
+            {(userData.interests.length > 0
+              ? userData.interests
+              : ['✈️ 여행', '🍽️ 맛집탐방', '🎵 음악']
+            ).map((tag: string, i: number) => (
+              <View key={i} style={styles.heroInterestTag}>
+                <Text style={styles.heroInterestTagText}>{tag}</Text>
               </View>
-              <Text style={{ fontSize: 11, color: pc.greenPale }}>골프왕</Text>
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
+            ))}
+          </View>
+        </View>
       </Animated.View>
 
       {/* 탭 */}
@@ -1378,7 +1430,8 @@ export const MyHomeScreen: React.FC = () => {
       >
         <KeyboardAvoidingView
           style={styles.guestbookModalWrapper}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
           <TouchableOpacity
             style={styles.guestbookModalOverlay}
@@ -1474,6 +1527,68 @@ export const MyHomeScreen: React.FC = () => {
                 disabled={styleSubmitting}
               >
                 {styleSubmitting ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.styleModalSaveText}>저장</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* 관심사 선택 모달 */}
+      <Modal
+        visible={interestModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setInterestModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.contentMenuOverlay}
+          activeOpacity={1}
+          onPress={() => setInterestModalVisible(false)}
+        >
+          <View style={styles.styleModalContainer}>
+            <Text style={styles.contentMenuTitle}>내 관심사 선택</Text>
+            <Text style={{ fontSize: 12, color: '#999', textAlign: 'center', marginBottom: 16 }}>
+              최대 7개까지 선택 가능
+            </Text>
+            <View style={styles.styleOptionsGrid}>
+              {INTEREST_OPTIONS.map((interest, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={[
+                    styles.styleOptionChip,
+                    selectedInterests.includes(interest) && styles.interestOptionChipActive,
+                  ]}
+                  onPress={() => handleToggleInterest(interest)}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.styleOptionChipText,
+                      selectedInterests.includes(interest) && styles.interestOptionChipTextActive,
+                    ]}
+                  >
+                    {interest}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={styles.styleModalActions}>
+              <TouchableOpacity
+                style={styles.styleModalCancel}
+                onPress={() => setInterestModalVisible(false)}
+              >
+                <Text style={styles.styleModalCancelText}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.styleModalSave, interestSubmitting && { opacity: 0.6 }]}
+                onPress={handleSaveInterests}
+                disabled={interestSubmitting}
+              >
+                {interestSubmitting ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
                   <Text style={styles.styleModalSaveText}>저장</Text>
@@ -1904,36 +2019,29 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: pc.gold,
   },
-  heroScoreCard: {
+  // 관심사 태그
+  heroInterestTag: {
+    paddingVertical: 7,
+    paddingHorizontal: 14,
     borderRadius: 20,
-    padding: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    backgroundColor: '#fff5f0',
+    borderWidth: 1,
+    borderColor: '#fcd5c0',
   },
-  heroScoreLabel: {
-    fontSize: 11,
-    color: pc.greenPale,
+  heroInterestTagText: {
+    fontSize: 13,
     fontWeight: '500',
-    letterSpacing: 0.5,
+    color: '#d97706',
   },
-  heroScoreNum: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#fff',
-    marginVertical: 2,
+
+  // 관심사 모달 활성 칩
+  interestOptionChipActive: {
+    backgroundColor: '#fff5f0',
+    borderColor: '#f59e0b',
   },
-  heroScoreSub: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.6)',
-  },
-  heroScoreBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  interestOptionChipTextActive: {
+    color: '#92400e',
+    fontWeight: '600',
   },
 
   // 탭
@@ -2411,7 +2519,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingBottom: 32,
+    paddingBottom: 48,
   },
   courseModalInput: {
     fontSize: 15,

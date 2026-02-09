@@ -22,6 +22,7 @@ export interface UserProfile {
   location: string;
   favoriteCourses: FavoriteCourse[];
   roundingStyles: string[];
+  interests: string[];
   golfExperience: string;
   monthlyRounds: string;
   overseasGolf: string;
