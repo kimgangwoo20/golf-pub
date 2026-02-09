@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: SHEET_MAX_HEIGHT,
-    paddingBottom: 34,
+    paddingBottom: 56,
   },
 
   // 드래그 핸들
