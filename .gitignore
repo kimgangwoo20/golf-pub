@@ -92,6 +92,7 @@ local.properties
 # ========================================
 # 7. 빌드 결과물
 # ========================================
+functions/lib/
 android/app/build/
 android/build/
 android/.gradle/

@@ -91,7 +91,19 @@
       "Bash(gcloud services enable:*)",
       "Bash(firebase functions:secrets:set:*)",
       "Bash(npx json:*)",
-      "Bash(npx jest:*)"
+      "Bash(npx jest:*)",
+      "Bash(.gradlew.bat app:assembleDebug:*)",
+      "Bash(./gradlew.bat:*)",
+      "Bash(npx firebase deploy:*)",
+      "Bash(npx firebase:*)",
+      "Bash(echo:*)",
+      "Bash(adb connect:*)",
+      "Bash(adb kill-server:*)",
+      "Bash(adb start-server:*)",
+      "Bash(adb:*)",
+      "Bash(del \"C:\\\\Projects\\\\golf-pub-app\\\\src\\\\utils\\\\dateUtils.ts\")",
+      "Bash(del \"C:\\\\Projects\\\\golf-pub-app\\\\src\\\\utils\\\\membershipGate.ts\")",
+      "Bash(git restore:*)"
     ]
   }
 }
