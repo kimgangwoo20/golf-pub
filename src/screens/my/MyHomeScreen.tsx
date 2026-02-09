@@ -254,7 +254,7 @@ export const MyHomeScreen: React.FC = () => {
   // 사용자 프로필 데이터 (Firestore userProfile에서 실제 값 사용)
   const profileData = userProfile as any;
   const userData = {
-    name: user?.displayName || '골퍼',
+    name: profile?.displayName || user?.displayName || '골퍼',
     email: user?.email || '',
     profileImage: user?.photoURL || DEFAULT_AVATAR,
     phone: user?.phoneNumber || '',
