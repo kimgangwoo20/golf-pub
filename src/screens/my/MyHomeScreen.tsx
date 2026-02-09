@@ -1035,8 +1035,8 @@ export const MyHomeScreen: React.FC = () => {
     [selectedTab],
   );
 
-  // 헤더 컴포넌트 (프로필 히어로 + 프로필 카드 + 탭)
-  const ListHeaderContent = () => (
+  // 헤더 (JSX 엘리먼트로 전달 → FlatList가 리마운트 대신 reconciliation 수행, ScrollView 스크롤 위치 보존)
+  const listHeader = (
     <>
       {/* ── Photo Hero ── */}
       <View style={styles.heroWrap}>
@@ -1364,7 +1364,7 @@ export const MyHomeScreen: React.FC = () => {
         data={unifiedData}
         keyExtractor={unifiedKeyExtractor}
         renderItem={renderUnifiedItem}
-        ListHeaderComponent={ListHeaderContent}
+        ListHeaderComponent={listHeader}
         ListFooterComponent={
           selectedTab === 'guestbook' ? () => <View style={styles.bottomSpacing} /> : ListFooter
         }
