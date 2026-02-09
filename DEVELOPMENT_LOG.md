@@ -158,6 +158,26 @@
   - `type: routeParams.type || 'photo'` 필드를 Firestore 게시물에 추가
 - [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.09 완료)
 
+### 2026.02.09 전체 앱 감사 기반 일괄 수정 - 보안/UI/품질 개선 (23차 배치)
+
+- [x] ~~법적 문서 수정: 홍길동→김강우, 연락처→support@golfpub.kr, 날짜 2026.02.09 업데이트 (PrivacyPolicy, LocationTerms, Support)~~ (2026.02.09 완료)
+- [x] ~~Firestore 보안 규칙 강화 (firestore.rules)~~ (2026.02.09 완료)
+  - pubs/golfCourses: `isSignedIn()` → 관리자 또는 평점 필드만 업데이트 가능
+  - applications: 주최자 또는 신청자 본인만 수정/삭제 가능
+  - bookingParticipants: 신청자 본인 또는 해당 부킹 주최자만 수정 가능
+- [x] ~~DEFAULT_AVATAR 상수 생성 및 17개 파일 하드코딩 URL 교체 (constants/images.ts + 16개 화면)~~ (2026.02.09 완료)
+- [x] ~~Modal onRequestClose 누락 2건 추가 (GolfCourseReviewScreen, FilterSheet)~~ (2026.02.09 완료)
+- [x] ~~SettingsScreen 개선: 앱 버전 app.json 동기화, 캐시 삭제 에러 메시지 수정, 저작권 연도 2026 업데이트~~ (2026.02.09 완료)
+- [x] ~~FeedScreen 풀투리프레시(RefreshControl) 추가~~ (2026.02.09 완료)
+- [x] ~~8개 화면 SafeAreaView 추가 (BookingRequests, PopularBookings, RecommendedBookings, RequestStatus, ChatList, CreateGroup, GroupList, Invite)~~ (2026.02.09 완료)
+- [x] ~~경합 조건 수정 (firebaseBooking, firebaseFriends, marketplaceAPI)~~ (2026.02.09 완료)
+  - joinBooking: read-then-write → runTransaction 원자적 처리
+  - acceptFriendRequest: 개별 write → runTransaction (중복 수락 방지)
+  - likeProduct/unlikeProduct: query→write → 결정적 docId + runTransaction
+- [x] ~~스텁 화면 3개 개선: CreateGroup, GroupList, Invite → 헤더+뒤로가기+"곧 출시" UI~~ (2026.02.09 완료)
+- [x] ~~빈 유틸리티 파일 2개 삭제 (dateUtils.ts, membershipGate.ts)~~ (2026.02.09 완료)
+- [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.09 완료)
+
 ### 2026.02.08 전체 코드베이스 감사 - 8개 버그 카테고리 일괄 수정 (20차 배치)
 
 - [x] ~~HomeScreen 네비게이션 크래시 수정 (HomeScreen.tsx)~~ (2026.02.08 완료)
@@ -727,13 +747,21 @@
 | 전체 코드베이스 감사 일괄 수정 (20차) | 9 | 9 | 0 | 100% |
 | Cloud Functions 클라이언트 전환 완료 (21차) | 3 | 3 | 0 | 100% |
 | My 홈피 다이어리 & 방명록 구현 (22차) | 6 | 6 | 0 | 100% |
-| **전체** | **235** | **232** | **3** | **99%** |
+| 전체 앱 감사 일괄 수정 (23차) | 11 | 11 | 0 | 100% |
+| **전체** | **246** | **243** | **3** | **99%** |
 
 ---
 
 ## 📝 일일 개발 기록
 
 ### 2026.02.09
+
+> **전체 앱 감사 기반 일괄 수정 23차 배치 (35개 파일, +481/-263줄)**
+> - 법적 문서: 홍길동→김강우, 연락처 통일 (support@golfpub.kr), 업데이트 날짜 수정
+> - Firestore 규칙: pubs/golfCourses 평점 필드만 수정 허용, applications/bookingParticipants 주최자 권한 추가
+> - DEFAULT_AVATAR/DEFAULT_PUB_IMAGE 상수 생성, 17개 파일 하드코딩 pravatar URL 교체
+> - Modal onRequestClose 2건, SettingsScreen 버전동기화/에러메시지/저작권, FeedScreen RefreshControl
+> - SafeAreaView 8개 화면 추가, 경합 조건 3건 트랜잭션 수정, 스텁 3개 개선, 빈 유틸 2개 삭제
 
 > **My 홈피 다이어리 & 방명록 기능 구현 22차 배치 (2개 파일, +213/-42줄)**
 > - MyHomeScreen 사진첩 탭 제거 → 3탭 구조(전체/다이어리/방명록)로 변경. 다이어리가 글+이미지+위치 통합하여 사진첩 역할 겸함
