@@ -618,10 +618,10 @@ export const MyHomeScreen: React.FC = () => {
     );
   };
 
-  // 헤더 컴포넌트 (프로필, 통계, 탭)
+  // 헤더 컴포넌트 (프로필 카드 + 탭)
   const ListHeader = () => (
     <>
-      {/* 프로필 배경 */}
+      {/* 배경 이미지 영역 (컨텐츠 없음, 배경만) */}
       <View style={styles.profileHeader}>
         <Image
           source={{ uri: userData.backgroundImage }}
@@ -629,31 +629,47 @@ export const MyHomeScreen: React.FC = () => {
           blurRadius={2}
         />
         <View style={styles.overlay} />
-        <View style={styles.profileContent}>
-          <TouchableOpacity onPress={handleEditProfile}>
-            <Image source={{ uri: userData.profileImage }} style={styles.profileImage} />
-          </TouchableOpacity>
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{userData.name}</Text>
-            <Text style={styles.profileHandicap}>핸디캡: {userData.handicap}</Text>
-          </View>
-          <View style={styles.visitorCounter}>
-            <View style={styles.counterItem}>
-              <Text style={styles.counterLabel}>Today</Text>
-              <Text style={styles.counterValue}>{userData.todayVisits}</Text>
-            </View>
-            <View style={styles.counterDivider} />
-            <View style={styles.counterItem}>
-              <Text style={styles.counterLabel}>Total</Text>
-              <Text style={styles.counterValue}>{userData.totalVisits}</Text>
-            </View>
-          </View>
-        </View>
       </View>
 
-      {/* 통계 카드 */}
-      <View style={styles.statsSection}>
-        <View style={styles.statsCard}>
+      {/* 프로필 카드 (배경 위로 오프셋) */}
+      <View style={styles.profileCard}>
+        {/* 프로필 사진 (배경 하단에 걸침) */}
+        <View style={styles.profileImageWrapper}>
+          <Image source={{ uri: userData.profileImage }} style={styles.profileImage} />
+        </View>
+
+        {/* 이름 + 핸디캡 */}
+        <View style={styles.profileInfo}>
+          <Text style={styles.profileName}>{userData.name}</Text>
+          <Text style={styles.profileHandicap}>핸디캡: {userData.handicap}</Text>
+        </View>
+
+        {/* 프로필 수정 버튼 */}
+        <TouchableOpacity style={styles.editProfileButton} onPress={handleEditProfile}>
+          <Text style={styles.editProfileText}>프로필 수정</Text>
+        </TouchableOpacity>
+
+        {/* 구분선 */}
+        <View style={styles.profileDivider} />
+
+        {/* 방문자 카운터 (인라인) */}
+        <View style={styles.visitorCounter}>
+          <View style={styles.counterItem}>
+            <Text style={styles.counterLabel}>Today</Text>
+            <Text style={styles.counterValue}>{userData.todayVisits}</Text>
+          </View>
+          <View style={styles.counterDivider} />
+          <View style={styles.counterItem}>
+            <Text style={styles.counterLabel}>Total</Text>
+            <Text style={styles.counterValue}>{userData.totalVisits}</Text>
+          </View>
+        </View>
+
+        {/* 구분선 */}
+        <View style={styles.profileDivider} />
+
+        {/* 통계 (프로필 카드 내부 통합) */}
+        <View style={styles.statsRow}>
           <View style={styles.statItem}>
             <Text style={styles.statIcon}>⛳</Text>
             <Text style={styles.statValue}>{userData.roundCount}</Text>
@@ -695,7 +711,6 @@ export const MyHomeScreen: React.FC = () => {
           ))}
         </View>
       </View>
-
     </>
   );
 
@@ -996,10 +1011,10 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
   },
 
-  // 프로필 배경
+  // 프로필 배경 (컨텐츠 없음, 배경만)
   profileHeader: {
     position: 'relative',
-    height: 200,
+    height: 160,
     backgroundColor: '#10b981',
   },
   backgroundImage: {
@@ -1015,20 +1030,32 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
-  profileContent: {
-    flex: 1,
+
+  // 프로필 카드 (배경 위로 오프셋)
+  profileCard: {
+    backgroundColor: '#fff',
+    marginHorizontal: 16,
+    marginTop: -50,
+    borderRadius: 16,
+    paddingBottom: 20,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  profileImageWrapper: {
+    marginTop: -45,
+    marginBottom: 12,
   },
   profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 3,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    borderWidth: 4,
     borderColor: '#fff',
     backgroundColor: '#E5E5E5',
-    marginBottom: 8,
   },
   profileInfo: {
     alignItems: 'center',
@@ -1037,79 +1064,75 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#fff',
+    color: '#1A1A1A',
     marginBottom: 4,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
   profileHandicap: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#E8F5E9',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    color: '#666',
+  },
+  editProfileButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#10b981',
+    marginBottom: 16,
+  },
+  editProfileText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#10b981',
+  },
+  profileDivider: {
+    width: '85%',
+    height: 1,
+    backgroundColor: '#F0F0F0',
+    marginBottom: 16,
   },
   visitorCounter: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    alignItems: 'center',
+    marginBottom: 16,
   },
   counterItem: {
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 24,
   },
   counterLabel: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '600',
-    color: '#666',
+    color: '#999',
     marginBottom: 2,
   },
   counterValue: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
     color: '#10b981',
   },
   counterDivider: {
     width: 1,
+    height: 28,
     backgroundColor: '#E5E5E5',
   },
 
-  // 통계 섹션
-  statsSection: {
-    marginHorizontal: 16,
-    marginTop: 16,
-    marginBottom: 16,
-  },
-  statsCard: {
+  // 통계 행 (프로필 카드 내부)
+  statsRow: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    width: '100%',
+    paddingHorizontal: 16,
   },
   statItem: {
     flex: 1,
     alignItems: 'center',
   },
   statIcon: {
-    fontSize: 24,
-    marginBottom: 6,
+    fontSize: 22,
+    marginBottom: 4,
   },
   statValue: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '700',
     color: '#10b981',
     marginBottom: 2,
@@ -1121,7 +1144,7 @@ const styles = StyleSheet.create({
   statDivider: {
     width: 1,
     backgroundColor: '#E5E5E5',
-    marginHorizontal: 8,
+    marginHorizontal: 4,
   },
 
   // 탭
@@ -1129,6 +1152,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5E5',
+    marginTop: 16,
   },
   tabContainer: {
     flexDirection: 'row',

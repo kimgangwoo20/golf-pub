@@ -23,13 +23,12 @@ jest.mock('expo-image-picker', () => ({
       assets: [{ uri: 'file:///camera.jpg', width: 4000, height: 3000 }],
     }),
   ),
-  MediaTypeOptions: { Images: 'Images' },
-}));
-
-// devicePermissions Mock
-jest.mock('../../src/utils/devicePermissions', () => ({
-  requestCameraPermission: jest.fn(() => Promise.resolve(true)),
-  requestStoragePermission: jest.fn(() => Promise.resolve(true)),
+  requestMediaLibraryPermissionsAsync: jest.fn(() =>
+    Promise.resolve({ status: 'granted' }),
+  ),
+  requestCameraPermissionsAsync: jest.fn(() =>
+    Promise.resolve({ status: 'granted' }),
+  ),
 }));
 
 describe('imageUtils', () => {

@@ -158,6 +158,29 @@
   - `type: routeParams.type || 'photo'` 필드를 Firestore 게시물에 추가
 - [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.09 완료)
 
+### 2026.02.09 프로필 사진 권한 수정 + My홈피 프로필 UI 최적화 (24차 배치)
+
+- [x] ~~app.json에 expo-image-picker 플러그인 추가 (빌드 시 Android/iOS 네이티브 권한 자동 설정)~~ (2026.02.09 완료)
+- [x] ~~imageUtils.ts 이미지 선택 권한을 expo 내장 API로 전환 (imageUtils.ts)~~ (2026.02.09 완료)
+  - 커스텀 `requestStoragePermission`/`requestCameraPermission` (devicePermissions.ts) 제거
+  - `import * as ImagePicker from 'expo-image-picker'` 정적 import로 변경 (동적 require 제거)
+  - `pickImageFromGallery`: `ImagePicker.requestMediaLibraryPermissionsAsync()` 사용
+  - `pickMultipleImages`: `ImagePicker.requestMediaLibraryPermissionsAsync()` 사용
+  - `takePhoto`: `ImagePicker.requestCameraPermissionsAsync()` 사용
+  - `MediaTypeOptions.Images` → `['images']` (최신 expo-image-picker API)
+  - 권한 거부 시 "설정으로 이동" 버튼 포함 Alert 추가 (`Linking.openSettings()`)
+- [x] ~~MyHomeScreen 프로필 헤더 UI 리디자인 - 모던 프로필 카드 스타일 (MyHomeScreen.tsx)~~ (2026.02.09 완료)
+  - 배경 이미지 200px → 160px (배경만, 컨텐츠 없음)
+  - 흰색 프로필 카드 `marginTop: -50` 오프셋 배치 (배경 위로 겹침)
+  - 프로필 사진 80px → 90px, 배경 하단에 걸치는 오프셋 배치 (`marginTop: -45`)
+  - 텍스트 색상: 흰색(배경 위) → 검정(흰색 카드 위)으로 가독성 향상
+  - 명시적 "프로필 수정" 아웃라인 버튼 추가 (기존 사진 터치 대체)
+  - 방문자 카운터 + 통계를 프로필 카드 내부로 통합 (별도 statsSection 제거)
+  - 구분선으로 섹션 분리
+- [x] ~~전화번호 비공개 검증 완료: UI(FriendProfileScreen) + API(getUserProfile) 이중 보호 확인, 추가 조치 불필요~~ (2026.02.09 완료)
+- [x] ~~imageUtils.test.ts 테스트 mock 업데이트 (devicePermissions → expo 내장 권한 mock)~~ (2026.02.09 완료)
+- [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.09 완료)
+
 ### 2026.02.09 전체 앱 감사 기반 일괄 수정 - 보안/UI/품질 개선 (23차 배치)
 
 - [x] ~~법적 문서 수정: 홍길동→김강우, 연락처→support@golfpub.kr, 날짜 2026.02.09 업데이트 (PrivacyPolicy, LocationTerms, Support)~~ (2026.02.09 완료)
@@ -748,13 +771,21 @@
 | Cloud Functions 클라이언트 전환 완료 (21차) | 3 | 3 | 0 | 100% |
 | My 홈피 다이어리 & 방명록 구현 (22차) | 6 | 6 | 0 | 100% |
 | 전체 앱 감사 일괄 수정 (23차) | 11 | 11 | 0 | 100% |
-| **전체** | **246** | **243** | **3** | **99%** |
+| 프로필 권한 수정 + My홈피 UI 최적화 (24차) | 6 | 6 | 0 | 100% |
+| **전체** | **252** | **249** | **3** | **99%** |
 
 ---
 
 ## 📝 일일 개발 기록
 
 ### 2026.02.09
+
+> **프로필 사진 권한 수정 + My홈피 프로필 UI 최적화 24차 배치 (4개 파일)**
+> - app.json: expo-image-picker 플러그인 추가 (빌드 시 네이티브 권한 자동 설정)
+> - imageUtils.ts: 커스텀 권한 함수(devicePermissions) 제거 → expo 내장 `requestMediaLibraryPermissionsAsync`/`requestCameraPermissionsAsync` 사용, 동적 require → 정적 import, 권한 거부 시 "설정으로 이동" Alert 추가
+> - MyHomeScreen.tsx: 프로필 헤더 리디자인 - 배경 160px + 흰색 카드 오프셋(-50px) + 프로필사진 90px 오프셋 + "프로필 수정" 버튼 + 방문자카운터/통계 카드 내부 통합
+> - 전화번호 비공개: UI + API 이중 보호 확인, 추가 조치 불필요
+> - imageUtils.test.ts: expo 내장 권한 mock으로 업데이트
 
 > **전체 앱 감사 기반 일괄 수정 23차 배치 (35개 파일, +481/-263줄)**
 > - 법적 문서: 홍길동→김강우, 연락처 통일 (support@golfpub.kr), 업데이트 날짜 수정
