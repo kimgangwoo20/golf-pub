@@ -1,5 +1,8 @@
 import { create } from 'zustand';
-import { firestore as firebaseFirestore, FirestoreTimestamp } from '@/services/firebase/firebaseConfig';
+import {
+  firestore as firebaseFirestore,
+  FirestoreTimestamp,
+} from '@/services/firebase/firebaseConfig';
 
 export interface Friend {
   id: string;
@@ -51,11 +54,7 @@ export const useFriendStore = create<FriendState>((set) => ({
         const batch = friendIds.slice(i, i + 10);
         const usersSnapshot = await firebaseFirestore
           .collection('users')
-          .where(
-            '__name__' as any,
-            'in',
-            batch,
-          )
+          .where('__name__' as any, 'in', batch)
           .get();
 
         usersSnapshot.docs.forEach((userDoc) => {
@@ -96,10 +95,13 @@ export const useFriendStore = create<FriendState>((set) => ({
 
   acceptFriendRequest: async (requestId) => {
     try {
-      await firebaseFirestore.collection('friendRequests').doc(requestId).set({
-        status: 'accepted',
-        updatedAt: FirestoreTimestamp.now(),
-      }, { merge: true });
+      await firebaseFirestore.collection('friendRequests').doc(requestId).set(
+        {
+          status: 'accepted',
+          updatedAt: FirestoreTimestamp.now(),
+        },
+        { merge: true },
+      );
     } catch (error: any) {
       throw error;
     }
@@ -108,7 +110,12 @@ export const useFriendStore = create<FriendState>((set) => ({
   removeFriend: async (friendId) => {
     try {
       // 서브컬렉션에서 삭제 (양방향은 firebaseFriends.removeFriend 사용 권장)
-      await firebaseFirestore.collection('users').doc(friendId).collection('friends').doc(friendId).delete();
+      await firebaseFirestore
+        .collection('users')
+        .doc(friendId)
+        .collection('friends')
+        .doc(friendId)
+        .delete();
     } catch (error: any) {
       throw error;
     }

@@ -1,5 +1,8 @@
 import { create } from 'zustand';
-import { firestore as firebaseFirestore, FirestoreTimestamp } from '@/services/firebase/firebaseConfig';
+import {
+  firestore as firebaseFirestore,
+  FirestoreTimestamp,
+} from '@/services/firebase/firebaseConfig';
 import { Product } from '@/types/marketplace-types';
 
 interface MarketplaceState {

@@ -229,13 +229,13 @@ export const pubAPI = {
 
       if (reviewsSnapshot.empty) {
         // 리뷰가 없으면 평점 초기화
-        await firestore()
-          .collection(PUBS_COLLECTION)
-          .doc(pubId)
-          .set({
+        await firestore().collection(PUBS_COLLECTION).doc(pubId).set(
+          {
             rating: 0,
             reviewCount: 0,
-          }, { merge: true });
+          },
+          { merge: true },
+        );
         return;
       }
 
@@ -249,10 +249,13 @@ export const pubAPI = {
       await firestore()
         .collection(PUBS_COLLECTION)
         .doc(pubId)
-        .set({
-          rating: Math.round(averageRating * 10) / 10, // 소수점 1자리
-          reviewCount: reviewsSnapshot.size,
-        }, { merge: true });
+        .set(
+          {
+            rating: Math.round(averageRating * 10) / 10, // 소수점 1자리
+            reviewCount: reviewsSnapshot.size,
+          },
+          { merge: true },
+        );
     } catch (error: any) {
       console.error('❌ 퍼블릭 평점 업데이트 실패:', error);
     }
@@ -267,14 +270,11 @@ export const pubAPI = {
     data: { rating: number; comment: string },
   ): Promise<{ success: boolean; message: string }> => {
     try {
-      await firestore()
-        .collection(PUB_REVIEWS_COLLECTION)
-        .doc(reviewId)
-        .update({
-          rating: data.rating,
-          comment: data.comment,
-          updatedAt: firestore.FieldValue.serverTimestamp(),
-        });
+      await firestore().collection(PUB_REVIEWS_COLLECTION).doc(reviewId).update({
+        rating: data.rating,
+        comment: data.comment,
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+      });
 
       // 평점 재계산
       await pubAPI.updatePubRating(pubId);
@@ -294,10 +294,7 @@ export const pubAPI = {
     reviewId: string,
   ): Promise<{ success: boolean; message: string }> => {
     try {
-      await firestore()
-        .collection(PUB_REVIEWS_COLLECTION)
-        .doc(reviewId)
-        .delete();
+      await firestore().collection(PUB_REVIEWS_COLLECTION).doc(reviewId).delete();
 
       // 평점 재계산 (리뷰 수 감소 포함)
       await pubAPI.updatePubRating(pubId);

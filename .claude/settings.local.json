@@ -103,7 +103,8 @@
       "Bash(adb:*)",
       "Bash(del \"C:\\\\Projects\\\\golf-pub-app\\\\src\\\\utils\\\\dateUtils.ts\")",
       "Bash(del \"C:\\\\Projects\\\\golf-pub-app\\\\src\\\\utils\\\\membershipGate.ts\")",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(npm run lint:fix:*)"
     ]
   }
 }

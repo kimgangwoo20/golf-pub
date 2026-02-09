@@ -20,9 +20,7 @@ export const GroupListScreen: React.FC = () => {
         <Text style={styles.emoji}>📋</Text>
         <Text style={styles.title}>그룹 목록</Text>
         <Text style={styles.subtitle}>곧 출시됩니다</Text>
-        <Text style={styles.description}>
-          참여 중인 그룹을 한눈에 관리할 수 있습니다.
-        </Text>
+        <Text style={styles.description}>참여 중인 그룹을 한눈에 관리할 수 있습니다.</Text>
       </View>
     </SafeAreaView>
   );

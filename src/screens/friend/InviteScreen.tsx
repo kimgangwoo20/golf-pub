@@ -20,9 +20,7 @@ export const InviteScreen: React.FC = () => {
         <Text style={styles.emoji}>💌</Text>
         <Text style={styles.title}>친구 초대</Text>
         <Text style={styles.subtitle}>곧 출시됩니다</Text>
-        <Text style={styles.description}>
-          친구를 초대하고 함께 골프를 즐겨보세요.
-        </Text>
+        <Text style={styles.description}>친구를 초대하고 함께 골프를 즐겨보세요.</Text>
       </View>
     </SafeAreaView>
   );

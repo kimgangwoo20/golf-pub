@@ -66,7 +66,7 @@ export const BookingListScreen: React.FC = () => {
       filtered = filtered.filter((b) => b.location?.includes(activeFilter.location!));
     if (activeFilter.priceRange) {
       const { min, max } = activeFilter.priceRange;
-      const getPrice = (b: typeof bookings[0]) => b.price.original || b.price.discount || 0;
+      const getPrice = (b: (typeof bookings)[0]) => b.price.original || b.price.discount || 0;
       filtered = filtered.filter((b) => getPrice(b) >= min && getPrice(b) <= max);
     }
     if (activeFilter.level && activeFilter.level.length > 0) {
@@ -81,7 +81,7 @@ export const BookingListScreen: React.FC = () => {
       filtered = filtered.filter((b) => b.hasPub === activeFilter.hasPub);
     }
     // 가격 헬퍼: original 우선, 없으면 discount
-    const getPrice = (b: typeof bookings[0]) => b.price.original || b.price.discount || 0;
+    const getPrice = (b: (typeof bookings)[0]) => b.price.original || b.price.discount || 0;
 
     switch (sortType) {
       case 'latest':

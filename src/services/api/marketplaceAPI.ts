@@ -586,7 +586,10 @@ export const marketplaceAPI = {
         .doc(productId)
         .collection('offers')
         .doc(offerId);
-      batch.update(offerRef, { status: 'ACCEPTED', updatedAt: firestore.FieldValue.serverTimestamp() });
+      batch.update(offerRef, {
+        status: 'ACCEPTED',
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+      });
 
       // 다른 PENDING 제안들 자동 거절
       const pendingOffers = await firestore()
@@ -598,7 +601,10 @@ export const marketplaceAPI = {
 
       pendingOffers.docs.forEach((doc) => {
         if (doc.id !== offerId) {
-          batch.update(doc.ref, { status: 'REJECTED', updatedAt: firestore.FieldValue.serverTimestamp() });
+          batch.update(doc.ref, {
+            status: 'REJECTED',
+            updatedAt: firestore.FieldValue.serverTimestamp(),
+          });
         }
       });
 

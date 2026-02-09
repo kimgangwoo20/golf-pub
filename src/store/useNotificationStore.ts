@@ -53,8 +53,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
               body: docData.body || '',
               read: docData.read ?? docData.isRead ?? false,
               data: docData.data,
-              createdAt:
-                docData.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+              createdAt: docData.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
             };
           }) as Notification[];
 

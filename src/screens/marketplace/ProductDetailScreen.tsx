@@ -375,10 +375,7 @@ export const ProductDetailScreen: React.FC = () => {
           <TouchableOpacity style={styles.likeButton} onPress={handleLike}>
             <Text style={styles.likeButtonIcon}>{isLiked ? '❤️' : '🤍'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.offerButton}
-            onPress={() => setOfferModalVisible(true)}
-          >
+          <TouchableOpacity style={styles.offerButton} onPress={() => setOfferModalVisible(true)}>
             <Text style={styles.offerButtonText}>가격 제안</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -419,7 +416,10 @@ export const ProductDetailScreen: React.FC = () => {
                 onChangeText={setOfferPrice}
               />
               <TouchableOpacity
-                style={[styles.offerSubmitButton, offerSubmitting && styles.offerSubmitButtonDisabled]}
+                style={[
+                  styles.offerSubmitButton,
+                  offerSubmitting && styles.offerSubmitButtonDisabled,
+                ]}
                 onPress={handleOfferSubmit}
                 disabled={offerSubmitting}
               >

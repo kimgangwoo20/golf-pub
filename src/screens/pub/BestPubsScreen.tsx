@@ -60,10 +60,7 @@ export const BestPubsScreen: React.FC = () => {
       style={styles.pubCard}
       onPress={() => navigation.navigate('PubDetail', { pubId: item.id })}
     >
-      <Image
-        source={{ uri: item.images?.[0] || DEFAULT_PUB_IMAGE }}
-        style={styles.pubImage}
-      />
+      <Image source={{ uri: item.images?.[0] || DEFAULT_PUB_IMAGE }} style={styles.pubImage} />
       {item.features?.includes('제휴') && (
         <View style={styles.partnerBadge}>
           <Text style={styles.partnerText}>제휴</Text>

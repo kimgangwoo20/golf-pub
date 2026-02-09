@@ -114,16 +114,8 @@ class KakaoMessageServiceClass {
   /**
    * 골프장 정보 공유하기
    */
-  async shareGolfCourse(
-    golfCourseName: string,
-    address: string,
-    phone?: string,
-  ): Promise<void> {
-    const parts = [
-      `[Golf Pub] ${golfCourseName}`,
-      '',
-      address,
-    ];
+  async shareGolfCourse(golfCourseName: string, address: string, phone?: string): Promise<void> {
+    const parts = [`[Golf Pub] ${golfCourseName}`, '', address];
     if (phone) parts.push(phone);
     parts.push('', this.webUrl);
 
@@ -140,13 +132,7 @@ class KakaoMessageServiceClass {
     _buttonTitle: string = '자세히 보기',
     link?: string,
   ): Promise<void> {
-    const message = [
-      title,
-      '',
-      description,
-      '',
-      link || this.webUrl,
-    ].join('\n');
+    const message = [title, '', description, '', link || this.webUrl].join('\n');
 
     await this.shareMessage(message);
   }

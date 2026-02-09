@@ -127,7 +127,12 @@ export const joinBooking = async (
 
       transaction.update(bookingRef, updateData);
 
-      return { success: true, message: '참가 신청이 완료되었습니다!', hostId: bookingData.hostId, title: bookingData.title };
+      return {
+        success: true,
+        message: '참가 신청이 완료되었습니다!',
+        hostId: bookingData.hostId,
+        title: bookingData.title,
+      };
     });
 
     if (!result.success) {
@@ -136,13 +141,15 @@ export const joinBooking = async (
 
     // 트랜잭션 외부: 부수 효과 (실패해도 참가 처리에 영향 없음)
     // 참가 기록 생성
-    await firestore().collection('bookingParticipants').add({
-      bookingId,
-      userId,
-      hostId: (result as any).hostId,
-      status: 'pending',
-      joinedAt: FirestoreTimestamp.now(),
-    });
+    await firestore()
+      .collection('bookingParticipants')
+      .add({
+        bookingId,
+        userId,
+        hostId: (result as any).hostId,
+        status: 'pending',
+        joinedAt: FirestoreTimestamp.now(),
+      });
 
     // 사용자 통계 업데이트
     await firestore()
@@ -292,10 +299,10 @@ export const cancelBooking = async (
   message: string;
 }> => {
   try {
-    const result = await callFunction<{ success: boolean; message: string }>(
-      'bookingCancel',
-      { bookingId, reason: reason || '' },
-    );
+    const result = await callFunction<{ success: boolean; message: string }>('bookingCancel', {
+      bookingId,
+      reason: reason || '',
+    });
     return result;
   } catch (error: any) {
     console.error('부킹 취소 실패:', error);
@@ -318,10 +325,9 @@ export const withdrawFromBooking = async (
   message: string;
 }> => {
   try {
-    const result = await callFunction<{ success: boolean; message: string }>(
-      'bookingWithdraw',
-      { bookingId },
-    );
+    const result = await callFunction<{ success: boolean; message: string }>('bookingWithdraw', {
+      bookingId,
+    });
     return result;
   } catch (error: any) {
     console.error('부킹 참가 철회 실패:', error);
@@ -419,10 +425,11 @@ export const approveBookingRequest = async (
   message: string;
 }> => {
   try {
-    const result = await callFunction<{ success: boolean; message: string }>(
-      'bookingApprove',
-      { requestId, bookingId, userId },
-    );
+    const result = await callFunction<{ success: boolean; message: string }>('bookingApprove', {
+      requestId,
+      bookingId,
+      userId,
+    });
     return result;
   } catch (error: any) {
     console.error('참가 승인 실패:', error);
@@ -446,10 +453,11 @@ export const rejectBookingRequest = async (
   message: string;
 }> => {
   try {
-    const result = await callFunction<{ success: boolean; message: string }>(
-      'bookingReject',
-      { requestId, bookingId: bookingId || '', userId: userId || '' },
-    );
+    const result = await callFunction<{ success: boolean; message: string }>('bookingReject', {
+      requestId,
+      bookingId: bookingId || '',
+      userId: userId || '',
+    });
     return result;
   } catch (error: any) {
     console.error('참가 거절 실패:', error);
@@ -704,10 +712,9 @@ export const leaveBooking = async (
   message: string;
 }> => {
   try {
-    const result = await callFunction<{ success: boolean; message: string }>(
-      'bookingWithdraw',
-      { bookingId },
-    );
+    const result = await callFunction<{ success: boolean; message: string }>('bookingWithdraw', {
+      bookingId,
+    });
     return result;
   } catch (error: any) {
     console.error('부킹 나가기 실패:', error);

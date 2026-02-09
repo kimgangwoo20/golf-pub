@@ -142,10 +142,17 @@ export const PostDetailScreen: React.FC = () => {
 
     // Firestore 영속화
     try {
-      const commentRef = firebaseFirestore.collection('posts').doc(postId).collection('comments').doc(commentId);
-      await commentRef.set({
-        likes: firestore.FieldValue.increment(wasLiked ? -1 : 1),
-      } as any, { merge: true });
+      const commentRef = firebaseFirestore
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .doc(commentId);
+      await commentRef.set(
+        {
+          likes: firestore.FieldValue.increment(wasLiked ? -1 : 1),
+        } as any,
+        { merge: true },
+      );
     } catch (error: any) {
       console.error('댓글 좋아요 실패:', error);
     }
@@ -198,9 +205,15 @@ export const PostDetailScreen: React.FC = () => {
           parentId: replyingTo,
           createdAt: FirestoreTimestamp.now(),
         });
-        await firebaseFirestore.collection('posts').doc(postId).set({
-          comments: firestore.FieldValue.increment(1),
-        } as any, { merge: true });
+        await firebaseFirestore
+          .collection('posts')
+          .doc(postId)
+          .set(
+            {
+              comments: firestore.FieldValue.increment(1),
+            } as any,
+            { merge: true },
+          );
       } catch (error: any) {
         console.error('대댓글 저장 실패:', error);
       }
@@ -231,9 +244,15 @@ export const PostDetailScreen: React.FC = () => {
           replies: [],
           createdAt: FirestoreTimestamp.now(),
         });
-        await firebaseFirestore.collection('posts').doc(postId).set({
-          comments: firestore.FieldValue.increment(1),
-        } as any, { merge: true });
+        await firebaseFirestore
+          .collection('posts')
+          .doc(postId)
+          .set(
+            {
+              comments: firestore.FieldValue.increment(1),
+            } as any,
+            { merge: true },
+          );
       } catch (error: any) {
         console.error('댓글 저장 실패:', error);
       }
@@ -273,10 +292,21 @@ export const PostDetailScreen: React.FC = () => {
 
           // Firestore 영속화
           try {
-            await firebaseFirestore.collection('posts').doc(postId).collection('comments').doc(commentId).delete();
-            await firebaseFirestore.collection('posts').doc(postId).set({
-              comments: firestore.FieldValue.increment(-1),
-            } as any, { merge: true });
+            await firebaseFirestore
+              .collection('posts')
+              .doc(postId)
+              .collection('comments')
+              .doc(commentId)
+              .delete();
+            await firebaseFirestore
+              .collection('posts')
+              .doc(postId)
+              .set(
+                {
+                  comments: firestore.FieldValue.increment(-1),
+                } as any,
+                { merge: true },
+              );
           } catch (error: any) {
             console.error('댓글 삭제 실패:', error);
           }
@@ -303,10 +333,13 @@ export const PostDetailScreen: React.FC = () => {
         onPress: async () => {
           try {
             // Firestore에서 게시물 삭제 (status를 deleted로 변경)
-            await firebaseFirestore.collection('posts').doc(postId).set({
-              status: 'deleted',
-              updatedAt: FirestoreTimestamp.now(),
-            }, { merge: true });
+            await firebaseFirestore.collection('posts').doc(postId).set(
+              {
+                status: 'deleted',
+                updatedAt: FirestoreTimestamp.now(),
+              },
+              { merge: true },
+            );
             Alert.alert('완료', '게시물이 삭제되었습니다.', [
               { text: '확인', onPress: () => navigation.goBack() },
             ]);

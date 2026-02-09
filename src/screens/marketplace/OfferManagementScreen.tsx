@@ -94,7 +94,8 @@ export const OfferManagementScreen: React.FC = () => {
           <Text style={styles.offerUser}>{offer.userName}</Text>
           <Text style={styles.offerPrice}>{offer.offerPrice.toLocaleString()}원</Text>
           <Text style={styles.offerDiscount}>
-            원가 대비 {discountPercent > 0 ? `-${discountPercent}%` : `+${Math.abs(discountPercent)}%`}
+            원가 대비{' '}
+            {discountPercent > 0 ? `-${discountPercent}%` : `+${Math.abs(discountPercent)}%`}
           </Text>
         </View>
         <View style={styles.offerActions}>
@@ -123,9 +124,7 @@ export const OfferManagementScreen: React.FC = () => {
         </Text>
         <Text style={styles.productPrice}>{item.product.price.toLocaleString()}원</Text>
       </View>
-      <Text style={styles.offerCount}>
-        대기 중인 제안 {item.offers.length}건
-      </Text>
+      <Text style={styles.offerCount}>대기 중인 제안 {item.offers.length}건</Text>
       {item.offers.map((offer) => renderOffer(offer, item.product.id))}
     </View>
   );
@@ -157,7 +156,13 @@ export const OfferManagementScreen: React.FC = () => {
         renderItem={renderGroup}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadOffers(); }} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              loadOffers();
+            }}
+          />
         }
         ListEmptyComponent={
           <View style={styles.center}>

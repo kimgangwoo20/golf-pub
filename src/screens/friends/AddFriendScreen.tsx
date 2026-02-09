@@ -216,10 +216,7 @@ export const AddFriendScreen: React.FC = () => {
 
   const renderUserCard = (userItem: Friend, _isSearch: boolean = false) => (
     <View key={userItem.id} style={styles.userCard}>
-      <Image
-        source={{ uri: userItem.avatar || DEFAULT_AVATAR }}
-        style={styles.userImage}
-      />
+      <Image source={{ uri: userItem.avatar || DEFAULT_AVATAR }} style={styles.userImage} />
 
       <View style={styles.userInfo}>
         <Text style={styles.userName}>{userItem.name}</Text>

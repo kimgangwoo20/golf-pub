@@ -105,20 +105,15 @@ export const GolfCourseReviewScreen: React.FC = () => {
     // 즉시 UI 업데이트 (낙관적 업데이트)
     setReviews(
       reviews.map((review) =>
-        review.id === reviewId
-          ? { ...review, isLiked: newIsLiked, likes: newLikes }
-          : review,
+        review.id === reviewId ? { ...review, isLiked: newIsLiked, likes: newLikes } : review,
       ),
     );
 
     // Firestore에 좋아요 수 저장
     try {
-      await firebaseFirestore
-        .collection('golf_course_reviews')
-        .doc(String(reviewId))
-        .update({
-          likes: newLikes,
-        });
+      await firebaseFirestore.collection('golf_course_reviews').doc(String(reviewId)).update({
+        likes: newLikes,
+      });
     } catch (error) {
       // 실패 시 롤백
       setReviews(
@@ -167,11 +162,10 @@ export const GolfCourseReviewScreen: React.FC = () => {
     try {
       if (editingReviewId) {
         // 리뷰 수정
-        const result = await golfCourseAPI.updateGolfCourseReview(
-          courseId,
-          editingReviewId,
-          { rating, comment: reviewText },
-        );
+        const result = await golfCourseAPI.updateGolfCourseReview(courseId, editingReviewId, {
+          rating,
+          comment: reviewText,
+        });
         if (!result.success) {
           Alert.alert('오류', result.message);
           return;
@@ -315,16 +309,18 @@ export const GolfCourseReviewScreen: React.FC = () => {
             <Text style={styles.backIcon}>‹</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>리뷰 ({reviews.length})</Text>
-          <TouchableOpacity onPress={() => {
-            setEditingReviewId(null);
-            setRating(5);
-            setCourseRating(5);
-            setFacilityRating(5);
-            setServiceRating(5);
-            setReviewText('');
-            setReviewImages([]);
-            setShowWriteModal(true);
-          }}>
+          <TouchableOpacity
+            onPress={() => {
+              setEditingReviewId(null);
+              setRating(5);
+              setCourseRating(5);
+              setFacilityRating(5);
+              setServiceRating(5);
+              setReviewText('');
+              setReviewImages([]);
+              setShowWriteModal(true);
+            }}
+          >
             <Text style={styles.writeIcon}>✏️</Text>
           </TouchableOpacity>
         </View>
@@ -513,15 +509,22 @@ export const GolfCourseReviewScreen: React.FC = () => {
         </ScrollView>
 
         {/* 리뷰 작성 모달 */}
-        <Modal visible={showWriteModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowWriteModal(false)}>
+        <Modal
+          visible={showWriteModal}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setShowWriteModal(false)}
+        >
           <SafeAreaView style={styles.modalSafeArea} edges={['top']}>
             <View style={styles.modalContainer}>
               {/* 모달 헤더 */}
               <View style={styles.modalHeader}>
-                <TouchableOpacity onPress={() => {
-                  setShowWriteModal(false);
-                  setEditingReviewId(null);
-                }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowWriteModal(false);
+                    setEditingReviewId(null);
+                  }}
+                >
                   <Text style={styles.modalCloseText}>취소</Text>
                 </TouchableOpacity>
                 <Text style={styles.modalTitle}>{editingReviewId ? '리뷰 수정' : '리뷰 작성'}</Text>

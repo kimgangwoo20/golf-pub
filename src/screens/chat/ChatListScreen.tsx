@@ -82,10 +82,7 @@ export const ChatListScreen: React.FC = () => {
           });
         }}
       >
-        <Image
-          source={{ uri: other.avatar || DEFAULT_AVATAR }}
-          style={styles.avatar}
-        />
+        <Image source={{ uri: other.avatar || DEFAULT_AVATAR }} style={styles.avatar} />
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
             <Text style={styles.chatName}>{other.name}</Text>
@@ -111,16 +108,16 @@ export const ChatListScreen: React.FC = () => {
       <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
         <View style={styles.container}>
           <View style={styles.header}>
-          <Text style={styles.headerTitle}>채팅</Text>
-          <View style={styles.headerButtons}>
-            <TouchableOpacity
-              style={styles.headerButton}
-              onPress={() => navigation.navigate('CreateChat')}
-            >
-              <Text style={styles.headerButtonText}>💬</Text>
-            </TouchableOpacity>
+            <Text style={styles.headerTitle}>채팅</Text>
+            <View style={styles.headerButtons}>
+              <TouchableOpacity
+                style={styles.headerButton}
+                onPress={() => navigation.navigate('CreateChat')}
+              >
+                <Text style={styles.headerButtonText}>💬</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#10b981" />
             <Text style={styles.loadingText}>채팅 목록을 불러오는 중...</Text>
@@ -133,53 +130,53 @@ export const ChatListScreen: React.FC = () => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
       <View style={styles.container}>
-      {/* 헤더 */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>채팅</Text>
-        <View style={styles.headerButtons}>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={() => navigation.navigate('CreateChat')}
-          >
-            <Text style={styles.headerButtonText}>💬</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* 검색 */}
-      <View style={styles.searchContainer}>
-        <Text style={styles.searchIcon}>🔍</Text>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="채팅 검색"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor="#999"
-        />
-      </View>
-
-      {/* 채팅 목록 */}
-      <FlatList
-        data={filteredRooms}
-        renderItem={renderChatItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor="#10b981"
-            colors={['#10b981']}
-          />
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>💬</Text>
-            <Text style={styles.emptyText}>채팅이 없습니다</Text>
-            <Text style={styles.emptySubtext}>새 채팅을 시작해보세요!</Text>
+        {/* 헤더 */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>채팅</Text>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={() => navigation.navigate('CreateChat')}
+            >
+              <Text style={styles.headerButtonText}>💬</Text>
+            </TouchableOpacity>
           </View>
-        }
+        </View>
+
+        {/* 검색 */}
+        <View style={styles.searchContainer}>
+          <Text style={styles.searchIcon}>🔍</Text>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="채팅 검색"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor="#999"
+          />
+        </View>
+
+        {/* 채팅 목록 */}
+        <FlatList
+          data={filteredRooms}
+          renderItem={renderChatItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#10b981"
+              colors={['#10b981']}
+            />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyIcon}>💬</Text>
+              <Text style={styles.emptyText}>채팅이 없습니다</Text>
+              <Text style={styles.emptySubtext}>새 채팅을 시작해보세요!</Text>
+            </View>
+          }
         />
       </View>
     </SafeAreaView>

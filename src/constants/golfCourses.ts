@@ -359,4 +359,3 @@ export const GOLF_COURSE_STATS = {
       getGolfCoursesByRegion('광주').length,
   },
 };
-

@@ -112,13 +112,13 @@ export const golfCourseAPI = {
 
       if (reviewsSnapshot.empty) {
         // 리뷰가 없으면 평점 초기화
-        await firestore()
-          .collection('golfCourses')
-          .doc(String(courseId))
-          .set({
+        await firestore().collection('golfCourses').doc(String(courseId)).set(
+          {
             rating: 0,
             reviewCount: 0,
-          }, { merge: true });
+          },
+          { merge: true },
+        );
         return;
       }
 
@@ -132,10 +132,13 @@ export const golfCourseAPI = {
       await firestore()
         .collection('golfCourses')
         .doc(String(courseId))
-        .set({
-          rating: Math.round(averageRating * 10) / 10, // 소수점 1자리
-          reviewCount: reviewsSnapshot.size,
-        }, { merge: true });
+        .set(
+          {
+            rating: Math.round(averageRating * 10) / 10, // 소수점 1자리
+            reviewCount: reviewsSnapshot.size,
+          },
+          { merge: true },
+        );
     } catch (error: any) {
       console.error('골프장 평점 업데이트 실패:', error);
     }
@@ -150,14 +153,11 @@ export const golfCourseAPI = {
     data: { rating: number; comment: string },
   ): Promise<{ success: boolean; message: string }> => {
     try {
-      await firestore()
-        .collection(GOLF_COURSE_REVIEWS_COLLECTION)
-        .doc(reviewId)
-        .update({
-          rating: data.rating,
-          content: data.comment,
-          updatedAt: firestore.FieldValue.serverTimestamp(),
-        });
+      await firestore().collection(GOLF_COURSE_REVIEWS_COLLECTION).doc(reviewId).update({
+        rating: data.rating,
+        content: data.comment,
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+      });
 
       // 평점 재계산
       await golfCourseAPI.updateGolfCourseRating(courseId);
@@ -177,10 +177,7 @@ export const golfCourseAPI = {
     reviewId: string,
   ): Promise<{ success: boolean; message: string }> => {
     try {
-      await firestore()
-        .collection(GOLF_COURSE_REVIEWS_COLLECTION)
-        .doc(reviewId)
-        .delete();
+      await firestore().collection(GOLF_COURSE_REVIEWS_COLLECTION).doc(reviewId).delete();
 
       // 평점 재계산 (리뷰 수 감소 포함)
       await golfCourseAPI.updateGolfCourseRating(courseId);

@@ -76,14 +76,17 @@ export const PubDetailScreen: React.FC = () => {
       {
         text: '네이버맵',
         onPress: () => {
-          Linking.openURL(`nmap://search?query=${encodeURIComponent(pub.name)}&appname=com.golfpub.app`).catch(() => {
+          Linking.openURL(
+            `nmap://search?query=${encodeURIComponent(pub.name)}&appname=com.golfpub.app`,
+          ).catch(() => {
             Linking.openURL(`https://map.naver.com/v5/search/${encodeURIComponent(pub.name)}`);
           });
         },
       },
       {
         text: '구글맵',
-        onPress: () => Linking.openURL(`https://maps.google.com/?q=${encodeURIComponent(pub.address || '')}`),
+        onPress: () =>
+          Linking.openURL(`https://maps.google.com/?q=${encodeURIComponent(pub.address || '')}`),
       },
       { text: '취소', style: 'cancel' },
     ]);
@@ -117,10 +120,7 @@ export const PubDetailScreen: React.FC = () => {
   return (
     <ScrollView style={styles.container}>
       {/* 이미지 */}
-      <Image
-        source={{ uri: pub.images?.[0] || DEFAULT_PUB_IMAGE }}
-        style={styles.image}
-      />
+      <Image source={{ uri: pub.images?.[0] || DEFAULT_PUB_IMAGE }} style={styles.image} />
       {pub.features?.includes('제휴') && (
         <View style={styles.partnerBadge}>
           <Text style={styles.partnerText}>제휴 펍</Text>
