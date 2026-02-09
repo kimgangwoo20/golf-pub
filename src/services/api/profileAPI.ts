@@ -6,6 +6,7 @@ import auth from '@react-native-firebase/auth';
 import storage from '@react-native-firebase/storage';
 import { UserProfile, Point, Coupon } from '@/types/profile-types';
 import { callFunction } from '@/services/firebase/firebaseFunctions';
+import { compressImage } from '@/utils/imageUtils';
 
 /**
  * Firestore 컬렉션
@@ -464,10 +465,13 @@ export const profileAPI = {
         throw new Error('로그인이 필요합니다.');
       }
 
+      // 이미지인 경우 압축 (업로드 속도 개선)
+      const uploadUri = type === 'image' ? await compressImage(uri, 1200, 0.7) : uri;
+
       // Storage에 업로드
       const ext = type === 'video' ? 'mp4' : 'jpg';
       const reference = storage().ref(`backgrounds/${currentUser.uid}/${Date.now()}.${ext}`);
-      await reference.putFile(uri);
+      await reference.putFile(uploadUri);
       const downloadURL = await reference.getDownloadURL();
 
       // 기존 배경 미디어 배열 가져오기

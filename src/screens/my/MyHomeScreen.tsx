@@ -282,8 +282,13 @@ export const MyHomeScreen: React.FC = () => {
     ?.backgroundMedia?.length
     ? profile.backgroundMedia
     : [];
-  const photoList: (string | null)[] =
-    backgroundMedia.length > 0 ? backgroundMedia.map((m) => m.url) : [null];
+
+  // photoList를 URL 기반으로 메모이제이션 → 프로필 리로드 시 불필요한 ScrollView 리셋 방지
+  const photoListKey = backgroundMedia.map((m) => m.url).join('|');
+  const photoList: (string | null)[] = useMemo(
+    () => (backgroundMedia.length > 0 ? backgroundMedia.map((m) => m.url) : [null]),
+    [photoListKey],
+  );
 
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedTab, setSelectedTab] = useState('all');
