@@ -179,6 +179,11 @@ export const NotificationListScreen: React.FC = () => {
           data={notifications}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
+          getItemLayout={(_data, index) => ({
+            length: 69,
+            offset: 69 * index,
+            index,
+          })}
           ListEmptyComponent={renderEmpty}
           refreshControl={
             <RefreshControl

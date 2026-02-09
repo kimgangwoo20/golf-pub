@@ -163,6 +163,11 @@ export const ChatListScreen: React.FC = () => {
           renderItem={renderChatItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
+          getItemLayout={(_data, index) => ({
+            length: 89,
+            offset: 89 * index,
+            index,
+          })}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           refreshControl={
             <RefreshControl

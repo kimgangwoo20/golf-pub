@@ -11,6 +11,7 @@ import {
   Switch,
   Platform,
   Image,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -277,7 +278,11 @@ export const CreateBookingScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* 제목 */}
         <View style={styles.section}>
           <Text style={styles.label}>
@@ -515,6 +520,7 @@ export const CreateBookingScreen: React.FC = () => {
         {/* 하단 여백 */}
         <View style={{ height: 40 }} />
       </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* 하단 등록 버튼 */}
       <View style={styles.bottomBar}>

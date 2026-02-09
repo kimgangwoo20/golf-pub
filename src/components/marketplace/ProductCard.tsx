@@ -1,5 +1,5 @@
 // ProductCard.tsx - 중고 상품 카드
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 
 interface ProductCardProps {
@@ -21,9 +21,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   timeAgo,
   onPress,
 }) => {
+  const [imageError, setImageError] = useState(false);
+
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
-      <Image source={{ uri: image }} style={styles.image} />
+      {!imageError && image ? (
+        <Image source={{ uri: image }} style={styles.image} onError={() => setImageError(true)} />
+      ) : (
+        <View style={[styles.image, styles.imagePlaceholder]}>
+          <Text style={styles.imagePlaceholderIcon}>📷</Text>
+        </View>
+      )}
       <View style={styles.info}>
         <Text style={styles.title} numberOfLines={2}>
           {title}
@@ -53,6 +61,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 150,
     backgroundColor: '#f0f0f0',
+  },
+  imagePlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  imagePlaceholderIcon: {
+    fontSize: 40,
   },
   info: {
     padding: 12,

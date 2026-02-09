@@ -1,5 +1,5 @@
 // ProfileCard.tsx - 프로필 카드
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 
 interface ProfileCardProps {
@@ -19,11 +19,18 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
   rating,
   onPress,
 }) => {
+  const [avatarError, setAvatarError] = useState(false);
   const Component = onPress ? TouchableOpacity : View;
 
   return (
     <Component style={styles.container} onPress={onPress}>
-      <Image source={{ uri: avatar }} style={styles.avatar} />
+      {!avatarError && avatar ? (
+        <Image source={{ uri: avatar }} style={styles.avatar} onError={() => setAvatarError(true)} />
+      ) : (
+        <View style={[styles.avatar, styles.avatarPlaceholder]}>
+          <Text style={styles.avatarInitial}>{name?.[0] || '?'}</Text>
+        </View>
+      )}
       <View style={styles.info}>
         <Text style={styles.name}>{name}</Text>
         <View style={styles.stats}>
@@ -59,6 +66,16 @@ const styles = StyleSheet.create({
     height: 70,
     borderRadius: 35,
     marginRight: 16,
+    backgroundColor: '#e5e7eb',
+  },
+  avatarPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
+    fontSize: 28,
+    fontWeight: '600',
+    color: '#6b7280',
   },
   info: {
     flex: 1,

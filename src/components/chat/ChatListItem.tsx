@@ -1,5 +1,5 @@
 // ChatListItem.tsx - 채팅 목록 아이템
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 
 interface ChatListItemProps {
@@ -19,9 +19,17 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
   unread,
   onPress,
 }) => {
+  const [avatarError, setAvatarError] = useState(false);
+
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
-      <Image source={{ uri: avatar }} style={styles.avatar} />
+      {!avatarError && avatar ? (
+        <Image source={{ uri: avatar }} style={styles.avatar} onError={() => setAvatarError(true)} />
+      ) : (
+        <View style={[styles.avatar, styles.avatarPlaceholder]}>
+          <Text style={styles.avatarInitial}>{name?.[0] || '?'}</Text>
+        </View>
+      )}
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.name}>{name}</Text>
@@ -54,6 +62,16 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     marginRight: 12,
+    backgroundColor: '#e5e7eb',
+  },
+  avatarPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#6b7280',
   },
   content: {
     flex: 1,

@@ -1,5 +1,5 @@
 // PubCard.tsx - 펍 카드 컴포넌트
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 
 interface PubCardProps {
@@ -31,9 +31,17 @@ export const PubCard: React.FC<PubCardProps> = ({
   isPartner = false,
   onPress,
 }) => {
+  const [imageError, setImageError] = useState(false);
+
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
-      <Image source={{ uri: image }} style={styles.image} />
+      {!imageError && image ? (
+        <Image source={{ uri: image }} style={styles.image} onError={() => setImageError(true)} />
+      ) : (
+        <View style={[styles.image, styles.imagePlaceholder]}>
+          <Text style={styles.imagePlaceholderIcon}>🍺</Text>
+        </View>
+      )}
       {isPartner && (
         <View style={styles.partnerBadge}>
           <Text style={styles.partnerText}>제휴</Text>
@@ -72,6 +80,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 160,
     backgroundColor: '#f0f0f0',
+  },
+  imagePlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  imagePlaceholderIcon: {
+    fontSize: 48,
   },
   partnerBadge: {
     position: 'absolute',

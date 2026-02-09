@@ -1,7 +1,7 @@
 // 📋 BookingCard.tsx
 // 골프 부킹 카드 컴포넌트
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
@@ -14,6 +14,8 @@ interface BookingCardProps {
 }
 
 export const BookingCard: React.FC<BookingCardProps> = ({ booking, onPress, onJoinPress }) => {
+  const [avatarError, setAvatarError] = useState(false);
+
   const getLevelBadge = (level: string) => {
     switch (level) {
       case 'beginner':
@@ -35,7 +37,17 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onPress, onJo
       {/* 헤더 */}
       <View style={styles.header}>
         <View style={styles.hostInfo}>
-          <Image source={{ uri: booking.host.avatar }} style={styles.avatar} />
+          {!avatarError && booking.host.avatar ? (
+            <Image
+              source={{ uri: booking.host.avatar }}
+              style={styles.avatar}
+              onError={() => setAvatarError(true)}
+            />
+          ) : (
+            <View style={[styles.avatar, styles.avatarPlaceholder]}>
+              <Text style={styles.avatarInitial}>{booking.host.name?.[0] || '?'}</Text>
+            </View>
+          )}
           <View style={styles.hostDetails}>
             <Text style={styles.hostName}>{booking.host.name}</Text>
             <View style={styles.ratingContainer}>
@@ -180,6 +192,15 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     marginRight: spacing.md,
     backgroundColor: colors.bgTertiary,
+  },
+  avatarPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    color: colors.textTertiary,
   },
   hostDetails: {
     flex: 1,

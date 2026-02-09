@@ -1,5 +1,5 @@
 // Avatar.tsx - 사용자 아바타 컴포넌트
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Image, Text, StyleSheet, ViewStyle } from 'react-native';
 
 interface AvatarProps {
@@ -16,6 +16,8 @@ interface AvatarProps {
 }
 
 export const Avatar: React.FC<AvatarProps> = ({ uri, name, size = 'medium', badge, style }) => {
+  const [imageError, setImageError] = useState(false);
+
   // 크기 계산
   const avatarSize =
     typeof size === 'number' ? size : size === 'small' ? 32 : size === 'large' ? 64 : 48;
@@ -46,8 +48,12 @@ export const Avatar: React.FC<AvatarProps> = ({ uri, name, size = 'medium', badg
 
   return (
     <View style={[styles.container, { width: avatarSize, height: avatarSize }, style]}>
-      {uri ? (
-        <Image source={{ uri }} style={[styles.image, { borderRadius: avatarSize / 2 }]} />
+      {uri && !imageError ? (
+        <Image
+          source={{ uri }}
+          style={[styles.image, { borderRadius: avatarSize / 2 }]}
+          onError={() => setImageError(true)}
+        />
       ) : (
         <View
           style={[

@@ -1,5 +1,5 @@
 // ApplicantCard.tsx - 부킹 신청자 카드
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 
 interface ApplicantCardProps {
@@ -40,10 +40,18 @@ export const ApplicantCard: React.FC<ApplicantCardProps> = ({
 
   const statusConfig = getStatusConfig();
 
+  const [avatarError, setAvatarError] = useState(false);
+
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.header} onPress={onViewProfile}>
-        <Image source={{ uri: avatar }} style={styles.avatar} />
+        {!avatarError && avatar ? (
+          <Image source={{ uri: avatar }} style={styles.avatar} onError={() => setAvatarError(true)} />
+        ) : (
+          <View style={[styles.avatar, styles.avatarPlaceholder]}>
+            <Text style={styles.avatarInitial}>{name?.[0] || '?'}</Text>
+          </View>
+        )}
         <View style={styles.info}>
           <View style={styles.nameRow}>
             <Text style={styles.name}>{name}</Text>
@@ -111,6 +119,16 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     marginRight: 12,
+    backgroundColor: '#e5e7eb',
+  },
+  avatarPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#6b7280',
   },
   info: {
     flex: 1,

@@ -1,5 +1,5 @@
 // FriendCard.tsx - 친구 카드 컴포넌트
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 
 interface FriendCardProps {
@@ -44,10 +44,18 @@ export const FriendCard: React.FC<FriendCardProps> = ({
 
   const Component = onPress ? TouchableOpacity : View;
 
+  const [avatarError, setAvatarError] = useState(false);
+
   return (
     <Component style={styles.container} onPress={onPress}>
       <View style={styles.avatarContainer}>
-        <Image source={{ uri: avatar }} style={styles.avatar} />
+        {!avatarError && avatar ? (
+          <Image source={{ uri: avatar }} style={styles.avatar} onError={() => setAvatarError(true)} />
+        ) : (
+          <View style={[styles.avatar, styles.avatarPlaceholder]}>
+            <Text style={styles.avatarInitial}>{name?.[0] || '?'}</Text>
+          </View>
+        )}
         {status && <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />}
       </View>
       <View style={styles.info}>
@@ -81,6 +89,16 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
+    backgroundColor: '#e5e7eb',
+  },
+  avatarPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#6b7280',
   },
   statusDot: {
     position: 'absolute',

@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import authService from '@/services/authService';
@@ -45,48 +48,58 @@ export const ForgotPasswordScreen: React.FC<{ navigation?: any }> = ({ navigatio
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation?.goBack()}>
-          <Text style={styles.backButton}>← 뒤로</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>비밀번호 찾기</Text>
-        <Text style={styles.subtitle}>가입하신 이메일로 비밀번호 재설정 링크를 보내드립니다</Text>
-      </View>
-
-      <View style={styles.form}>
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>이메일</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="이메일을 입력하세요"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            editable={!loading}
-          />
-        </View>
-
-        <TouchableOpacity
-          style={[styles.sendButton, loading && styles.sendButtonDisabled]}
-          onPress={handleSend}
-          disabled={loading}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
         >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.sendButtonText}>{sent ? '재발송' : '재설정 링크 받기'}</Text>
-          )}
-        </TouchableOpacity>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation?.goBack()}>
+              <Text style={styles.backButton}>← 뒤로</Text>
+            </TouchableOpacity>
+            <Text style={styles.title}>비밀번호 찾기</Text>
+            <Text style={styles.subtitle}>가입하신 이메일로 비밀번호 재설정 링크를 보내드립니다</Text>
+          </View>
 
-        {sent && (
-          <Text style={styles.sentMessage}>이메일이 발송되었습니다. 메일함을 확인해주세요.</Text>
-        )}
+          <View style={styles.form}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>이메일</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="이메일을 입력하세요"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                editable={!loading}
+              />
+            </View>
 
-        <TouchableOpacity style={styles.loginLink} onPress={() => navigation?.goBack()}>
-          <Text style={styles.loginLinkText}>로그인 화면으로 돌아가기</Text>
-        </TouchableOpacity>
-      </View>
+            <TouchableOpacity
+              style={[styles.sendButton, loading && styles.sendButtonDisabled]}
+              onPress={handleSend}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.sendButtonText}>{sent ? '재발송' : '재설정 링크 받기'}</Text>
+              )}
+            </TouchableOpacity>
+
+            {sent && (
+              <Text style={styles.sentMessage}>이메일이 발송되었습니다. 메일함을 확인해주세요.</Text>
+            )}
+
+            <TouchableOpacity style={styles.loginLink} onPress={() => navigation?.goBack()}>
+              <Text style={styles.loginLinkText}>로그인 화면으로 돌아가기</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
