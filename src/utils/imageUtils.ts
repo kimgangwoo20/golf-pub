@@ -122,7 +122,7 @@ export const takePhoto = async (options?: ImagePickerOptions): Promise<string | 
 /**
  * 이미지 선택 방법 선택 (갤러리/카메라)
  */
-export const showImagePickerOptions = (): Promise<string | null> => {
+export const showImagePickerOptions = (options?: ImagePickerOptions): Promise<string | null> => {
   return new Promise((resolve) => {
     Alert.alert(
       '이미지 추가',
@@ -131,14 +131,14 @@ export const showImagePickerOptions = (): Promise<string | null> => {
         {
           text: '카메라',
           onPress: async () => {
-            const uri = await takePhoto();
+            const uri = await takePhoto(options);
             resolve(uri);
           },
         },
         {
           text: '갤러리',
           onPress: async () => {
-            const uri = await pickImageFromGallery();
+            const uri = await pickImageFromGallery(options);
             resolve(uri);
           },
         },

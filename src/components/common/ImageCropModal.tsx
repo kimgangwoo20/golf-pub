@@ -1,5 +1,7 @@
-// 이미지 선택 확인 모달 — 크롭된 이미지 미리보기 + 확인/취소
-// 큰 버튼 + 앱 테마 색상으로 가시성 향상
+// 이미지 선택 확인 모달
+// - 시스템 크롭 UI 대신 앱 자체 미리보기 제공
+// - 원형 프레임 미리보기 + 확인/취소
+// - 네이티브 모듈 미사용 (TurboModule 호환성 이슈 방지)
 
 import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, Image, Dimensions } from 'react-native';
@@ -19,9 +21,9 @@ interface ImageCropModalProps {
 
 /**
  * 이미지 선택 확인 모달
- * - 시스템 크롭 후 결과 미리보기
- * - 큰 초록색 "선택 완료" 버튼
- * - expo-image-manipulator 미사용 (네이티브 모듈 에러 방지)
+ * - 시스템 크롭 UI 없이 앱 내부에서 미리보기
+ * - 원형 프레임으로 프로필 사진 미리보기
+ * - 네이티브 크롭 모듈 미사용 (New Architecture 호환)
  */
 export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   visible,
@@ -41,11 +43,11 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         {/* 상단 헤더 */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.headerCancelBtn} onPress={onCancel} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.headerBtn} onPress={onCancel} activeOpacity={0.7}>
             <Text style={styles.headerCancelText}>취소</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>사진 확인</Text>
-          <View style={{ width: 50 }} />
+          <View style={styles.headerBtn} />
         </View>
 
         {/* 이미지 미리보기 */}
@@ -88,7 +90,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  headerCancelBtn: {
+  headerBtn: {
     paddingVertical: 8,
     paddingHorizontal: 12,
     minWidth: 50,

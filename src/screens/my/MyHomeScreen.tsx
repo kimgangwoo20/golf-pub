@@ -375,10 +375,10 @@ export const MyHomeScreen: React.FC = () => {
     }
   };
 
-  // 초기 데이터 로드
+  // 초기 데이터 로드 (탭 전환 시 불필요한 재로드 방지)
   useEffect(() => {
     loadInitialData();
-  }, [selectedTab, user?.uid]);
+  }, [user?.uid]);
 
   // Firestore에서 posts 컬렉션 쿼리 (현재 사용자의 게시물)
   const loadInitialData = async () => {
@@ -1224,7 +1224,7 @@ export const MyHomeScreen: React.FC = () => {
         />
       ) : (
         <FlatList
-          key={`content-grid-${selectedTab}`}
+          key="content-grid"
           data={contents}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderContentItem}
