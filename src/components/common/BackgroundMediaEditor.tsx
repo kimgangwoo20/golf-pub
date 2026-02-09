@@ -23,9 +23,13 @@ import * as ImagePicker from 'expo-image-picker';
 import { profileAPI } from '@/services/api/profileAPI';
 import { colors, fontWeight } from '@/styles/theme';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const THUMB_SIZE = (SCREEN_WIDTH - 80) / 3;
 const MAX_MEDIA_COUNT = 5;
+// 바텀시트 최대 높이 (화면의 85%)
+const SHEET_MAX_HEIGHT = SCREEN_HEIGHT * 0.85;
+// FlatList 최대 높이 (시트 내부에서 스크롤 가능하도록)
+const LIST_MAX_HEIGHT = SCREEN_HEIGHT * 0.45;
 
 interface BackgroundMediaItem {
   url: string;
@@ -311,64 +315,63 @@ export const BackgroundMediaEditor: React.FC<BackgroundMediaEditorProps> = ({
         <Pressable style={styles.overlayDismiss} onPress={onClose} />
 
         <View style={styles.container}>
-          <SafeAreaView edges={['bottom']} style={styles.safeArea}>
-            <View style={styles.dragHandleWrap}>
-              <View style={styles.dragHandle} />
-            </View>
+          <View style={styles.dragHandleWrap}>
+            <View style={styles.dragHandle} />
+          </View>
 
-            <View style={styles.header}>
-              <Text style={styles.title}>배경 미디어 편집</Text>
-              <TouchableOpacity
-                style={styles.closeBtn}
-                onPress={onClose}
-                activeOpacity={0.7}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              >
-                <Text style={styles.closeBtnText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.subtitle}>
-              사진/영상을 추가하여 프로필 배경을 꾸며보세요 ({media.length}/{MAX_MEDIA_COUNT})
-            </Text>
-
-            <FlatList
-              data={media}
-              keyExtractor={(item) => item.url}
-              renderItem={renderMediaItem}
-              numColumns={3}
-              columnWrapperStyle={media.length > 1 ? styles.gridRow : undefined}
-              contentContainerStyle={styles.gridContent}
-              ListEmptyComponent={
-                <View style={styles.emptyWrap}>
-                  <Text style={styles.emptyIcon}>📷</Text>
-                  <Text style={styles.emptyText}>등록된 배경 미디어가 없습니다</Text>
-                  <Text style={styles.emptySubText}>아래 버튼을 눌러 추가해보세요</Text>
-                </View>
-              }
-            />
-
+          <View style={styles.header}>
+            <Text style={styles.title}>배경 미디어 편집</Text>
             <TouchableOpacity
-              style={[
-                styles.addBtn,
-                (uploading || media.length >= MAX_MEDIA_COUNT) && styles.addBtnDisabled,
-              ]}
-              onPress={handleAddMedia}
-              disabled={uploading || media.length >= MAX_MEDIA_COUNT}
+              style={styles.closeBtn}
+              onPress={onClose}
               activeOpacity={0.7}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
-              {uploading ? (
-                <View style={styles.uploadingRow}>
-                  <ActivityIndicator color="#fff" size="small" />
-                  <Text style={styles.uploadingText}>업로드 중...</Text>
-                </View>
-              ) : (
-                <Text style={styles.addBtnText}>
-                  {media.length >= MAX_MEDIA_COUNT ? '최대 개수 도달' : '+ 미디어 추가'}
-                </Text>
-              )}
+              <Text style={styles.closeBtnText}>✕</Text>
             </TouchableOpacity>
-          </SafeAreaView>
+          </View>
+
+          <Text style={styles.subtitle}>
+            사진/영상을 추가하여 프로필 배경을 꾸며보세요 ({media.length}/{MAX_MEDIA_COUNT})
+          </Text>
+
+          <FlatList
+            data={media}
+            keyExtractor={(item) => item.url}
+            renderItem={renderMediaItem}
+            numColumns={3}
+            columnWrapperStyle={media.length > 1 ? styles.gridRow : undefined}
+            contentContainerStyle={styles.gridContent}
+            style={styles.mediaList}
+            ListEmptyComponent={
+              <View style={styles.emptyWrap}>
+                <Text style={styles.emptyIcon}>📷</Text>
+                <Text style={styles.emptyText}>등록된 배경 미디어가 없습니다</Text>
+                <Text style={styles.emptySubText}>아래 버튼을 눌러 추가해보세요</Text>
+              </View>
+            }
+          />
+
+          <TouchableOpacity
+            style={[
+              styles.addBtn,
+              (uploading || media.length >= MAX_MEDIA_COUNT) && styles.addBtnDisabled,
+            ]}
+            onPress={handleAddMedia}
+            disabled={uploading || media.length >= MAX_MEDIA_COUNT}
+            activeOpacity={0.7}
+          >
+            {uploading ? (
+              <View style={styles.uploadingRow}>
+                <ActivityIndicator color="#fff" size="small" />
+                <Text style={styles.uploadingText}>업로드 중...</Text>
+              </View>
+            ) : (
+              <Text style={styles.addBtnText}>
+                {media.length >= MAX_MEDIA_COUNT ? '최대 개수 도달' : '+ 미디어 추가'}
+              </Text>
+            )}
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -471,15 +474,12 @@ const styles = StyleSheet.create({
   overlayDismiss: {
     flex: 1,
   },
-  safeArea: {
-    flex: 1,
-  },
   container: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '85%',
-    paddingBottom: 20,
+    maxHeight: SHEET_MAX_HEIGHT,
+    paddingBottom: 34,
   },
 
   // 드래그 핸들
@@ -538,6 +538,9 @@ const styles = StyleSheet.create({
   gridRow: {
     gap: 8,
     marginBottom: 8,
+  },
+  mediaList: {
+    maxHeight: LIST_MAX_HEIGHT,
   },
   thumbWrap: {
     width: THUMB_SIZE,
