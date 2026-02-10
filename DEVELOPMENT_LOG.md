@@ -160,6 +160,18 @@
   - App.tsx는 `my/settings/SettingsScreen.tsx`만 import, profile/ 버전은 참조 없음
 - [x] ~~TypeScript 0 에러, ESLint 0 에러 (560 warnings - 기존 any 타입)~~ (2026.02.10 완료)
 
+### 2026.02.10 .env 보안 정리
+
+- [x] ~~`.env` 파일 Git 추적 해제 (`git rm --cached .env`)~~ (2026.02.10 완료)
+  - `.env`가 `.gitignore`에 포함되어 있었지만 이미 tracked 상태로 실제 API 키가 커밋에 포함되어 있었음
+- [x] ~~`git filter-repo`로 전체 Git 히스토리에서 `.env` 완전 제거 + force push~~ (2026.02.10 완료)
+  - 169개 커밋 히스토리에서 `.env` 파일 흔적 완전 삭제
+  - `git log --all --oneline -- .env` → 0건 확인
+- [x] ~~`.env.example` 실제 `.env` 키 구조와 동기화~~ (2026.02.10 완료)
+  - 추가: `FIREBASE_DATABASE_URL`, `KAKAO_NATIVE_APP_KEY`/`REST_API_KEY`/`JS_KEY` (기존 단일 키 → 3종 분리)
+  - 추가: Cloudflare Images 4개, 백엔드/웹 URL 2개, 날씨 API 키
+  - 섹션 8개로 재정리 (Firebase, Kakao, Toss, Cloudflare, 백엔드, 날씨, 앱설정, 디버그)
+
 ### 2026.02.10 코드 감사 기반 버그 일괄 수정 (CRITICAL → LOW)
 
 - [x] ~~3-에이전트 병렬 코드 감사 수행 (Navigation/State, API/Firebase, UI/UX)~~ (2026.02.10 완료)
