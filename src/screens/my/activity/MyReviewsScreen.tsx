@@ -145,7 +145,12 @@ export const MyReviewsScreen: React.FC = () => {
                         style={styles.imageScroll}
                       >
                         {review.images.map((img: string, idx: number) => (
-                          <Image key={idx} source={{ uri: img }} style={styles.reviewImage} />
+                          <Image
+                            key={idx}
+                            source={{ uri: img }}
+                            style={styles.reviewImage}
+                            onError={() => {}}
+                          />
                         ))}
                       </ScrollView>
                     )}

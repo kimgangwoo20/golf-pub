@@ -22,7 +22,7 @@ export const SongCard: React.FC<SongCardProps> = ({
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       {albumArt ? (
-        <Image source={{ uri: albumArt }} style={styles.albumArt} />
+        <Image source={{ uri: albumArt }} style={styles.albumArt} onError={() => {}} />
       ) : (
         <View style={styles.albumArtPlaceholder}>
           <Text style={styles.placeholderIcon}>🎵</Text>

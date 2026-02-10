@@ -67,7 +67,11 @@ export const CreateChatScreen: React.FC<{ navigation?: any }> = ({ navigation })
 
   const renderFriendItem = ({ item }: { item: any }) => (
     <TouchableOpacity style={styles.friendItem} onPress={() => handleSelectFriend(item)}>
-      <Image source={{ uri: item.friendAvatar || DEFAULT_AVATAR }} style={styles.avatar} />
+      <Image
+        source={{ uri: item.friendAvatar || DEFAULT_AVATAR }}
+        style={styles.avatar}
+        onError={() => {}}
+      />
       <View style={styles.friendInfo}>
         <Text style={styles.friendName}>{item.friendName}</Text>
         <Text style={styles.friendStatus}>골프 친구</Text>

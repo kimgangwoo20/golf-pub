@@ -179,7 +179,12 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
           {photoList.map((photo, i) => (
             <View key={i} style={styles.slide}>
               {photo ? (
-                <Image source={{ uri: photo }} style={styles.slideImage} resizeMode="cover" />
+                <Image
+                  source={{ uri: photo }}
+                  style={styles.slideImage}
+                  resizeMode="cover"
+                  onError={() => {}}
+                />
               ) : (
                 <LinearGradient
                   colors={

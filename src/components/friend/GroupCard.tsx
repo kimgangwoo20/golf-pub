@@ -35,7 +35,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
 
   return (
     <Component style={styles.container} onPress={onPress}>
-      <Image source={{ uri: thumbnail }} style={styles.thumbnail} />
+      <Image source={{ uri: thumbnail }} style={styles.thumbnail} onError={() => {}} />
       <View style={styles.info}>
         <Text style={styles.name}>{name}</Text>
         <View style={styles.meta}>

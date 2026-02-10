@@ -282,244 +282,248 @@ export const CreateBookingScreen: React.FC = () => {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        {/* 제목 */}
-        <View style={styles.section}>
-          <Text style={styles.label}>
-            제목 <Text style={styles.required}>*</Text>
-          </Text>
-          <TextInput
-            style={styles.input}
-            placeholder="예: 주말 라운딩 같이 치실 분!"
-            value={title}
-            onChangeText={setTitle}
-            maxLength={50}
-          />
-          <Text style={styles.charCount}>{title.length}/50</Text>
-        </View>
-
-        {/* 골프장 */}
-        <View style={styles.section}>
-          <Text style={styles.label}>
-            골프장 <Text style={styles.required}>*</Text>
-          </Text>
-          <TextInput
-            style={styles.input}
-            placeholder="예: 세라지오CC"
-            value={golfCourse}
-            onChangeText={setGolfCourse}
-          />
-        </View>
-
-        {/* 지역 */}
-        <View style={styles.section}>
-          <Text style={styles.label}>
-            지역 <Text style={styles.required}>*</Text>
-          </Text>
-          <TextInput
-            style={styles.input}
-            placeholder="예: 경기 광주"
-            value={location}
-            onChangeText={setLocation}
-          />
-        </View>
-
-        {/* 날짜 & 시간 - 피커 */}
-        <View style={styles.section}>
-          <Text style={styles.label}>
-            날짜 & 시간 <Text style={styles.required}>*</Text>
-          </Text>
-          <View style={styles.row}>
-            <TouchableOpacity
-              style={[styles.pickerButton, styles.halfInput]}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Text style={styles.pickerIcon}>📅</Text>
-              <Text style={styles.pickerText}>{formatDateDisplay(selectedDate)}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.pickerButton, styles.halfInput]}
-              onPress={() => setShowTimePicker(true)}
-            >
-              <Text style={styles.pickerIcon}>🕐</Text>
-              <Text style={styles.pickerText}>{formatTime(selectedTime)}</Text>
-            </TouchableOpacity>
-          </View>
-
-          {showDatePicker && (
-            <DateTimePicker
-              value={selectedDate}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              minimumDate={new Date()}
-              onChange={onDateChange}
-              locale="ko"
-            />
-          )}
-          {showTimePicker && (
-            <DateTimePicker
-              value={selectedTime}
-              mode="time"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              minuteInterval={10}
-              onChange={onTimeChange}
-              locale="ko"
-            />
-          )}
-        </View>
-
-        {/* 인원 */}
-        <View style={styles.section}>
-          <Text style={styles.label}>
-            최대 인원 <Text style={styles.required}>*</Text>
-          </Text>
-          <View style={styles.chipRow}>
-            {playerCounts.map((count) => (
-              <TouchableOpacity
-                key={count}
-                style={[styles.chip, maxPlayers === count && styles.chipActive]}
-                onPress={() => setMaxPlayers(count)}
-              >
-                <Text style={[styles.chipText, maxPlayers === count && styles.chipTextActive]}>
-                  {count}명
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* 가격 */}
-        <View style={styles.section}>
-          <Text style={styles.label}>
-            1인당 가격 <Text style={styles.required}>*</Text>
-          </Text>
-          <View style={styles.priceInputContainer}>
+        <ScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* 제목 */}
+          <View style={styles.section}>
+            <Text style={styles.label}>
+              제목 <Text style={styles.required}>*</Text>
+            </Text>
             <TextInput
-              style={[styles.input, styles.priceInput]}
-              placeholder="120000"
-              value={price}
-              onChangeText={setPrice}
-              keyboardType="number-pad"
-              autoComplete="off"
-              textContentType="none"
-              importantForAutofill="no"
+              style={styles.input}
+              placeholder="예: 주말 라운딩 같이 치실 분!"
+              value={title}
+              onChangeText={setTitle}
+              maxLength={50}
             />
-            <Text style={styles.priceUnit}>원</Text>
+            <Text style={styles.charCount}>{title.length}/50</Text>
           </View>
-          <Text style={styles.hint}>그린피, 카트비 등 모든 비용 포함</Text>
-        </View>
 
-        {/* 실력 레벨 */}
-        <View style={styles.section}>
-          <Text style={styles.label}>실력 레벨</Text>
-          <View style={styles.levelGrid}>
-            {levels.map((item) => (
+          {/* 골프장 */}
+          <View style={styles.section}>
+            <Text style={styles.label}>
+              골프장 <Text style={styles.required}>*</Text>
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="예: 세라지오CC"
+              value={golfCourse}
+              onChangeText={setGolfCourse}
+            />
+          </View>
+
+          {/* 지역 */}
+          <View style={styles.section}>
+            <Text style={styles.label}>
+              지역 <Text style={styles.required}>*</Text>
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="예: 경기 광주"
+              value={location}
+              onChangeText={setLocation}
+            />
+          </View>
+
+          {/* 날짜 & 시간 - 피커 */}
+          <View style={styles.section}>
+            <Text style={styles.label}>
+              날짜 & 시간 <Text style={styles.required}>*</Text>
+            </Text>
+            <View style={styles.row}>
               <TouchableOpacity
-                key={item.key}
-                style={[styles.levelCard, level === item.key && styles.levelCardActive]}
-                onPress={() => setLevel(item.key)}
+                style={[styles.pickerButton, styles.halfInput]}
+                onPress={() => setShowDatePicker(true)}
               >
-                <Text style={[styles.levelLabel, level === item.key && styles.levelLabelActive]}>
-                  {item.label}
-                </Text>
-                <Text style={[styles.levelDesc, level === item.key && styles.levelDescActive]}>
-                  {item.desc}
-                </Text>
+                <Text style={styles.pickerIcon}>📅</Text>
+                <Text style={styles.pickerText}>{formatDateDisplay(selectedDate)}</Text>
               </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* 술집 연계 */}
-        <View style={styles.section}>
-          <View style={styles.switchRow}>
-            <View>
-              <Text style={styles.label}>술집 연계</Text>
-              <Text style={styles.hint}>라운딩 후 골프 Pub에서 모임</Text>
-            </View>
-            <Switch
-              value={hasPub}
-              onValueChange={setHasPub}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor="white"
-            />
-          </View>
-
-          {hasPub && (
-            <View style={styles.pubInputs}>
-              <TextInput
-                style={styles.input}
-                placeholder="술집 이름 (예: 골프 Pub 횡성점)"
-                value={pubName}
-                onChangeText={setPubName}
-              />
               <TouchableOpacity
-                style={[styles.pickerButton, { marginTop: 8 }]}
-                onPress={() => setShowPubTimePicker(true)}
+                style={[styles.pickerButton, styles.halfInput]}
+                onPress={() => setShowTimePicker(true)}
               >
                 <Text style={styles.pickerIcon}>🕐</Text>
-                <Text style={styles.pickerText}>{formatTime(selectedPubTime)}</Text>
+                <Text style={styles.pickerText}>{formatTime(selectedTime)}</Text>
               </TouchableOpacity>
-              {showPubTimePicker && (
-                <DateTimePicker
-                  value={selectedPubTime}
-                  mode="time"
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  minuteInterval={10}
-                  onChange={onPubTimeChange}
-                  locale="ko"
-                />
-              )}
             </View>
-          )}
-        </View>
 
-        {/* 이미지 */}
-        <View style={styles.section}>
-          <Text style={styles.label}>
-            사진 ({images.length}/{MAX_IMAGES})
-          </Text>
-          <View style={styles.imageRow}>
-            {images.map((uri, index) => (
-              <View key={index} style={styles.imageWrapper}>
-                <Image source={{ uri }} style={styles.imagePreview} />
-                <TouchableOpacity
-                  style={styles.imageRemoveButton}
-                  onPress={() => removeImage(index)}
-                >
-                  <Text style={styles.imageRemoveText}>X</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-            {images.length < MAX_IMAGES && (
-              <TouchableOpacity style={styles.imageAddButton} onPress={pickImages}>
-                <Text style={styles.imageAddIcon}>+</Text>
-                <Text style={styles.imageAddText}>사진 추가</Text>
-              </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={selectedDate}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                minimumDate={new Date()}
+                onChange={onDateChange}
+                locale="ko"
+              />
+            )}
+            {showTimePicker && (
+              <DateTimePicker
+                value={selectedTime}
+                mode="time"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                minuteInterval={10}
+                onChange={onTimeChange}
+                locale="ko"
+              />
             )}
           </View>
-          <Text style={styles.hint}>골프장, 코스 사진 등을 추가하면 참가율이 높아져요</Text>
-        </View>
 
-        {/* 상세 설명 */}
-        <View style={styles.section}>
-          <Text style={styles.label}>상세 설명</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="라운딩 관련 상세 내용을 작성해주세요"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            numberOfLines={6}
-            textAlignVertical="top"
-            maxLength={500}
-          />
-          <Text style={styles.charCount}>{description.length}/500</Text>
-        </View>
+          {/* 인원 */}
+          <View style={styles.section}>
+            <Text style={styles.label}>
+              최대 인원 <Text style={styles.required}>*</Text>
+            </Text>
+            <View style={styles.chipRow}>
+              {playerCounts.map((count) => (
+                <TouchableOpacity
+                  key={count}
+                  style={[styles.chip, maxPlayers === count && styles.chipActive]}
+                  onPress={() => setMaxPlayers(count)}
+                >
+                  <Text style={[styles.chipText, maxPlayers === count && styles.chipTextActive]}>
+                    {count}명
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
 
-        {/* 하단 여백 */}
-        <View style={{ height: 40 }} />
-      </ScrollView>
+          {/* 가격 */}
+          <View style={styles.section}>
+            <Text style={styles.label}>
+              1인당 가격 <Text style={styles.required}>*</Text>
+            </Text>
+            <View style={styles.priceInputContainer}>
+              <TextInput
+                style={[styles.input, styles.priceInput]}
+                placeholder="120000"
+                value={price}
+                onChangeText={setPrice}
+                keyboardType="number-pad"
+                autoComplete="off"
+                textContentType="none"
+                importantForAutofill="no"
+              />
+              <Text style={styles.priceUnit}>원</Text>
+            </View>
+            <Text style={styles.hint}>그린피, 카트비 등 모든 비용 포함</Text>
+          </View>
+
+          {/* 실력 레벨 */}
+          <View style={styles.section}>
+            <Text style={styles.label}>실력 레벨</Text>
+            <View style={styles.levelGrid}>
+              {levels.map((item) => (
+                <TouchableOpacity
+                  key={item.key}
+                  style={[styles.levelCard, level === item.key && styles.levelCardActive]}
+                  onPress={() => setLevel(item.key)}
+                >
+                  <Text style={[styles.levelLabel, level === item.key && styles.levelLabelActive]}>
+                    {item.label}
+                  </Text>
+                  <Text style={[styles.levelDesc, level === item.key && styles.levelDescActive]}>
+                    {item.desc}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* 술집 연계 */}
+          <View style={styles.section}>
+            <View style={styles.switchRow}>
+              <View>
+                <Text style={styles.label}>술집 연계</Text>
+                <Text style={styles.hint}>라운딩 후 골프 Pub에서 모임</Text>
+              </View>
+              <Switch
+                value={hasPub}
+                onValueChange={setHasPub}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor="white"
+              />
+            </View>
+
+            {hasPub && (
+              <View style={styles.pubInputs}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="술집 이름 (예: 골프 Pub 횡성점)"
+                  value={pubName}
+                  onChangeText={setPubName}
+                />
+                <TouchableOpacity
+                  style={[styles.pickerButton, { marginTop: 8 }]}
+                  onPress={() => setShowPubTimePicker(true)}
+                >
+                  <Text style={styles.pickerIcon}>🕐</Text>
+                  <Text style={styles.pickerText}>{formatTime(selectedPubTime)}</Text>
+                </TouchableOpacity>
+                {showPubTimePicker && (
+                  <DateTimePicker
+                    value={selectedPubTime}
+                    mode="time"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    minuteInterval={10}
+                    onChange={onPubTimeChange}
+                    locale="ko"
+                  />
+                )}
+              </View>
+            )}
+          </View>
+
+          {/* 이미지 */}
+          <View style={styles.section}>
+            <Text style={styles.label}>
+              사진 ({images.length}/{MAX_IMAGES})
+            </Text>
+            <View style={styles.imageRow}>
+              {images.map((uri, index) => (
+                <View key={index} style={styles.imageWrapper}>
+                  <Image source={{ uri }} style={styles.imagePreview} />
+                  <TouchableOpacity
+                    style={styles.imageRemoveButton}
+                    onPress={() => removeImage(index)}
+                  >
+                    <Text style={styles.imageRemoveText}>X</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+              {images.length < MAX_IMAGES && (
+                <TouchableOpacity style={styles.imageAddButton} onPress={pickImages}>
+                  <Text style={styles.imageAddIcon}>+</Text>
+                  <Text style={styles.imageAddText}>사진 추가</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            <Text style={styles.hint}>골프장, 코스 사진 등을 추가하면 참가율이 높아져요</Text>
+          </View>
+
+          {/* 상세 설명 */}
+          <View style={styles.section}>
+            <Text style={styles.label}>상세 설명</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="라운딩 관련 상세 내용을 작성해주세요"
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={6}
+              textAlignVertical="top"
+              maxLength={500}
+            />
+            <Text style={styles.charCount}>{description.length}/500</Text>
+          </View>
+
+          {/* 하단 여백 */}
+          <View style={{ height: 40 }} />
+        </ScrollView>
       </KeyboardAvoidingView>
 
       {/* 하단 등록 버튼 */}

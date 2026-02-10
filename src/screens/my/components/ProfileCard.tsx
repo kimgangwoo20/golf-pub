@@ -11,6 +11,7 @@ export const ProfileCard: React.FC<Props> = ({ user, onEdit }) => (
     <Image
       source={{ uri: user?.photoURL || 'https://via.placeholder.com/100' }}
       style={styles.avatar}
+      onError={() => {}}
     />
     <Text style={styles.name}>{user?.name || '사용자'}</Text>
     <Text style={styles.level}>Level {user?.level || 1}</Text>

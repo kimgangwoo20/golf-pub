@@ -21,7 +21,7 @@ export const ParticipantItem: React.FC<ParticipantItemProps> = ({
 
   return (
     <Component style={styles.container} onPress={onPress}>
-      <Image source={{ uri: avatar }} style={styles.avatar} />
+      <Image source={{ uri: avatar }} style={styles.avatar} onError={() => {}} />
       <View style={styles.info}>
         <View style={styles.nameRow}>
           <Text style={styles.name}>{name}</Text>

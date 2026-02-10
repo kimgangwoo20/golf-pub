@@ -31,7 +31,7 @@ const { width } = Dimensions.get('window');
 export const ProductDetailScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const route = useRoute();
-  const { productId } = route.params as { productId: string };
+  const { productId } = (route.params as { productId: string }) ?? {};
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -279,7 +279,12 @@ export const ProductDetailScreen: React.FC = () => {
             >
               {product.images.length > 0 ? (
                 product.images.map((image, index) => (
-                  <Image key={index} source={{ uri: image }} style={styles.galleryImage} />
+                  <Image
+                    key={index}
+                    source={{ uri: image }}
+                    style={styles.galleryImage}
+                    onError={() => {}}
+                  />
                 ))
               ) : (
                 <View
@@ -304,7 +309,11 @@ export const ProductDetailScreen: React.FC = () => {
           {/* 판매자 정보 */}
           <TouchableOpacity style={styles.sellerSection} onPress={handleSellerPress}>
             {product.sellerImage ? (
-              <Image source={{ uri: product.sellerImage }} style={styles.sellerImage} />
+              <Image
+                source={{ uri: product.sellerImage }}
+                style={styles.sellerImage}
+                onError={() => {}}
+              />
             ) : (
               <View
                 style={[

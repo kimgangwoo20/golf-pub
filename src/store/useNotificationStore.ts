@@ -57,10 +57,11 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
             };
           }) as Notification[];
 
-          set({ notifications });
+          const unreadCount = notifications.filter((n) => !n.read).length;
+          set({ notifications, unreadCount });
         },
-        () => {
-          // 알림 구독 오류 - 무시
+        (error) => {
+          console.error('알림 구독 오류:', error);
         },
       );
   },
@@ -82,13 +83,13 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       .collection('users')
       .doc(userId)
       .collection('notifications')
-      .where('isRead', '==', false)
+      .where('read', '==', false)
       .onSnapshot(
         (snapshot) => {
           set({ unreadCount: snapshot.size });
         },
-        () => {
-          // 읽지 않은 알림 구독 오류 - 무시
+        (error) => {
+          console.error('읽지 않은 알림 구독 오류:', error);
         },
       );
   },

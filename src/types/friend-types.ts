@@ -3,7 +3,7 @@
 export type FriendshipStatus = 'accepted' | 'pending' | 'blocked';
 
 export interface Friend {
-  id: number;
+  id: string;
   name: string;
   image: string;
   handicap: number;
@@ -15,8 +15,8 @@ export interface Friend {
 }
 
 export interface FriendRequest {
-  id: number;
-  userId: number;
+  id: string;
+  userId: string;
   userName: string;
   userImage: string;
   userHandicap: number;

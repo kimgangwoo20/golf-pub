@@ -278,7 +278,12 @@ export const BookingDetailScreen: React.FC = () => {
                 onMomentumScrollEnd={onImageScroll}
                 keyExtractor={(_, index) => `img-${index}`}
                 renderItem={({ item }) => (
-                  <Image source={{ uri: item }} style={styles.image} resizeMode="cover" />
+                  <Image
+                    source={{ uri: item }}
+                    style={styles.image}
+                    resizeMode="cover"
+                    onError={() => {}}
+                  />
                 )}
               />
               {bookingImages.length > 1 && (
@@ -366,7 +371,11 @@ export const BookingDetailScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>호스트</Text>
           <View style={styles.hostCard}>
             {booking.host.avatar ? (
-              <Image source={{ uri: booking.host.avatar }} style={styles.hostAvatar} />
+              <Image
+                source={{ uri: booking.host.avatar }}
+                style={styles.hostAvatar}
+                onError={() => {}}
+              />
             ) : (
               <View
                 style={[

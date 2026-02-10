@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import firestoreModule from '@react-native-firebase/firestore';
 import {
   firestore as firebaseFirestore,
   FirestoreTimestamp,
@@ -22,7 +23,7 @@ interface FriendState {
   loadFriends: (userId: string) => Promise<void>;
   sendFriendRequest: (userId: string, friendId: string, friendName: string) => Promise<void>;
   acceptFriendRequest: (requestId: string) => Promise<void>;
-  removeFriend: (friendId: string) => Promise<void>;
+  removeFriend: (userId: string, friendId: string) => Promise<void>;
 }
 
 export const useFriendStore = create<FriendState>((set) => ({
@@ -54,7 +55,7 @@ export const useFriendStore = create<FriendState>((set) => ({
         const batch = friendIds.slice(i, i + 10);
         const usersSnapshot = await firebaseFirestore
           .collection('users')
-          .where('__name__' as any, 'in', batch)
+          .where(firestoreModule.FieldPath.documentId(), 'in', batch)
           .get();
 
         usersSnapshot.docs.forEach((userDoc) => {
@@ -107,15 +108,28 @@ export const useFriendStore = create<FriendState>((set) => ({
     }
   },
 
-  removeFriend: async (friendId) => {
+  removeFriend: async (userId, friendId) => {
     try {
-      // 서브컬렉션에서 삭제 (양방향은 firebaseFriends.removeFriend 사용 권장)
-      await firebaseFirestore
-        .collection('users')
-        .doc(friendId)
-        .collection('friends')
-        .doc(friendId)
-        .delete();
+      // 양방향 삭제: 내 목록에서 친구 제거 + 친구 목록에서 나 제거
+      await Promise.all([
+        firebaseFirestore
+          .collection('users')
+          .doc(userId)
+          .collection('friends')
+          .doc(friendId)
+          .delete(),
+        firebaseFirestore
+          .collection('users')
+          .doc(friendId)
+          .collection('friends')
+          .doc(userId)
+          .delete(),
+      ]);
+
+      // 로컬 상태 업데이트
+      set((state) => ({
+        friends: state.friends.filter((f) => f.friendId !== friendId),
+      }));
     } catch (error: any) {
       throw error;
     }

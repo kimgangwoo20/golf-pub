@@ -7,7 +7,9 @@ import { firebaseMessaging } from './firebaseMessaging';
 import { profileAPI } from '@/services/api/profileAPI';
 import { callFunction } from '@/services/firebase/firebaseFunctions';
 
-export interface Booking {
+// Booking 타입은 booking-types.ts에서 가져옴 (participants.members: BookingMember[])
+// firebaseBooking에서는 간소화된 인터페이스 사용 (Firestore 문서 구조)
+export interface FirebaseBooking {
   id: string;
   title: string;
   course: string;
@@ -17,7 +19,8 @@ export interface Booking {
   participants: {
     current: number;
     max: number;
-    list: string[]; // userId 배열
+    list: string[]; // 하위 호환: userId 배열 (레거시)
+    members?: { uid: string; name: string; role: string }[]; // 표준 구조
   };
   price: {
     original: number;
@@ -32,7 +35,7 @@ export interface Booking {
  * 부킹 생성
  */
 export const createBooking = async (
-  bookingData: Partial<Booking>,
+  bookingData: Partial<FirebaseBooking>,
 ): Promise<{
   success: boolean;
   bookingId?: string;
@@ -96,10 +99,12 @@ export const joinBooking = async (
         return { success: false, message: '존재하지 않는 부킹입니다.' };
       }
 
-      const bookingData = bookingDoc.data() as Booking;
+      const bookingData = bookingDoc.data() as FirebaseBooking;
 
-      // 이미 참가 중인지 확인
-      if (bookingData.participants.list.includes(userId)) {
+      // 이미 참가 중인지 확인 (list 또는 members 양쪽 확인)
+      const isInList = bookingData.participants.list?.includes(userId);
+      const isInMembers = bookingData.participants.members?.some((m) => m.uid === userId);
+      if (isInList || isInMembers) {
         return { success: false, message: '이미 참가 중입니다.' };
       }
 
@@ -199,7 +204,7 @@ export const getBookings = async (filter?: {
   status?: string;
   date?: string;
   level?: string;
-}): Promise<Booking[]> => {
+}): Promise<FirebaseBooking[]> => {
   try {
     let query = firestore().collection('bookings').orderBy('createdAt', 'desc').limit(20);
 
@@ -216,7 +221,7 @@ export const getBookings = async (filter?: {
     return snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-    })) as Booking[];
+    })) as FirebaseBooking[];
   } catch (error) {
     console.error('부킹 목록 조회 실패:', error);
     return [];
@@ -226,7 +231,7 @@ export const getBookings = async (filter?: {
 /**
  * 부킹 상세 정보 가져오기
  */
-export const getBookingDetail = async (bookingId: string): Promise<Booking | null> => {
+export const getBookingDetail = async (bookingId: string): Promise<FirebaseBooking | null> => {
   try {
     const doc = await firestore().collection('bookings').doc(bookingId).get();
 
@@ -237,7 +242,7 @@ export const getBookingDetail = async (bookingId: string): Promise<Booking | nul
     return {
       id: doc.id,
       ...doc.data(),
-    } as Booking;
+    } as FirebaseBooking;
   } catch (error) {
     console.error('부킹 상세 조회 실패:', error);
     return null;
@@ -247,7 +252,7 @@ export const getBookingDetail = async (bookingId: string): Promise<Booking | nul
 /**
  * 내가 생성한 부킹 목록
  */
-export const getMyHostedBookings = async (userId: string): Promise<Booking[]> => {
+export const getMyHostedBookings = async (userId: string): Promise<FirebaseBooking[]> => {
   try {
     const snapshot = await firestore()
       .collection('bookings')
@@ -258,7 +263,7 @@ export const getMyHostedBookings = async (userId: string): Promise<Booking[]> =>
     return snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-    })) as Booking[];
+    })) as FirebaseBooking[];
   } catch (error) {
     console.error('내 부킹 조회 실패:', error);
     return [];
@@ -268,7 +273,7 @@ export const getMyHostedBookings = async (userId: string): Promise<Booking[]> =>
 /**
  * 내가 참가한 부킹 목록
  */
-export const getMyJoinedBookings = async (userId: string): Promise<Booking[]> => {
+export const getMyJoinedBookings = async (userId: string): Promise<FirebaseBooking[]> => {
   try {
     const snapshot = await firestore()
       .collection('bookings')
@@ -279,7 +284,7 @@ export const getMyJoinedBookings = async (userId: string): Promise<Booking[]> =>
     return snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-    })) as Booking[];
+    })) as FirebaseBooking[];
   } catch (error) {
     console.error('참가 부킹 조회 실패:', error);
     return [];
@@ -496,9 +501,7 @@ export const getPopularBookings = async (
     if (snapshot.empty) return [];
 
     // 호스트 ID 수집 후 배치 쿼리 (N+1 방지)
-    const hostIds = [
-      ...new Set(snapshot.docs.map((doc) => doc.data().hostId).filter(Boolean)),
-    ];
+    const hostIds = [...new Set(snapshot.docs.map((doc) => doc.data().hostId).filter(Boolean))];
     const hostMap: Record<string, string> = {};
 
     // Firestore 'in' 쿼리는 최대 10개씩
@@ -573,9 +576,7 @@ export const getRecommendedBookings = async (
       .slice(0, limitCount);
 
     // 호스트 ID 수집 후 배치 쿼리 (N+1 방지)
-    const hostIds = [
-      ...new Set(filteredDocs.map((doc) => doc.data().hostId).filter(Boolean)),
-    ];
+    const hostIds = [...new Set(filteredDocs.map((doc) => doc.data().hostId).filter(Boolean))];
     const hostMap: Record<string, string> = {};
 
     for (let i = 0; i < hostIds.length; i += 10) {

@@ -136,14 +136,19 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
     return (
       <View style={[styles.messageContainer, isMyMessage ? styles.myMessage : styles.otherMessage]}>
         {!isMyMessage && item.senderAvatar && (
-          <Image source={{ uri: item.senderAvatar }} style={styles.avatar} />
+          <Image source={{ uri: item.senderAvatar }} style={styles.avatar} onError={() => {}} />
         )}
 
         <View style={[styles.messageBubble, isMyMessage && styles.myBubble]}>
           {!isMyMessage && <Text style={styles.senderName}>{item.senderName}</Text>}
 
           {item.type === 'image' && item.imageUrl ? (
-            <Image source={{ uri: item.imageUrl }} style={styles.messageImage} resizeMode="cover" />
+            <Image
+              source={{ uri: item.imageUrl }}
+              style={styles.messageImage}
+              resizeMode="cover"
+              onError={() => {}}
+            />
           ) : (
             <Text
               style={[

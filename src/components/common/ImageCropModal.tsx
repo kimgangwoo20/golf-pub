@@ -166,6 +166,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                 source={{ uri: imageUri }}
                 style={[styles.cropImage, animatedImageStyle]}
                 resizeMode="cover"
+                onError={() => {}}
               />
             </GestureDetector>
 

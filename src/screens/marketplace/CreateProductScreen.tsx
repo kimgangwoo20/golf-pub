@@ -179,156 +179,160 @@ export const CreateProductScreen: React.FC = () => {
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          {/* 이미지 추가 */}
-          <View style={styles.section}>
-            <Text style={styles.label}>
-              상품 이미지 <Text style={styles.required}>*</Text>
-            </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.imageScroll}
-            >
-              <TouchableOpacity style={styles.addImageButton} onPress={handleAddImage}>
-                <Text style={styles.addImageIcon}>📷</Text>
-                <Text style={styles.addImageText}>{images.length}/10</Text>
-              </TouchableOpacity>
-              {images.map((uri, index) => (
-                <View key={index} style={styles.imageContainer}>
-                  <Image source={{ uri }} style={styles.selectedImage} />
-                  <TouchableOpacity
-                    style={styles.removeImageButton}
-                    onPress={() => handleRemoveImage(index)}
-                  >
-                    <Text style={styles.removeImageText}>✕</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-
-          {/* 제목 */}
-          <View style={styles.section}>
-            <Text style={styles.label}>
-              제목 <Text style={styles.required}>*</Text>
-            </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="상품 제목을 입력하세요"
-              value={title}
-              onChangeText={setTitle}
-              maxLength={50}
-            />
-            <Text style={styles.charCount}>{title.length}/50</Text>
-          </View>
-
-          {/* 카테고리 */}
-          <View style={styles.section}>
-            <Text style={styles.label}>
-              카테고리 <Text style={styles.required}>*</Text>
-            </Text>
-            <View style={styles.categoryGrid}>
-              {CATEGORIES.map((cat) => (
-                <TouchableOpacity
-                  key={cat.id}
-                  style={[
-                    styles.categoryButton,
-                    category === cat.id && styles.categoryButtonActive,
-                  ]}
-                  onPress={() => setCategory(cat.id)}
-                >
-                  <Text style={styles.categoryIcon}>{cat.icon}</Text>
-                  <Text
-                    style={[
-                      styles.categoryButtonText,
-                      category === cat.id && styles.categoryButtonTextActive,
-                    ]}
-                  >
-                    {cat.name}
-                  </Text>
+          <ScrollView
+            style={styles.scrollView}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* 이미지 추가 */}
+            <View style={styles.section}>
+              <Text style={styles.label}>
+                상품 이미지 <Text style={styles.required}>*</Text>
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.imageScroll}
+              >
+                <TouchableOpacity style={styles.addImageButton} onPress={handleAddImage}>
+                  <Text style={styles.addImageIcon}>📷</Text>
+                  <Text style={styles.addImageText}>{images.length}/10</Text>
                 </TouchableOpacity>
-              ))}
+                {images.map((uri, index) => (
+                  <View key={index} style={styles.imageContainer}>
+                    <Image source={{ uri }} style={styles.selectedImage} />
+                    <TouchableOpacity
+                      style={styles.removeImageButton}
+                      onPress={() => handleRemoveImage(index)}
+                    >
+                      <Text style={styles.removeImageText}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
             </View>
-          </View>
 
-          {/* 가격 */}
-          <View style={styles.section}>
-            <Text style={styles.label}>
-              가격 <Text style={styles.required}>*</Text>
-            </Text>
-            <View style={styles.priceInputContainer}>
+            {/* 제목 */}
+            <View style={styles.section}>
+              <Text style={styles.label}>
+                제목 <Text style={styles.required}>*</Text>
+              </Text>
               <TextInput
-                style={styles.priceInput}
-                placeholder="0"
-                value={price}
-                onChangeText={(text) => setPrice(text.replace(/[^0-9]/g, ''))}
-                keyboardType="numeric"
+                style={styles.input}
+                placeholder="상품 제목을 입력하세요"
+                value={title}
+                onChangeText={setTitle}
+                maxLength={50}
               />
-              <Text style={styles.priceUnit}>원</Text>
+              <Text style={styles.charCount}>{title.length}/50</Text>
             </View>
-          </View>
 
-          {/* 상태 */}
-          <View style={styles.section}>
-            <Text style={styles.label}>
-              상품 상태 <Text style={styles.required}>*</Text>
-            </Text>
-            <View style={styles.conditionGrid}>
-              {(Object.keys(CONDITION_LABELS) as ProductCondition[]).map((cond) => (
-                <TouchableOpacity
-                  key={cond}
-                  style={[
-                    styles.conditionButton,
-                    condition === cond && styles.conditionButtonActive,
-                  ]}
-                  onPress={() => setCondition(cond)}
-                >
-                  <Text
+            {/* 카테고리 */}
+            <View style={styles.section}>
+              <Text style={styles.label}>
+                카테고리 <Text style={styles.required}>*</Text>
+              </Text>
+              <View style={styles.categoryGrid}>
+                {CATEGORIES.map((cat) => (
+                  <TouchableOpacity
+                    key={cat.id}
                     style={[
-                      styles.conditionButtonText,
-                      condition === cond && styles.conditionButtonTextActive,
+                      styles.categoryButton,
+                      category === cat.id && styles.categoryButtonActive,
                     ]}
+                    onPress={() => setCategory(cat.id)}
                   >
-                    {CONDITION_LABELS[cond]}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text style={styles.categoryIcon}>{cat.icon}</Text>
+                    <Text
+                      style={[
+                        styles.categoryButtonText,
+                        category === cat.id && styles.categoryButtonTextActive,
+                      ]}
+                    >
+                      {cat.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
-          </View>
 
-          {/* 거래 지역 */}
-          <View style={styles.section}>
-            <Text style={styles.label}>거래 지역</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="예: 서울 강남구"
-              value={location}
-              onChangeText={setLocation}
-            />
-          </View>
+            {/* 가격 */}
+            <View style={styles.section}>
+              <Text style={styles.label}>
+                가격 <Text style={styles.required}>*</Text>
+              </Text>
+              <View style={styles.priceInputContainer}>
+                <TextInput
+                  style={styles.priceInput}
+                  placeholder="0"
+                  value={price}
+                  onChangeText={(text) => setPrice(text.replace(/[^0-9]/g, ''))}
+                  keyboardType="numeric"
+                />
+                <Text style={styles.priceUnit}>원</Text>
+              </View>
+            </View>
 
-          {/* 상세 설명 */}
-          <View style={styles.section}>
-            <Text style={styles.label}>
-              상세 설명 <Text style={styles.required}>*</Text>
-            </Text>
-            <TextInput
-              style={[styles.input, styles.descriptionInput]}
-              placeholder="상품에 대해 자세히 설명해주세요"
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={6}
-              maxLength={1000}
-              textAlignVertical="top"
-            />
-            <Text style={styles.charCount}>{description.length}/1000</Text>
-          </View>
+            {/* 상태 */}
+            <View style={styles.section}>
+              <Text style={styles.label}>
+                상품 상태 <Text style={styles.required}>*</Text>
+              </Text>
+              <View style={styles.conditionGrid}>
+                {(Object.keys(CONDITION_LABELS) as ProductCondition[]).map((cond) => (
+                  <TouchableOpacity
+                    key={cond}
+                    style={[
+                      styles.conditionButton,
+                      condition === cond && styles.conditionButtonActive,
+                    ]}
+                    onPress={() => setCondition(cond)}
+                  >
+                    <Text
+                      style={[
+                        styles.conditionButtonText,
+                        condition === cond && styles.conditionButtonTextActive,
+                      ]}
+                    >
+                      {CONDITION_LABELS[cond]}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
 
-          {/* 하단 여백 */}
-          <View style={styles.bottomSpacing} />
-        </ScrollView>
+            {/* 거래 지역 */}
+            <View style={styles.section}>
+              <Text style={styles.label}>거래 지역</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="예: 서울 강남구"
+                value={location}
+                onChangeText={setLocation}
+              />
+            </View>
+
+            {/* 상세 설명 */}
+            <View style={styles.section}>
+              <Text style={styles.label}>
+                상세 설명 <Text style={styles.required}>*</Text>
+              </Text>
+              <TextInput
+                style={[styles.input, styles.descriptionInput]}
+                placeholder="상품에 대해 자세히 설명해주세요"
+                value={description}
+                onChangeText={setDescription}
+                multiline
+                numberOfLines={6}
+                maxLength={1000}
+                textAlignVertical="top"
+              />
+              <Text style={styles.charCount}>{description.length}/1000</Text>
+            </View>
+
+            {/* 하단 여백 */}
+            <View style={styles.bottomSpacing} />
+          </ScrollView>
         </KeyboardAvoidingView>
 
         {/* 등록 버튼 */}

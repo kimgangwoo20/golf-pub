@@ -68,7 +68,11 @@ export const formatters = {
     if (diffHour < 24) return `${diffHour}시간 전`;
     if (diffDay < 7) return `${diffDay}일 전`;
     if (diffDay < 30) return `${Math.floor(diffDay / 7)}주 전`;
-    return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+    // 올해인 경우 월/일만, 작년 이전인 경우 연도 포함
+    if (date.getFullYear() === now.getFullYear()) {
+      return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+    }
+    return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
   },
 
   /**

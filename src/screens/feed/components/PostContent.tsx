@@ -27,7 +27,7 @@ export const PostContent: React.FC<Props> = ({ post, onLike, onBack }) => (
     <Text style={styles.content}>{post?.content || ''}</Text>
 
     {post?.images?.map((img: string, idx: number) => (
-      <Image key={idx} source={{ uri: img }} style={styles.image} />
+      <Image key={idx} source={{ uri: img }} style={styles.image} onError={() => {}} />
     ))}
 
     <View style={styles.actions}>

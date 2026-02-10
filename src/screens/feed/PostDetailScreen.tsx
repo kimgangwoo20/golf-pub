@@ -16,7 +16,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { FeedStackParamList } from '@/types/navigation-types';
 import { Post, Comment } from '@/types/feed-types';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useFeedStore } from '@/store/useFeedStore';
@@ -31,14 +32,13 @@ const { width } = Dimensions.get('window');
 
 export const PostDetailScreen: React.FC = () => {
   const navigation = useNavigation();
-  const route = useRoute();
+  const route = useRoute<RouteProp<FeedStackParamList, 'PostDetail'>>();
   const { user } = useAuthStore();
 
   // 현재 사용자 ID
   const currentUserId = user?.uid || '';
 
-  // @ts-expect-error route.params 타입 미정의
-  const postId = route.params?.postId as string;
+  const postId = route.params?.postId;
   const { getPostById, getPostComments } = useFeedStore();
 
   const [post, setPost] = useState<Post | null>(null);
@@ -468,7 +468,11 @@ export const PostDetailScreen: React.FC = () => {
           <View style={styles.postSection}>
             {/* 작성자 */}
             <View style={styles.authorSection}>
-              <Image source={{ uri: post.author.image }} style={styles.authorImage} />
+              <Image
+                source={{ uri: post.author.image }}
+                style={styles.authorImage}
+                onError={() => {}}
+              />
               <View style={styles.authorInfo}>
                 <View style={styles.authorNameRow}>
                   <Text style={styles.authorName}>{post.author.name}</Text>
@@ -541,7 +545,11 @@ export const PostDetailScreen: React.FC = () => {
 
             {comments.map((comment) => (
               <View key={comment.id} style={styles.commentItem}>
-                <Image source={{ uri: comment.author.image }} style={styles.commentAuthorImage} />
+                <Image
+                  source={{ uri: comment.author.image }}
+                  style={styles.commentAuthorImage}
+                  onError={() => {}}
+                />
 
                 <View style={styles.commentContent}>
                   <View style={styles.commentHeader}>

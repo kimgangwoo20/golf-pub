@@ -496,15 +496,40 @@ class FirebaseChatService {
    * @param roomId - 채팅방 ID
    * @param userId - 사용자 ID
    */
-  async leaveChatRoom(roomId: string, _userId: string): Promise<void> {
+  async leaveChatRoom(roomId: string, userId: string): Promise<void> {
     try {
-      // 채팅방 삭제 (2명 모두 나가면 삭제)
       const roomRef = database.ref(`chatRooms/${roomId}`);
-      await roomRef.remove();
+      const snapshot = await roomRef.once('value');
 
-      // 메시지도 삭제
-      const messagesRef = database.ref(`messages/${roomId}`);
-      await messagesRef.remove();
+      if (!snapshot.exists()) {
+        return;
+      }
+
+      const room = snapshot.val() as ChatRoom;
+      const remainingParticipants = room.participants.filter((id) => id !== userId);
+
+      if (remainingParticipants.length === 0) {
+        // 마지막 참가자가 나가면 채팅방 + 메시지 삭제
+        await roomRef.remove();
+        await database.ref(`messages/${roomId}`).remove();
+        await database.ref(`typing/${roomId}`).remove();
+      } else {
+        // 참가자 목록에서 제거하고 관련 데이터 정리
+        const updates: Record<string, any> = {
+          participants: remainingParticipants,
+          updatedAt: Date.now(),
+        };
+
+        // 나간 사용자의 이름/사진/unreadCount 정리
+        delete room.participantNames?.[userId];
+        delete room.participantPhotos?.[userId];
+        delete room.unreadCount?.[userId];
+        updates.participantNames = room.participantNames;
+        updates.participantPhotos = room.participantPhotos;
+        updates.unreadCount = room.unreadCount;
+
+        await roomRef.update(updates);
+      }
     } catch (error) {
       throw new Error(handleFirebaseError(error));
     }

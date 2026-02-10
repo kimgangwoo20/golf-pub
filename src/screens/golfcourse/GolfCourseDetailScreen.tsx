@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { GolfCourse, GolfCourseReview } from '@/types/golfcourse-types';
 import { fetchWeather } from '@/services/api/weatherAPI';
 import { Weather } from '@/types';
@@ -22,11 +22,14 @@ import { golfCourseAPI } from '@/services/api/golfCourseAPI';
 
 const { width } = Dimensions.get('window');
 
+type GolfCourseDetailParams = {
+  GolfCourseDetail: { course: GolfCourse };
+};
+
 export const GolfCourseDetailScreen: React.FC = () => {
   const navigation = useNavigation();
-  const route = useRoute();
+  const route = useRoute<RouteProp<GolfCourseDetailParams, 'GolfCourseDetail'>>();
 
-  // @ts-expect-error route.params 타입 미지정
   const courseParam = route.params?.course as GolfCourse;
 
   const [course, setCourse] = useState<GolfCourse>(courseParam);
@@ -196,7 +199,12 @@ export const GolfCourseDetailScreen: React.FC = () => {
               scrollEventThrottle={16}
             >
               {course.images.map((image, index) => (
-                <Image key={index} source={{ uri: image }} style={styles.courseImage} />
+                <Image
+                  key={index}
+                  source={{ uri: image }}
+                  style={styles.courseImage}
+                  onError={() => {}}
+                />
               ))}
             </ScrollView>
             <View style={styles.imageIndicator}>
@@ -370,7 +378,11 @@ export const GolfCourseDetailScreen: React.FC = () => {
             {reviews.map((review) => (
               <View key={review.id} style={styles.reviewItem}>
                 <View style={styles.reviewHeader}>
-                  <Image source={{ uri: review.author.image }} style={styles.reviewAuthorImage} />
+                  <Image
+                    source={{ uri: review.author.image }}
+                    style={styles.reviewAuthorImage}
+                    onError={() => {}}
+                  />
                   <View style={styles.reviewAuthorInfo}>
                     <Text style={styles.reviewAuthorName}>{review.author.name}</Text>
                     <View style={styles.reviewRating}>

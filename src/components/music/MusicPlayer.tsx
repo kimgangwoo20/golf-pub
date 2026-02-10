@@ -23,7 +23,7 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      {albumArt && <Image source={{ uri: albumArt }} style={styles.albumArt} />}
+      {albumArt && <Image source={{ uri: albumArt }} style={styles.albumArt} onError={() => {}} />}
       <View style={styles.info}>
         <Text style={styles.title} numberOfLines={1}>
           {title}

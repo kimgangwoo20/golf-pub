@@ -165,7 +165,11 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
             disabled={isUploadingImage}
           >
             {profileImage ? (
-              <Image source={{ uri: profileImage }} style={styles.profileImage} />
+              <Image
+                source={{ uri: profileImage }}
+                style={styles.profileImage}
+                onError={() => {}}
+              />
             ) : (
               <View style={styles.profileImagePlaceholder}>
                 <Text style={styles.profileImagePlaceholderText}>👤</Text>

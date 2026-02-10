@@ -129,7 +129,11 @@ export const JoinedMeetupsScreen: React.FC = () => {
                 >
                   {/* 이미지 */}
                   {meetup.image && (
-                    <Image source={{ uri: meetup.image }} style={styles.meetupImage} />
+                    <Image
+                      source={{ uri: meetup.image }}
+                      style={styles.meetupImage}
+                      onError={() => {}}
+                    />
                   )}
 
                   {/* 술집 연계 배지 */}

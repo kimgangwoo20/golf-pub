@@ -16,7 +16,7 @@ export const ChatListScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
     if (user?.uid) {
       loadChatRooms(user.uid);
     }
-  }, [user]);
+  }, [user?.uid, loadChatRooms]);
 
   const filteredChats = chatRooms.filter((chat) =>
     chat.participants.some((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase())),
@@ -42,7 +42,11 @@ export const ChatListScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
           });
         }}
       >
-        <Image source={{ uri: otherParticipant?.avatar || DEFAULT_AVATAR }} style={styles.avatar} />
+        <Image
+          source={{ uri: otherParticipant?.avatar || DEFAULT_AVATAR }}
+          style={styles.avatar}
+          onError={() => {}}
+        />
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
             <Text style={styles.chatName}>{chatName}</Text>

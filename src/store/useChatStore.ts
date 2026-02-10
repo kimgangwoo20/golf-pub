@@ -147,6 +147,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
    */
   sendMessage: async (roomId, senderId, senderName, message, senderAvatar) => {
     try {
+      set({ error: null });
       const now = FirestoreTimestamp.now();
       const messageData = {
         chatRoomId: roomId,
@@ -202,6 +203,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
    */
   sendImage: async (roomId, senderId, senderName, imageUrl, senderAvatar) => {
     try {
+      set({ error: null });
       const now = FirestoreTimestamp.now();
       const messageData = {
         chatRoomId: roomId,

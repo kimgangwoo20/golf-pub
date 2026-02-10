@@ -616,6 +616,14 @@ class FirebaseMessagingService {
       console.warn('FCM 초기화 실패:', error);
     }
   }
+
+  /**
+   * 모든 리스너 정리 (로그아웃 시 호출)
+   */
+  cleanup(): void {
+    this._unsubscribers.forEach((unsub) => unsub());
+    this._unsubscribers = [];
+  }
 }
 
 // 싱글톤 인스턴스 export

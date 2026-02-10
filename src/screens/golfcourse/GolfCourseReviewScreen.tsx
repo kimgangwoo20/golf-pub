@@ -15,9 +15,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { GolfCourse, GolfCourseReview } from '@/types/golfcourse-types';
+import { GolfCourseReview } from '@/types/golfcourse-types';
+import { GolfCourseStackParamList } from '@/types/navigation-types';
 import { useAuthStore } from '@/store/useAuthStore';
 import { golfCourseAPI } from '@/services/api/golfCourseAPI';
 import {
@@ -32,18 +33,15 @@ type SortType = 'recent' | 'rating_high' | 'rating_low' | 'likes';
 
 export const GolfCourseReviewScreen: React.FC = () => {
   const navigation = useNavigation();
-  const route = useRoute();
+  const route = useRoute<RouteProp<GolfCourseStackParamList, 'GolfCourseReview'>>();
   const { user } = useAuthStore();
 
   // 현재 사용자 ID (로그인된 사용자)
   const currentUserId = user?.uid || '';
 
-  // @ts-expect-error route.params 타입 미지정
-  const courseParam = route.params?.course as GolfCourse | undefined;
-  // @ts-expect-error route.params 타입 미지정
-  const courseIdParam = route.params?.courseId as string | undefined;
-  // @ts-expect-error route.params 타입 미지정
-  const writeReviewParam = route.params?.writeReview as boolean;
+  const courseParam = route.params?.course;
+  const courseIdParam = route.params?.courseId;
+  const writeReviewParam = route.params?.writeReview;
 
   // courseId: course 객체에서 추출하거나, courseId 파라미터에서 가져옴 (딥링킹 지원)
   const courseId = courseParam?.id || courseIdParam || '';
@@ -449,7 +447,11 @@ export const GolfCourseReviewScreen: React.FC = () => {
               filteredReviews.map((review) => (
                 <View key={review.id} style={styles.reviewCard}>
                   <View style={styles.reviewHeader}>
-                    <Image source={{ uri: review.author.image }} style={styles.reviewAuthorImage} />
+                    <Image
+                      source={{ uri: review.author.image }}
+                      style={styles.reviewAuthorImage}
+                      onError={() => {}}
+                    />
                     <View style={styles.reviewAuthorInfo}>
                       <View style={styles.reviewAuthorRow}>
                         <Text style={styles.reviewAuthorName}>{review.author.name}</Text>
@@ -485,7 +487,12 @@ export const GolfCourseReviewScreen: React.FC = () => {
                       style={styles.reviewImages}
                     >
                       {review.images.map((image, index) => (
-                        <Image key={index} source={{ uri: image }} style={styles.reviewImage} />
+                        <Image
+                          key={index}
+                          source={{ uri: image }}
+                          style={styles.reviewImage}
+                          onError={() => {}}
+                        />
                       ))}
                     </ScrollView>
                   )}
@@ -607,7 +614,11 @@ export const GolfCourseReviewScreen: React.FC = () => {
                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     {reviewImages.map((image, index) => (
                       <View key={index} style={styles.imagePreview}>
-                        <Image source={{ uri: image }} style={styles.previewImage} />
+                        <Image
+                          source={{ uri: image }}
+                          style={styles.previewImage}
+                          onError={() => {}}
+                        />
                         <TouchableOpacity
                           style={styles.removeImageButton}
                           onPress={() =>

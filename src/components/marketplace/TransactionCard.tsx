@@ -34,7 +34,7 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
 
   return (
     <View style={styles.container}>
-      <Image source={{ uri: productImage }} style={styles.image} />
+      <Image source={{ uri: productImage }} style={styles.image} onError={() => {}} />
       <View style={styles.info}>
         <View style={styles.header}>
           <Text style={styles.type}>{type === 'buy' ? '구매' : '판매'}</Text>

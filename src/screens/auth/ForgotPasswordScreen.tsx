@@ -52,16 +52,15 @@ export const ForgotPasswordScreen: React.FC<{ navigation?: any }> = ({ navigatio
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
-        >
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation?.goBack()}>
               <Text style={styles.backButton}>← 뒤로</Text>
             </TouchableOpacity>
             <Text style={styles.title}>비밀번호 찾기</Text>
-            <Text style={styles.subtitle}>가입하신 이메일로 비밀번호 재설정 링크를 보내드립니다</Text>
+            <Text style={styles.subtitle}>
+              가입하신 이메일로 비밀번호 재설정 링크를 보내드립니다
+            </Text>
           </View>
 
           <View style={styles.form}>
@@ -91,7 +90,9 @@ export const ForgotPasswordScreen: React.FC<{ navigation?: any }> = ({ navigatio
             </TouchableOpacity>
 
             {sent && (
-              <Text style={styles.sentMessage}>이메일이 발송되었습니다. 메일함을 확인해주세요.</Text>
+              <Text style={styles.sentMessage}>
+                이메일이 발송되었습니다. 메일함을 확인해주세요.
+              </Text>
             )}
 
             <TouchableOpacity style={styles.loginLink} onPress={() => navigation?.goBack()}>

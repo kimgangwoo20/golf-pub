@@ -120,7 +120,11 @@ export const PubDetailScreen: React.FC = () => {
   return (
     <ScrollView style={styles.container}>
       {/* 이미지 */}
-      <Image source={{ uri: pub.images?.[0] || DEFAULT_PUB_IMAGE }} style={styles.image} />
+      <Image
+        source={{ uri: pub.images?.[0] || DEFAULT_PUB_IMAGE }}
+        style={styles.image}
+        onError={() => {}}
+      />
       {pub.features?.includes('제휴') && (
         <View style={styles.partnerBadge}>
           <Text style={styles.partnerText}>제휴 펍</Text>

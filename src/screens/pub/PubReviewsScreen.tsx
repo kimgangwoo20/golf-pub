@@ -151,7 +151,11 @@ export const PubReviewsScreen: React.FC = () => {
   const renderReview = ({ item }: { item: PubReview }) => (
     <View style={styles.reviewCard}>
       <View style={styles.reviewHeader}>
-        <Image source={{ uri: item.userImage || DEFAULT_AVATAR }} style={styles.avatar} />
+        <Image
+          source={{ uri: item.userImage || DEFAULT_AVATAR }}
+          style={styles.avatar}
+          onError={() => {}}
+        />
         <View style={styles.userInfo}>
           <Text style={styles.userName}>{item.userName}</Text>
           <View style={styles.ratingRow}>
@@ -168,7 +172,12 @@ export const PubReviewsScreen: React.FC = () => {
       {item.images && item.images.length > 0 && (
         <View style={styles.images}>
           {item.images.map((image, index) => (
-            <Image key={index} source={{ uri: image }} style={styles.reviewImage} />
+            <Image
+              key={index}
+              source={{ uri: image }}
+              style={styles.reviewImage}
+              onError={() => {}}
+            />
           ))}
         </View>
       )}

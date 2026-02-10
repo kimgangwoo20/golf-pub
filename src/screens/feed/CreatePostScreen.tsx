@@ -237,7 +237,7 @@ export const CreatePostScreen: React.FC = () => {
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {images.map((image, index) => (
                   <View key={index} style={styles.imagePreviewItem}>
-                    <Image source={{ uri: image }} style={styles.previewImage} />
+                    <Image source={{ uri: image }} style={styles.previewImage} onError={() => {}} />
                     <TouchableOpacity
                       style={styles.removeImageButton}
                       onPress={() => handleRemoveImage(index)}

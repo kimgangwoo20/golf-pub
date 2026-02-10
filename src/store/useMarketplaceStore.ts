@@ -88,6 +88,8 @@ export const useMarketplaceStore = create<MarketplaceState>((set) => ({
 
   updateItem: async (id, data) => {
     try {
+      set({ loading: true, error: null });
+
       await firebaseFirestore
         .collection('products')
         .doc(id)
@@ -95,15 +97,31 @@ export const useMarketplaceStore = create<MarketplaceState>((set) => ({
           ...data,
           updatedAt: FirestoreTimestamp.now(),
         });
+
+      // 로컬 상태 업데이트
+      set((state) => ({
+        items: state.items.map((item) => (item.id === id ? { ...item, ...data } : item)),
+        loading: false,
+      }));
     } catch (error: any) {
+      set({ error: error.message, loading: false });
       throw error;
     }
   },
 
   deleteItem: async (id) => {
     try {
+      set({ loading: true, error: null });
+
       await firebaseFirestore.collection('products').doc(id).delete();
+
+      // 로컬 상태 업데이트
+      set((state) => ({
+        items: state.items.filter((item) => item.id !== id),
+        loading: false,
+      }));
     } catch (error: any) {
+      set({ error: error.message, loading: false });
       throw error;
     }
   },

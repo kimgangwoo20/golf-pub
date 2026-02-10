@@ -172,7 +172,11 @@ export const HostedMeetupsScreen: React.FC = () => {
                 >
                   {/* 이미지 */}
                   {meetup.image && (
-                    <Image source={{ uri: meetup.image }} style={styles.meetupImage} />
+                    <Image
+                      source={{ uri: meetup.image }}
+                      style={styles.meetupImage}
+                      onError={() => {}}
+                    />
                   )}
 
                   {/* 모집 중 배지 */}

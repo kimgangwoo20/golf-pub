@@ -151,7 +151,12 @@ const ImageCarousel: React.FC<{ urls: string[] }> = React.memo(({ urls }) => {
 
   if (urls.length === 1) {
     return (
-      <Image source={{ uri: urls[0] }} style={carouselStyles.singleImage} resizeMode="contain" />
+      <Image
+        source={{ uri: urls[0] }}
+        style={carouselStyles.singleImage}
+        resizeMode="contain"
+        onError={() => {}}
+      />
     );
   }
 
@@ -168,7 +173,12 @@ const ImageCarousel: React.FC<{ urls: string[] }> = React.memo(({ urls }) => {
         }}
         keyExtractor={(_, i) => i.toString()}
         renderItem={({ item: url }) => (
-          <Image source={{ uri: url }} style={carouselStyles.image} resizeMode="contain" />
+          <Image
+            source={{ uri: url }}
+            style={carouselStyles.image}
+            resizeMode="contain"
+            onError={() => {}}
+          />
         )}
         getItemLayout={(_, index) => ({
           length: width,
@@ -465,7 +475,13 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
           {/* 헤더 */}
           <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
             <View style={styles.authorInfo}>
-              {authorImage && <Image source={{ uri: authorImage }} style={styles.authorAvatar} />}
+              {authorImage && (
+                <Image
+                  source={{ uri: authorImage }}
+                  style={styles.authorAvatar}
+                  onError={() => {}}
+                />
+              )}
               <View>
                 <Text style={styles.authorName}>{authorName || '사용자'}</Text>
                 <Text style={styles.date}>{item.date}</Text>
@@ -606,7 +622,11 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
                     <View>
                       {/* 댓글 */}
                       <View style={commentStyles.item}>
-                        <Image source={{ uri: comment.userImage }} style={commentStyles.avatar} />
+                        <Image
+                          source={{ uri: comment.userImage }}
+                          style={commentStyles.avatar}
+                          onError={() => {}}
+                        />
                         <View style={commentStyles.body}>
                           <View style={commentStyles.meta}>
                             <Text style={commentStyles.userName}>{comment.userName}</Text>
@@ -660,6 +680,7 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
                                 <Image
                                   source={{ uri: reply.userImage }}
                                   style={commentStyles.replyAvatar}
+                                  onError={() => {}}
                                 />
                                 <View style={commentStyles.body}>
                                   <View style={commentStyles.meta}>

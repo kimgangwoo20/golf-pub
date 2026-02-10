@@ -18,7 +18,7 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       {coverImage ? (
-        <Image source={{ uri: coverImage }} style={styles.cover} />
+        <Image source={{ uri: coverImage }} style={styles.cover} onError={() => {}} />
       ) : (
         <View style={styles.coverPlaceholder}>
           <Text style={styles.placeholderIcon}>🎵</Text>

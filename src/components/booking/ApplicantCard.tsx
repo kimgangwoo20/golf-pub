@@ -46,7 +46,11 @@ export const ApplicantCard: React.FC<ApplicantCardProps> = ({
     <View style={styles.container}>
       <TouchableOpacity style={styles.header} onPress={onViewProfile}>
         {!avatarError && avatar ? (
-          <Image source={{ uri: avatar }} style={styles.avatar} onError={() => setAvatarError(true)} />
+          <Image
+            source={{ uri: avatar }}
+            style={styles.avatar}
+            onError={() => setAvatarError(true)}
+          />
         ) : (
           <View style={[styles.avatar, styles.avatarPlaceholder]}>
             <Text style={styles.avatarInitial}>{name?.[0] || '?'}</Text>

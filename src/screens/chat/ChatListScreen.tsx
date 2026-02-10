@@ -84,7 +84,11 @@ export const ChatListScreen: React.FC = () => {
           });
         }}
       >
-        <Image source={{ uri: other.avatar || DEFAULT_AVATAR }} style={styles.avatar} />
+        <Image
+          source={{ uri: other.avatar || DEFAULT_AVATAR }}
+          style={styles.avatar}
+          onError={() => {}}
+        />
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
             <Text style={styles.chatName}>{other.name}</Text>
@@ -210,7 +214,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    paddingTop: 60,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },

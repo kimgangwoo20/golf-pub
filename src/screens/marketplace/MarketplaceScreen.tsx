@@ -186,7 +186,11 @@ export const MarketplaceScreen: React.FC = () => {
                 >
                   {/* 이미지 */}
                   <View style={styles.imageContainer}>
-                    <Image source={{ uri: product.images[0] }} style={styles.productImage} />
+                    <Image
+                      source={{ uri: product.images[0] }}
+                      style={styles.productImage}
+                      onError={() => {}}
+                    />
 
                     {/* 상태 배지 */}
                     {statusBadge && (

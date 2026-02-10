@@ -81,6 +81,16 @@ export const FeedScreen: React.FC = () => {
   const [unreadMessages, _setUnreadMessages] = useState(0);
   const [imageIndices, setImageIndices] = useState<Record<string, number>>({});
   const [refreshing, setRefreshing] = useState(false);
+  const [_failedImages, setFailedImages] = useState<Set<string>>(new Set());
+
+  // 이미지 로드 실패 처리
+  const handleImageError = useCallback((uri: string) => {
+    setFailedImages((prev) => {
+      const next = new Set(prev);
+      next.add(uri);
+      return next;
+    });
+  }, []);
 
   // Instagram/YouTube 스타일 키보드 처리
   const keyboardHeight = useRef(new Animated.Value(0)).current;
@@ -102,7 +112,15 @@ export const FeedScreen: React.FC = () => {
         unsubscribeFromNotifications();
         unsubscribeFromUnreadCount();
       };
-    }, [user?.uid]),
+    }, [
+      user?.uid,
+      subscribeToNotifications,
+      subscribeToUnreadCount,
+      unsubscribeFromNotifications,
+      unsubscribeFromUnreadCount,
+      loadPosts,
+      loadStories,
+    ]),
   );
 
   // 풀 투 리프레시
@@ -431,7 +449,11 @@ export const FeedScreen: React.FC = () => {
         {/* Witty 스타일 헤더 */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Image source={{ uri: user?.photoURL || DEFAULT_AVATAR }} style={styles.headerAvatar} />
+            <Image
+              source={{ uri: user?.photoURL || DEFAULT_AVATAR }}
+              style={styles.headerAvatar}
+              onError={() => handleImageError(user?.photoURL || '')}
+            />
             <Text style={styles.headerName}>{user?.displayName || '사용자'}</Text>
           </View>
 
@@ -516,7 +538,11 @@ export const FeedScreen: React.FC = () => {
                     onPress={() => handleStoryPress(story.id)}
                   >
                     <View style={styles.storyImageWrapper}>
-                      <Image source={{ uri: story.userImage }} style={styles.storyImage} />
+                      <Image
+                        source={{ uri: story.userImage }}
+                        style={styles.storyImage}
+                        onError={() => handleImageError(story.userImage)}
+                      />
                       <View style={styles.storyRing} />
                     </View>
                     <Text style={styles.storyName} numberOfLines={1}>
@@ -560,7 +586,11 @@ export const FeedScreen: React.FC = () => {
               <View key={feed.id} style={styles.feedCard}>
                 {/* 피드 헤더 */}
                 <View style={styles.feedHeader}>
-                  <Image source={{ uri: feed.userImage }} style={styles.feedAvatar} />
+                  <Image
+                    source={{ uri: feed.userImage }}
+                    style={styles.feedAvatar}
+                    onError={() => handleImageError(feed.userImage)}
+                  />
                   <View style={styles.feedUserInfo}>
                     <Text style={styles.feedUserName}>{feed.userName}</Text>
                     <Text style={styles.feedTime}>{feed.time}</Text>
@@ -594,6 +624,7 @@ export const FeedScreen: React.FC = () => {
                           source={{ uri: img }}
                           style={styles.feedImage}
                           resizeMode="cover"
+                          onError={() => handleImageError(img)}
                         />
                       ))}
                     </ScrollView>
@@ -604,7 +635,11 @@ export const FeedScreen: React.FC = () => {
                     </View>
                   </View>
                 ) : feed.image ? (
-                  <Image source={{ uri: feed.image }} style={styles.feedImage} />
+                  <Image
+                    source={{ uri: feed.image }}
+                    style={styles.feedImage}
+                    onError={() => handleImageError(feed.image!)}
+                  />
                 ) : null}
 
                 {/* 위치 */}
@@ -728,7 +763,11 @@ export const FeedScreen: React.FC = () => {
                     <View>
                       {/* 댓글 */}
                       <View style={styles.commentItem}>
-                        <Image source={{ uri: comment.userImage }} style={styles.commentAvatar} />
+                        <Image
+                          source={{ uri: comment.userImage }}
+                          style={styles.commentAvatar}
+                          onError={() => handleImageError(comment.userImage)}
+                        />
                         <View style={styles.commentContent}>
                           <View style={styles.commentHeader}>
                             <Text style={styles.commentUserName}>{comment.userName}</Text>
@@ -786,6 +825,7 @@ export const FeedScreen: React.FC = () => {
                                 <Image
                                   source={{ uri: reply.userImage }}
                                   style={styles.replyAvatar}
+                                  onError={() => handleImageError(reply.userImage)}
                                 />
                                 <View style={styles.commentContent}>
                                   <View style={styles.commentHeader}>

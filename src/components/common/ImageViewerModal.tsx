@@ -139,6 +139,7 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
                 source={{ uri: imageUri }}
                 style={[styles.image, animatedStyle]}
                 resizeMode="contain"
+                onError={() => {}}
               />
             </GestureDetector>
           </View>

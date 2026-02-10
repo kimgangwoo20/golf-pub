@@ -270,7 +270,7 @@ export const BackgroundMediaEditor: React.FC<BackgroundMediaEditorProps> = ({
       activeOpacity={0.8}
       onPress={() => setPreviewUri(item.url)}
     >
-      <Image source={{ uri: item.url }} style={styles.thumb} />
+      <Image source={{ uri: item.url }} style={styles.thumb} onError={() => {}} />
       {item.type === 'video' && (
         <View style={styles.videoOverlay}>
           <Text style={styles.videoIcon}>▶</Text>
@@ -379,7 +379,12 @@ export const BackgroundMediaEditor: React.FC<BackgroundMediaEditorProps> = ({
       {!!previewUri && (
         <View style={styles.previewContainer}>
           <Pressable style={styles.previewDismiss} onPress={() => setPreviewUri(null)} />
-          <Image source={{ uri: previewUri }} style={styles.previewImage} resizeMode="contain" />
+          <Image
+            source={{ uri: previewUri }}
+            style={styles.previewImage}
+            resizeMode="contain"
+            onError={() => {}}
+          />
           <SafeAreaView edges={['top']} style={styles.previewCloseBar}>
             <TouchableOpacity
               style={styles.previewCloseBtn}

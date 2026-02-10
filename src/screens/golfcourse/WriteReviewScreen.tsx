@@ -13,7 +13,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { GolfCourseStackParamList } from '@/types/navigation-types';
 import { useAuthStore } from '@/store/useAuthStore';
 import { firestore as firebaseFirestore } from '@/services/firebase/firebaseConfig';
 import { firebaseStorage } from '@/services/firebase/firebaseStorage';
@@ -22,11 +23,10 @@ import * as ImagePicker from 'expo-image-picker';
 
 export const WriteReviewScreen: React.FC = () => {
   const navigation = useNavigation();
-  const route = useRoute();
+  const route = useRoute<RouteProp<GolfCourseStackParamList, 'WriteReview'>>();
   const { user } = useAuthStore();
 
-  // @ts-expect-error route params 타입 미정의
-  const courseId = route.params?.courseId as string;
+  const courseId = route.params?.courseId;
 
   const [rating, setRating] = useState(5);
   const [courseRating, setCourseRating] = useState(5);

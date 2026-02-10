@@ -169,6 +169,7 @@ export const FriendsScreen: React.FC = () => {
                   <Image
                     source={{ uri: friend.avatar || DEFAULT_AVATAR }}
                     style={styles.friendImage}
+                    onError={() => {}}
                   />
 
                   <View style={styles.friendInfo}>

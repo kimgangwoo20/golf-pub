@@ -105,7 +105,7 @@ export const BookingRequestsScreen: React.FC<{ navigation?: any }> = ({ navigati
         style={styles.requestInfo}
       >
         {item.avatar ? (
-          <Image source={{ uri: item.avatar }} style={styles.avatar} />
+          <Image source={{ uri: item.avatar }} style={styles.avatar} onError={() => {}} />
         ) : (
           <View style={[styles.avatar, styles.avatarPlaceholder]}>
             <Text style={styles.avatarPlaceholderText}>{item.name.charAt(0)}</Text>

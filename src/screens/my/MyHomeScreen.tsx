@@ -907,7 +907,11 @@ export const MyHomeScreen: React.FC = () => {
       <View style={styles.guestbookCard}>
         <View style={styles.guestbookHeader}>
           <View style={styles.guestbookHeaderLeft}>
-            <Image source={{ uri: item.authorImage }} style={styles.guestbookAvatar} />
+            <Image
+              source={{ uri: item.authorImage }}
+              style={styles.guestbookAvatar}
+              onError={() => {}}
+            />
             <Text style={styles.guestbookAuthor}>{item.author}</Text>
             {isMyEntry && <Text style={styles.myBadge}>내 글</Text>}
           </View>
@@ -984,7 +988,11 @@ export const MyHomeScreen: React.FC = () => {
                 onLongPress={() => handleContentLongPress(contentItem)}
                 activeOpacity={0.9}
               >
-                <Image source={{ uri: contentItem.image }} style={styles.contentImage} />
+                <Image
+                  source={{ uri: contentItem.image }}
+                  style={styles.contentImage}
+                  onError={() => {}}
+                />
                 <View style={styles.contentOverlay}>
                   <Text style={styles.contentIcon}>{contentItem.icon}</Text>
                 </View>
@@ -1061,6 +1069,7 @@ export const MyHomeScreen: React.FC = () => {
                       source={{ uri: photo }}
                       style={styles.heroSlideImage}
                       resizeMode="cover"
+                      onError={() => {}}
                     />
                   )
                 ) : (
@@ -1136,7 +1145,11 @@ export const MyHomeScreen: React.FC = () => {
         >
           <View style={styles.heroAvatarBox}>
             {userData.profileImage && userData.profileImage !== DEFAULT_AVATAR ? (
-              <Image source={{ uri: userData.profileImage }} style={styles.heroAvatarImg} />
+              <Image
+                source={{ uri: userData.profileImage }}
+                style={styles.heroAvatarImg}
+                onError={() => {}}
+              />
             ) : (
               <LinearGradient
                 colors={[pc.greenPale, pc.greenMist]}

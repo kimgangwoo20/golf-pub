@@ -50,7 +50,11 @@ export const FriendCard: React.FC<FriendCardProps> = ({
     <Component style={styles.container} onPress={onPress}>
       <View style={styles.avatarContainer}>
         {!avatarError && avatar ? (
-          <Image source={{ uri: avatar }} style={styles.avatar} onError={() => setAvatarError(true)} />
+          <Image
+            source={{ uri: avatar }}
+            style={styles.avatar}
+            onError={() => setAvatarError(true)}
+          />
         ) : (
           <View style={[styles.avatar, styles.avatarPlaceholder]}>
             <Text style={styles.avatarInitial}>{name?.[0] || '?'}</Text>

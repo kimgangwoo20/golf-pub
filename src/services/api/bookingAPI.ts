@@ -383,66 +383,52 @@ export const bookingAPI = {
         throw new Error('로그인이 필요합니다.');
       }
 
-      // 호스트 확인
-      const bookingDoc = await firestore().collection(BOOKINGS_COLLECTION).doc(bookingId).get();
+      const bookingRef = firestore().collection(BOOKINGS_COLLECTION).doc(bookingId);
+      const applicationRef = bookingRef.collection(APPLICATIONS_COLLECTION).doc(applicationId);
 
-      if (!bookingDoc.exists) {
-        throw new Error('부킹을 찾을 수 없습니다.');
-      }
+      // 트랜잭션으로 정원 초과 방지
+      await firestore().runTransaction(async (transaction) => {
+        const bookingDoc = await transaction.get(bookingRef);
+        if (!bookingDoc.exists) {
+          throw new Error('부킹을 찾을 수 없습니다.');
+        }
 
-      const booking = bookingDoc.data();
-      if (booking?.hostId !== currentUser.uid) {
-        throw new Error('승인할 권한이 없습니다.');
-      }
+        const booking = bookingDoc.data();
+        if (booking?.hostId !== currentUser.uid) {
+          throw new Error('승인할 권한이 없습니다.');
+        }
 
-      // 정원 확인
-      if (booking?.currentPlayers >= booking?.maxPlayers) {
-        throw new Error('정원이 마감되었습니다.');
-      }
+        // 트랜잭션 내에서 정원 확인 (레이스 컨디션 방지)
+        if (booking?.currentPlayers >= booking?.maxPlayers) {
+          throw new Error('정원이 마감되었습니다.');
+        }
 
-      // 신청 정보 가져오기
-      const applicationDoc = await firestore()
-        .collection(BOOKINGS_COLLECTION)
-        .doc(bookingId)
-        .collection(APPLICATIONS_COLLECTION)
-        .doc(applicationId)
-        .get();
+        const applicationDoc = await transaction.get(applicationRef);
+        if (!applicationDoc.exists) {
+          throw new Error('신청을 찾을 수 없습니다.');
+        }
 
-      if (!applicationDoc.exists) {
-        throw new Error('신청을 찾을 수 없습니다.');
-      }
+        const application = applicationDoc.data();
 
-      const application = applicationDoc.data();
-
-      // 배치 업데이트
-      const batch = firestore().batch();
-
-      // 신청 상태 업데이트
-      batch.update(
-        firestore()
-          .collection(BOOKINGS_COLLECTION)
-          .doc(bookingId)
-          .collection(APPLICATIONS_COLLECTION)
-          .doc(applicationId),
-        {
+        // 신청 상태 업데이트
+        transaction.update(applicationRef, {
           status: 'accepted',
           acceptedAt: firestore.FieldValue.serverTimestamp(),
-        },
-      );
+        });
 
-      // 부킹 참가자 추가
-      batch.update(firestore().collection(BOOKINGS_COLLECTION).doc(bookingId), {
-        currentPlayers: firestore.FieldValue.increment(1),
-        participants: firestore.FieldValue.arrayUnion({
-          id: application?.userId,
-          name: application?.userName,
-          avatar: application?.userAvatar,
-        }),
-        status: booking.currentPlayers + 1 >= booking.maxPlayers ? 'full' : booking.status,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        // 부킹 참가자 추가
+        const newPlayerCount = (booking?.currentPlayers || 0) + 1;
+        transaction.update(bookingRef, {
+          currentPlayers: newPlayerCount,
+          participants: firestore.FieldValue.arrayUnion({
+            id: application?.userId,
+            name: application?.userName,
+            avatar: application?.userAvatar,
+          }),
+          status: newPlayerCount >= booking?.maxPlayers ? 'full' : booking?.status,
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+        });
       });
-
-      await batch.commit();
     } catch (error: any) {
       console.error('❌ 신청자 승인 실패:', error);
       throw new Error(error.message || '신청자 승인에 실패했습니다.');
@@ -572,9 +558,10 @@ export const bookingAPI = {
         }
       });
 
-      const applications = (await Promise.all(bookingPromises)).filter(
-        (app) => app !== null,
-      ) as { booking: Booking; applicationStatus: string }[];
+      const applications = (await Promise.all(bookingPromises)).filter((app) => app !== null) as {
+        booking: Booking;
+        applicationStatus: string;
+      }[];
 
       return applications.map((app) => ({
         ...app.booking,

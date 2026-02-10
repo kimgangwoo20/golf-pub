@@ -264,6 +264,7 @@ export const FriendRequestsScreen: React.FC = () => {
                   <Image
                     source={{ uri: request.userImage || DEFAULT_AVATAR }}
                     style={styles.userImage}
+                    onError={() => {}}
                   />
 
                   <View style={styles.requestInfo}>

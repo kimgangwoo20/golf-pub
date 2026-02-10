@@ -192,7 +192,7 @@ export const ChatRoomScreen: React.FC = () => {
           />
         )}
         {item.type === 'image' && item.imageUrl ? (
-          <Image source={{ uri: item.imageUrl }} style={styles.messageImage} />
+          <Image source={{ uri: item.imageUrl }} style={styles.messageImage} onError={() => {}} />
         ) : (
           <View style={[styles.messageBubble, isMine && styles.myMessageBubble]}>
             <Text style={[styles.messageText, isMine && styles.myMessageText]}>{item.message}</Text>

@@ -243,7 +243,7 @@ const GolfCourseStackNavigator = () => (
   <GolfCourseStack.Navigator screenOptions={{ headerShown: false }}>
     <GolfCourseStack.Screen name="GolfCourseSearch" component={GolfCourseSearchScreen} />
     <GolfCourseStack.Screen name="GolfCourseDetail" component={GolfCourseDetailScreen} />
-    <GolfCourseStack.Screen name="GolfCourseReview" component={GolfCourseReviewScreen as any} />
+    <GolfCourseStack.Screen name="GolfCourseReview" component={GolfCourseReviewScreen} />
     <GolfCourseStack.Screen name="WriteReview" component={WriteReviewScreen} />
     <GolfCourseStack.Screen name="BestPubs" component={BestPubsScreen} />
     <GolfCourseStack.Screen name="PubDetail" component={PubDetailScreen} />
@@ -267,7 +267,7 @@ const FeedStackNavigator = () => (
   <FeedStack.Navigator screenOptions={{ headerShown: false }}>
     <FeedStack.Screen name="FeedMain" component={FeedScreen} />
     <FeedStack.Screen name="CreatePost" component={CreatePostScreen} />
-    <FeedStack.Screen name="PostDetail" component={PostDetailScreen as any} />
+    <FeedStack.Screen name="PostDetail" component={PostDetailScreen} />
     <FeedStack.Screen name="NotificationList" component={NotificationListScreen} />
   </FeedStack.Navigator>
 );

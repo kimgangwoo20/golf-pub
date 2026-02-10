@@ -157,7 +157,11 @@ export const FriendProfileScreen: React.FC = () => {
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {/* 프로필 정보 */}
           <View style={styles.profileSection}>
-            <Image source={{ uri: profile.avatar || DEFAULT_AVATAR }} style={styles.profileImage} />
+            <Image
+              source={{ uri: profile.avatar || DEFAULT_AVATAR }}
+              style={styles.profileImage}
+              onError={() => {}}
+            />
 
             <Text style={styles.profileName}>{profile.name}</Text>
 

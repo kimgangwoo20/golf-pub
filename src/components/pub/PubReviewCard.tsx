@@ -1,5 +1,5 @@
 // PubReviewCard.tsx - 펍 리뷰 카드 컴포넌트
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 
 interface PubReviewCardProps {
@@ -25,6 +25,8 @@ export const PubReviewCard: React.FC<PubReviewCardProps> = ({
   content,
   images = [],
 }) => {
+  const [avatarError, setAvatarError] = useState(false);
+
   const renderStars = (rating: number) => {
     return '⭐'.repeat(rating);
   };
@@ -32,7 +34,22 @@ export const PubReviewCard: React.FC<PubReviewCardProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Image source={{ uri: userAvatar }} style={styles.avatar} />
+        {!avatarError && userAvatar ? (
+          <Image
+            source={{ uri: userAvatar }}
+            style={styles.avatar}
+            onError={() => setAvatarError(true)}
+          />
+        ) : (
+          <View
+            style={[
+              styles.avatar,
+              { backgroundColor: '#e5e7eb', alignItems: 'center', justifyContent: 'center' },
+            ]}
+          >
+            <Text style={{ fontSize: 18, color: '#6b7280' }}>{userName?.[0] || '?'}</Text>
+          </View>
+        )}
         <View style={styles.userInfo}>
           <Text style={styles.userName}>{userName}</Text>
           <View style={styles.ratingRow}>
@@ -45,7 +62,12 @@ export const PubReviewCard: React.FC<PubReviewCardProps> = ({
       {images.length > 0 && (
         <View style={styles.images}>
           {images.map((image, index) => (
-            <Image key={index} source={{ uri: image }} style={styles.reviewImage} />
+            <Image
+              key={index}
+              source={{ uri: image }}
+              style={styles.reviewImage}
+              onError={() => {}}
+            />
           ))}
         </View>
       )}

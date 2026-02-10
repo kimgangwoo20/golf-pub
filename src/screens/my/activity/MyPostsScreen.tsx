@@ -153,7 +153,13 @@ export const MyPostsScreen: React.FC = () => {
                 return (
                   <View key={post.id} style={styles.postCard}>
                     {/* 이미지 */}
-                    {post.image && <Image source={{ uri: post.image }} style={styles.postImage} />}
+                    {post.image && (
+                      <Image
+                        source={{ uri: post.image }}
+                        style={styles.postImage}
+                        onError={() => {}}
+                      />
+                    )}
 
                     {/* 상태 배지 */}
                     <View style={[styles.statusBadge, { backgroundColor: statusBadge.bgColor }]}>

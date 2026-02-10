@@ -35,7 +35,7 @@ export interface UserRating {
 }
 
 export interface Point {
-  id: number;
+  id: string;
   amount: number;
   description: string;
   type: 'earn' | 'spend';
@@ -43,7 +43,7 @@ export interface Point {
 }
 
 export interface Coupon {
-  id: number;
+  id: string;
   name: string;
   discount: number;
   discountType: 'percent' | 'fixed';
@@ -52,9 +52,9 @@ export interface Coupon {
   isUsed: boolean;
 }
 
-export interface Review {
-  id: number;
-  bookingId: number;
+export interface ProfileReview {
+  id: string;
+  bookingId: string;
   bookingTitle: string;
   rating: number;
   comment: string;
