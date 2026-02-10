@@ -1,18 +1,170 @@
+// MembershipPaymentScreen.tsx - 멤버십 결제 화면 (Toss Widget SDK 연동)
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import {
+  PaymentWidgetProvider,
+  PaymentMethodWidget,
+  AgreementWidget,
+  usePaymentWidget,
+} from '@tosspayments/widget-sdk-react-native';
+import type { AgreementStatus } from '@tosspayments/widget-sdk-react-native';
 import { useAuthStore } from '@/store/useAuthStore';
-import { tossPayments } from '@/services/payment/tossPayments';
+import { tossPayments, TOSS_CLIENT_KEY } from '@/services/payment/tossPayments';
 import { subscriptionService } from '@/services/payment/subscriptionService';
 import type { MembershipPlan, BillingCycle } from '@/services/payment/subscriptionService';
 
-export const MembershipPaymentScreen: React.FC = () => {
-  const navigation = useNavigation<any>();
-  const route = useRoute();
-  const [paymentMethod, setPaymentMethod] = useState('card');
+const USE_WIDGET = !!TOSS_CLIENT_KEY;
 
-  const params = route.params as any;
-  const { plan, billingCycle, price } = params || {};
+// --- Widget 모드 결제 내용 ---
+const WidgetPaymentContent: React.FC<{
+  plan: string;
+  billingCycle: string;
+  price: number;
+}> = ({ plan, billingCycle, price }) => {
+  const navigation = useNavigation<any>();
+  const paymentWidget = usePaymentWidget();
+  const [paymentMethodReady, setPaymentMethodReady] = useState(false);
+  const [agreementReady, setAgreementReady] = useState(false);
+  const [agreementStatus, setAgreementStatus] = useState<AgreementStatus | null>(null);
+  const [processing, setProcessing] = useState(false);
+
+  const isReady = paymentMethodReady && agreementReady;
+  const canPay = isReady && agreementStatus?.agreedRequiredTerms;
+
+  const handlePayment = async () => {
+    if (!canPay || processing) return;
+
+    try {
+      setProcessing(true);
+      const user = useAuthStore.getState().user;
+      if (!user) {
+        Alert.alert('오류', '로그인이 필요합니다.');
+        return;
+      }
+
+      const orderId = tossPayments.generateOrderId('MEMBERSHIP');
+
+      const result = await paymentWidget.requestPayment({
+        orderId,
+        orderName: `Golf Pub ${plan} 멤버십 (${billingCycle === 'MONTHLY' ? '월간' : '연간'})`,
+        customerEmail: user.email || undefined,
+        customerName: user.displayName || '회원',
+      });
+
+      if (result?.success) {
+        // 결제 확인 (Cloud Functions)
+        const confirmResult = await tossPayments.confirmPayment(
+          result.success.paymentKey,
+          result.success.orderId,
+          result.success.amount,
+        );
+
+        if (!confirmResult.success) {
+          Alert.alert('결제 확인 실패', confirmResult.message);
+          return;
+        }
+
+        // 멤버십 구독 시작
+        const subResult = await subscriptionService.subscribe(
+          user.uid,
+          plan as MembershipPlan,
+          billingCycle as BillingCycle,
+          price,
+        );
+
+        if (!subResult.success) {
+          Alert.alert('오류', subResult.message);
+          return;
+        }
+
+        // 결제 성공 후 프로필 즉시 갱신 (게이트 해제)
+        await useAuthStore.getState().refreshProfile(user.uid);
+
+        navigation.navigate('MembershipSuccess' as any);
+      } else if (result?.fail) {
+        Alert.alert('결제 실패', result.fail.message);
+      }
+    } catch (error: any) {
+      Alert.alert('오류', error.message || '멤버십 결제에 실패했습니다.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  return (
+    <>
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>결제 정보</Text>
+          <View style={styles.card}>
+            <View style={styles.row}>
+              <Text style={styles.label}>멤버십 플랜</Text>
+              <Text style={styles.value}>{plan}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>결제 주기</Text>
+              <Text style={styles.value}>{billingCycle === 'MONTHLY' ? '월간' : '연간'}</Text>
+            </View>
+            <View style={[styles.row, styles.totalRow]}>
+              <Text style={styles.totalLabel}>결제 금액</Text>
+              <Text style={styles.totalValue}>{price?.toLocaleString()}원</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* 결제 수단 위젯 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>결제 수단</Text>
+          <PaymentMethodWidget
+            selector="payment-method"
+            onLoadEnd={() => setPaymentMethodReady(true)}
+          />
+        </View>
+
+        {/* 약관 동의 위젯 */}
+        <View style={styles.section}>
+          <AgreementWidget
+            selector="agreement"
+            onChange={(status) => setAgreementStatus(status)}
+            onLoadEnd={() => setAgreementReady(true)}
+          />
+        </View>
+      </ScrollView>
+
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={[styles.button, !canPay && styles.buttonDisabled]}
+          onPress={handlePayment}
+          disabled={!canPay || processing}
+        >
+          {processing ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>결제하기</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </>
+  );
+};
+
+// --- Fallback 모드 결제 내용 ---
+const FallbackPaymentContent: React.FC<{
+  plan: string;
+  billingCycle: string;
+  price: number;
+}> = ({ plan, billingCycle, price }) => {
+  const navigation = useNavigation<any>();
+  const [paymentMethod, setPaymentMethod] = useState('card');
 
   const handlePayment = () => {
     Alert.alert('결제 진행', '결제를 진행하시겠습니까?', [
@@ -27,7 +179,6 @@ export const MembershipPaymentScreen: React.FC = () => {
               return;
             }
 
-            // Toss Payments 결제 요청
             const orderId = tossPayments.generateOrderId('MEMBERSHIP');
             const paymentResult = await tossPayments.requestPayment({
               orderId,
@@ -42,7 +193,6 @@ export const MembershipPaymentScreen: React.FC = () => {
               return;
             }
 
-            // 결제 성공 → 멤버십 구독 시작
             const result = await subscriptionService.subscribe(
               user.uid,
               plan as MembershipPlan,
@@ -55,6 +205,9 @@ export const MembershipPaymentScreen: React.FC = () => {
               return;
             }
 
+            // 결제 성공 후 프로필 즉시 갱신 (게이트 해제)
+            await useAuthStore.getState().refreshProfile(user.uid);
+
             navigation.navigate('MembershipSuccess' as any);
           } catch (error: any) {
             Alert.alert('오류', error.message || '멤버십 결제에 실패했습니다.');
@@ -65,7 +218,7 @@ export const MembershipPaymentScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <>
       <ScrollView style={styles.scrollView}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>결제 정보</Text>
@@ -107,6 +260,32 @@ export const MembershipPaymentScreen: React.FC = () => {
           <Text style={styles.buttonText}>결제하기</Text>
         </TouchableOpacity>
       </View>
+    </>
+  );
+};
+
+// --- 메인 화면 ---
+export const MembershipPaymentScreen: React.FC = () => {
+  const route = useRoute();
+  const params = route.params as any;
+  const { plan, billingCycle, price } = params || {};
+
+  const user = useAuthStore((s) => s.user);
+  const customerKey = user?.uid || 'anonymous';
+
+  if (USE_WIDGET) {
+    return (
+      <View style={styles.container}>
+        <PaymentWidgetProvider clientKey={TOSS_CLIENT_KEY} customerKey={customerKey}>
+          <WidgetPaymentContent plan={plan} billingCycle={billingCycle} price={price} />
+        </PaymentWidgetProvider>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <FallbackPaymentContent plan={plan} billingCycle={billingCycle} price={price} />
     </View>
   );
 };
@@ -141,5 +320,6 @@ const styles = StyleSheet.create({
   methodText: { fontSize: 16, fontWeight: '600' },
   footer: { padding: 20, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#e0e0e0' },
   button: { backgroundColor: '#10b981', padding: 16, borderRadius: 12, alignItems: 'center' },
+  buttonDisabled: { backgroundColor: '#999' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });

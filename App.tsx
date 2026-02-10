@@ -1,5 +1,5 @@
 // App.tsx - Expo 앱 진입점 (Firebase + Auth 통합)
-import React, { Suspense, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { navigationRef } from './src/utils/navigationRef';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -14,15 +14,15 @@ import './src/services/firebase/firebaseConfig';
 // 홈 화면
 import { HomeScreen } from './src/screens/home/HomeScreen';
 
-// 멤버십 화면들 (lazy import - 필요 시에만 로드)
-const MembershipIntroScreen = React.lazy(() => import('./src/screens/membership/MembershipIntroScreen').then(m => ({ default: m.MembershipIntroScreen })));
-const MembershipPlanScreen = React.lazy(() => import('./src/screens/membership/MembershipPlanScreen').then(m => ({ default: m.MembershipPlanScreen })));
-const PlanComparisonScreen = React.lazy(() => import('./src/screens/membership/PlanComparisonScreen').then(m => ({ default: m.PlanComparisonScreen })));
-const MembershipPaymentScreen = React.lazy(() => import('./src/screens/membership/MembershipPaymentScreen').then(m => ({ default: m.MembershipPaymentScreen })));
-const MembershipSuccessScreen = React.lazy(() => import('./src/screens/membership/MembershipSuccessScreen').then(m => ({ default: m.MembershipSuccessScreen })));
-const MembershipBenefitsScreen = React.lazy(() => import('./src/screens/membership/MembershipBenefitsScreen').then(m => ({ default: m.MembershipBenefitsScreen })));
-const MembershipManageScreen = React.lazy(() => import('./src/screens/membership/MembershipManageScreen').then(m => ({ default: m.MembershipManageScreen })));
-const UpgradePlanScreen = React.lazy(() => import('./src/screens/membership/UpgradePlanScreen').then(m => ({ default: m.UpgradePlanScreen })));
+// 멤버십 화면들
+import { MembershipIntroScreen } from './src/screens/membership/MembershipIntroScreen';
+import { MembershipPlanScreen } from './src/screens/membership/MembershipPlanScreen';
+import { PlanComparisonScreen } from './src/screens/membership/PlanComparisonScreen';
+import { MembershipPaymentScreen } from './src/screens/membership/MembershipPaymentScreen';
+import { MembershipSuccessScreen } from './src/screens/membership/MembershipSuccessScreen';
+import { MembershipBenefitsScreen } from './src/screens/membership/MembershipBenefitsScreen';
+import { MembershipManageScreen } from './src/screens/membership/MembershipManageScreen';
+import { UpgradePlanScreen } from './src/screens/membership/UpgradePlanScreen';
 
 // 부킹 화면들
 import { BookingListScreen } from './src/screens/booking/BookingListScreen';
@@ -71,10 +71,10 @@ import { FriendProfileScreen } from './src/screens/friends/FriendProfileScreen';
 import { AddFriendScreen } from './src/screens/friends/AddFriendScreen';
 import { FriendRequestsScreen } from './src/screens/friends/FriendRequestsScreen';
 
-// 친구 그룹/초대 화면들 (lazy import)
-const InviteScreen = React.lazy(() => import('./src/screens/friend/InviteScreen').then(m => ({ default: m.InviteScreen })));
-const CreateGroupScreen = React.lazy(() => import('./src/screens/friend/CreateGroupScreen').then(m => ({ default: m.CreateGroupScreen })));
-const GroupListScreen = React.lazy(() => import('./src/screens/friend/GroupListScreen').then(m => ({ default: m.GroupListScreen })));
+// 친구 그룹/초대 화면들
+import { InviteScreen } from './src/screens/friend/InviteScreen';
+import { CreateGroupScreen } from './src/screens/friend/CreateGroupScreen';
+import { GroupListScreen } from './src/screens/friend/GroupListScreen';
 
 // Feed 화면들
 import { FeedScreen } from './src/screens/feed/FeedScreen';
@@ -116,34 +116,8 @@ import { ErrorBoundary } from './src/components/common/ErrorBoundary';
 // 결제 내역
 import { PaymentHistoryScreen } from './src/screens/profile/PaymentHistoryScreen';
 
-// Lazy 스크린 래퍼 (Suspense fallback)
-const LazyFallback = () => (
-  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' }}>
-    <ActivityIndicator size="small" color="#10b981" />
-  </View>
-);
-
-// React.lazy 컴포넌트를 React Navigation과 호환되게 래핑
-const withSuspense = (LazyComponent: React.LazyExoticComponent<React.ComponentType<any>>) => {
-  return (props: any) => (
-    <Suspense fallback={<LazyFallback />}>
-      <LazyComponent {...props} />
-    </Suspense>
-  );
-};
-
-// lazy 화면 Suspense 래핑
-const MembershipIntroSuspense = withSuspense(MembershipIntroScreen);
-const MembershipPlanSuspense = withSuspense(MembershipPlanScreen);
-const PlanComparisonSuspense = withSuspense(PlanComparisonScreen);
-const MembershipPaymentSuspense = withSuspense(MembershipPaymentScreen);
-const MembershipSuccessSuspense = withSuspense(MembershipSuccessScreen);
-const MembershipBenefitsSuspense = withSuspense(MembershipBenefitsScreen);
-const MembershipManageSuspense = withSuspense(MembershipManageScreen);
-const UpgradePlanSuspense = withSuspense(UpgradePlanScreen);
-const InviteSuspense = withSuspense(InviteScreen);
-const CreateGroupSuspense = withSuspense(CreateGroupScreen);
-const GroupListSuspense = withSuspense(GroupListScreen);
+// 성별 미설정 유저용 모달
+import { GenderSelectModal } from './src/components/common/GenderSelectModal';
 
 const Tab = createBottomTabNavigator();
 const HomeStack = createNativeStackNavigator();
@@ -158,14 +132,14 @@ const FeedStack = createNativeStackNavigator();
 const HomeStackNavigator = () => (
   <HomeStack.Navigator screenOptions={{ headerShown: false }}>
     <HomeStack.Screen name="HomeMain" component={HomeScreen} />
-    <HomeStack.Screen name="Membership" component={MembershipIntroSuspense} />
-    <HomeStack.Screen name="MembershipPlan" component={MembershipPlanSuspense} />
-    <HomeStack.Screen name="PlanComparison" component={PlanComparisonSuspense} />
-    <HomeStack.Screen name="MembershipPayment" component={MembershipPaymentSuspense} />
-    <HomeStack.Screen name="MembershipSuccess" component={MembershipSuccessSuspense} />
-    <HomeStack.Screen name="MembershipBenefits" component={MembershipBenefitsSuspense} />
-    <HomeStack.Screen name="MembershipManage" component={MembershipManageSuspense} />
-    <HomeStack.Screen name="UpgradePlan" component={UpgradePlanSuspense} />
+    <HomeStack.Screen name="Membership" component={MembershipIntroScreen} />
+    <HomeStack.Screen name="MembershipPlan" component={MembershipPlanScreen} />
+    <HomeStack.Screen name="PlanComparison" component={PlanComparisonScreen} />
+    <HomeStack.Screen name="MembershipPayment" component={MembershipPaymentScreen} />
+    <HomeStack.Screen name="MembershipSuccess" component={MembershipSuccessScreen} />
+    <HomeStack.Screen name="MembershipBenefits" component={MembershipBenefitsScreen} />
+    <HomeStack.Screen name="MembershipManage" component={MembershipManageScreen} />
+    <HomeStack.Screen name="UpgradePlan" component={UpgradePlanScreen} />
     <HomeStack.Screen name="NotificationList" component={NotificationListScreen} />
   </HomeStack.Navigator>
 );
@@ -195,9 +169,9 @@ const MyHomeStackNavigator = () => (
     <MyHomeStack.Screen name="AddFriend" component={AddFriendScreen} />
     <MyHomeStack.Screen name="FriendRequests" component={FriendRequestsScreen} />
     {/* 친구 그룹/초대 */}
-    <MyHomeStack.Screen name="InviteFriend" component={InviteSuspense} />
-    <MyHomeStack.Screen name="CreateGroup" component={CreateGroupSuspense} />
-    <MyHomeStack.Screen name="GroupList" component={GroupListSuspense} />
+    <MyHomeStack.Screen name="InviteFriend" component={InviteScreen} />
+    <MyHomeStack.Screen name="CreateGroup" component={CreateGroupScreen} />
+    <MyHomeStack.Screen name="GroupList" component={GroupListScreen} />
     {/* 프로필 관련 */}
     <MyHomeStack.Screen name="Profile" component={ProfileScreen} />
     <MyHomeStack.Screen name="EditProfile" component={EditProfileScreen} />
@@ -208,8 +182,8 @@ const MyHomeStackNavigator = () => (
     <MyHomeStack.Screen name="MyPosts" component={MyPostsScreen} />
     <MyHomeStack.Screen name="MyReviews" component={MyReviewsScreen} />
     {/* 멤버십 관리 (프로필에서 접근) */}
-    <MyHomeStack.Screen name="MembershipManage" component={MembershipManageSuspense} />
-    <MyHomeStack.Screen name="UpgradePlan" component={UpgradePlanSuspense} />
+    <MyHomeStack.Screen name="MembershipManage" component={MembershipManageScreen} />
+    <MyHomeStack.Screen name="UpgradePlan" component={UpgradePlanScreen} />
     {/* 설정 & 알림 */}
     <MyHomeStack.Screen name="Settings" component={SettingsScreen} />
     <MyHomeStack.Screen name="Notifications" component={NotificationListScreen} />
@@ -269,6 +243,8 @@ const FeedStackNavigator = () => (
     <FeedStack.Screen name="CreatePost" component={CreatePostScreen} />
     <FeedStack.Screen name="PostDetail" component={PostDetailScreen} />
     <FeedStack.Screen name="NotificationList" component={NotificationListScreen} />
+    <FeedStack.Screen name="Profile" component={ProfileScreen} />
+    <FeedStack.Screen name="UserHome" component={MyHomeScreen} />
   </FeedStack.Navigator>
 );
 
@@ -302,9 +278,7 @@ function AppContent() {
         options={{
           tabBarLabel: '홈',
           tabBarIcon: ({ focused }) => (
-            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-              🏠
-            </Text>
+            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>🏠</Text>
           ),
         }}
       />
@@ -314,9 +288,7 @@ function AppContent() {
         options={{
           tabBarLabel: '부킹',
           tabBarIcon: ({ focused }) => (
-            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-              ⛳
-            </Text>
+            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>⛳</Text>
           ),
         }}
       />
@@ -326,9 +298,7 @@ function AppContent() {
         options={{
           tabBarLabel: 'Feed',
           tabBarIcon: ({ focused }) => (
-            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-              📱
-            </Text>
+            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>📱</Text>
           ),
         }}
       />
@@ -338,9 +308,7 @@ function AppContent() {
         options={{
           tabBarLabel: '채팅',
           tabBarIcon: ({ focused }) => (
-            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-              💬
-            </Text>
+            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>💬</Text>
           ),
         }}
       />
@@ -350,9 +318,7 @@ function AppContent() {
         options={{
           tabBarLabel: '중고거래',
           tabBarIcon: ({ focused }) => (
-            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-              🛒
-            </Text>
+            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>🛒</Text>
           ),
         }}
       />
@@ -362,9 +328,7 @@ function AppContent() {
         options={{
           tabBarLabel: '골프장',
           tabBarIcon: ({ focused }) => (
-            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-              🏌️
-            </Text>
+            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>🏌️</Text>
           ),
         }}
       />
@@ -374,9 +338,7 @@ function AppContent() {
         options={{
           tabBarLabel: 'My홈피',
           tabBarIcon: ({ focused }) => (
-            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>
-              🏡
-            </Text>
+            <Text style={{ fontSize: focused ? 26 : 24, opacity: focused ? 1 : 0.7 }}>🏡</Text>
           ),
         }}
       />
@@ -439,7 +401,7 @@ const linking = {
 };
 
 export default function App() {
-  const { user, loading, initAuth } = useAuthStore();
+  const { user, userProfile, loading, initAuth } = useAuthStore();
   const { subscribeToUnreadCount, unsubscribeFromUnreadCount } = useNotificationStore();
 
   useEffect(() => {
@@ -460,12 +422,22 @@ export default function App() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8fafc' }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#f8fafc',
+        }}
+      >
         <ActivityIndicator size="large" color="#10b981" />
         <Text style={{ marginTop: 16, fontSize: 16, color: '#64748b' }}>로딩 중...</Text>
       </View>
     );
   }
+
+  // 성별 미설정 여부 (로그인 상태 + 프로필 존재 + gender 없음)
+  const showGenderModal = !!user && !!userProfile && !userProfile.gender;
 
   return (
     <SafeAreaProvider>
@@ -473,6 +445,7 @@ export default function App() {
         <NavigationContainer ref={navigationRef} linking={linking}>
           {user ? <AppContent /> : <AuthNavigator />}
         </NavigationContainer>
+        {showGenderModal && <GenderSelectModal />}
       </ErrorBoundary>
       <StatusBar style="dark" />
     </SafeAreaProvider>

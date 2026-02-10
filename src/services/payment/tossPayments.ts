@@ -4,6 +4,12 @@
 import { callFunction } from '@/services/firebase/firebaseFunctions';
 
 /**
+ * Toss Payments 클라이언트 키
+ * PaymentWidgetProvider에 전달하여 Widget SDK 초기화에 사용
+ */
+export const TOSS_CLIENT_KEY = process.env.EXPO_PUBLIC_TOSS_CLIENT_KEY || '';
+
+/**
  * 결제 수단 타입
  */
 export type PaymentMethodType = 'card' | 'account' | 'kakao' | 'naver';

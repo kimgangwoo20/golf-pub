@@ -33,6 +33,8 @@ export interface UserProfile {
   handicap?: number;
   favoriteGolfCourse?: string;
   golfExperience?: number; // 골프 경력 (년)
+  gender?: 'male' | 'female'; // 성별
+  membership?: string; // 멤버십 타입 (FREE, PREMIUM, VIP)
 }
 
 class AuthService {
@@ -70,6 +72,7 @@ class AuthService {
     email: string,
     password: string,
     displayName: string,
+    gender?: 'male' | 'female',
   ): Promise<FirebaseAuthTypes.UserCredential> {
     try {
       // Firebase Auth에 사용자 생성
@@ -84,6 +87,7 @@ class AuthService {
         displayName,
         photoURL: null,
         phoneNumber: null,
+        gender,
       });
 
       return userCredential;
@@ -113,11 +117,12 @@ class AuthService {
       displayName: string | null;
       photoURL: string | null;
       phoneNumber: string | null;
+      gender?: 'male' | 'female';
     },
   ): Promise<void> {
     try {
       const now = new Date();
-      const userProfile = {
+      const userProfile: Record<string, any> = {
         uid,
         email: data.email,
         displayName: data.displayName,
@@ -126,6 +131,7 @@ class AuthService {
         points: 0,
         pointBalance: 0,
         role: 'GENERAL',
+        membership: 'FREE',
         stats: {
           hostedBookings: 0,
           joinedBookings: 0,
@@ -136,6 +142,11 @@ class AuthService {
         createdAt: now,
         updatedAt: now,
       };
+
+      // gender가 있을 때만 포함 (undefined 방지)
+      if (data.gender) {
+        userProfile.gender = data.gender;
+      }
 
       const userRef = doc(firestore, 'users', uid);
       await setDoc(userRef, userProfile, { merge: true });

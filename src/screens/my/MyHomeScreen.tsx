@@ -34,6 +34,8 @@ import { DEFAULT_AVATAR } from '@/constants/images';
 import { ImageViewerModal } from '@/components/common/ImageViewerModal';
 import { BackgroundMediaEditor } from '@/components/common/BackgroundMediaEditor';
 import { colors, fontWeight as fw } from '@/styles/theme';
+import { useMembershipGate } from '@/hooks/useMembershipGate';
+import { PremiumGuard } from '@/components/common/PremiumGuard';
 
 const { width } = Dimensions.get('window');
 const ITEMS_PER_PAGE = 6;
@@ -241,23 +243,49 @@ const HeroVideoPlayer: React.FC<{ uri: string; shouldPlay: boolean }> = ({ uri, 
   );
 };
 
-export const MyHomeScreen: React.FC = () => {
+export const MyHomeScreen: React.FC<{ route?: any }> = ({ route }) => {
   const navigation = useNavigation<any>();
   const { user, userProfile } = useAuthStore();
+  const { checkAccess } = useMembershipGate();
   const { profile, loadProfile, updateProfile } = useProfileStore();
+
+  // 타인의 홈피 보기: route.params.userId가 있으면 해당 유저 조회
+  const viewUserId: string | undefined = route?.params?.userId;
+  const targetUserId = viewUserId || user?.uid || '';
+  const isOwnProfile = !viewUserId || viewUserId === user?.uid;
+
+  // 타인 프로필 데이터 (viewUserId가 있을 때 Firestore에서 직접 로드)
+  const [otherUserProfile, setOtherUserProfile] = useState<any>(null);
 
   // 프로필 로드
   useEffect(() => {
-    if (user?.uid) loadProfile(user.uid);
-  }, [user?.uid, loadProfile]);
+    if (targetUserId) loadProfile(targetUserId);
+  }, [targetUserId, loadProfile]);
 
-  // 사용자 프로필 데이터 (Firestore userProfile에서 실제 값 사용)
-  const profileData = userProfile as any;
+  // 타인의 userProfile 로드 (authStore의 userProfile은 현재 로그인 사용자 것)
+  useEffect(() => {
+    if (!isOwnProfile && viewUserId) {
+      firebaseFirestore
+        .collection('users')
+        .doc(viewUserId)
+        .get()
+        .then((doc) => {
+          if (doc.exists) setOtherUserProfile(doc.data());
+        })
+        .catch(() => {});
+    }
+  }, [isOwnProfile, viewUserId]);
+
+  // 사용자 프로필 데이터 (본인이면 authStore, 타인이면 Firestore에서 로드한 데이터)
+  const profileData = isOwnProfile ? (userProfile as any) : otherUserProfile;
   const userData = {
-    name: profile?.displayName || user?.displayName || '골퍼',
-    email: user?.email || '',
-    profileImage: user?.photoURL || DEFAULT_AVATAR,
-    phone: user?.phoneNumber || '',
+    name:
+      profile?.displayName ||
+      (isOwnProfile ? user?.displayName : profileData?.displayName) ||
+      '골퍼',
+    email: (isOwnProfile ? user?.email : profileData?.email) || '',
+    profileImage: (isOwnProfile ? user?.photoURL : profileData?.photoURL) || DEFAULT_AVATAR,
+    phone: (isOwnProfile ? user?.phoneNumber : profileData?.phoneNumber) || '',
     points: profileData?.points || 0,
     membership: profileData?.membership || 'FREE',
     handicap: profileData?.handicap || '18',
@@ -345,7 +373,7 @@ export const MyHomeScreen: React.FC = () => {
   // 배경 미디어 편집기 상태
   const [bgEditorVisible, setBgEditorVisible] = useState(false);
 
-  // 현재 사용자 ID
+  // 현재 사용자 ID (본인 여부 판단용)
   const currentUserId = user?.uid || '';
 
   // 포토 히어로 상태
@@ -370,15 +398,15 @@ export const MyHomeScreen: React.FC = () => {
   // 방명록 Firestore 로드
   useEffect(() => {
     loadGuestbook();
-  }, [user?.uid]);
+  }, [targetUserId]);
 
   // 방명록 Firestore 쿼리
   const loadGuestbook = async () => {
-    if (!user?.uid) return;
+    if (!targetUserId) return;
     try {
       const snapshot = await firebaseFirestore
         .collection('users')
-        .doc(user.uid)
+        .doc(targetUserId)
         .collection('guestbook')
         .orderBy('createdAt', 'desc')
         .limit(20)
@@ -410,7 +438,7 @@ export const MyHomeScreen: React.FC = () => {
     try {
       await firebaseFirestore
         .collection('users')
-        .doc(user.uid)
+        .doc(targetUserId)
         .collection('guestbook')
         .add({
           authorId: user.uid,
@@ -486,7 +514,7 @@ export const MyHomeScreen: React.FC = () => {
   const buildPostsQuery = (_tab: string) => {
     return firebaseFirestore
       .collection('posts')
-      .where('author.id', '==', user?.uid)
+      .where('author.id', '==', targetUserId)
       .orderBy('createdAt', 'desc');
   };
 
@@ -1098,7 +1126,14 @@ export const MyHomeScreen: React.FC = () => {
           pointerEvents="box-none"
         >
           <View style={styles.heroNavRow}>
-            <Text style={styles.heroNavTitle}>My 홈피</Text>
+            {!isOwnProfile && (
+              <TouchableOpacity style={styles.heroNavBtn} onPress={() => navigation.goBack()}>
+                <Text style={{ fontSize: 18, color: '#fff' }}>←</Text>
+              </TouchableOpacity>
+            )}
+            <Text style={styles.heroNavTitle}>
+              {isOwnProfile ? 'My 홈피' : `${userData.name}의 홈피`}
+            </Text>
             <View style={styles.heroNavRight}>
               <View style={styles.heroPhotoCounter}>
                 <Text style={styles.heroCounterText}>
@@ -1106,12 +1141,19 @@ export const MyHomeScreen: React.FC = () => {
                 </Text>
                 <Text style={{ fontSize: 13 }}>📷</Text>
               </View>
-              <TouchableOpacity style={styles.heroNavBtn} onPress={() => setBgEditorVisible(true)}>
-                <Text style={{ fontSize: 16, color: '#fff' }}>🖼️</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.heroNavBtn} onPress={() => setDrawerVisible(true)}>
-                <Text style={styles.heroHamburger}>☰</Text>
-              </TouchableOpacity>
+              {isOwnProfile && (
+                <TouchableOpacity
+                  style={styles.heroNavBtn}
+                  onPress={() => setBgEditorVisible(true)}
+                >
+                  <Text style={{ fontSize: 16, color: '#fff' }}>🖼️</Text>
+                </TouchableOpacity>
+              )}
+              {isOwnProfile && (
+                <TouchableOpacity style={styles.heroNavBtn} onPress={() => setDrawerVisible(true)}>
+                  <Text style={styles.heroHamburger}>☰</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </LinearGradient>
@@ -1181,30 +1223,50 @@ export const MyHomeScreen: React.FC = () => {
         {/* 소개 */}
         <View style={styles.heroBioBox}>
           <Text style={styles.heroBioText}>{userData.bio}</Text>
-          <TouchableOpacity style={{ marginTop: 8 }} onPress={handleEditProfile}>
-            <Text style={{ fontSize: 12, color: pc.greenMain, fontWeight: fw.medium }}>
-              ✏️ 소개 수정
-            </Text>
-          </TouchableOpacity>
+          {isOwnProfile && (
+            <TouchableOpacity style={{ marginTop: 8 }} onPress={handleEditProfile}>
+              <Text style={{ fontSize: 12, color: pc.greenMain, fontWeight: fw.medium }}>
+                ✏️ 소개 수정
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* 액션 버튼 */}
-        <View style={styles.heroActionRow}>
-          <TouchableOpacity
-            style={[styles.heroActionBtn, styles.heroActionOutline]}
-            onPress={handleEditProfile}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.heroActionOutlineText}>✏️ 프로필 수정</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.heroActionBtn, styles.heroActionFill]}
-            onPress={() => navigation.navigate('Friends' as any)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.heroActionFillText}>👥 골프친구</Text>
-          </TouchableOpacity>
-        </View>
+        {isOwnProfile ? (
+          <View style={styles.heroActionRow}>
+            <TouchableOpacity
+              style={[styles.heroActionBtn, styles.heroActionOutline]}
+              onPress={handleEditProfile}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.heroActionOutlineText}>✏️ 프로필 수정</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.heroActionBtn, styles.heroActionFill]}
+              onPress={() => navigation.navigate('Friends' as any)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.heroActionFillText}>👥 골프친구</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.heroActionRow}>
+            <TouchableOpacity
+              style={[styles.heroActionBtn, styles.heroActionOutline]}
+              onPress={() => navigation.goBack()}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.heroActionOutlineText}>← 돌아가기</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.heroActionBtn, styles.heroActionFill]}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.heroActionFillText}>💬 메세지</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Today / Total */}
         <View style={styles.heroTtBox}>
@@ -1252,8 +1314,12 @@ export const MyHomeScreen: React.FC = () => {
             <TouchableOpacity
               key={i}
               style={styles.heroStatChip}
-              onPress={() => handleOpenStatEdit(stat.label, stat.key, stat.value.replace('회', ''))}
-              activeOpacity={0.7}
+              onPress={
+                isOwnProfile
+                  ? () => handleOpenStatEdit(stat.label, stat.key, stat.value.replace('회', ''))
+                  : undefined
+              }
+              activeOpacity={isOwnProfile ? 0.7 : 1}
             >
               <Text style={{ fontSize: 22, marginBottom: 6 }}>{stat.emoji}</Text>
               <Text style={styles.heroStatChipLabel}>{stat.label}</Text>
@@ -1266,9 +1332,14 @@ export const MyHomeScreen: React.FC = () => {
         <View style={{ marginBottom: 18 }}>
           <View style={styles.heroSectionTitleRow}>
             <Text style={styles.heroSectionTitle}>자주 가는 골프장</Text>
-            <TouchableOpacity style={styles.heroAddBtn} onPress={() => setCourseModalVisible(true)}>
-              <Text style={styles.heroAddBtnText}>+</Text>
-            </TouchableOpacity>
+            {isOwnProfile && (
+              <TouchableOpacity
+                style={styles.heroAddBtn}
+                onPress={() => setCourseModalVisible(true)}
+              >
+                <Text style={styles.heroAddBtnText}>+</Text>
+              </TouchableOpacity>
+            )}
           </View>
           <View style={styles.heroTagWrap}>
             {(userData.favoriteCourses.length > 0
@@ -1279,8 +1350,10 @@ export const MyHomeScreen: React.FC = () => {
                 key={i}
                 style={styles.heroFavTag}
                 activeOpacity={0.7}
-                onLongPress={() =>
-                  userData.favoriteCourses.length > 0 && handleDeleteCourse(course, i)
+                onLongPress={
+                  isOwnProfile
+                    ? () => userData.favoriteCourses.length > 0 && handleDeleteCourse(course, i)
+                    : undefined
                 }
               >
                 <Text style={styles.heroFavTagText}>{course.name}</Text>
@@ -1293,9 +1366,11 @@ export const MyHomeScreen: React.FC = () => {
         <View style={{ marginBottom: 18 }}>
           <View style={styles.heroSectionTitleRow}>
             <Text style={styles.heroSectionTitle}>라운딩 스타일</Text>
-            <TouchableOpacity style={styles.heroAddBtn} onPress={handleOpenStyleModal}>
-              <Text style={styles.heroAddBtnText}>+</Text>
-            </TouchableOpacity>
+            {isOwnProfile && (
+              <TouchableOpacity style={styles.heroAddBtn} onPress={handleOpenStyleModal}>
+                <Text style={styles.heroAddBtnText}>+</Text>
+              </TouchableOpacity>
+            )}
           </View>
           <View style={styles.heroTagWrap}>
             {(userData.roundingStyles.length > 0
@@ -1312,10 +1387,12 @@ export const MyHomeScreen: React.FC = () => {
         {/* 내 관심사 */}
         <View style={{ marginBottom: 18 }}>
           <View style={styles.heroSectionTitleRow}>
-            <Text style={styles.heroSectionTitle}>내 관심사</Text>
-            <TouchableOpacity style={styles.heroAddBtn} onPress={handleOpenInterestModal}>
-              <Text style={styles.heroAddBtnText}>+</Text>
-            </TouchableOpacity>
+            <Text style={styles.heroSectionTitle}>관심사</Text>
+            {isOwnProfile && (
+              <TouchableOpacity style={styles.heroAddBtn} onPress={handleOpenInterestModal}>
+                <Text style={styles.heroAddBtnText}>+</Text>
+              </TouchableOpacity>
+            )}
           </View>
           <View style={styles.heroTagWrap}>
             {(userData.interests.length > 0
@@ -1369,6 +1446,12 @@ export const MyHomeScreen: React.FC = () => {
       <Text style={styles.emptyText}>등록된 게시물이 없습니다</Text>
     </View>
   );
+
+  // 멤버십 게이팅: 본인 홈피 접근 시만 비구독 남성 차단
+  // (타인 홈피는 ProfileScreen에서 이미 게이팅됨)
+  if (isOwnProfile && !checkAccess('myHome')) {
+    return <PremiumGuard feature="My홈피" />;
+  }
 
   return (
     <View style={styles.container}>
@@ -1450,10 +1533,12 @@ export const MyHomeScreen: React.FC = () => {
         </TouchableOpacity>
       </Modal>
 
-      {/* FAB 버튼 */}
-      <TouchableOpacity style={styles.fabButton} onPress={handleFabPress}>
-        <Text style={styles.fabIcon}>✏️</Text>
-      </TouchableOpacity>
+      {/* FAB 버튼 (본인 홈피만 표시) */}
+      {isOwnProfile && (
+        <TouchableOpacity style={styles.fabButton} onPress={handleFabPress}>
+          <Text style={styles.fabIcon}>✏️</Text>
+        </TouchableOpacity>
+      )}
 
       {/* 방명록 작성 모달 */}
       <Modal

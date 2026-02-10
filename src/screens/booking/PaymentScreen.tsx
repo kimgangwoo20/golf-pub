@@ -1,4 +1,4 @@
-// PaymentScreen.tsx - 결제 화면 (Firestore 연동)
+// PaymentScreen.tsx - 결제 화면 (Toss Widget SDK 연동)
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -11,11 +11,18 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import {
+  PaymentWidgetProvider,
+  PaymentMethodWidget,
+  AgreementWidget,
+  usePaymentWidget,
+} from '@tosspayments/widget-sdk-react-native';
+import type { AgreementStatus } from '@tosspayments/widget-sdk-react-native';
 import { colors } from '@/styles/theme';
 import { getBookingDetail } from '@/services/firebase/firebaseBooking';
 import { useBookingStore } from '@/store/useBookingStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { tossPayments } from '@/services/payment/tossPayments';
+import { tossPayments, TOSS_CLIENT_KEY } from '@/services/payment/tossPayments';
 import {
   firestore,
   doc,
@@ -25,191 +32,95 @@ import {
   serverTimestamp,
 } from '@/services/firebase/firebaseConfig';
 
+// Widget SDK 사용 가능 여부
+const USE_WIDGET = !!TOSS_CLIENT_KEY;
+
 type PaymentMethod = 'card' | 'account' | 'kakao' | 'naver';
 
-export const PaymentScreen: React.FC = () => {
+// --- Widget 모드 결제 내용 ---
+const PaymentWidgetContent: React.FC<{
+  booking: any;
+  bookingId: string;
+  totalAmount: number;
+}> = ({ booking, bookingId, totalAmount }) => {
   const navigation = useNavigation<any>();
-  const route = useRoute<any>();
-  const bookingId = route.params?.bookingId as string;
+  const paymentWidget = usePaymentWidget();
+  const [paymentMethodReady, setPaymentMethodReady] = useState(false);
+  const [agreementReady, setAgreementReady] = useState(false);
+  const [agreementStatus, setAgreementStatus] = useState<AgreementStatus | null>(null);
+  const [processing, setProcessing] = useState(false);
 
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('card');
-  const [agreed, setAgreed] = useState(false);
-  const [booking, setBooking] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const isReady = paymentMethodReady && agreementReady;
+  const canPay = isReady && agreementStatus?.agreedRequiredTerms;
 
-  const loadBooking = useCallback(async () => {
-    if (!bookingId) return;
+  const handlePayment = async () => {
+    if (!canPay || processing) return;
+
     try {
-      setLoading(true);
-      const bookingData = await getBookingDetail(bookingId);
+      setProcessing(true);
+      const user = useAuthStore.getState().user;
+      if (!user || !bookingId) {
+        Alert.alert('오류', '로그인 정보를 확인해주세요.');
+        return;
+      }
 
-      if (bookingData) {
-        // 호스트 이름 조회
-        let hostName = '호스트';
-        if (bookingData.hostId) {
-          try {
-            const hostDocSnap = await getDoc(doc(firestore, 'users', bookingData.hostId));
-            const hostData = hostDocSnap.data();
-            hostName = hostData?.name || hostData?.displayName || '호스트';
-          } catch {
-            // 호스트 정보 조회 실패 시 기본값 사용
-          }
+      const orderId = tossPayments.generateOrderId('BOOKING');
+
+      // Widget SDK 결제 요청
+      const result = await paymentWidget.requestPayment({
+        orderId,
+        orderName: booking.title || '골프 모임 참가비',
+        customerEmail: user.email || undefined,
+        customerName: user.displayName || '참가자',
+      });
+
+      if (result?.success) {
+        // 결제 확인 (Cloud Functions 경유)
+        const confirmResult = await tossPayments.confirmPayment(
+          result.success.paymentKey,
+          result.success.orderId,
+          result.success.amount,
+          bookingId,
+        );
+
+        if (!confirmResult.success) {
+          Alert.alert('결제 확인 실패', confirmResult.message);
+          return;
         }
 
-        setBooking({
-          id: bookingData.id,
-          title: bookingData.title || '',
-          golfCourse: bookingData.course || '',
-          location: '',
-          date: bookingData.date || '',
-          time: bookingData.time || '',
-          price: bookingData.price?.original || 0,
-          hostName,
+        // 부킹 참가 처리
+        await useBookingStore
+          .getState()
+          .joinBooking(bookingId, user.uid, user.displayName || '참가자');
+
+        // 결제 정보 Firestore 저장
+        await addDoc(collection(firestore, 'payments'), {
+          paymentKey: result.success.paymentKey,
+          orderId: result.success.orderId,
+          bookingId,
+          userId: user.uid,
+          amount: result.success.amount,
+          method: 'card',
+          status: 'DONE',
+          approvedAt: new Date().toISOString(),
+          createdAt: serverTimestamp(),
         });
+
+        Alert.alert('결제 완료!', '참가 신청이 완료되었습니다.\n호스트의 승인을 기다려주세요.', [
+          { text: '확인', onPress: () => navigation.navigate('BookingList' as any) },
+        ]);
+      } else if (result?.fail) {
+        Alert.alert('결제 실패', result.fail.message);
       }
-    } catch (error) {
-      console.error('부킹 정보 로드 실패:', error);
+    } catch (error: any) {
+      Alert.alert('결제 실패', error.message || '결제 처리에 실패했습니다.');
     } finally {
-      setLoading(false);
+      setProcessing(false);
     }
-  }, [bookingId]);
-
-  useEffect(() => {
-    loadBooking();
-  }, [loadBooking]);
-
-  const paymentMethods = [
-    { key: 'card' as PaymentMethod, label: '신용/체크카드', icon: '💳' },
-    { key: 'account' as PaymentMethod, label: '계좌이체', icon: '🏦' },
-    { key: 'kakao' as PaymentMethod, label: '카카오페이', icon: '💛' },
-    { key: 'naver' as PaymentMethod, label: '네이버페이', icon: '💚' },
-  ];
-
-  const totalAmount = booking?.price || 0;
-
-  const handlePayment = () => {
-    if (!agreed) {
-      Alert.alert('약관 동의 필요', '결제 진행을 위해 약관에 동의해주세요.');
-      return;
-    }
-
-    Alert.alert(
-      '결제 확인',
-      `${totalAmount.toLocaleString()}원을 결제하시겠습니까?\n\n에스크로로 안전하게 보관되며,\n라운딩 완료 후 호스트에게 전달됩니다.`,
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '결제',
-          onPress: async () => {
-            try {
-              const user = useAuthStore.getState().user;
-              if (!user || !bookingId) {
-                Alert.alert('오류', '로그인 정보를 확인해주세요.');
-                return;
-              }
-
-              // Toss Payments 결제 요청
-              const orderId = tossPayments.generateOrderId('BOOKING');
-              const paymentResult = await tossPayments.requestPayment({
-                orderId,
-                orderName: booking.title || '골프 모임 참가비',
-                amount: totalAmount,
-                method: selectedMethod,
-                customerName: user.displayName || '참가자',
-                customerEmail: user.email || undefined,
-              });
-
-              if (!paymentResult.success) {
-                Alert.alert('결제 실패', paymentResult.message);
-                return;
-              }
-
-              // 결제 성공 → 부킹 참가 처리
-              await useBookingStore
-                .getState()
-                .joinBooking(bookingId, user.uid, user.displayName || '참가자');
-
-              // 결제 정보 Firestore 저장
-              await addDoc(collection(firestore, 'payments'), {
-                paymentKey: paymentResult.paymentKey,
-                orderId: paymentResult.orderId,
-                bookingId,
-                userId: user.uid,
-                amount: paymentResult.amount,
-                method: paymentResult.method,
-                status: 'DONE',
-                approvedAt: paymentResult.approvedAt,
-                createdAt: serverTimestamp(),
-              });
-
-              Alert.alert(
-                '결제 완료!',
-                '참가 신청이 완료되었습니다.\n호스트의 승인을 기다려주세요.',
-                [
-                  {
-                    text: '확인',
-                    onPress: () => {
-                      navigation.navigate('BookingList' as any);
-                    },
-                  },
-                ],
-              );
-            } catch (error: any) {
-              Alert.alert('참가 실패', error.message || '부킹 참가에 실패했습니다.');
-            }
-          },
-        },
-      ],
-    );
   };
 
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.backButton}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>결제</Text>
-          <View style={{ width: 24 }} />
-        </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>결제 정보를 불러오는 중...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (!booking) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.backButton}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>결제</Text>
-          <View style={{ width: 24 }} />
-        </View>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.emptyIcon}>📋</Text>
-          <Text style={styles.emptyText}>부킹 정보를 찾을 수 없습니다</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   return (
-    <SafeAreaView style={styles.container}>
-      {/* 헤더 */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>결제</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
+    <>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* 예약 정보 */}
         <View style={styles.section}>
@@ -273,7 +184,198 @@ export const PaymentScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* 결제 수단 */}
+        {/* 결제 수단 위젯 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>결제 수단</Text>
+          <PaymentMethodWidget
+            selector="payment-method"
+            onLoadEnd={() => setPaymentMethodReady(true)}
+          />
+        </View>
+
+        {/* 약관 동의 위젯 */}
+        <View style={styles.section}>
+          <AgreementWidget
+            selector="agreement"
+            onChange={(status) => setAgreementStatus(status)}
+            onLoadEnd={() => setAgreementReady(true)}
+          />
+        </View>
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
+
+      {/* 하단 결제 버튼 */}
+      <View style={styles.bottomBar}>
+        <View style={styles.bottomInfo}>
+          <Text style={styles.bottomLabel}>총 결제 금액</Text>
+          <Text style={styles.bottomPrice}>{totalAmount.toLocaleString()}원</Text>
+        </View>
+        <TouchableOpacity
+          style={[styles.paymentButton, !canPay && styles.paymentButtonDisabled]}
+          onPress={handlePayment}
+          disabled={!canPay || processing}
+        >
+          {processing ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text style={styles.paymentButtonText}>{totalAmount.toLocaleString()}원 결제하기</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </>
+  );
+};
+
+// --- Fallback 모드 (시뮬레이션) 결제 내용 ---
+const FallbackPaymentContent: React.FC<{
+  booking: any;
+  bookingId: string;
+  totalAmount: number;
+}> = ({ booking, bookingId, totalAmount }) => {
+  const navigation = useNavigation<any>();
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('card');
+  const [agreed, setAgreed] = useState(false);
+
+  const paymentMethods = [
+    { key: 'card' as PaymentMethod, label: '신용/체크카드', icon: '💳' },
+    { key: 'account' as PaymentMethod, label: '계좌이체', icon: '🏦' },
+    { key: 'kakao' as PaymentMethod, label: '카카오페이', icon: '💛' },
+    { key: 'naver' as PaymentMethod, label: '네이버페이', icon: '💚' },
+  ];
+
+  const handlePayment = () => {
+    if (!agreed) {
+      Alert.alert('약관 동의 필요', '결제 진행을 위해 약관에 동의해주세요.');
+      return;
+    }
+
+    Alert.alert(
+      '결제 확인',
+      `${totalAmount.toLocaleString()}원을 결제하시겠습니까?\n\n에스크로로 안전하게 보관되며,\n라운딩 완료 후 호스트에게 전달됩니다.`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '결제',
+          onPress: async () => {
+            try {
+              const user = useAuthStore.getState().user;
+              if (!user || !bookingId) {
+                Alert.alert('오류', '로그인 정보를 확인해주세요.');
+                return;
+              }
+
+              const orderId = tossPayments.generateOrderId('BOOKING');
+              const paymentResult = await tossPayments.requestPayment({
+                orderId,
+                orderName: booking.title || '골프 모임 참가비',
+                amount: totalAmount,
+                method: selectedMethod,
+                customerName: user.displayName || '참가자',
+                customerEmail: user.email || undefined,
+              });
+
+              if (!paymentResult.success) {
+                Alert.alert('결제 실패', paymentResult.message);
+                return;
+              }
+
+              await useBookingStore
+                .getState()
+                .joinBooking(bookingId, user.uid, user.displayName || '참가자');
+
+              await addDoc(collection(firestore, 'payments'), {
+                paymentKey: paymentResult.paymentKey,
+                orderId: paymentResult.orderId,
+                bookingId,
+                userId: user.uid,
+                amount: paymentResult.amount,
+                method: paymentResult.method,
+                status: 'DONE',
+                approvedAt: paymentResult.approvedAt,
+                createdAt: serverTimestamp(),
+              });
+
+              Alert.alert(
+                '결제 완료!',
+                '참가 신청이 완료되었습니다.\n호스트의 승인을 기다려주세요.',
+                [{ text: '확인', onPress: () => navigation.navigate('BookingList' as any) }],
+              );
+            } catch (error: any) {
+              Alert.alert('참가 실패', error.message || '부킹 참가에 실패했습니다.');
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  return (
+    <>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* 예약 정보 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>예약 정보</Text>
+          <View style={styles.bookingCard}>
+            <Text style={styles.bookingTitle}>{booking.title}</Text>
+            <View style={styles.bookingInfo}>
+              <Text style={styles.bookingLabel}>골프장</Text>
+              <Text style={styles.bookingValue}>{booking.golfCourse}</Text>
+            </View>
+            {booking.location ? (
+              <View style={styles.bookingInfo}>
+                <Text style={styles.bookingLabel}>지역</Text>
+                <Text style={styles.bookingValue}>{booking.location}</Text>
+              </View>
+            ) : null}
+            <View style={styles.bookingInfo}>
+              <Text style={styles.bookingLabel}>날짜</Text>
+              <Text style={styles.bookingValue}>{booking.date}</Text>
+            </View>
+            <View style={styles.bookingInfo}>
+              <Text style={styles.bookingLabel}>시간</Text>
+              <Text style={styles.bookingValue}>{booking.time}</Text>
+            </View>
+            <View style={styles.bookingInfo}>
+              <Text style={styles.bookingLabel}>호스트</Text>
+              <Text style={styles.bookingValue}>{booking.hostName}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* 결제 금액 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>결제 금액</Text>
+          <View style={styles.priceBreakdown}>
+            <View style={styles.priceRow}>
+              <Text style={styles.priceLabel}>라운딩 비용</Text>
+              <Text style={styles.priceValue}>{totalAmount.toLocaleString()}원</Text>
+            </View>
+            <View style={styles.priceRow}>
+              <Text style={styles.priceLabel}>플랫폼 수수료 (5%)</Text>
+              <Text style={styles.priceFee}>포함</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.priceRow}>
+              <Text style={styles.totalLabel}>총 결제 금액</Text>
+              <Text style={styles.totalValue}>{totalAmount.toLocaleString()}원</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* 에스크로 안내 */}
+        <View style={styles.section}>
+          <View style={styles.escrowCard}>
+            <Text style={styles.escrowTitle}>🔒 안전한 에스크로 결제</Text>
+            <Text style={styles.escrowDesc}>
+              결제하신 금액은 에스크로로 안전하게 보관됩니다.{'\n'}
+              라운딩 완료 후 호스트에게 전달되며,{'\n'}
+              취소 시 전액 환불됩니다.
+            </Text>
+          </View>
+        </View>
+
+        {/* 결제 수단 (Fallback) */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>결제 수단</Text>
           <View style={styles.methodGrid}>
@@ -305,7 +407,7 @@ export const PaymentScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* 약관 동의 */}
+        {/* 약관 동의 (Fallback) */}
         <View style={styles.section}>
           <TouchableOpacity style={styles.agreementRow} onPress={() => setAgreed(!agreed)}>
             <View style={[styles.checkbox, agreed && styles.checkboxChecked]}>
@@ -319,7 +421,6 @@ export const PaymentScreen: React.FC = () => {
           </Text>
         </View>
 
-        {/* 하단 여백 */}
         <View style={{ height: 100 }} />
       </ScrollView>
 
@@ -337,6 +438,129 @@ export const PaymentScreen: React.FC = () => {
           <Text style={styles.paymentButtonText}>{totalAmount.toLocaleString()}원 결제하기</Text>
         </TouchableOpacity>
       </View>
+    </>
+  );
+};
+
+// --- 메인 화면 ---
+export const PaymentScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+  const bookingId = route.params?.bookingId as string;
+
+  const [booking, setBooking] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const user = useAuthStore((s) => s.user);
+  const customerKey = user?.uid || 'anonymous';
+
+  const loadBooking = useCallback(async () => {
+    if (!bookingId) return;
+    try {
+      setLoading(true);
+      const bookingData = await getBookingDetail(bookingId);
+
+      if (bookingData) {
+        let hostName = '호스트';
+        if (bookingData.hostId) {
+          try {
+            const hostDocSnap = await getDoc(doc(firestore, 'users', bookingData.hostId));
+            const hostData = hostDocSnap.data();
+            hostName = hostData?.name || hostData?.displayName || '호스트';
+          } catch {
+            // 호스트 정보 조회 실패 시 기본값 사용
+          }
+        }
+
+        setBooking({
+          id: bookingData.id,
+          title: bookingData.title || '',
+          golfCourse: bookingData.course || '',
+          location: '',
+          date: bookingData.date || '',
+          time: bookingData.time || '',
+          price: bookingData.price?.original || 0,
+          hostName,
+        });
+      }
+    } catch (error) {
+      console.error('부킹 정보 로드 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [bookingId]);
+
+  useEffect(() => {
+    loadBooking();
+  }, [loadBooking]);
+
+  const totalAmount = booking?.price || 0;
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.backButton}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>결제</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>결제 정보를 불러오는 중...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!booking) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.backButton}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>결제</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.emptyIcon}>📋</Text>
+          <Text style={styles.emptyText}>부킹 정보를 찾을 수 없습니다</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Widget SDK 사용 가능 시 Provider로 래핑
+  if (USE_WIDGET) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.backButton}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>결제</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <PaymentWidgetProvider clientKey={TOSS_CLIENT_KEY} customerKey={customerKey}>
+          <PaymentWidgetContent booking={booking} bookingId={bookingId} totalAmount={totalAmount} />
+        </PaymentWidgetProvider>
+      </SafeAreaView>
+    );
+  }
+
+  // Fallback (시뮬레이션 모드)
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.backButton}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>결제</Text>
+        <View style={{ width: 24 }} />
+      </View>
+      <FallbackPaymentContent booking={booking} bookingId={bookingId} totalAmount={totalAmount} />
     </SafeAreaView>
   );
 };

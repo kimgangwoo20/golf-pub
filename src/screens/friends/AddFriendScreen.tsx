@@ -25,6 +25,7 @@ import {
 import { useAuthStore } from '@/store/useAuthStore';
 import { Friend } from '@/services/firebase/firebaseFriends';
 import { DEFAULT_AVATAR } from '@/constants/images';
+import { useMembershipGate } from '@/hooks/useMembershipGate';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -33,6 +34,7 @@ type TabType = 'search' | 'suggestions' | 'qr';
 export const AddFriendScreen: React.FC = () => {
   const navigation = useNavigation();
   const { user } = useAuthStore();
+  const { gateAction } = useMembershipGate();
 
   const [activeTab, setActiveTab] = useState<TabType>('search');
   const [searchText, setSearchText] = useState('');
@@ -95,19 +97,25 @@ export const AddFriendScreen: React.FC = () => {
     }
   };
 
-  const handleAddFriend = async (targetUserId: string, userName: string) => {
+  const handleAddFriend = (targetUserId: string, userName: string) => {
     if (!user?.uid) {
       Alert.alert('알림', '로그인이 필요합니다.');
       return;
     }
 
+    gateAction('addFriend', () => doAddFriend(targetUserId, userName));
+  };
+
+  const doAddFriend = async (targetUserId: string, userName: string) => {
+    if (!user?.uid) return;
+    const uid = user.uid;
     Alert.alert('친구 추가', `${userName}님에게 친구 요청을 보내시겠습니까?`, [
       { text: '취소', style: 'cancel' },
       {
         text: '요청',
         onPress: async () => {
           try {
-            const result = await sendFriendRequest(user.uid, targetUserId);
+            const result = await sendFriendRequest(uid, targetUserId);
 
             if (result.success) {
               Alert.alert('완료', result.message);

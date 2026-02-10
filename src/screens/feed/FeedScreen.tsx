@@ -37,6 +37,7 @@ import {
   FirestoreTimestamp,
 } from '@/services/firebase/firebaseConfig';
 import { DEFAULT_AVATAR } from '@/constants/images';
+import { useMembershipGate } from '@/hooks/useMembershipGate';
 
 const { width: _width } = Dimensions.get('window');
 
@@ -62,6 +63,7 @@ interface ReplyTarget {
 export const FeedScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { user } = useAuthStore();
+  const { gateAction } = useMembershipGate();
   const {
     unreadCount: unreadNotifications,
     subscribeToNotifications,
@@ -429,7 +431,12 @@ export const FeedScreen: React.FC = () => {
   };
 
   const handleCreatePost = () => {
-    navigation.navigate('CreatePost' as any);
+    gateAction('createPost', () => navigation.navigate('CreatePost' as any));
+  };
+
+  // 피드에서 사용자 프로필로 이동
+  const handleUserPress = (userId: string) => {
+    gateAction('viewProfile', () => navigation.navigate('Profile', { userId }));
   };
 
   return (
@@ -574,7 +581,11 @@ export const FeedScreen: React.FC = () => {
             {posts.map((feed) => (
               <View key={feed.id} style={styles.feedCard}>
                 {/* 피드 헤더 */}
-                <View style={styles.feedHeader}>
+                <TouchableOpacity
+                  style={styles.feedHeader}
+                  onPress={() => handleUserPress(feed.userId)}
+                  activeOpacity={0.7}
+                >
                   <Image
                     source={{ uri: feed.userImage }}
                     style={styles.feedAvatar}
@@ -584,7 +595,7 @@ export const FeedScreen: React.FC = () => {
                     <Text style={styles.feedUserName}>{feed.userName}</Text>
                     <Text style={styles.feedTime}>{feed.time}</Text>
                   </View>
-                </View>
+                </TouchableOpacity>
 
                 {/* 피드 내용 */}
                 <Text style={styles.feedContent}>{feed.content}</Text>

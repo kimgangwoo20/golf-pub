@@ -20,12 +20,13 @@ export const RegisterScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [gender, setGender] = useState<'male' | 'female' | null>(null);
   const [loading, setLoading] = useState(false);
 
   const { createUserWithEmailAndPassword } = useAuthStore();
 
   const handleRegister = async () => {
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !gender) {
       Alert.alert('알림', '모든 항목을 입력하세요.');
       return;
     }
@@ -60,7 +61,7 @@ export const RegisterScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
 
     try {
       setLoading(true);
-      await createUserWithEmailAndPassword(email, password, name);
+      await createUserWithEmailAndPassword(email, password, name, gender);
       Alert.alert('회원가입 완료', '환영합니다!');
     } catch (error: any) {
       let message = '회원가입에 실패했습니다.';
@@ -147,6 +148,40 @@ export const RegisterScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
               />
             </View>
 
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>성별 *</Text>
+              <View style={styles.genderRow}>
+                <TouchableOpacity
+                  style={[styles.genderButton, gender === 'male' && styles.genderButtonActive]}
+                  onPress={() => setGender('male')}
+                  disabled={loading}
+                >
+                  <Text
+                    style={[
+                      styles.genderButtonText,
+                      gender === 'male' && styles.genderButtonTextActive,
+                    ]}
+                  >
+                    남성
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.genderButton, gender === 'female' && styles.genderButtonActive]}
+                  onPress={() => setGender('female')}
+                  disabled={loading}
+                >
+                  <Text
+                    style={[
+                      styles.genderButtonText,
+                      gender === 'female' && styles.genderButtonTextActive,
+                    ]}
+                  >
+                    여성
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
             <TouchableOpacity
               style={[styles.registerButton, loading && styles.registerButtonDisabled]}
               onPress={handleRegister}
@@ -201,4 +236,20 @@ const styles = StyleSheet.create({
   loginLink: { alignItems: 'center', marginTop: 20, paddingBottom: 24 },
   loginLinkText: { fontSize: 14, color: '#666' },
   loginLinkBold: { color: '#10b981', fontWeight: '700' },
+  genderRow: { flexDirection: 'row', gap: 12 },
+  genderButton: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  genderButtonActive: {
+    borderColor: '#10b981',
+    backgroundColor: '#ecfdf5',
+  },
+  genderButtonText: { fontSize: 16, color: '#666' },
+  genderButtonTextActive: { color: '#10b981', fontWeight: '700' },
 });

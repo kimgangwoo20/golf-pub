@@ -17,8 +17,11 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { ProductCategory, CATEGORIES } from '@/types/marketplace-types';
 import { useMarketplaceStore } from '@/store/useMarketplaceStore';
 import { colors } from '@/styles/theme';
+import { useMembershipGate } from '@/hooks/useMembershipGate';
+import { PremiumGuard } from '@/components/common/PremiumGuard';
 
 export const MarketplaceScreen: React.FC = () => {
+  const { checkAccess } = useMembershipGate();
   const navigation = useNavigation<any>();
   const { items, loading, error, loadItems } = useMarketplaceStore();
 
@@ -34,6 +37,11 @@ export const MarketplaceScreen: React.FC = () => {
       loadItems();
     }, []),
   );
+
+  // 멤버십 게이팅: 비구독 남성 차단
+  if (!checkAccess('trade')) {
+    return <PremiumGuard feature="중고거래" />;
+  }
 
   // 카테고리 필터링
   const filteredProducts = items.filter((product) => {

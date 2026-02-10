@@ -17,6 +17,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useProfileStore } from '@/store/useProfileStore';
 import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
+import { useMembershipGate } from '@/hooks/useMembershipGate';
+import { PremiumGuard } from '@/components/common/PremiumGuard';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HERO_HEIGHT = 480;
@@ -41,6 +43,7 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
 }) => {
   const { user, signOut } = useAuthStore();
   const { profile, loadProfile, toggleProfileLike, checkProfileLiked } = useProfileStore();
+  const { checkAccess } = useMembershipGate();
   const [refreshing, setRefreshing] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [liked, setLiked] = useState(false);
@@ -152,6 +155,11 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
   const totalRounds = profile?.totalRounds || profile?.stats?.gamesPlayed || 0;
   const averageScore = profile?.stats?.averageScore || 0;
   const favoriteCourses = profile?.favoriteCourses || [];
+
+  // 타인 프로필 멤버십 게이팅
+  if (!isOwnProfile && !checkAccess('viewProfile')) {
+    return <PremiumGuard feature="프로필 보기" />;
+  }
 
   return (
     <ScrollView
@@ -366,6 +374,17 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
             </>
           )}
         </View>
+
+        {/* 홈피로 이동하기 (타인 프로필) */}
+        {!isOwnProfile && (
+          <TouchableOpacity
+            style={styles.goHomeBtn}
+            onPress={() => navigation?.navigate('UserHome', { userId: targetUserId })}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.goHomeBtnText}>🏡 홈피로 이동하기</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Today / Total */}
         <View style={styles.ttBox}>
@@ -955,5 +974,20 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.danger,
     fontWeight: fontWeight.semibold,
+  },
+
+  // 홈피 이동 버튼
+  goHomeBtn: {
+    marginBottom: 18,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    backgroundColor: pc.greenMain,
+  },
+  goHomeBtnText: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold,
+    color: '#fff',
   },
 });

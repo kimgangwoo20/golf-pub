@@ -72,7 +72,7 @@ export const MEMBERSHIP_PERMISSIONS: Record<MembershipType, MembershipPermission
     canTrade: false,
     canReserveGolfCourse: false,
     canSendMessage: false,
-    canViewProfiles: true,
+    canViewProfiles: false,
     canAccessPremiumContent: false,
   },
   [MembershipType.PREMIUM]: {

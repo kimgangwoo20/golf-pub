@@ -14,6 +14,7 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { pubAPI, Pub } from '@/services/api/pubAPI';
 import { KakaoMapService } from '@/services/kakao/kakaoMap';
+import { KakaoMapView } from '@/components/common/KakaoMapView';
 import { DEFAULT_PUB_IMAGE } from '@/constants/images';
 
 export const PubDetailScreen: React.FC = () => {
@@ -23,6 +24,7 @@ export const PubDetailScreen: React.FC = () => {
 
   const [pub, setPub] = useState<Pub | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mapCoords, setMapCoords] = useState<{ latitude: number; longitude: number } | null>(null);
 
   const loadPub = useCallback(async () => {
     if (!pubId) return;
@@ -40,6 +42,18 @@ export const PubDetailScreen: React.FC = () => {
   useEffect(() => {
     loadPub();
   }, [loadPub]);
+
+  // 좌표 설정: 직접 좌표가 있으면 사용, 없으면 주소에서 지오코딩
+  useEffect(() => {
+    if (!pub) return;
+    if (pub.latitude && pub.longitude) {
+      setMapCoords({ latitude: pub.latitude, longitude: pub.longitude });
+    } else if (pub.address) {
+      KakaoMapService.getCoordinatesFromAddress(pub.address).then((coords) => {
+        if (coords) setMapCoords(coords);
+      });
+    }
+  }, [pub]);
 
   const handleCall = () => {
     if (pub?.phone) {
@@ -191,6 +205,31 @@ export const PubDetailScreen: React.FC = () => {
           </View>
         ) : null}
       </View>
+
+      {/* 위치 지도 */}
+      {mapCoords && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>위치</Text>
+          <KakaoMapView
+            latitude={mapCoords.latitude}
+            longitude={mapCoords.longitude}
+            markers={[
+              {
+                lat: mapCoords.latitude,
+                lng: mapCoords.longitude,
+                title: pub.name,
+              },
+            ]}
+            height={200}
+            zoomLevel={3}
+          />
+          {pub.address ? (
+            <TouchableOpacity style={styles.mapNavigationButton} onPress={handleMap}>
+              <Text style={styles.mapNavigationButtonText}>🧭 길찾기</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      )}
 
       {/* 메뉴 */}
       {pub.menu && pub.menu.length > 0 && (
@@ -392,5 +431,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  mapNavigationButton: {
+    marginTop: 12,
+    backgroundColor: '#f0f0f0',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  mapNavigationButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#10b981',
   },
 });

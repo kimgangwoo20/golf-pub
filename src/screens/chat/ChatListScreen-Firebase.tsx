@@ -5,9 +5,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useChatStore } from '@/store/useChatStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { DEFAULT_AVATAR } from '@/constants/images';
+import { useMembershipGate } from '@/hooks/useMembershipGate';
+import { PremiumGuard } from '@/components/common/PremiumGuard';
 
 export const ChatListScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const { user } = useAuthStore();
+  const { checkAccess } = useMembershipGate();
   const { chatRooms, loadChatRooms } = useChatStore();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -73,6 +76,11 @@ export const ChatListScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
       </TouchableOpacity>
     );
   };
+
+  // 멤버십 게이팅: 비구독 남성 차단
+  if (!checkAccess('chat')) {
+    return <PremiumGuard feature="채팅" />;
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>

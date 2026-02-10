@@ -18,6 +18,7 @@ export interface User {
   pointBalance: number;
   points: number; // pointBalance alias
   membership?: string;
+  gender?: 'male' | 'female';
   createdAt: Date;
   updatedAt: Date;
 }

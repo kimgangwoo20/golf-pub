@@ -19,12 +19,13 @@ import { useProfileStore } from '@/store/useProfileStore';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
-  const { user } = useAuthStore();
+  const { user, userProfile } = useAuthStore();
   const { loadProfile: refreshProfileStore } = useProfileStore();
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [phone, setPhone] = useState('');
   const [handicap, setHandicap] = useState('');
+  const [gender, setGender] = useState<'male' | 'female' | undefined>(undefined);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -45,6 +46,7 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
         setPhone(profile.phone || '');
         setHandicap(profile.handicap?.toString() || '0');
         setProfileImage(profile.profileImage || null);
+        setGender((profile as any).gender || userProfile?.gender);
       }
     } catch (error) {
       console.error('프로필 로드 실패:', error);
@@ -118,12 +120,16 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
 
     setIsLoading(true);
     try {
-      await profileAPI.updateProfile({
+      const updateData: any = {
         name: name.trim(),
         bio: bio.trim(),
         phone: phone.trim(),
         handicap: handicapNum,
-      });
+      };
+      if (gender) {
+        updateData.gender = gender;
+      }
+      await profileAPI.updateProfile(updateData);
       // 스토어 갱신 → MyHomeScreen 등에 즉시 반영
       if (user?.uid) {
         await refreshProfileStore(user.uid);
@@ -236,6 +242,28 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
           />
         </View>
 
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>성별</Text>
+          <View style={styles.genderRow}>
+            <TouchableOpacity
+              style={[styles.genderButton, gender === 'male' && styles.genderButtonActive]}
+              onPress={() => setGender('male')}
+            >
+              <Text style={[styles.genderText, gender === 'male' && styles.genderTextActive]}>
+                남성
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.genderButton, gender === 'female' && styles.genderButtonActive]}
+              onPress={() => setGender('female')}
+            >
+              <Text style={[styles.genderText, gender === 'female' && styles.genderTextActive]}>
+                여성
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <TouchableOpacity
           style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
           onPress={handleSave}
@@ -325,4 +353,20 @@ const styles = StyleSheet.create({
   },
   saveButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   saveButtonDisabled: { opacity: 0.7 },
+  genderRow: { flexDirection: 'row', gap: 12 },
+  genderButton: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  genderButtonActive: {
+    borderColor: '#10b981',
+    backgroundColor: '#ecfdf5',
+  },
+  genderText: { fontSize: 15, color: '#666' },
+  genderTextActive: { color: '#10b981', fontWeight: '700' },
 });

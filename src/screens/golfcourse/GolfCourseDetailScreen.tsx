@@ -19,6 +19,7 @@ import { GolfCourse, GolfCourseReview } from '@/types/golfcourse-types';
 import { fetchWeather } from '@/services/api/weatherAPI';
 import { Weather } from '@/types';
 import { golfCourseAPI } from '@/services/api/golfCourseAPI';
+import { KakaoMapView } from '@/components/common/KakaoMapView';
 
 const { width } = Dimensions.get('window');
 
@@ -245,6 +246,27 @@ export const GolfCourseDetailScreen: React.FC = () => {
                 <Text style={styles.actionText}>홈페이지</Text>
               </TouchableOpacity>
             </View>
+          </View>
+
+          {/* 위치 지도 */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>위치</Text>
+            <KakaoMapView
+              latitude={course.location.latitude}
+              longitude={course.location.longitude}
+              markers={[
+                {
+                  lat: course.location.latitude,
+                  lng: course.location.longitude,
+                  title: course.name,
+                },
+              ]}
+              height={200}
+              zoomLevel={3}
+            />
+            <TouchableOpacity style={styles.navigationButton} onPress={handleNavigation}>
+              <Text style={styles.navigationButtonText}>🧭 길찾기</Text>
+            </TouchableOpacity>
           </View>
 
           {/* 요금 정보 */}
@@ -797,6 +819,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   writeReviewText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#10b981',
+  },
+  navigationButton: {
+    marginTop: 12,
+    backgroundColor: '#F5F5F5',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  navigationButtonText: {
     fontSize: 15,
     fontWeight: '700',
     color: '#10b981',

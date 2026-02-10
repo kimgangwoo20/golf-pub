@@ -19,7 +19,9 @@ interface AuthState {
     email: string,
     password: string,
     displayName: string,
+    gender?: 'male' | 'female',
   ) => Promise<void>;
+  refreshProfile: (uid: string) => Promise<void>;
   signOut: () => Promise<void>;
   loadUserProfile: (uid: string) => Promise<void>;
   updateUserProfile: (uid: string, data: Partial<UserProfile>) => Promise<void>;
@@ -134,7 +136,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   /**
    * 이메일/비밀번호 회원가입
    */
-  createUserWithEmailAndPassword: async (email: string, password: string, displayName: string) => {
+  createUserWithEmailAndPassword: async (
+    email: string,
+    password: string,
+    displayName: string,
+    gender?: 'male' | 'female',
+  ) => {
     try {
       set({ loading: true, error: null });
 
@@ -142,6 +149,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         email,
         password,
         displayName,
+        gender,
       );
       const profile = await authService.getUserProfile(userCredential.user.uid);
 
@@ -183,6 +191,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         loading: false,
       });
       throw error;
+    }
+  },
+
+  /**
+   * 프로필 새로고침 (결제 후 즉시 반영 등)
+   */
+  refreshProfile: async (uid: string) => {
+    try {
+      const profile = await authService.getUserProfile(uid);
+      if (profile) {
+        set({ userProfile: profile });
+      }
+    } catch (error) {
+      console.error('프로필 새로고침 실패');
     }
   },
 

@@ -23,9 +23,12 @@ import { useBookingStore } from '@/store/useBookingStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { validators } from '@/utils/validators';
 import { firebaseStorage } from '@/services/firebase/firebaseStorage';
+import { useMembershipGate } from '@/hooks/useMembershipGate';
+import { PremiumGuard } from '@/components/common/PremiumGuard';
 
 export const CreateBookingScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { checkAccess } = useMembershipGate();
 
   // 폼 상태
   const [title, setTitle] = useState('');
@@ -256,6 +259,11 @@ export const CreateBookingScreen: React.FC = () => {
       },
     ]);
   };
+
+  // 멤버십 게이팅: 비구독 남성 차단
+  if (!checkAccess('createBooking')) {
+    return <PremiumGuard feature="모임 만들기" />;
+  }
 
   return (
     <SafeAreaView style={styles.container}>
