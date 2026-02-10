@@ -245,6 +245,27 @@
 - [x] ~~ImageViewerModal, BackgroundMediaEditor 컴포넌트 신규 추가~~ (2026.02.10 완료)
 - [x] ~~TypeScript 0 에러 유지~~ (2026.02.10 완료)
 
+### 2026.02.10 코드 품질 개선 — Mock 제거 + 이미지 압축 + 임시저장
+
+- [x] ~~FeedViewer Mock 댓글 제거 → Firestore 연동 (FeedViewer.tsx)~~ (2026.02.10 완료)
+  - `generateMockComments()` 하드코딩 7개 Mock 댓글 완전 제거
+  - 댓글 모달 오픈 시 Firestore `posts/{postId}/comments` 서브컬렉션에서 실시간 로드
+  - 새 댓글 등록 시 Firestore에 저장 + 낙관적 UI (임시 ID → 실제 docRef.id 교체)
+  - Comment 인터페이스 `id: number` → `string` 변경 (Firestore 문서 ID 호환)
+  - `useAuthStore` 연동하여 현재 사용자 정보로 댓글 작성자 표시
+  - 댓글 로딩 중 ActivityIndicator 표시
+- [x] ~~이미지 압축 구현 (firebaseStorage.ts)~~ (2026.02.10 완료)
+  - `compressImage()` 스텁(원본 반환) → `expo-image-manipulator` 실제 구현
+  - `manipulateAsync()` + `SaveFormat.JPEG` 사용 (maxWidth 1200, quality 0.8 기본값)
+  - 압축 실패 시 원본 URI 반환 (graceful fallback)
+- [x] ~~게시물 임시저장 기능 구현 (CreatePostScreen.tsx)~~ (2026.02.10 완료)
+  - `handleSaveDraft()` Alert만 표시 → AsyncStorage 실제 저장 구현
+  - 저장 항목: content, images(로컬 URI), location, visibility, hashtags
+  - 화면 진입 시 기존 임시저장 데이터 자동 복원 + 안내 Alert
+  - 게시 성공 후 임시저장 데이터 자동 삭제 (`clearDraft`)
+  - 작성 취소 시 임시저장 옵션 제공 (기존 플로우 유지)
+- [x] ~~TypeScript 0 에러, ESLint 0 에러 확인~~ (2026.02.10 완료)
+
 ### 2026.02.10 멤버십 게이팅 시스템 + 성별 기반 면제 + 홈피 이동 플로우
 
 - [x] ~~React.lazy 번들 오류 수정 (App.tsx)~~ (2026.02.10 완료)

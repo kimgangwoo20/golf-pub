@@ -3,6 +3,7 @@
 
 import { storage, storageRefFn, getDownloadURL, handleFirebaseError } from './firebaseConfig';
 import type { FirebaseStorageTypes } from '@react-native-firebase/storage';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 
 /**
  * 이미지 압축 옵션
@@ -424,33 +425,22 @@ class FirebaseStorageService {
    */
   async compressImage(
     uri: string,
-    _options: ImageCompressionOptions = {
+    options: ImageCompressionOptions = {
       maxWidth: 1200,
       maxHeight: 1200,
       quality: 0.8,
     },
   ): Promise<string> {
     try {
-      // React Native Image Resizer 또는 Expo ImageManipulator 사용
-      // 여기서는 예시로 구현
-
-      // 이미지 압축 시작
-
-      // [향후] expo-image-manipulator 설치 후 이미지 압축 활성화 (현재는 원본 업로드, 기능상 문제 없음)
-      // import * as ImageManipulator from 'expo-image-manipulator';
-      // const result = await ImageManipulator.manipulateAsync(
-      //   uri,
-      //   [{ resize: { width: options.maxWidth, height: options.maxHeight } }],
-      //   { compress: options.quality, format: ImageManipulator.SaveFormat.JPEG }
-      // );
-
-      // 이미지 압축 완료
-
-      // 임시로 원본 URI 반환
-      return uri;
+      const result = await manipulateAsync(
+        uri,
+        [{ resize: { width: options.maxWidth, height: options.maxHeight } }],
+        { compress: options.quality, format: SaveFormat.JPEG },
+      );
+      return result.uri;
     } catch (error) {
-      console.error('이미지 압축 실패');
-      return uri; // 압축 실패 시 원본 반환
+      console.error('이미지 압축 실패, 원본 사용');
+      return uri;
     }
   }
 

@@ -1,6 +1,6 @@
 // CreatePostScreen.tsx - 게시물 작성 화면
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useFeedStore } from '@/store/useFeedStore';
 import {
@@ -23,6 +24,8 @@ import {
   FirestoreTimestamp,
 } from '@/services/firebase/firebaseConfig';
 import { firebaseStorage } from '@/services/firebase/firebaseStorage';
+
+const DRAFT_STORAGE_KEY = 'post_draft';
 
 const { width: _width } = Dimensions.get('window');
 const MAX_IMAGES = 10;
@@ -42,6 +45,40 @@ export const CreatePostScreen: React.FC = () => {
   const [visibility, setVisibility] = useState<'public' | 'friends'>('public');
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [publishing, setPublishing] = useState(false);
+  const [_draftLoaded, setDraftLoaded] = useState(false);
+
+  // 임시저장 데이터 로드
+  useEffect(() => {
+    const loadDraft = async () => {
+      try {
+        const raw = await AsyncStorage.getItem(DRAFT_STORAGE_KEY);
+        if (!raw) {
+          setDraftLoaded(true);
+          return;
+        }
+        const draft = JSON.parse(raw);
+        if (draft.content) setContent(draft.content);
+        if (draft.images) setImages(draft.images);
+        if (draft.location) setLocation(draft.location);
+        if (draft.visibility) setVisibility(draft.visibility);
+        if (draft.hashtags) setHashtags(draft.hashtags);
+        setDraftLoaded(true);
+        Alert.alert('임시저장', '이전에 작성 중이던 게시물을 불러왔습니다.');
+      } catch {
+        setDraftLoaded(true);
+      }
+    };
+    loadDraft();
+  }, []);
+
+  // 임시저장 데이터 삭제
+  const clearDraft = useCallback(async () => {
+    try {
+      await AsyncStorage.removeItem(DRAFT_STORAGE_KEY);
+    } catch {
+      // 무시
+    }
+  }, []);
 
   const handleAddImage = async () => {
     if (images.length >= MAX_IMAGES) {
@@ -110,8 +147,14 @@ export const CreatePostScreen: React.FC = () => {
     setHashtags(hashtags.filter((h) => h !== tag));
   };
 
-  const handleSaveDraft = () => {
-    Alert.alert('임시저장', '게시물이 임시저장되었습니다.');
+  const handleSaveDraft = async () => {
+    try {
+      const draft = { content, images, location, visibility, hashtags };
+      await AsyncStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+      Alert.alert('임시저장', '게시물이 임시저장되었습니다.');
+    } catch {
+      Alert.alert('오류', '임시저장에 실패했습니다.');
+    }
   };
 
   const handlePublish = () => {
@@ -169,7 +212,8 @@ export const CreatePostScreen: React.FC = () => {
               createdAt: FirestoreTimestamp.now(),
             });
 
-            // 피드 스토어 갱신
+            // 임시저장 삭제 + 피드 스토어 갱신
+            await clearDraft();
             await useFeedStore.getState().loadPosts();
             setPublishing(false);
             Alert.alert('완료', '게시물이 등록되었습니다.', [

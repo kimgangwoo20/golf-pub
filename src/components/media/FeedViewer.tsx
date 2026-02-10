@@ -15,8 +15,14 @@ import {
   Keyboard,
   Platform,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  firestore as firebaseFirestore,
+  FirestoreTimestamp,
+} from '@/services/firebase/firebaseConfig';
+import { useAuthStore } from '@/store/useAuthStore';
 
 const { width, height } = Dimensions.get('window');
 
@@ -39,7 +45,7 @@ export interface FeedItem {
 
 // 댓글 인터페이스
 interface Comment {
-  id: number;
+  id: string;
   feedId: string | number; // Firestore 문서 ID (string) 또는 숫자 ID 지원
   userName: string;
   userImage: string;
@@ -47,11 +53,11 @@ interface Comment {
   time: string;
   likes: number;
   replies?: Comment[];
-  parentId?: number;
+  parentId?: string;
 }
 
 interface ReplyTarget {
-  commentId: number;
+  commentId: string;
   userName: string;
 }
 
@@ -66,84 +72,20 @@ interface FeedViewerProps {
   authorImage?: string;
 }
 
-// Mock 댓글 데이터 생성
-const generateMockComments = (): Comment[] => [
-  {
-    id: 1,
-    feedId: 1,
-    userName: '이민지',
-    userImage: 'https://i.pravatar.cc/150?img=45',
-    content: '우와 날씨 진짜 좋아보여요!',
-    time: '1시간 전',
-    likes: 5,
-    replies: [
-      {
-        id: 101,
-        feedId: 1,
-        userName: '박정우',
-        userImage: 'https://i.pravatar.cc/150?img=33',
-        content: '맞아요 완전 좋았어요!',
-        time: '50분 전',
-        likes: 2,
-        parentId: 1,
-      },
-    ],
-  },
-  {
-    id: 2,
-    feedId: 1,
-    userName: '최수진',
-    userImage: 'https://i.pravatar.cc/150?img=27',
-    content: '스코어 어떻게 되셨어요?',
-    time: '1시간 전',
-    likes: 3,
-  },
-  {
-    id: 3,
-    feedId: 2,
-    userName: '박정우',
-    userImage: 'https://i.pravatar.cc/150?img=33',
-    content: '골프장 풍경 최고네요!',
-    time: '3시간 전',
-    likes: 8,
-  },
-  {
-    id: 4,
-    feedId: 3,
-    userName: '이민지',
-    userImage: 'https://i.pravatar.cc/150?img=45',
-    content: '스윙 폼이 좋아지셨네요!',
-    time: '5시간 전',
-    likes: 12,
-  },
-  {
-    id: 5,
-    feedId: 4,
-    userName: '최수진',
-    userImage: 'https://i.pravatar.cc/150?img=27',
-    content: '100타 돌파 축하드려요!! 🎉',
-    time: '1일 전',
-    likes: 15,
-  },
-  {
-    id: 6,
-    feedId: 4,
-    userName: '김철수',
-    userImage: 'https://i.pravatar.cc/150?img=15',
-    content: '대단해요! 저도 목표입니다',
-    time: '1일 전',
-    likes: 7,
-  },
-  {
-    id: 7,
-    feedId: 5,
-    userName: '박정우',
-    userImage: 'https://i.pravatar.cc/150?img=33',
-    content: '새 드라이버 어떤 건가요?',
-    time: '2일 전',
-    likes: 4,
-  },
-];
+// 상대 시간 포맷팅
+const formatRelativeTime = (date: Date): string => {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHour = Math.floor(diffMs / 3600000);
+  const diffDay = Math.floor(diffMs / 86400000);
+
+  if (diffMin < 1) return '방금 전';
+  if (diffMin < 60) return `${diffMin}분 전`;
+  if (diffHour < 24) return `${diffHour}시간 전`;
+  if (diffDay < 7) return `${diffDay}일 전`;
+  return date.toLocaleDateString('ko-KR');
+};
 
 // 가로 이미지 캐러셀 컴포넌트
 const ImageCarousel: React.FC<{ urls: string[] }> = React.memo(({ urls }) => {
@@ -275,15 +217,17 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
   const insets = useSafeAreaInsets();
 
   // 댓글 상태
-  const [comments, setComments] = useState<Comment[]>(generateMockComments);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [commentModalVisible, setCommentModalVisible] = useState(false);
   const [selectedFeedId, setSelectedFeedId] = useState<string | number | null>(null);
   const [commentText, setCommentText] = useState('');
-  const [likedComments, setLikedComments] = useState<Set<number>>(new Set());
+  const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
   const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null);
-  const [editingComment, setEditingComment] = useState<{ id: number; parentId?: number } | null>(
+  const [editingComment, setEditingComment] = useState<{ id: string; parentId?: string } | null>(
     null,
   );
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const { user } = useAuthStore();
 
   const keyboardHeight = useRef(new Animated.Value(0)).current;
   const inputRef = useRef<TextInput>(null);
@@ -331,11 +275,53 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
     [onLike],
   );
 
-  // 댓글 모달 열기
-  const handleOpenComments = useCallback((feedId: string | number) => {
-    setSelectedFeedId(feedId);
-    setCommentModalVisible(true);
+  // Firestore에서 댓글 로드
+  const loadComments = useCallback(async (feedId: string | number) => {
+    try {
+      setCommentsLoading(true);
+      const postId = String(feedId);
+      const snapshot = await firebaseFirestore
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .orderBy('createdAt', 'asc')
+        .limit(50)
+        .get();
+
+      const firestoreComments: Comment[] = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        const createdAt = data.createdAt?.toDate?.() || new Date();
+        return {
+          id: doc.id,
+          feedId,
+          userName: data.author?.name || '사용자',
+          userImage: data.author?.image || '',
+          content: data.content || '',
+          time: formatRelativeTime(createdAt),
+          likes: data.likes || 0,
+        };
+      });
+
+      setComments((prev) => {
+        const otherComments = prev.filter((c) => c.feedId !== feedId);
+        return [...otherComments, ...firestoreComments];
+      });
+    } catch (error) {
+      console.error('댓글 로드 실패:', error);
+    } finally {
+      setCommentsLoading(false);
+    }
   }, []);
+
+  // 댓글 모달 열기
+  const handleOpenComments = useCallback(
+    (feedId: string | number) => {
+      setSelectedFeedId(feedId);
+      setCommentModalVisible(true);
+      loadComments(feedId);
+    },
+    [loadComments],
+  );
 
   // 댓글 가져오기
   const getCommentsForFeed = useCallback(
@@ -375,12 +361,16 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
       return;
     }
 
+    const tempId = Date.now().toString();
+    const commentContent = commentText.trim();
+    const commentUserName = user?.displayName || currentUserName;
+    const commentUserImage = user?.photoURL || authorImage || '';
     const newComment: Comment = {
-      id: Date.now(),
+      id: tempId,
       feedId: selectedFeedId,
-      userName: currentUserName,
-      userImage: authorImage || 'https://i.pravatar.cc/150?img=1',
-      content: commentText.trim(),
+      userName: commentUserName,
+      userImage: commentUserImage,
+      content: commentContent,
       time: '방금 전',
       likes: 0,
     };
@@ -397,9 +387,31 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
       setReplyTarget(null);
     } else {
       setComments((prev) => [...prev, newComment]);
+
+      // Firestore에 댓글 저장
+      const postId = String(selectedFeedId);
+      firebaseFirestore
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .add({
+          author: {
+            id: user?.uid || '',
+            name: commentUserName,
+            image: commentUserImage,
+          },
+          content: commentContent,
+          likes: 0,
+          replies: [],
+          createdAt: FirestoreTimestamp.now(),
+        })
+        .then((docRef) => {
+          setComments((prev) => prev.map((c) => (c.id === tempId ? { ...c, id: docRef.id } : c)));
+        })
+        .catch((err) => console.error('댓글 저장 실패:', err));
     }
 
-    onComment?.(selectedFeedId, commentText.trim());
+    onComment?.(selectedFeedId, commentContent);
     setCommentText('');
   }, [
     commentText,
@@ -409,10 +421,11 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
     currentUserName,
     authorImage,
     onComment,
+    user,
   ]);
 
   // 댓글 좋아요
-  const handleCommentLike = useCallback((commentId: number) => {
+  const handleCommentLike = useCallback((commentId: string) => {
     setLikedComments((prev) => {
       const next = new Set(prev);
       if (next.has(commentId)) next.delete(commentId);
@@ -422,14 +435,14 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
   }, []);
 
   // 답글 시작
-  const startReply = useCallback((commentId: number, userName: string) => {
+  const startReply = useCallback((commentId: string, userName: string) => {
     setReplyTarget({ commentId, userName });
     setEditingComment(null);
     setTimeout(() => inputRef.current?.focus(), 100);
   }, []);
 
   // 수정 시작
-  const startEdit = useCallback((comment: Comment, parentId?: number) => {
+  const startEdit = useCallback((comment: Comment, parentId?: string) => {
     setEditingComment({ id: comment.id, parentId });
     setCommentText(comment.content);
     setReplyTarget(null);
@@ -437,7 +450,7 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
   }, []);
 
   // 댓글 삭제
-  const handleDeleteComment = useCallback((commentId: number, parentId?: number) => {
+  const handleDeleteComment = useCallback((commentId: string, parentId?: string) => {
     if (parentId) {
       setComments((prev) =>
         prev.map((c) => {
@@ -612,7 +625,11 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
                 contentContainerStyle={commentStyles.list}
                 ListEmptyComponent={
                   <View style={commentStyles.empty}>
-                    <Text style={commentStyles.emptyText}>아직 댓글이 없습니다</Text>
+                    {commentsLoading ? (
+                      <ActivityIndicator size="small" color="#10b981" />
+                    ) : (
+                      <Text style={commentStyles.emptyText}>아직 댓글이 없습니다</Text>
+                    )}
                   </View>
                 }
                 renderItem={({ item: comment }) => {
