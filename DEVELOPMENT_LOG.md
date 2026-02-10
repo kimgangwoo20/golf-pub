@@ -245,6 +245,50 @@
 - [x] ~~ImageViewerModal, BackgroundMediaEditor 컴포넌트 신규 추가~~ (2026.02.10 완료)
 - [x] ~~TypeScript 0 에러 유지~~ (2026.02.10 완료)
 
+### 2026.02.10 멤버십 게이팅 시스템 + 성별 기반 면제 + 홈피 이동 플로우
+
+- [x] ~~React.lazy 번들 오류 수정 (App.tsx)~~ (2026.02.10 완료)
+  - `React.lazy()` + `Suspense` 래퍼 → 직접 import로 전환 (React Native에서 React.lazy 불안정)
+  - 멤버십 8개 + 친구그룹 3개 화면 직접 import
+- [x] ~~성별 필드 추가 및 회원가입 연동~~ (2026.02.10 완료)
+  - `UserProfile` 인터페이스에 `gender?: 'male' | 'female'`, `membership?: string` 필드 추가 (authService.ts)
+  - `User` 타입에 `gender` 필드 추가 (types/index.ts)
+  - RegisterScreen: 성별 선택 UI (남성/여성 토글 버튼) + 필수 입력 처리
+  - `createUserProfile()`, `createUserWithEmailAndPassword()` gender 전달
+- [x] ~~GenderSelectModal 신규 생성 (components/common/)~~ (2026.02.10 완료)
+  - 기존 유저 / 카카오 로그인 유저 중 gender 미설정 시 필수 선택 모달 표시
+  - 닫기 불가 (성별 선택 전까지 앱 사용 차단)
+  - App.tsx에서 `userProfile?.gender` 없으면 오버레이 렌더링
+- [x] ~~useMembershipGate 훅 신규 생성 (hooks/)~~ (2026.02.10 완료)
+  - 접근 권한 판단: 여성 → 항상 허용, 프리미엄/VIP → 허용, 무료 남성 → 권한 테이블 기반 차단
+  - `checkAccess(feature)`: boolean 반환, `gateAction(feature, onAllow)`: 차단 시 프리미엄 프롬프트
+  - `FEATURE_PERMISSION_MAP`: chat, trade, createPost, viewProfile, addFriend, createBooking, joinBooking, myHome
+  - 기존 `permissions.ts`의 `hasPermission()` + `membershipPlans.ts` 상수 활용
+- [x] ~~PremiumGuard 컴포넌트 신규 생성 (components/common/)~~ (2026.02.10 완료)
+  - 전체 화면 대체형 프리미엄 안내 (왕관 아이콘 + 가입 버튼 + 돌아가기 버튼)
+- [x] ~~7개 화면 멤버십 게이팅 적용~~ (2026.02.10 완료)
+  - 화면 진입 차단: ChatListScreen, MarketplaceScreen, MyHomeScreen, CreateBookingScreen
+  - 타인 프로필 보기 차단: ProfileScreen (`isOwnProfile === false` 시)
+  - 액션 차단: FeedScreen (게시물 작성), AddFriendScreen (친구 추가)
+  - React Hooks rules-of-hooks 준수: 모든 guard를 hooks 뒤, return 문 앞에 배치
+- [x] ~~피드→프로필→홈피 이동 플로우 구현~~ (2026.02.10 완료)
+  - FeedScreen: 사용자 이름/아바타 탭 → `gateAction('viewProfile')` → ProfileScreen 이동
+  - ProfileScreen: 타인 프로필 하단에 "홈피로 이동하기" 버튼 추가
+  - App.tsx FeedStack에 `Profile`, `UserHome` 화면 등록
+- [x] ~~MyHomeScreen 타인 홈피 읽기 전용 모드~~ (2026.02.10 완료)
+  - `route.params.userId` 수신 → 해당 유저 Firestore 프로필/게시글/방명록 로드
+  - 타이틀: `{name}의 홈피`, 뒤로가기 버튼 추가
+  - 편집 UI 전체 숨김 (FAB, 드로어, 배경편집, 소개수정, 프로필수정, 스탯편집, 태그 추가/삭제)
+  - 방명록 작성은 타인 홈피에서도 가능 (대상 유저의 방명록에 저장)
+- [x] ~~결제 후 즉시 게이트 해제~~ (2026.02.10 완료)
+  - `useAuthStore`에 `refreshProfile(uid)` 액션 추가
+  - MembershipPaymentScreen, PaymentScreen: 결제 성공 후 `refreshProfile` 호출
+- [x] ~~EditProfileScreen 성별 편집 필드 추가~~ (2026.02.10 완료)
+- [x] ~~MembershipManageScreen 하드코딩 → 실제 userProfile 데이터~~ (2026.02.10 완료)
+- [x] ~~membershipPlans.ts FREE 플랜 `canViewProfiles: true` → `false` 변경~~ (2026.02.10 완료)
+- [x] ~~TypeScript 0 에러, ESLint 0 에러 확인~~ (2026.02.10 완료)
+- **수정 파일**: 20개 기존 파일 + 3개 신규 파일 (GenderSelectModal, PremiumGuard, useMembershipGate)
+
 ### 2026.02.09 프로필 좋아요 Firestore 연동 (26차 배치)
 
 - [x] ~~useProfileStore에 `likeCount` 필드 + 좋아요 액션 추가 (useProfileStore.ts)~~ (2026.02.09 완료)
