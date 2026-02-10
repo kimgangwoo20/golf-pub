@@ -36,7 +36,6 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       const snapshot = await firebaseFirestore
         .collection('bookings')
         .where('status', '==', 'OPEN')
-        .orderBy('createdAt', 'desc')
         .limit(50)
         .get();
 
@@ -46,6 +45,9 @@ export const useBookingStore = create<BookingState>((set, get) => ({
         createdAt: doc.data().createdAt?.toDate(),
         updatedAt: doc.data().updatedAt?.toDate(),
       })) as Booking[];
+
+      // 클라이언트 사이드 정렬 (최신순)
+      bookings.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
 
       set({ bookings, loading: false });
     } catch (error: any) {
@@ -68,14 +70,12 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       const hostSnapshot = await firebaseFirestore
         .collection('bookings')
         .where('hostId', '==', userId)
-        .orderBy('createdAt', 'desc')
         .get();
 
       // 내가 참여한 부킹
       const participantSnapshot = await firebaseFirestore
         .collection('bookings')
         .where('participants.members', 'array-contains', { uid: userId })
-        .orderBy('createdAt', 'desc')
         .get();
 
       const hostBookings = hostSnapshot.docs.map((doc) => ({
@@ -99,6 +99,9 @@ export const useBookingStore = create<BookingState>((set, get) => ({
           uniqueBookings.push(booking);
         }
       });
+
+      // 클라이언트 사이드 정렬 (최신순)
+      uniqueBookings.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
 
       set({ bookings: uniqueBookings, loading: false });
     } catch (error: any) {
@@ -250,12 +253,14 @@ export const useBookingStore = create<BookingState>((set, get) => ({
           throw new Error('이미 참가한 부킹입니다');
         }
 
+        const currentList = (latestData as any).participants?.list || [];
         transaction.update(bookingRef, {
           'participants.current': latestData.participants.current + 1,
           'participants.members': [
             ...latestData.participants.members,
             { uid: userId, name: userName, role: 'member' },
           ],
+          'participants.list': [...currentList, userId],
           updatedAt: FirestoreTimestamp.now(),
         });
       });
@@ -311,9 +316,11 @@ export const useBookingStore = create<BookingState>((set, get) => ({
           throw new Error('호스트는 부킹을 나갈 수 없습니다');
         }
 
+        const currentList = (bookingData as any).participants?.list || [];
         transaction.update(bookingRef, {
           'participants.current': Math.max(1, bookingData.participants.current - 1),
           'participants.members': bookingData.participants.members.filter((m) => m.uid !== userId),
+          'participants.list': currentList.filter((id: string) => id !== userId),
           updatedAt: FirestoreTimestamp.now(),
         });
       });

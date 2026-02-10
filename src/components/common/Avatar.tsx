@@ -1,6 +1,7 @@
 // Avatar.tsx - 사용자 아바타 컴포넌트
 import React, { useState } from 'react';
 import { View, Image, Text, StyleSheet, ViewStyle } from 'react-native';
+import { colors, fontWeight } from '@/styles/theme';
 
 interface AvatarProps {
   /** 아바타 이미지 URL */
@@ -36,11 +37,11 @@ export const Avatar: React.FC<AvatarProps> = ({ uri, name, size = 'medium', badg
   const getBadgeColor = () => {
     switch (badge) {
       case 'online':
-        return '#10b981';
+        return colors.success;
       case 'busy':
-        return '#f59e0b';
+        return colors.warning;
       case 'offline':
-        return '#6b7280';
+        return colors.textSecondary;
       default:
         return 'transparent';
     }
@@ -85,13 +86,13 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   placeholder: {
-    backgroundColor: '#e5e7eb',
+    backgroundColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   initials: {
-    color: '#6b7280',
-    fontWeight: '600',
+    color: colors.textSecondary,
+    fontWeight: fontWeight.semibold,
   },
   badge: {
     position: 'absolute',
@@ -99,6 +100,6 @@ const styles = StyleSheet.create({
     right: 0,
     borderRadius: 999,
     borderWidth: 2,
-    borderColor: '#fff',
+    borderColor: colors.bgPrimary,
   },
 });

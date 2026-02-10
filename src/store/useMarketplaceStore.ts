@@ -29,7 +29,6 @@ export const useMarketplaceStore = create<MarketplaceState>((set) => ({
       const snapshot = await firebaseFirestore
         .collection('products')
         .where('status', '==', 'available')
-        .orderBy('createdAt', 'desc')
         .limit(50)
         .get();
 
@@ -39,6 +38,19 @@ export const useMarketplaceStore = create<MarketplaceState>((set) => ({
         createdAt: doc.data().createdAt?.toDate(),
         updatedAt: doc.data().updatedAt?.toDate(),
       })) as Product[];
+
+      // 클라이언트 사이드 정렬 (최신순)
+      items.sort((a, b) => {
+        const aTime =
+          a.createdAt instanceof Date
+            ? a.createdAt.getTime()
+            : new Date(a.createdAt || 0).getTime();
+        const bTime =
+          b.createdAt instanceof Date
+            ? b.createdAt.getTime()
+            : new Date(b.createdAt || 0).getTime();
+        return bTime - aTime;
+      });
 
       set({ items, loading: false });
     } catch (error: any) {
@@ -53,7 +65,6 @@ export const useMarketplaceStore = create<MarketplaceState>((set) => ({
       const snapshot = await firebaseFirestore
         .collection('products')
         .where('sellerId', '==', userId)
-        .orderBy('createdAt', 'desc')
         .get();
 
       const items = snapshot.docs.map((doc) => ({
@@ -62,6 +73,19 @@ export const useMarketplaceStore = create<MarketplaceState>((set) => ({
         createdAt: doc.data().createdAt?.toDate(),
         updatedAt: doc.data().updatedAt?.toDate(),
       })) as Product[];
+
+      // 클라이언트 사이드 정렬 (최신순)
+      items.sort((a, b) => {
+        const aTime =
+          a.createdAt instanceof Date
+            ? a.createdAt.getTime()
+            : new Date(a.createdAt || 0).getTime();
+        const bTime =
+          b.createdAt instanceof Date
+            ? b.createdAt.getTime()
+            : new Date(b.createdAt || 0).getTime();
+        return bTime - aTime;
+      });
 
       set({ items, loading: false });
     } catch (error: any) {

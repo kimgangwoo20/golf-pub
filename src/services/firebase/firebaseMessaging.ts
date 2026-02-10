@@ -56,6 +56,7 @@ export interface NotificationData {
   data?: Record<string, any>;
   imageUrl?: string;
   isRead: boolean;
+  read: boolean; // useNotificationStore 호환 필드
   createdAt: any;
 }
 
@@ -251,6 +252,7 @@ class FirebaseMessagingService {
         data,
         imageUrl,
         isRead: false,
+        read: false, // useNotificationStore 호환
         createdAt: FirestoreTimestamp.now(),
       };
 
@@ -325,7 +327,7 @@ class FirebaseMessagingService {
   async markAsRead(userId: string, notificationId: string): Promise<void> {
     try {
       const notificationRef = doc(firestore, 'users', userId, 'notifications', notificationId);
-      await updateDoc(notificationRef, { isRead: true });
+      await updateDoc(notificationRef, { isRead: true, read: true });
     } catch (error) {
       // 읽음 처리 실패 - 무시
     }
@@ -345,7 +347,7 @@ class FirebaseMessagingService {
       const batch = writeBatch(firestore);
 
       snapshot.forEach((docSnap) => {
-        batch.update(docSnap.ref, { isRead: true });
+        batch.update(docSnap.ref, { isRead: true, read: true });
       });
 
       await batch.commit();

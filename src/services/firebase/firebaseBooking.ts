@@ -129,10 +129,27 @@ export const joinBooking = async (
         return { success: false, message: '참가할 수 없는 부킹입니다.' };
       }
 
+      // 사용자 프로필 조회 (members 필드용)
+      let userName = '사용자';
+      try {
+        const userDoc = await getDoc(doc(firestore, 'users', userId));
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          userName = userData?.name || userData?.displayName || '사용자';
+        }
+      } catch {
+        // 프로필 조회 실패 시 기본값 사용
+      }
+
       const newCurrent = bookingData.participants.current + 1;
+      const currentMembers = bookingData.participants.members || [];
       const updateData: Record<string, any> = {
         'participants.current': newCurrent,
         'participants.list': arrayUnion(userId),
+        'participants.members': [
+          ...currentMembers,
+          { uid: userId, name: userName, role: 'member' },
+        ],
         updatedAt: FirestoreTimestamp.now(),
       };
 
@@ -261,17 +278,20 @@ export const getBookingDetail = async (bookingId: string): Promise<FirebaseBooki
  */
 export const getMyHostedBookings = async (userId: string): Promise<FirebaseBooking[]> => {
   try {
-    const q = query(
-      collection(firestore, 'bookings'),
-      where('hostId', '==', userId),
-      orderBy('createdAt', 'desc'),
-    );
+    const q = query(collection(firestore, 'bookings'), where('hostId', '==', userId));
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map((docSnap) => ({
+    const bookings = snapshot.docs.map((docSnap) => ({
       id: docSnap.id,
       ...docSnap.data(),
     })) as FirebaseBooking[];
+
+    // 클라이언트 사이드 정렬 (복합 인덱스 불필요)
+    return bookings.sort((a, b) => {
+      const aTime = (a as any).createdAt?.toDate?.()?.getTime?.() || 0;
+      const bTime = (b as any).createdAt?.toDate?.()?.getTime?.() || 0;
+      return bTime - aTime;
+    });
   } catch (error) {
     console.error('내 부킹 조회 실패:', error);
     return [];
@@ -286,14 +306,20 @@ export const getMyJoinedBookings = async (userId: string): Promise<FirebaseBooki
     const q = query(
       collection(firestore, 'bookings'),
       where('participants.list', 'array-contains', userId),
-      orderBy('createdAt', 'desc'),
     );
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map((docSnap) => ({
+    const bookings = snapshot.docs.map((docSnap) => ({
       id: docSnap.id,
       ...docSnap.data(),
     })) as FirebaseBooking[];
+
+    // 클라이언트 사이드 정렬 (복합 인덱스 불필요)
+    return bookings.sort((a, b) => {
+      const aTime = (a as any).createdAt?.toDate?.()?.getTime?.() || 0;
+      const bTime = (b as any).createdAt?.toDate?.()?.getTime?.() || 0;
+      return bTime - aTime;
+    });
   } catch (error) {
     console.error('참가 부킹 조회 실패:', error);
     return [];

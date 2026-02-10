@@ -728,7 +728,8 @@ export const MyHomeScreen: React.FC<{ route?: any }> = ({ route }) => {
     { icon: '💰', label: '포인트 내역', screen: 'PointHistory' },
     { icon: '🎫', label: '쿠폰함', screen: 'Coupons' },
     { icon: '❓', label: '고객센터', screen: 'Support' },
-    { icon: '⭐', label: '내 활동', screen: 'Profile' },
+    { icon: '⭐', label: '내 활동', screen: 'MyActivity' },
+    { icon: '🚪', label: '로그아웃', screen: 'Logout' },
   ];
 
   // 탭 데이터
@@ -751,11 +752,30 @@ export const MyHomeScreen: React.FC<{ route?: any }> = ({ route }) => {
       navigation.navigate('Coupons' as any);
     } else if (screen === 'Support') {
       navigation.navigate('Support' as any);
-    } else if (screen === 'Profile') {
-      navigation.navigate('Profile' as any);
+    } else if (screen === 'MyActivity') {
+      navigation.navigate('MyActivity' as any);
+    } else if (screen === 'Logout') {
+      handleLogout();
     } else {
       Alert.alert(screen, `${screen} 기능은 곧 출시됩니다.`);
     }
+  };
+
+  const handleLogout = () => {
+    Alert.alert('로그아웃', '로그아웃 하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '로그아웃',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await useAuthStore.getState().signOut();
+          } catch {
+            Alert.alert('오류', '로그아웃에 실패했습니다.');
+          }
+        },
+      },
+    ]);
   };
 
   const handleEditProfile = () => {

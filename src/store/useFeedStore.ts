@@ -82,10 +82,10 @@ export const useFeedStore = create<FeedState>((set) => ({
     try {
       set({ loading: true, error: null });
 
+      // 복합 인덱스 없이 조회 후 클라이언트 정렬
       const snapshot = await firebaseFirestore
         .collection('posts')
         .where('author.id', '==', userId)
-        .orderBy('createdAt', 'desc')
         .limit(50)
         .get();
 
@@ -116,6 +116,11 @@ export const useFeedStore = create<FeedState>((set) => ({
           createdAt: createdAt.toISOString(),
         } as FeedPost & Record<string, any>;
       });
+
+      // 클라이언트 사이드 정렬 (최신순)
+      myPosts.sort(
+        (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime(),
+      );
 
       set({ myPosts: myPosts as FeedPost[], loading: false });
     } catch (error: any) {

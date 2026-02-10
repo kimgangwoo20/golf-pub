@@ -6,8 +6,9 @@ export const validators = {
    */
   isValidEmail: (email: string): boolean => {
     if (!email) return false;
-    // RFC 5322 간소화 패턴: 최소 2자 로컬, 최소 2자 도메인, 최소 2자 TLD
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    // RFC 5322 기반 엄격한 패턴: 도메인 라벨 최대 63자, TLD 최소 2자 영문 필수
+    const emailRegex =
+      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email);
   },
 
@@ -18,6 +19,8 @@ export const validators = {
   isValidPhoneNumber: (phone: string): boolean => {
     if (!phone) return false;
     const cleaned = phone.replace(/\D/g, '');
+    // 총 자릿수 10~11자리 범위 확인
+    if (cleaned.length < 10 || cleaned.length > 11) return false;
     // 010은 반드시 11자리
     if (cleaned.startsWith('010')) {
       return /^010\d{8}$/.test(cleaned);

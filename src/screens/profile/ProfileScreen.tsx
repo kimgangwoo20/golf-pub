@@ -41,9 +41,9 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
   navigation,
   route,
 }) => {
-  const { user, signOut } = useAuthStore();
+  const { user } = useAuthStore();
   const { profile, loadProfile, toggleProfileLike, checkProfileLiked } = useProfileStore();
-  const { checkAccess } = useMembershipGate();
+  const { checkAccess, gateAction } = useMembershipGate();
   const [refreshing, setRefreshing] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [liked, setLiked] = useState(false);
@@ -129,30 +129,12 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
     }
   };
 
-  const handleLogout = () => {
-    Alert.alert('로그아웃', '정말 로그아웃 하시겠습니까?', [
-      { text: '취소', style: 'cancel' },
-      {
-        text: '로그아웃',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await signOut();
-          } catch {
-            Alert.alert('오류', '로그아웃에 실패했습니다.');
-          }
-        },
-      },
-    ]);
-  };
-
   // 프로필 데이터
   const displayName = profile?.displayName || user?.displayName || '골퍼';
   const bio =
     profile?.bio ||
     '골프를 사랑하는 골퍼입니다 🏌️\n함께 라운딩 갈 골프 친구 찾고 있어요!\n편하게 골친 신청 주세요 😊';
   const location = profile?.location || '서울';
-  const totalRounds = profile?.totalRounds || profile?.stats?.gamesPlayed || 0;
   const averageScore = profile?.stats?.averageScore || 0;
   const favoriteCourses = profile?.favoriteCourses || [];
 
@@ -225,7 +207,7 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
             ) : (
               <View style={{ width: 36 }} />
             )}
-            <Text style={styles.navTitle}>프로필</Text>
+            <Text style={styles.navTitle}>{isOwnProfile ? '' : displayName}</Text>
             <View style={styles.navRightGroup}>
               <View style={styles.photoCounter}>
                 <Text style={styles.counterText}>
@@ -236,7 +218,7 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
               {isOwnProfile && (
                 <TouchableOpacity
                   style={styles.navBtn}
-                  onPress={() => navigation?.navigate('Settings')}
+                  onPress={() => navigation?.navigate('MyHome', { screen: 'Settings' })}
                 >
                   <Text style={{ fontSize: 16 }}>⚙️</Text>
                 </TouchableOpacity>
@@ -354,10 +336,10 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.actionBtn, styles.actionFill]}
-                onPress={() => navigation?.navigate('MyHomeMain')}
+                onPress={() => navigation?.navigate('MyHome', { screen: 'MyHomeMain' })}
                 activeOpacity={0.7}
               >
-                <Text style={styles.actionFillText}>🏠 My홈피</Text>
+                <Text style={styles.actionFillText}>🏠 홈피 놀러가기</Text>
               </TouchableOpacity>
             </>
           ) : (
@@ -365,10 +347,31 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
               <TouchableOpacity
                 style={[styles.actionBtn, styles.actionOutline]}
                 activeOpacity={0.7}
+                onPress={() => {
+                  gateAction('addFriend', () => {
+                    Alert.alert('골친 신청', `${displayName}님에게 골친 신청을 보내시겠습니까?`, [
+                      { text: '취소', style: 'cancel' },
+                      {
+                        text: '신청하기',
+                        onPress: () =>
+                          Alert.alert('완료', `${displayName}님에게 골친 신청을 보냈습니다.`),
+                      },
+                    ]);
+                  });
+                }}
               >
                 <Text style={styles.actionOutlineText}>👥 골친 신청</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.actionBtn, styles.actionFill]} activeOpacity={0.7}>
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.actionFill]}
+                activeOpacity={0.7}
+                onPress={() => {
+                  navigation?.navigate('Chat', {
+                    screen: 'ChatScreen',
+                    params: { userId: targetUserId, userName: displayName },
+                  });
+                }}
+              >
                 <Text style={styles.actionFillText}>💬 메세지</Text>
               </TouchableOpacity>
             </>
@@ -382,22 +385,9 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
             onPress={() => navigation?.navigate('UserHome', { userId: targetUserId })}
             activeOpacity={0.7}
           >
-            <Text style={styles.goHomeBtnText}>🏡 홈피로 이동하기</Text>
+            <Text style={styles.goHomeBtnText}>🏡 홈피 놀러가기</Text>
           </TouchableOpacity>
         )}
-
-        {/* Today / Total */}
-        <View style={styles.ttBox}>
-          <View style={styles.ttItem}>
-            <Text style={styles.ttLabel}>TODAY</Text>
-            <Text style={styles.ttValue}>{(profile as any)?.stats?.todayVisits || 0}</Text>
-          </View>
-          <View style={styles.ttDivider} />
-          <View style={styles.ttItem}>
-            <Text style={styles.ttLabel}>TOTAL</Text>
-            <Text style={styles.ttValue}>{totalRounds > 0 ? totalRounds : 0}</Text>
-          </View>
-        </View>
 
         {/* 골프 스탯 */}
         <View style={styles.statsGrid}>
@@ -479,35 +469,6 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
             ))}
           </View>
         </View>
-
-        {/* 메뉴 (본인 프로필) */}
-        {isOwnProfile && (
-          <View style={styles.menuBox}>
-            {[
-              { icon: '⛳', label: '내 부킹 목록', screen: 'MyBookings' },
-              { icon: '👑', label: '멤버십 관리', screen: 'MembershipManage' },
-              { icon: '💰', label: '포인트 내역', screen: 'PointHistory' },
-            ].map((item, i) => (
-              <TouchableOpacity
-                key={i}
-                style={[styles.menuItem, i > 0 && styles.menuItemBorder]}
-                onPress={() => navigation?.navigate(item.screen)}
-                activeOpacity={0.6}
-              >
-                <Text style={styles.menuIcon}>{item.icon}</Text>
-                <Text style={styles.menuLabel}>{item.label}</Text>
-                <Text style={styles.menuArrow}>›</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-
-        {/* 로그아웃 */}
-        {isOwnProfile && (
-          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.7}>
-            <Text style={styles.logoutText}>로그아웃</Text>
-          </TouchableOpacity>
-        )}
 
         <View style={{ height: 40 }} />
       </Animated.View>
@@ -808,38 +769,6 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
 
-  // Today / Total
-  ttBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fafafa',
-    borderRadius: 12,
-    paddingVertical: 16,
-    marginBottom: 18,
-  },
-  ttItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  ttLabel: {
-    fontSize: 12,
-    color: '#a3a3a3',
-    fontWeight: fontWeight.medium,
-    letterSpacing: 0.5,
-    marginBottom: 4,
-  },
-  ttValue: {
-    fontSize: 26,
-    fontWeight: fontWeight.bold,
-    color: pc.greenMain,
-  },
-  ttDivider: {
-    width: 1,
-    height: 36,
-    backgroundColor: '#e8e8e8',
-  },
-
   // 골프 스탯 그리드
   statsGrid: {
     flexDirection: 'row',
@@ -931,49 +860,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
     color: '#d97706',
-  },
-
-  // 메뉴
-  menuBox: {
-    backgroundColor: '#fafafa',
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 18,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-  },
-  menuItemBorder: {
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-  },
-  menuIcon: {
-    fontSize: 20,
-    marginRight: 12,
-  },
-  menuLabel: {
-    flex: 1,
-    fontSize: fontSize.md,
-    color: colors.textPrimary,
-    fontWeight: fontWeight.medium,
-  },
-  menuArrow: {
-    fontSize: 22,
-    color: '#ccc',
-  },
-
-  // 로그아웃
-  logoutBtn: {
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  logoutText: {
-    fontSize: fontSize.md,
-    color: colors.danger,
-    fontWeight: fontWeight.semibold,
   },
 
   // 홈피 이동 버튼

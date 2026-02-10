@@ -141,7 +141,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
       // Firestore 일괄 업데이트
       const notificationsRef = collection(firestore, 'users', userId, 'notifications');
-      const q = query(notificationsRef, where('isRead', '==', false));
+      const q = query(notificationsRef, where('read', '==', false));
       const snapshot = await getDocs(q);
 
       const batch = writeBatch(firestore);

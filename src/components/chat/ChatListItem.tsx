@@ -1,6 +1,7 @@
 // ChatListItem.tsx - 채팅 목록 아이템
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { colors, fontSize, fontWeight, spacing } from '@/styles/theme';
 
 interface ChatListItemProps {
   name: string;
@@ -57,16 +58,16 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    padding: 16,
+    padding: spacing.lg,
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.bgPrimary,
   },
   avatar: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    marginRight: 12,
-    backgroundColor: '#e5e7eb',
+    marginRight: spacing.md,
+    backgroundColor: colors.border,
   },
   avatarPlaceholder: {
     alignItems: 'center',
@@ -74,8 +75,8 @@ const styles = StyleSheet.create({
   },
   avatarInitial: {
     fontSize: 22,
-    fontWeight: '600',
-    color: '#6b7280',
+    fontWeight: fontWeight.semibold,
+    color: colors.textSecondary,
   },
   content: {
     flex: 1,
@@ -84,16 +85,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   name: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1a1a1a',
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.textPrimary,
   },
   timestamp: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: fontSize.xs,
+    color: colors.textTertiary,
   },
   footer: {
     flexDirection: 'row',
@@ -103,21 +104,21 @@ const styles = StyleSheet.create({
   lastMessage: {
     flex: 1,
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
   },
   badge: {
-    backgroundColor: '#10b981',
+    backgroundColor: colors.primary,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
-    marginLeft: 8,
+    marginLeft: spacing.sm,
   },
   badgeText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: 'bold',
+    color: colors.bgPrimary,
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.bold,
   },
 });

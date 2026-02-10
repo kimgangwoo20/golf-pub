@@ -85,7 +85,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const snapshot = await firebaseFirestore
         .collection('chatRooms')
         .where('participantIds', 'array-contains', userId)
-        .orderBy('updatedAt', 'desc')
         .get();
 
       const chatRooms = snapshot.docs.map((doc) => ({
@@ -100,6 +99,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
             }
           : undefined,
       })) as ChatRoom[];
+
+      // 클라이언트 사이드 정렬 (최근 업데이트순)
+      chatRooms.sort((a, b) => (b.updatedAt?.getTime() || 0) - (a.updatedAt?.getTime() || 0));
 
       set({ chatRooms, loading: false });
     } catch (error: any) {

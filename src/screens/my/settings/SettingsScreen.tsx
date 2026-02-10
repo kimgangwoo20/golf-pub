@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { EmailAuthProvider } from '@react-native-firebase/auth';
 import { auth, firestore, doc, deleteDoc } from '@/services/firebase/firebaseConfig';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -122,6 +123,23 @@ export const SettingsScreen: React.FC = () => {
     Alert.alert('업데이트 확인', '최신 버전을 사용하고 있습니다.');
   };
 
+  const handleLogout = () => {
+    Alert.alert('로그아웃', '로그아웃 하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '로그아웃',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await useAuthStore.getState().signOut();
+          } catch {
+            Alert.alert('오류', '로그아웃에 실패했습니다.');
+          }
+        },
+      },
+    ]);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.container}>
@@ -209,6 +227,16 @@ export const SettingsScreen: React.FC = () => {
 
               <TouchableOpacity style={styles.menuItem} onPress={handleWithdrawal}>
                 <Text style={[styles.menuLabel, styles.dangerText]}>회원 탈퇴</Text>
+                <Text style={styles.menuArrow}>›</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* 로그아웃 */}
+          <View style={styles.section}>
+            <View style={styles.menuCard}>
+              <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+                <Text style={[styles.menuLabel, styles.dangerText]}>로그아웃</Text>
                 <Text style={styles.menuArrow}>›</Text>
               </TouchableOpacity>
             </View>

@@ -23,7 +23,6 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
   const { loadProfile: refreshProfileStore } = useProfileStore();
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
-  const [phone, setPhone] = useState('');
   const [handicap, setHandicap] = useState('');
   const [gender, setGender] = useState<'male' | 'female' | undefined>(undefined);
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -43,7 +42,6 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
       if (profile) {
         setName(profile.name || '');
         setBio(profile.bio || '');
-        setPhone(profile.phone || '');
         setHandicap(profile.handicap?.toString() || '0');
         setProfileImage(profile.profileImage || null);
         setGender((profile as any).gender || userProfile?.gender);
@@ -106,11 +104,6 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
       return;
     }
 
-    if (phone.trim() && !validators.isValidPhoneNumber(phone.trim())) {
-      Alert.alert('알림', '올바른 전화번호 형식을 입력해주세요. (예: 010-0000-0000)');
-      return;
-    }
-
     // 핸디캡 범위 검증
     const handicapNum = parseInt(handicap, 10) || 0;
     if (handicapNum < 0 || handicapNum > 54) {
@@ -123,12 +116,8 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
       const updateData: any = {
         name: name.trim(),
         bio: bio.trim(),
-        phone: phone.trim(),
         handicap: handicapNum,
       };
-      if (gender) {
-        updateData.gender = gender;
-      }
       await profileAPI.updateProfile(updateData);
       // 스토어 갱신 → MyHomeScreen 등에 즉시 반영
       if (user?.uid) {
@@ -220,17 +209,6 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
         </View>
 
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>전화번호</Text>
-          <TextInput
-            style={styles.input}
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            placeholder="010-0000-0000"
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
           <Text style={styles.label}>핸디캡</Text>
           <TextInput
             style={styles.input}
@@ -245,23 +223,18 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
         <View style={styles.inputContainer}>
           <Text style={styles.label}>성별</Text>
           <View style={styles.genderRow}>
-            <TouchableOpacity
-              style={[styles.genderButton, gender === 'male' && styles.genderButtonActive]}
-              onPress={() => setGender('male')}
-            >
+            <View style={[styles.genderButton, gender === 'male' && styles.genderButtonActive]}>
               <Text style={[styles.genderText, gender === 'male' && styles.genderTextActive]}>
                 남성
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.genderButton, gender === 'female' && styles.genderButtonActive]}
-              onPress={() => setGender('female')}
-            >
+            </View>
+            <View style={[styles.genderButton, gender === 'female' && styles.genderButtonActive]}>
               <Text style={[styles.genderText, gender === 'female' && styles.genderTextActive]}>
                 여성
               </Text>
-            </TouchableOpacity>
+            </View>
           </View>
+          <Text style={styles.genderHint}>성별은 변경할 수 없습니다. 문의: 고객센터</Text>
         </View>
 
         <TouchableOpacity
@@ -369,4 +342,5 @@ const styles = StyleSheet.create({
   },
   genderText: { fontSize: 15, color: '#666' },
   genderTextActive: { color: '#10b981', fontWeight: '700' },
+  genderHint: { fontSize: 12, color: '#999', marginTop: 8 },
 });

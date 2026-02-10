@@ -434,9 +434,9 @@ export const FeedScreen: React.FC = () => {
     gateAction('createPost', () => navigation.navigate('CreatePost' as any));
   };
 
-  // 피드에서 사용자 프로필로 이동
+  // 피드에서 사용자 프로필로 이동 (간략 프로필 뷰)
   const handleUserPress = (userId: string) => {
-    gateAction('viewProfile', () => navigation.navigate('Profile', { userId }));
+    gateAction('viewProfile', () => navigation.navigate('Profile' as any, { userId }));
   };
 
   return (

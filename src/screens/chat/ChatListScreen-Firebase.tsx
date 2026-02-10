@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors, spacing, fontSize, fontWeight } from '@/styles/theme';
 import { useChatStore } from '@/store/useChatStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { DEFAULT_AVATAR } from '@/constants/images';
@@ -112,7 +113,7 @@ export const ChatListScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
             placeholder="채팅 검색"
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.textTertiary}
           />
         </View>
 
@@ -138,28 +139,28 @@ export const ChatListScreen: React.FC<{ navigation?: any }> = ({ navigation }) =
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.bgPrimary,
   },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.bgPrimary,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    padding: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: colors.border,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
+    fontSize: fontSize.xxl,
+    fontWeight: fontWeight.bold,
+    color: colors.textPrimary,
   },
   headerButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.md,
   },
   headerButton: {
     width: 40,
@@ -168,39 +169,39 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerButtonText: {
-    fontSize: 20,
+    fontSize: fontSize.xl,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    margin: 16,
-    paddingHorizontal: 16,
+    backgroundColor: colors.bgTertiary,
+    margin: spacing.lg,
+    paddingHorizontal: spacing.lg,
     borderRadius: 12,
   },
   searchIcon: {
-    fontSize: 16,
-    marginRight: 8,
+    fontSize: fontSize.lg,
+    marginRight: spacing.sm,
   },
   searchInput: {
     flex: 1,
     height: 44,
-    fontSize: 16,
-    color: '#1a1a1a',
+    fontSize: fontSize.lg,
+    color: colors.textPrimary,
   },
   listContent: {
     flexGrow: 1,
   },
   chatItem: {
     flexDirection: 'row',
-    padding: 16,
+    padding: spacing.lg,
     alignItems: 'center',
   },
   avatar: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    marginRight: 12,
+    marginRight: spacing.md,
   },
   chatInfo: {
     flex: 1,
@@ -209,16 +210,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   chatName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1a1a1a',
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.textPrimary,
   },
   timestamp: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: fontSize.xs,
+    color: colors.textTertiary,
   },
   chatFooter: {
     flexDirection: 'row',
@@ -228,26 +229,26 @@ const styles = StyleSheet.create({
   lastMessage: {
     flex: 1,
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
   },
   unreadBadge: {
-    backgroundColor: '#10b981',
+    backgroundColor: colors.primary,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
-    marginLeft: 8,
+    marginLeft: spacing.sm,
   },
   unreadText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: 'bold',
+    color: colors.bgPrimary,
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.bold,
   },
   separator: {
     height: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.border,
     marginLeft: 84,
   },
   emptyContainer: {
@@ -258,12 +259,12 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 8,
+    fontWeight: fontWeight.semibold,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#999',
+    color: colors.textTertiary,
   },
 });

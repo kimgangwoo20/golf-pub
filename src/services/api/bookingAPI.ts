@@ -18,7 +18,6 @@ import {
   runTransaction,
   collectionGroup,
   serverTimestamp,
-  arrayUnion,
 } from '@/services/firebase/firebaseConfig';
 import {
   Booking,
@@ -443,15 +442,22 @@ export const bookingAPI = {
           acceptedAt: serverTimestamp(),
         });
 
-        // 부킹 참가자 추가
+        // 부킹 참가자 추가 (participants는 객체 구조이므로 members 서브필드 사용)
+        const currentMembers = booking?.participants?.members || [];
+        const currentList = booking?.participants?.list || [];
         const newPlayerCount = (booking?.currentPlayers || 0) + 1;
         transaction.update(bookingRef, {
           currentPlayers: newPlayerCount,
-          participants: arrayUnion({
-            id: application?.userId,
-            name: application?.userName,
-            avatar: application?.userAvatar,
-          }),
+          'participants.current': newPlayerCount,
+          'participants.members': [
+            ...currentMembers,
+            {
+              uid: application?.userId,
+              name: application?.userName,
+              role: 'member',
+            },
+          ],
+          'participants.list': [...currentList, application?.userId],
           status: newPlayerCount >= booking?.maxPlayers ? 'full' : booking?.status,
           updatedAt: serverTimestamp(),
         });

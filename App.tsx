@@ -43,6 +43,7 @@ import { HostedMeetupsScreen } from './src/screens/my/activity/HostedMeetupsScre
 import { JoinedMeetupsScreen } from './src/screens/my/activity/JoinedMeetupsScreen';
 import { MyPostsScreen } from './src/screens/my/activity/MyPostsScreen';
 import { MyReviewsScreen } from './src/screens/my/activity/MyReviewsScreen';
+import { MyActivityScreen } from './src/screens/my/activity/MyActivityScreen';
 
 // 프로필 화면들
 import { ProfileScreen } from './src/screens/profile/ProfileScreen';
@@ -72,9 +73,9 @@ import { AddFriendScreen } from './src/screens/friends/AddFriendScreen';
 import { FriendRequestsScreen } from './src/screens/friends/FriendRequestsScreen';
 
 // 친구 그룹/초대 화면들
-import { InviteScreen } from './src/screens/friend/InviteScreen';
-import { CreateGroupScreen } from './src/screens/friend/CreateGroupScreen';
-import { GroupListScreen } from './src/screens/friend/GroupListScreen';
+import { InviteScreen } from './src/screens/friends/InviteScreen';
+import { CreateGroupScreen } from './src/screens/friends/CreateGroupScreen';
+import { GroupListScreen } from './src/screens/friends/GroupListScreen';
 
 // Feed 화면들
 import { FeedScreen } from './src/screens/feed/FeedScreen';
@@ -177,6 +178,7 @@ const MyHomeStackNavigator = () => (
     <MyHomeStack.Screen name="EditProfile" component={EditProfileScreen} />
     <MyHomeStack.Screen name="MyBookings" component={MyBookingsScreen} />
     {/* 활동 화면들 */}
+    <MyHomeStack.Screen name="MyActivity" component={MyActivityScreen} />
     <MyHomeStack.Screen name="HostedMeetups" component={HostedMeetupsScreen} />
     <MyHomeStack.Screen name="JoinedMeetups" component={JoinedMeetupsScreen} />
     <MyHomeStack.Screen name="MyPosts" component={MyPostsScreen} />
@@ -244,6 +246,7 @@ const FeedStackNavigator = () => (
     <FeedStack.Screen name="PostDetail" component={PostDetailScreen} />
     <FeedStack.Screen name="NotificationList" component={NotificationListScreen} />
     <FeedStack.Screen name="Profile" component={ProfileScreen} />
+    <FeedStack.Screen name="EditProfile" component={EditProfileScreen} />
     <FeedStack.Screen name="UserHome" component={MyHomeScreen} />
   </FeedStack.Navigator>
 );
