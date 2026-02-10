@@ -135,6 +135,31 @@
   - my/: MyHomeScreen, AccountManagementScreen
 - [x] ~~TypeScript typecheck 0 에러 유지~~ (2026.02.07 완료)
 
+### 2026.02.10 종합 코드 감사 2차 - 크래시 방지, 네비게이션 타입, 스토어/서비스 수정
+
+- [x] ~~전체 코드베이스 Image onError 일괄 추가 (48+ 파일, 58개 원격 Image)~~ (2026.02.10 완료)
+  - 원격 URI Image 컴포넌트에 `onError={() => {}}` 핸들러 누락 → 이미지 로드 실패 시 크래시 방지
+  - 대상: components/ 14개 + screens/ 34개 파일 (BackgroundMediaEditor, FeedViewer, ProductDetailScreen, ChatListScreen 등)
+  - Node.js 일괄 스크립트 + 수동 멀티라인 JSX 수정 + ESLint --fix Prettier 포맷 정리
+- [x] ~~navigation-types.ts 생성: 7개 스택 route param 타입 정의~~ (2026.02.10 완료)
+  - HomeStackParamList, BookingStackParamList, MyHomeStackParamList, MarketplaceStackParamList, GolfCourseStackParamList, ChatStackParamList, FeedStackParamList
+  - PostDetailScreen, GolfCourseReviewScreen, WriteReviewScreen에서 `@ts-expect-error` 5개 제거
+  - `RouteProp<>` 제네릭으로 타입 안전한 route params 접근
+  - App.tsx에서 불필요한 `as any` 캐스팅 2개 제거 (GolfCourseReviewScreen, PostDetailScreen)
+- [x] ~~useChatStore sendMessage/sendImage 에러 상태 초기화 추가~~ (2026.02.10 완료)
+  - 이전 에러가 남아있어 다음 메시지 전송 시 에러 표시되는 버그 수정
+- [x] ~~useNotificationStore subscribeToUnreadCount 필드명 통일~~ (2026.02.10 완료)
+  - `where('isRead', '==', false)` → `where('read', '==', false)` (실제 Firestore 필드명과 일치)
+  - 구독 에러 콜백에 `console.error` 추가 (기존 silent 무시 → 에러 로깅)
+- [x] ~~firebaseMessaging cleanup() 메서드 추가~~ (2026.02.10 완료)
+  - 로그아웃 시 FCM 리스너(토큰 갱신, 포그라운드 메시지, 알림 탭) 명시적 정리 가능
+- [x] ~~bookingAPI.acceptApplicant Firestore 트랜잭션 래핑~~ (2026.02.10 완료)
+  - 기존: read → check capacity → batch update (레이스 컨디션으로 정원 초과 가능)
+  - 수정: `firestore().runTransaction()` 내에서 정원 확인 + 참가자 추가 (원자적 처리)
+- [x] ~~profile/SettingsScreen.tsx 삭제 (미사용 dead code)~~ (2026.02.10 완료)
+  - App.tsx는 `my/settings/SettingsScreen.tsx`만 import, profile/ 버전은 참조 없음
+- [x] ~~TypeScript 0 에러, ESLint 0 에러 (560 warnings - 기존 any 타입)~~ (2026.02.10 완료)
+
 ### 2026.02.10 코드 감사 기반 버그 일괄 수정 (CRITICAL → LOW)
 
 - [x] ~~3-에이전트 병렬 코드 감사 수행 (Navigation/State, API/Firebase, UI/UX)~~ (2026.02.10 완료)
