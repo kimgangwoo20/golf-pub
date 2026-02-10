@@ -160,6 +160,33 @@
   - App.tsx는 `my/settings/SettingsScreen.tsx`만 import, profile/ 버전은 참조 없음
 - [x] ~~TypeScript 0 에러, ESLint 0 에러 (560 warnings - 기존 any 타입)~~ (2026.02.10 완료)
 
+### 2026.02.10 Firebase Namespaced → Modular API 전체 마이그레이션
+
+- [x] ~~36개 파일, ~200+ API 호출을 RNFB v21 namespaced API에서 modular API로 전환~~ (2026.02.10 완료)
+  - RNFB v22에서 namespaced API 완전 제거 예정 → 앱 시작 시 20+ deprecated 경고 해소 및 v22 사전 대비
+- [x] ~~`firebaseConfig.ts` 중앙 허브 리팩토링~~ (2026.02.10 완료)
+  - `getFirestore()`, `getAuth()`, `getStorage()`, `getDatabase()`, `getMessaging()` 싱글톤 인스턴스 생성
+  - 모든 modular 함수를 re-export하여 소비자 파일이 한 곳에서 import
+  - `documentId()` 래퍼 헬퍼 추가 (`FieldPath.documentId()` 타입 누락 우회)
+  - `FirestoreTimestamp`, `RealtimeTimestamp` 유틸리티 유지
+- [x] ~~Firebase 서비스 3개 마이그레이션 (`firebaseBooking`, `firebaseFriends`, `firebaseAttendance`)~~ (2026.02.10 완료)
+- [x] ~~API 서비스 10개 마이그레이션 (`bookingAPI`, `profileAPI`, `marketplaceAPI`, `friendAPI`, `golfCourseAPI`, `pubAPI`, `membershipAPI`, `authAPI`, `paymentAPI`, `subscriptionService`)~~ (2026.02.10 완료)
+- [x] ~~Zustand 스토어 4개 마이그레이션 (`useAuthStore`, `useNotificationStore`, `useFriendStore`, `useProfileStore`)~~ (2026.02.10 완료)
+- [x] ~~기타 서비스 5개 마이그레이션 (`authService`, `firebaseFunctions`, `firebaseMessaging`, `firebaseStorage`, `firebaseAuth`)~~ (2026.02.10 완료)
+  - `firebaseFunctions`: `getFunctions(undefined, 'asia-northeast3')` Seoul 리전 유지
+- [x] ~~스크린 11개 마이그레이션~~ (2026.02.10 완료)
+  - `FeedScreen`, `PostDetailScreen`, `usePostDetail`, `ProductDetailScreen`, `PaymentScreen`, `FriendRequestsScreen`, `useReviewScreen`, `useCourseSearch`, `EditProfileScreen`, `SettingsScreen`, `AccountManagementScreen`
+- [x] ~~유틸리티 2개 마이그레이션 (`imageUtils`, `seedData`)~~ (2026.02.10 완료)
+- [x] ~~주요 패턴 변환 완료~~ (2026.02.10 완료)
+  - `firestore().collection('x').doc(y).get()` → `getDoc(doc(firestore, 'x', y))`
+  - `auth().signInWithEmailAndPassword(e,p)` → `signInWithEmailAndPassword(auth, e, p)`
+  - `firestore.FieldValue.increment(n)` → `increment(n)`
+  - `firestore.FieldValue.serverTimestamp()` → `serverTimestamp()`
+  - `DocumentSnapshot.exists()` → `.exists` (property, 메서드 아님)
+  - 동적 쿼리 체인 → constraint 배열 패턴 (`query(collection(...), ...constraints)`)
+  - `QueryConstraint` 타입 호환성 이슈 → `any[]` 패턴 해결
+- [x] ~~TypeScript 0 에러, ESLint 0 에러 (560 warnings - 기존 any 타입)~~ (2026.02.10 완료)
+
 ### 2026.02.10 .env 보안 정리
 
 - [x] ~~`.env` 파일 Git 추적 해제 (`git rm --cached .env`)~~ (2026.02.10 완료)
