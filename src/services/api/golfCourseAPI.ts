@@ -1,7 +1,21 @@
 // golfCourseAPI.ts - 골프장 리뷰 API (Firestore 연동)
 
-import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
+import {
+  firestore,
+  auth,
+  collection,
+  doc,
+  addDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit as limitFn,
+  serverTimestamp,
+} from '@/services/firebase/firebaseConfig';
 import { GolfCourseReview } from '@/types/golfcourse-types';
 import { useAuthStore } from '@/store/useAuthStore';
 import { profileAPI } from '@/services/api/profileAPI';
@@ -14,20 +28,21 @@ export const golfCourseAPI = {
    */
   getGolfCourseReviews: async (
     courseId: number | string,
-    limit: number = 20,
+    limitCount: number = 20,
   ): Promise<GolfCourseReview[]> => {
     try {
-      const snapshot = await firestore()
-        .collection(GOLF_COURSE_REVIEWS_COLLECTION)
-        .where('courseId', '==', courseId)
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .get();
+      const q = query(
+        collection(firestore, GOLF_COURSE_REVIEWS_COLLECTION),
+        where('courseId', '==', courseId),
+        orderBy('createdAt', 'desc'),
+        limitFn(limitCount),
+      );
+      const snapshot = await getDocs(q);
 
-      return snapshot.docs.map((doc) => {
-        const data = doc.data();
+      return snapshot.docs.map((docSnap) => {
+        const data = docSnap.data();
         return {
-          id: doc.id,
+          id: docSnap.id,
           courseId: data.courseId,
           author: data.author || { id: '', name: '익명', image: '', handicap: 0 },
           rating: data.rating || 0,
@@ -62,7 +77,7 @@ export const golfCourseAPI = {
     },
   ): Promise<string> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
@@ -78,10 +93,10 @@ export const golfCourseAPI = {
         ...reviewData,
         likes: 0,
         isLiked: false,
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: serverTimestamp(),
       };
 
-      const docRef = await firestore().collection(GOLF_COURSE_REVIEWS_COLLECTION).add(docData);
+      const docRef = await addDoc(collection(firestore, GOLF_COURSE_REVIEWS_COLLECTION), docData);
 
       // 골프장 평점 업데이트
       await golfCourseAPI.updateGolfCourseRating(courseId);
@@ -105,14 +120,16 @@ export const golfCourseAPI = {
    */
   updateGolfCourseRating: async (courseId: number | string): Promise<void> => {
     try {
-      const reviewsSnapshot = await firestore()
-        .collection(GOLF_COURSE_REVIEWS_COLLECTION)
-        .where('courseId', '==', courseId)
-        .get();
+      const q = query(
+        collection(firestore, GOLF_COURSE_REVIEWS_COLLECTION),
+        where('courseId', '==', courseId),
+      );
+      const reviewsSnapshot = await getDocs(q);
 
       if (reviewsSnapshot.empty) {
         // 리뷰가 없으면 평점 초기화
-        await firestore().collection('golfCourses').doc(String(courseId)).set(
+        await setDoc(
+          doc(firestore, 'golfCourses', String(courseId)),
           {
             rating: 0,
             reviewCount: 0,
@@ -123,22 +140,20 @@ export const golfCourseAPI = {
       }
 
       let totalRating = 0;
-      reviewsSnapshot.docs.forEach((doc) => {
-        totalRating += doc.data().rating || 0;
+      reviewsSnapshot.docs.forEach((docSnap) => {
+        totalRating += docSnap.data().rating || 0;
       });
 
       const averageRating = totalRating / reviewsSnapshot.size;
 
-      await firestore()
-        .collection('golfCourses')
-        .doc(String(courseId))
-        .set(
-          {
-            rating: Math.round(averageRating * 10) / 10, // 소수점 1자리
-            reviewCount: reviewsSnapshot.size,
-          },
-          { merge: true },
-        );
+      await setDoc(
+        doc(firestore, 'golfCourses', String(courseId)),
+        {
+          rating: Math.round(averageRating * 10) / 10, // 소수점 1자리
+          reviewCount: reviewsSnapshot.size,
+        },
+        { merge: true },
+      );
     } catch (error: any) {
       console.error('골프장 평점 업데이트 실패:', error);
     }
@@ -153,10 +168,10 @@ export const golfCourseAPI = {
     data: { rating: number; comment: string },
   ): Promise<{ success: boolean; message: string }> => {
     try {
-      await firestore().collection(GOLF_COURSE_REVIEWS_COLLECTION).doc(reviewId).update({
+      await updateDoc(doc(firestore, GOLF_COURSE_REVIEWS_COLLECTION, reviewId), {
         rating: data.rating,
         content: data.comment,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
 
       // 평점 재계산
@@ -177,7 +192,7 @@ export const golfCourseAPI = {
     reviewId: string,
   ): Promise<{ success: boolean; message: string }> => {
     try {
-      await firestore().collection(GOLF_COURSE_REVIEWS_COLLECTION).doc(reviewId).delete();
+      await deleteDoc(doc(firestore, GOLF_COURSE_REVIEWS_COLLECTION, reviewId));
 
       // 평점 재계산 (리뷰 수 감소 포함)
       await golfCourseAPI.updateGolfCourseRating(courseId);

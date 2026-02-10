@@ -1,8 +1,23 @@
 // 👥 friendAPI.ts
 // 친구 관리 API - Firebase Firestore 연동
 
-import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
+import {
+  firestore,
+  auth,
+  collection,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  serverTimestamp,
+  documentId,
+} from '@/services/firebase/firebaseConfig';
 import { Friend, FriendRequest, FriendshipStatus } from '@/types/friend-types';
 
 /**
@@ -36,7 +51,7 @@ export const friendAPI = {
    */
   sendFriendRequest: async (targetUserId: string, message?: string): Promise<string> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
@@ -46,11 +61,12 @@ export const friendAPI = {
       }
 
       // 이미 친구 관계가 있는지 확인
-      const existingFriendship = await firestore()
-        .collection(FRIENDSHIPS_COLLECTION)
-        .where('userId1', 'in', [currentUser.uid, targetUserId])
-        .where('userId2', 'in', [currentUser.uid, targetUserId])
-        .get();
+      const existingQ = query(
+        collection(firestore, FRIENDSHIPS_COLLECTION),
+        where('userId1', 'in', [currentUser.uid, targetUserId]),
+        where('userId2', 'in', [currentUser.uid, targetUserId]),
+      );
+      const existingFriendship = await getDocs(existingQ);
 
       if (!existingFriendship.empty) {
         const friendship = existingFriendship.docs[0].data();
@@ -70,10 +86,10 @@ export const friendAPI = {
         status: 'pending' as FriendshipStatus,
         initiatorId: currentUser.uid,
         message: message || '',
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: serverTimestamp(),
       };
 
-      const docRef = await firestore().collection(FRIENDSHIPS_COLLECTION).add(friendshipData);
+      const docRef = await addDoc(collection(firestore, FRIENDSHIPS_COLLECTION), friendshipData);
 
       return docRef.id;
     } catch (error: any) {
@@ -89,15 +105,12 @@ export const friendAPI = {
    */
   acceptFriendRequest: async (friendshipId: string): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
-      const friendshipDoc = await firestore()
-        .collection(FRIENDSHIPS_COLLECTION)
-        .doc(friendshipId)
-        .get();
+      const friendshipDoc = await getDoc(doc(firestore, FRIENDSHIPS_COLLECTION, friendshipId));
 
       if (!friendshipDoc.exists) {
         throw new Error('친구 요청을 찾을 수 없습니다.');
@@ -115,9 +128,9 @@ export const friendAPI = {
       }
 
       // 승인
-      await firestore().collection(FRIENDSHIPS_COLLECTION).doc(friendshipId).update({
+      await updateDoc(doc(firestore, FRIENDSHIPS_COLLECTION, friendshipId), {
         status: 'accepted',
-        acceptedAt: firestore.FieldValue.serverTimestamp(),
+        acceptedAt: serverTimestamp(),
       });
     } catch (error: any) {
       console.error('❌ 친구 요청 승인 실패:', error);
@@ -132,15 +145,12 @@ export const friendAPI = {
    */
   rejectFriendRequest: async (friendshipId: string): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
-      const friendshipDoc = await firestore()
-        .collection(FRIENDSHIPS_COLLECTION)
-        .doc(friendshipId)
-        .get();
+      const friendshipDoc = await getDoc(doc(firestore, FRIENDSHIPS_COLLECTION, friendshipId));
 
       if (!friendshipDoc.exists) {
         throw new Error('친구 요청을 찾을 수 없습니다.');
@@ -154,7 +164,7 @@ export const friendAPI = {
       }
 
       // 거절 = 삭제
-      await firestore().collection(FRIENDSHIPS_COLLECTION).doc(friendshipId).delete();
+      await deleteDoc(doc(firestore, FRIENDSHIPS_COLLECTION, friendshipId));
     } catch (error: any) {
       console.error('❌ 친구 요청 거절 실패:', error);
       throw new Error(error.message || '친구 요청 거절에 실패했습니다.');
@@ -168,35 +178,37 @@ export const friendAPI = {
    */
   getFriends: async (): Promise<Friend[]> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
       // 내가 userId1인 경우
-      const friendships1 = await firestore()
-        .collection(FRIENDSHIPS_COLLECTION)
-        .where('userId1', '==', currentUser.uid)
-        .where('status', '==', 'accepted')
-        .get();
+      const q1 = query(
+        collection(firestore, FRIENDSHIPS_COLLECTION),
+        where('userId1', '==', currentUser.uid),
+        where('status', '==', 'accepted'),
+      );
+      const friendships1 = await getDocs(q1);
 
       // 내가 userId2인 경우
-      const friendships2 = await firestore()
-        .collection(FRIENDSHIPS_COLLECTION)
-        .where('userId2', '==', currentUser.uid)
-        .where('status', '==', 'accepted')
-        .get();
+      const q2 = query(
+        collection(firestore, FRIENDSHIPS_COLLECTION),
+        where('userId2', '==', currentUser.uid),
+        where('status', '==', 'accepted'),
+      );
+      const friendships2 = await getDocs(q2);
 
       // 친구 ID 목록
       const friendIds: string[] = [];
 
-      friendships1.docs.forEach((doc) => {
-        const data = doc.data();
+      friendships1.docs.forEach((docSnap) => {
+        const data = docSnap.data();
         friendIds.push(data.userId2);
       });
 
-      friendships2.docs.forEach((doc) => {
-        const data = doc.data();
+      friendships2.docs.forEach((docSnap) => {
+        const data = docSnap.data();
         friendIds.push(data.userId1);
       });
 
@@ -212,15 +224,16 @@ export const friendAPI = {
       }
 
       for (const chunk of chunks) {
-        const usersSnapshot = await firestore()
-          .collection(USERS_COLLECTION)
-          .where(firestore.FieldPath.documentId(), 'in', chunk)
-          .get();
+        const usersQ = query(
+          collection(firestore, USERS_COLLECTION),
+          where(documentId(), 'in', chunk),
+        );
+        const usersSnapshot = await getDocs(usersQ);
 
-        usersSnapshot.docs.forEach((doc) => {
-          const data = doc.data();
+        usersSnapshot.docs.forEach((docSnap) => {
+          const data = docSnap.data();
           friends.push({
-            id: doc.id,
+            id: docSnap.id,
             name: data.name || data.displayName || '익명',
             image: data.photoURL || data.avatar || '',
             handicap: data.handicap || 0,
@@ -237,20 +250,22 @@ export const friendAPI = {
       const currentFriendIds = new Set(friendIds);
       for (const friend of friends) {
         try {
-          const friendFriendships1 = await firestore()
-            .collection(FRIENDSHIPS_COLLECTION)
-            .where('userId1', '==', friend.id)
-            .where('status', '==', 'accepted')
-            .get();
-          const friendFriendships2 = await firestore()
-            .collection(FRIENDSHIPS_COLLECTION)
-            .where('userId2', '==', friend.id)
-            .where('status', '==', 'accepted')
-            .get();
+          const friendQ1 = query(
+            collection(firestore, FRIENDSHIPS_COLLECTION),
+            where('userId1', '==', friend.id),
+            where('status', '==', 'accepted'),
+          );
+          const friendFriendships1 = await getDocs(friendQ1);
+          const friendQ2 = query(
+            collection(firestore, FRIENDSHIPS_COLLECTION),
+            where('userId2', '==', friend.id),
+            where('status', '==', 'accepted'),
+          );
+          const friendFriendships2 = await getDocs(friendQ2);
 
           const friendFriendIds = new Set<string>();
-          friendFriendships1.docs.forEach((doc) => friendFriendIds.add(doc.data().userId2));
-          friendFriendships2.docs.forEach((doc) => friendFriendIds.add(doc.data().userId1));
+          friendFriendships1.docs.forEach((docSnap) => friendFriendIds.add(docSnap.data().userId2));
+          friendFriendships2.docs.forEach((docSnap) => friendFriendIds.add(docSnap.data().userId1));
 
           let mutualCount = 0;
           friendFriendIds.forEach((id) => {
@@ -278,24 +293,25 @@ export const friendAPI = {
    */
   getReceivedFriendRequests: async (): Promise<FriendRequest[]> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
-      const snapshot = await firestore()
-        .collection(FRIENDSHIPS_COLLECTION)
-        .where('userId2', '==', currentUser.uid)
-        .where('status', '==', 'pending')
-        .orderBy('createdAt', 'desc')
-        .get();
+      const q = query(
+        collection(firestore, FRIENDSHIPS_COLLECTION),
+        where('userId2', '==', currentUser.uid),
+        where('status', '==', 'pending'),
+        orderBy('createdAt', 'desc'),
+      );
+      const snapshot = await getDocs(q);
 
       if (snapshot.empty) {
         return [];
       }
 
       // 요청 보낸 사람 정보 가져오기
-      const senderIds = snapshot.docs.map((doc) => doc.data().userId1);
+      const senderIds = snapshot.docs.map((docSnap) => docSnap.data().userId1);
       const requests: FriendRequest[] = [];
 
       // 중복 제거
@@ -307,22 +323,23 @@ export const friendAPI = {
 
       const senderDataMap: { [key: string]: any } = {};
       for (const chunk of chunks) {
-        const usersSnapshot = await firestore()
-          .collection(USERS_COLLECTION)
-          .where(firestore.FieldPath.documentId(), 'in', chunk)
-          .get();
+        const usersQ = query(
+          collection(firestore, USERS_COLLECTION),
+          where(documentId(), 'in', chunk),
+        );
+        const usersSnapshot = await getDocs(usersQ);
 
-        usersSnapshot.docs.forEach((doc) => {
-          senderDataMap[doc.id] = doc.data();
+        usersSnapshot.docs.forEach((docSnap) => {
+          senderDataMap[docSnap.id] = docSnap.data();
         });
       }
 
-      snapshot.docs.forEach((doc) => {
-        const data = doc.data();
+      snapshot.docs.forEach((docSnap) => {
+        const data = docSnap.data();
         const senderData = senderDataMap[data.userId1] || {};
 
         requests.push({
-          id: doc.id,
+          id: docSnap.id,
           userId: data.userId1,
           userName: senderData.name || senderData.displayName || '익명',
           userImage: senderData.photoURL || senderData.avatar || '',
@@ -349,24 +366,25 @@ export const friendAPI = {
    */
   getSentFriendRequests: async (): Promise<FriendRequest[]> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
-      const snapshot = await firestore()
-        .collection(FRIENDSHIPS_COLLECTION)
-        .where('userId1', '==', currentUser.uid)
-        .where('status', '==', 'pending')
-        .orderBy('createdAt', 'desc')
-        .get();
+      const q = query(
+        collection(firestore, FRIENDSHIPS_COLLECTION),
+        where('userId1', '==', currentUser.uid),
+        where('status', '==', 'pending'),
+        orderBy('createdAt', 'desc'),
+      );
+      const snapshot = await getDocs(q);
 
       if (snapshot.empty) {
         return [];
       }
 
       // 요청 받은 사람 정보 가져오기
-      const receiverIds = snapshot.docs.map((doc) => doc.data().userId2);
+      const receiverIds = snapshot.docs.map((docSnap) => docSnap.data().userId2);
       const requests: FriendRequest[] = [];
 
       const uniqueReceiverIds = [...new Set(receiverIds)];
@@ -377,22 +395,23 @@ export const friendAPI = {
 
       const receiverDataMap: { [key: string]: any } = {};
       for (const chunk of chunks) {
-        const usersSnapshot = await firestore()
-          .collection(USERS_COLLECTION)
-          .where(firestore.FieldPath.documentId(), 'in', chunk)
-          .get();
+        const usersQ = query(
+          collection(firestore, USERS_COLLECTION),
+          where(documentId(), 'in', chunk),
+        );
+        const usersSnapshot = await getDocs(usersQ);
 
-        usersSnapshot.docs.forEach((doc) => {
-          receiverDataMap[doc.id] = doc.data();
+        usersSnapshot.docs.forEach((docSnap) => {
+          receiverDataMap[docSnap.id] = docSnap.data();
         });
       }
 
-      snapshot.docs.forEach((doc) => {
-        const data = doc.data();
+      snapshot.docs.forEach((docSnap) => {
+        const data = docSnap.data();
         const receiverData = receiverDataMap[data.userId2] || {};
 
         requests.push({
-          id: doc.id,
+          id: docSnap.id,
           userId: data.userId2,
           userName: receiverData.name || receiverData.displayName || '익명',
           userImage: receiverData.photoURL || receiverData.avatar || '',
@@ -419,25 +438,26 @@ export const friendAPI = {
    */
   removeFriend: async (friendId: string): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
       // 친구 관계 찾기
-      const friendships = await firestore()
-        .collection(FRIENDSHIPS_COLLECTION)
-        .where('userId1', 'in', [currentUser.uid, friendId])
-        .where('userId2', 'in', [currentUser.uid, friendId])
-        .where('status', '==', 'accepted')
-        .get();
+      const friendshipsQ = query(
+        collection(firestore, FRIENDSHIPS_COLLECTION),
+        where('userId1', 'in', [currentUser.uid, friendId]),
+        where('userId2', 'in', [currentUser.uid, friendId]),
+        where('status', '==', 'accepted'),
+      );
+      const friendships = await getDocs(friendshipsQ);
 
       if (friendships.empty) {
         throw new Error('친구 관계를 찾을 수 없습니다.');
       }
 
       // 삭제
-      await firestore().collection(FRIENDSHIPS_COLLECTION).doc(friendships.docs[0].id).delete();
+      await deleteDoc(doc(firestore, FRIENDSHIPS_COLLECTION, friendships.docs[0].id));
     } catch (error: any) {
       console.error('❌ 친구 삭제 실패:', error);
       throw new Error(error.message || '친구 삭제에 실패했습니다.');
@@ -451,7 +471,7 @@ export const friendAPI = {
    */
   blockUser: async (userId: string): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
@@ -461,30 +481,28 @@ export const friendAPI = {
       }
 
       // 기존 관계 확인
-      const existingFriendship = await firestore()
-        .collection(FRIENDSHIPS_COLLECTION)
-        .where('userId1', 'in', [currentUser.uid, userId])
-        .where('userId2', 'in', [currentUser.uid, userId])
-        .get();
+      const existingQ = query(
+        collection(firestore, FRIENDSHIPS_COLLECTION),
+        where('userId1', 'in', [currentUser.uid, userId]),
+        where('userId2', 'in', [currentUser.uid, userId]),
+      );
+      const existingFriendship = await getDocs(existingQ);
 
       if (!existingFriendship.empty) {
         // 기존 관계 업데이트
-        await firestore()
-          .collection(FRIENDSHIPS_COLLECTION)
-          .doc(existingFriendship.docs[0].id)
-          .update({
-            status: 'blocked',
-            blockedBy: currentUser.uid,
-            blockedAt: firestore.FieldValue.serverTimestamp(),
-          });
+        await updateDoc(doc(firestore, FRIENDSHIPS_COLLECTION, existingFriendship.docs[0].id), {
+          status: 'blocked',
+          blockedBy: currentUser.uid,
+          blockedAt: serverTimestamp(),
+        });
       } else {
         // 새로운 차단 관계 생성
-        await firestore().collection(FRIENDSHIPS_COLLECTION).add({
+        await addDoc(collection(firestore, FRIENDSHIPS_COLLECTION), {
           userId1: currentUser.uid,
           userId2: userId,
           status: 'blocked',
           blockedBy: currentUser.uid,
-          blockedAt: firestore.FieldValue.serverTimestamp(),
+          blockedAt: serverTimestamp(),
         });
       }
     } catch (error: any) {
@@ -500,18 +518,19 @@ export const friendAPI = {
    */
   unblockUser: async (userId: string): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
       // 차단 관계 찾기
-      const blockRelation = await firestore()
-        .collection(FRIENDSHIPS_COLLECTION)
-        .where('userId1', 'in', [currentUser.uid, userId])
-        .where('userId2', 'in', [currentUser.uid, userId])
-        .where('status', '==', 'blocked')
-        .get();
+      const blockQ = query(
+        collection(firestore, FRIENDSHIPS_COLLECTION),
+        where('userId1', 'in', [currentUser.uid, userId]),
+        where('userId2', 'in', [currentUser.uid, userId]),
+        where('status', '==', 'blocked'),
+      );
+      const blockRelation = await getDocs(blockQ);
 
       if (blockRelation.empty) {
         throw new Error('차단 관계를 찾을 수 없습니다.');
@@ -525,7 +544,7 @@ export const friendAPI = {
       }
 
       // 삭제
-      await firestore().collection(FRIENDSHIPS_COLLECTION).doc(blockRelation.docs[0].id).delete();
+      await deleteDoc(doc(firestore, FRIENDSHIPS_COLLECTION, blockRelation.docs[0].id));
     } catch (error: any) {
       console.error('❌ 차단 해제 실패:', error);
       throw new Error(error.message || '차단 해제에 실패했습니다.');
@@ -535,39 +554,40 @@ export const friendAPI = {
   /**
    * 사용자 검색
    *
-   * @param query 검색어 (이름 or 이메일)
-   * @param limit 결과 개수
+   * @param searchQuery 검색어 (이름 or 이메일)
+   * @param limitCount 결과 개수
    * @returns 검색 결과
    */
-  searchUsers: async (query: string, limit: number = 20): Promise<Friend[]> => {
+  searchUsers: async (searchQuery: string, limitCount: number = 20): Promise<Friend[]> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
-      if (!query || query.trim().length < 2) {
+      if (!searchQuery || searchQuery.trim().length < 2) {
         throw new Error('검색어는 2자 이상 입력해주세요.');
       }
 
       // Firestore는 full-text search를 지원하지 않으므로
       // 이름이 검색어로 시작하는 사용자를 찾습니다
-      const snapshot = await firestore()
-        .collection(USERS_COLLECTION)
-        .where('name', '>=', query)
-        .where('name', '<=', query + '\uf8ff')
-        .limit(limit)
-        .get();
+      const q = query(
+        collection(firestore, USERS_COLLECTION),
+        where('name', '>=', searchQuery),
+        where('name', '<=', searchQuery + '\uf8ff'),
+        limit(limitCount),
+      );
+      const snapshot = await getDocs(q);
 
       const users: Friend[] = [];
 
-      snapshot.docs.forEach((doc) => {
+      snapshot.docs.forEach((docSnap) => {
         // 본인 제외
-        if (doc.id === currentUser.uid) return;
+        if (docSnap.id === currentUser.uid) return;
 
-        const data = doc.data();
+        const data = docSnap.data();
         users.push({
-          id: doc.id,
+          id: docSnap.id,
           name: data.name || data.displayName || '익명',
           image: data.photoURL || data.avatar || '',
           handicap: data.handicap || 0,

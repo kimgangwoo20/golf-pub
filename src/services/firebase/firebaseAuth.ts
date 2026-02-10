@@ -1,7 +1,24 @@
 // 🔐 firebaseAuth.ts
 // Firebase Authentication (카카오 Custom Token 인증)
 
-import { auth, firestore, FirestoreTimestamp, handleFirebaseError } from './firebaseConfig';
+import {
+  auth,
+  firestore,
+  collection,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  runTransaction,
+  signInWithCustomToken,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  FirestoreTimestamp,
+  handleFirebaseError,
+} from './firebaseConfig';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
 /**
@@ -61,7 +78,7 @@ class FirebaseAuthService {
   ): Promise<FirebaseAuthTypes.UserCredential> {
     try {
       // Custom Token으로 Firebase 인증
-      const userCredential = await auth.signInWithCustomToken(customToken);
+      const userCredential = await signInWithCustomToken(auth, customToken);
 
       // Firestore에 사용자 프로필 저장/업데이트
       await this.updateUserProfile(userCredential.user.uid, kakaoUserInfo);
@@ -87,7 +104,7 @@ class FirebaseAuthService {
     try {
       // 이메일 로그인 시작
 
-      const userCredential = await auth.signInWithEmailAndPassword(email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
       // 마지막 로그인 시간 업데이트
       await this.updateLastLogin(userCredential.user.uid);
@@ -116,7 +133,7 @@ class FirebaseAuthService {
       // 이메일 회원가입 시작
 
       // Firebase Authentication 회원가입
-      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
       // 프로필 업데이트
       await userCredential.user.updateProfile({
@@ -167,7 +184,7 @@ class FirebaseAuthService {
         await this.setUserOffline(user.uid);
       }
 
-      await auth.signOut();
+      await signOut(auth);
     } catch (error) {
       console.error('로그아웃 실패');
       throw new Error(handleFirebaseError(error));
@@ -191,13 +208,14 @@ class FirebaseAuthService {
    */
   async getUserProfile(uid: string): Promise<UserProfile | null> {
     try {
-      const doc = await firestore.collection('users').doc(uid).get();
+      const userRef = doc(firestore, 'users', uid);
+      const docSnap = await getDoc(userRef);
 
-      if (!doc.exists) {
+      if (!docSnap.exists) {
         return null;
       }
 
-      return doc.data() as UserProfile;
+      return docSnap.data() as UserProfile;
     } catch (error) {
       console.error('프로필 가져오기 실패');
       return null;
@@ -238,7 +256,8 @@ class FirebaseAuthService {
         lastLoginAt: FirestoreTimestamp.now(),
       };
 
-      await firestore.collection('users').doc(uid).set(userProfile);
+      const userRef = doc(firestore, 'users', uid);
+      await setDoc(userRef, userProfile);
     } catch (error) {
       console.error('프로필 생성 실패');
       throw error;
@@ -253,12 +272,12 @@ class FirebaseAuthService {
    */
   private async updateUserProfile(uid: string, kakaoUserInfo: KakaoUserInfo): Promise<void> {
     try {
-      const userRef = firestore.collection('users').doc(uid);
-      const doc = await userRef.get();
+      const userRef = doc(firestore, 'users', uid);
+      const docSnap = await getDoc(userRef);
 
       const profile = kakaoUserInfo.kakao_account.profile;
 
-      if (!doc.exists) {
+      if (!docSnap.exists) {
         // 신규 사용자 - 프로필 생성
         await this.createUserProfile(uid, {
           email: kakaoUserInfo.kakao_account.email || null,
@@ -268,11 +287,11 @@ class FirebaseAuthService {
         });
       } else {
         // 기존 사용자 - 프로필 업데이트
-        await userRef.update({
-          email: kakaoUserInfo.kakao_account.email || doc.data()?.email,
-          displayName: profile?.nickname || doc.data()?.displayName,
-          photoURL: profile?.profile_image_url || doc.data()?.photoURL,
-          phoneNumber: kakaoUserInfo.kakao_account.phone_number || doc.data()?.phoneNumber,
+        await updateDoc(userRef, {
+          email: kakaoUserInfo.kakao_account.email || docSnap.data()?.email,
+          displayName: profile?.nickname || docSnap.data()?.displayName,
+          photoURL: profile?.profile_image_url || docSnap.data()?.photoURL,
+          phoneNumber: kakaoUserInfo.kakao_account.phone_number || docSnap.data()?.phoneNumber,
           updatedAt: FirestoreTimestamp.now(),
         });
 
@@ -291,7 +310,8 @@ class FirebaseAuthService {
    */
   private async updateLastLogin(uid: string): Promise<void> {
     try {
-      await firestore.collection('users').doc(uid).update({
+      const userRef = doc(firestore, 'users', uid);
+      await updateDoc(userRef, {
         lastLoginAt: FirestoreTimestamp.now(),
       });
 
@@ -310,7 +330,8 @@ class FirebaseAuthService {
    */
   private async setUserOnline(uid: string): Promise<void> {
     try {
-      await firestore.collection('users').doc(uid).update({
+      const userRef = doc(firestore, 'users', uid);
+      await updateDoc(userRef, {
         isOnline: true,
         lastSeenAt: FirestoreTimestamp.now(),
       });
@@ -326,7 +347,8 @@ class FirebaseAuthService {
    */
   private async setUserOffline(uid: string): Promise<void> {
     try {
-      await firestore.collection('users').doc(uid).update({
+      const userRef = doc(firestore, 'users', uid);
+      await updateDoc(userRef, {
         isOnline: false,
         lastSeenAt: FirestoreTimestamp.now(),
       });
@@ -343,13 +365,11 @@ class FirebaseAuthService {
    */
   async updateProfile(uid: string, updates: Partial<UserProfile>): Promise<void> {
     try {
-      await firestore
-        .collection('users')
-        .doc(uid)
-        .update({
-          ...updates,
-          updatedAt: FirestoreTimestamp.now(),
-        });
+      const userRef = doc(firestore, 'users', uid);
+      await updateDoc(userRef, {
+        ...updates,
+        updatedAt: FirestoreTimestamp.now(),
+      });
 
       // 프로필 업데이트 성공
     } catch (error) {
@@ -366,7 +386,8 @@ class FirebaseAuthService {
    */
   async updateHandicap(uid: string, handicap: number): Promise<void> {
     try {
-      await firestore.collection('users').doc(uid).update({
+      const userRef = doc(firestore, 'users', uid);
+      await updateDoc(userRef, {
         handicap,
         updatedAt: FirestoreTimestamp.now(),
       });
@@ -385,7 +406,8 @@ class FirebaseAuthService {
    */
   async verifyCoach(uid: string): Promise<void> {
     try {
-      await firestore.collection('users').doc(uid).update({
+      const userRef = doc(firestore, 'users', uid);
+      await updateDoc(userRef, {
         isCoach: true,
         coachVerified: true,
         role: 'COACH',
@@ -408,17 +430,17 @@ class FirebaseAuthService {
    */
   async addPoints(uid: string, points: number, reason: string): Promise<void> {
     try {
-      const userRef = firestore.collection('users').doc(uid);
+      const userRef = doc(firestore, 'users', uid);
 
       // 트랜잭션으로 포인트 추가
-      await firestore.runTransaction(async (transaction) => {
-        const doc = await transaction.get(userRef);
+      await runTransaction(firestore, async (transaction) => {
+        const docSnap = await transaction.get(userRef);
 
-        if (!doc.exists) {
+        if (!docSnap.exists) {
           throw new Error('사용자를 찾을 수 없습니다.');
         }
 
-        const currentPoints = doc.data()?.points || 0;
+        const currentPoints = docSnap.data()?.points || 0;
         const newPoints = currentPoints + points;
 
         transaction.update(userRef, {
@@ -427,7 +449,7 @@ class FirebaseAuthService {
         });
 
         // 포인트 히스토리 기록
-        const historyRef = firestore.collection('users').doc(uid).collection('pointHistory').doc();
+        const historyRef = doc(collection(firestore, 'users', uid, 'pointHistory'));
 
         transaction.set(historyRef, {
           amount: points,
@@ -453,17 +475,17 @@ class FirebaseAuthService {
    */
   async deductPoints(uid: string, points: number, reason: string): Promise<void> {
     try {
-      const userRef = firestore.collection('users').doc(uid);
+      const userRef = doc(firestore, 'users', uid);
 
       // 트랜잭션으로 포인트 차감
-      await firestore.runTransaction(async (transaction) => {
-        const doc = await transaction.get(userRef);
+      await runTransaction(firestore, async (transaction) => {
+        const docSnap = await transaction.get(userRef);
 
-        if (!doc.exists) {
+        if (!docSnap.exists) {
           throw new Error('사용자를 찾을 수 없습니다.');
         }
 
-        const currentPoints = doc.data()?.points || 0;
+        const currentPoints = docSnap.data()?.points || 0;
 
         if (currentPoints < points) {
           throw new Error('포인트가 부족합니다.');
@@ -477,7 +499,7 @@ class FirebaseAuthService {
         });
 
         // 포인트 히스토리 기록
-        const historyRef = firestore.collection('users').doc(uid).collection('pointHistory').doc();
+        const historyRef = doc(collection(firestore, 'users', uid, 'pointHistory'));
 
         transaction.set(historyRef, {
           amount: -points,
@@ -502,7 +524,8 @@ class FirebaseAuthService {
   async deleteAccount(uid: string): Promise<void> {
     try {
       // Firestore 사용자 문서 삭제
-      await firestore.collection('users').doc(uid).delete();
+      const userRef = doc(firestore, 'users', uid);
+      await deleteDoc(userRef);
 
       // Firebase Auth 사용자 삭제
       const user = auth.currentUser;
@@ -524,7 +547,7 @@ class FirebaseAuthService {
    * @returns Unsubscribe function
    */
   onAuthStateChanged(callback: (user: FirebaseAuthTypes.User | null) => void): () => void {
-    return auth.onAuthStateChanged(callback);
+    return onAuthStateChanged(auth, callback);
   }
 }
 

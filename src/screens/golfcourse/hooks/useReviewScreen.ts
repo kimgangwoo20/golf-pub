@@ -1,6 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import firestore from '@react-native-firebase/firestore';
+import {
+  firestore,
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  startAfter,
+  getDocs,
+} from '@/services/firebase/firebaseConfig';
 
 const PAGE_SIZE = 10;
 
@@ -19,38 +28,47 @@ export const useReviewScreen = (courseId: string) => {
     loadReviews();
   }, [courseId, filter, sort]);
 
+  const buildConstraints = (): any[] => {
+    const constraints: any[] = [where('courseId', '==', courseId)];
+
+    // 별점 필터
+    if (filter !== 'all') {
+      const ratingValue = parseInt(filter, 10);
+      if (!isNaN(ratingValue)) {
+        constraints.push(where('rating', '==', ratingValue));
+      }
+    }
+
+    // 정렬
+    if (sort === 'latest') {
+      constraints.push(orderBy('createdAt', 'desc'));
+    } else if (sort === 'rating') {
+      constraints.push(orderBy('rating', 'desc'));
+    } else if (sort === 'likes') {
+      constraints.push(orderBy('likes', 'desc'));
+    }
+
+    return constraints;
+  };
+
   const loadReviews = async () => {
     if (!courseId) return;
     setLoading(true);
     lastDocRef.current = null;
     try {
-      let query: any = firestore()
-        .collection('golf_course_reviews')
-        .where('courseId', '==', courseId);
+      const constraints = buildConstraints();
+      const q = query(
+        collection(firestore, 'golf_course_reviews'),
+        ...constraints,
+        limit(PAGE_SIZE),
+      );
 
-      // 별점 필터
-      if (filter !== 'all') {
-        const ratingValue = parseInt(filter, 10);
-        if (!isNaN(ratingValue)) {
-          query = query.where('rating', '==', ratingValue);
-        }
-      }
+      const snapshot = await getDocs(q);
 
-      // 정렬
-      if (sort === 'latest') {
-        query = query.orderBy('createdAt', 'desc');
-      } else if (sort === 'rating') {
-        query = query.orderBy('rating', 'desc');
-      } else if (sort === 'likes') {
-        query = query.orderBy('likes', 'desc');
-      }
-
-      const snapshot = await query.limit(PAGE_SIZE).get();
-
-      const reviewList = snapshot.docs.map((doc: any) => {
-        const data = doc.data();
+      const reviewList = snapshot.docs.map((docSnap: any) => {
+        const data = docSnap.data();
         return {
-          id: doc.id,
+          id: docSnap.id,
           courseId: data.courseId,
           author: data.author || { id: '', name: '익명', image: '' },
           rating: data.rating || 0,
@@ -93,31 +111,20 @@ export const useReviewScreen = (courseId: string) => {
     if (!hasMore || loading || !lastDocRef.current || !courseId) return;
 
     try {
-      let query: any = firestore()
-        .collection('golf_course_reviews')
-        .where('courseId', '==', courseId);
+      const constraints = buildConstraints();
+      const q = query(
+        collection(firestore, 'golf_course_reviews'),
+        ...constraints,
+        startAfter(lastDocRef.current),
+        limit(PAGE_SIZE),
+      );
 
-      if (filter !== 'all') {
-        const ratingValue = parseInt(filter, 10);
-        if (!isNaN(ratingValue)) {
-          query = query.where('rating', '==', ratingValue);
-        }
-      }
+      const snapshot = await getDocs(q);
 
-      if (sort === 'latest') {
-        query = query.orderBy('createdAt', 'desc');
-      } else if (sort === 'rating') {
-        query = query.orderBy('rating', 'desc');
-      } else if (sort === 'likes') {
-        query = query.orderBy('likes', 'desc');
-      }
-
-      const snapshot = await query.startAfter(lastDocRef.current).limit(PAGE_SIZE).get();
-
-      const moreReviews = snapshot.docs.map((doc: any) => {
-        const data = doc.data();
+      const moreReviews = snapshot.docs.map((docSnap: any) => {
+        const data = docSnap.data();
         return {
-          id: doc.id,
+          id: docSnap.id,
           courseId: data.courseId,
           author: data.author || { id: '', name: '익명', image: '' },
           rating: data.rating || 0,

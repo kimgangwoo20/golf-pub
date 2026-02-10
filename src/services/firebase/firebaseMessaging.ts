@@ -1,7 +1,24 @@
 // 🔔 firebaseMessaging.ts
 // Firebase Cloud Messaging (FCM) 푸시 알림
 
-import { messaging, firestore, FirestoreTimestamp, handleFirebaseError } from './firebaseConfig';
+import {
+  messaging,
+  firestore,
+  collection,
+  doc,
+  setDoc,
+  updateDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  onSnapshot,
+  writeBatch,
+  deleteDoc,
+  FirestoreTimestamp,
+  handleFirebaseError,
+} from './firebaseConfig';
 import type { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
@@ -91,7 +108,8 @@ class FirebaseMessagingService {
    */
   async saveToken(userId: string, token: string): Promise<void> {
     try {
-      await firestore.collection('users').doc(userId).update({
+      const userRef = doc(firestore, 'users', userId);
+      await updateDoc(userRef, {
         fcmToken: token,
         fcmTokenUpdatedAt: FirestoreTimestamp.now(),
         platform: Platform.OS,
@@ -110,7 +128,8 @@ class FirebaseMessagingService {
     try {
       await messaging.deleteToken();
 
-      await firestore.collection('users').doc(userId).update({
+      const userRef = doc(firestore, 'users', userId);
+      await updateDoc(userRef, {
         fcmToken: null,
         fcmTokenUpdatedAt: FirestoreTimestamp.now(),
       });
@@ -220,11 +239,8 @@ class FirebaseMessagingService {
     imageUrl?: string,
   ): Promise<string> {
     try {
-      const notificationRef = firestore
-        .collection('users')
-        .doc(userId)
-        .collection('notifications')
-        .doc();
+      const notificationsRef = collection(firestore, 'users', userId, 'notifications');
+      const notificationRef = doc(notificationsRef);
 
       const notification: NotificationData = {
         id: notificationRef.id,
@@ -238,7 +254,7 @@ class FirebaseMessagingService {
         createdAt: FirestoreTimestamp.now(),
       };
 
-      await notificationRef.set(notification);
+      await setDoc(notificationRef, notification);
 
       return notificationRef.id;
     } catch (error) {
@@ -250,23 +266,19 @@ class FirebaseMessagingService {
    * 알림 목록 가져오기
    *
    * @param userId - 사용자 ID
-   * @param limit - 개수 제한
+   * @param limitCount - 개수 제한
    * @returns 알림 목록
    */
-  async getNotifications(userId: string, limit: number = 20): Promise<NotificationData[]> {
+  async getNotifications(userId: string, limitCount: number = 20): Promise<NotificationData[]> {
     try {
-      const snapshot = await firestore
-        .collection('users')
-        .doc(userId)
-        .collection('notifications')
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .get();
+      const notificationsRef = collection(firestore, 'users', userId, 'notifications');
+      const q = query(notificationsRef, orderBy('createdAt', 'desc'), limit(limitCount));
+      const snapshot = await getDocs(q);
 
       const notifications: NotificationData[] = [];
 
-      snapshot.forEach((doc) => {
-        notifications.push(doc.data() as NotificationData);
+      snapshot.forEach((docSnap) => {
+        notifications.push(docSnap.data() as NotificationData);
       });
 
       return notifications;
@@ -280,29 +292,26 @@ class FirebaseMessagingService {
    *
    * @param userId - 사용자 ID
    * @param callback - 콜백 함수
-   * @param limit - 개수 제한
+   * @param limitCount - 개수 제한
    * @returns Unsubscribe function
    */
   subscribeToNotifications(
     userId: string,
     callback: (notifications: NotificationData[]) => void,
-    limit: number = 20,
+    limitCount: number = 20,
   ): () => void {
-    const unsubscribe = firestore
-      .collection('users')
-      .doc(userId)
-      .collection('notifications')
-      .orderBy('createdAt', 'desc')
-      .limit(limit)
-      .onSnapshot((snapshot) => {
-        const notifications: NotificationData[] = [];
+    const notificationsRef = collection(firestore, 'users', userId, 'notifications');
+    const q = query(notificationsRef, orderBy('createdAt', 'desc'), limit(limitCount));
 
-        snapshot.forEach((doc) => {
-          notifications.push(doc.data() as NotificationData);
-        });
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const notifications: NotificationData[] = [];
 
-        callback(notifications);
+      snapshot.forEach((docSnap) => {
+        notifications.push(docSnap.data() as NotificationData);
       });
+
+      callback(notifications);
+    });
 
     return unsubscribe;
   }
@@ -315,12 +324,8 @@ class FirebaseMessagingService {
    */
   async markAsRead(userId: string, notificationId: string): Promise<void> {
     try {
-      await firestore
-        .collection('users')
-        .doc(userId)
-        .collection('notifications')
-        .doc(notificationId)
-        .update({ isRead: true });
+      const notificationRef = doc(firestore, 'users', userId, 'notifications', notificationId);
+      await updateDoc(notificationRef, { isRead: true });
     } catch (error) {
       // 읽음 처리 실패 - 무시
     }
@@ -333,17 +338,14 @@ class FirebaseMessagingService {
    */
   async markAllAsRead(userId: string): Promise<void> {
     try {
-      const snapshot = await firestore
-        .collection('users')
-        .doc(userId)
-        .collection('notifications')
-        .where('isRead', '==', false)
-        .get();
+      const notificationsRef = collection(firestore, 'users', userId, 'notifications');
+      const q = query(notificationsRef, where('isRead', '==', false));
+      const snapshot = await getDocs(q);
 
-      const batch = firestore.batch();
+      const batch = writeBatch(firestore);
 
-      snapshot.forEach((doc) => {
-        batch.update(doc.ref, { isRead: true });
+      snapshot.forEach((docSnap) => {
+        batch.update(docSnap.ref, { isRead: true });
       });
 
       await batch.commit();
@@ -360,12 +362,8 @@ class FirebaseMessagingService {
    */
   async deleteNotification(userId: string, notificationId: string): Promise<void> {
     try {
-      await firestore
-        .collection('users')
-        .doc(userId)
-        .collection('notifications')
-        .doc(notificationId)
-        .delete();
+      const notificationRef = doc(firestore, 'users', userId, 'notifications', notificationId);
+      await deleteDoc(notificationRef);
     } catch (error) {
       // 알림 삭제 실패 - 무시
     }
@@ -378,16 +376,13 @@ class FirebaseMessagingService {
    */
   async deleteAllNotifications(userId: string): Promise<void> {
     try {
-      const snapshot = await firestore
-        .collection('users')
-        .doc(userId)
-        .collection('notifications')
-        .get();
+      const notificationsRef = collection(firestore, 'users', userId, 'notifications');
+      const snapshot = await getDocs(notificationsRef);
 
-      const batch = firestore.batch();
+      const batch = writeBatch(firestore);
 
-      snapshot.forEach((doc) => {
-        batch.delete(doc.ref);
+      snapshot.forEach((docSnap) => {
+        batch.delete(docSnap.ref);
       });
 
       await batch.commit();
@@ -404,12 +399,9 @@ class FirebaseMessagingService {
    */
   async getUnreadCount(userId: string): Promise<number> {
     try {
-      const snapshot = await firestore
-        .collection('users')
-        .doc(userId)
-        .collection('notifications')
-        .where('isRead', '==', false)
-        .get();
+      const notificationsRef = collection(firestore, 'users', userId, 'notifications');
+      const q = query(notificationsRef, where('isRead', '==', false));
+      const snapshot = await getDocs(q);
 
       return snapshot.size;
     } catch (error) {
@@ -425,14 +417,12 @@ class FirebaseMessagingService {
    * @returns Unsubscribe function
    */
   subscribeToUnreadCount(userId: string, callback: (count: number) => void): () => void {
-    const unsubscribe = firestore
-      .collection('users')
-      .doc(userId)
-      .collection('notifications')
-      .where('isRead', '==', false)
-      .onSnapshot((snapshot) => {
-        callback(snapshot.size);
-      });
+    const notificationsRef = collection(firestore, 'users', userId, 'notifications');
+    const q = query(notificationsRef, where('isRead', '==', false));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      callback(snapshot.size);
+    });
 
     return unsubscribe;
   }

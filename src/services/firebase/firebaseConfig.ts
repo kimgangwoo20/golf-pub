@@ -1,169 +1,162 @@
 // 🔥 firebaseConfig.ts
-// Firebase 초기화 및 설정
+// Firebase 초기화 및 설정 (Modular API)
 // @react-native-firebase는 google-services.json을 통해 자동 초기화됩니다
 
-import firebase from '@react-native-firebase/app';
-import firestore from '@react-native-firebase/firestore';
-import database from '@react-native-firebase/database';
-import storage from '@react-native-firebase/storage';
-import messaging from '@react-native-firebase/messaging';
-import auth from '@react-native-firebase/auth';
+import {
+  getFirestore,
+  collection,
+  doc,
+  writeBatch,
+  runTransaction,
+  onSnapshot,
+  query,
+  where,
+  orderBy,
+  limit,
+  serverTimestamp,
+  Timestamp,
+  FieldPath,
+} from '@react-native-firebase/firestore';
+import { getAuth } from '@react-native-firebase/auth';
+import { getStorage, ref as storageRef } from '@react-native-firebase/storage';
+import {
+  getDatabase,
+  ref as databaseRef,
+  serverTimestamp as rtdbServerTimestamp,
+} from '@react-native-firebase/database';
+import { getMessaging } from '@react-native-firebase/messaging';
 
-// Firebase 앱 참조 (자동 초기화됨)
-const firebaseApp = firebase.app();
-
-// Firestore 설정 (서울 리전)
-const firestoreInstance = firestore();
-
-// 오프라인 지속성 활성화
-firestoreInstance.settings({
-  cacheSizeBytes: firestore.CACHE_SIZE_UNLIMITED,
-  persistence: true,
-});
-
-// Realtime Database 설정 (서울 리전)
-const databaseInstance = database();
-
-// 오프라인 지속성 활성화
-databaseInstance.setPersistenceEnabled(true);
-databaseInstance.setPersistenceCacheSizeBytes(10000000); // 10MB
-
-// Storage 설정
-const storageInstance = storage();
-
-// 업로드 타임아웃 설정 (60초)
-storageInstance.setMaxUploadRetryTime(60000);
-
-// Messaging 설정
-const messagingInstance = messaging();
-
-// Auth 설정
-const authInstance = auth();
+// Modular 인스턴스 생성
+const firestoreInstance = getFirestore();
+const authInstance = getAuth();
+const storageInstance = getStorage();
+const databaseInstance = getDatabase();
+const messagingInstance = getMessaging();
 
 /**
- * Firestore 컬렉션 참조
+ * Firestore 컬렉션 참조 (modular)
  */
 export const collections = {
   // 사용자
-  users: () => firestoreInstance.collection('users'),
+  users: () => collection(firestoreInstance, 'users'),
 
   // 부킹
-  bookings: () => firestoreInstance.collection('bookings'),
+  bookings: () => collection(firestoreInstance, 'bookings'),
   bookingComments: (bookingId: string) =>
-    firestoreInstance.collection('bookings').doc(bookingId).collection('comments'),
+    collection(firestoreInstance, 'bookings', bookingId, 'comments'),
   bookingParticipants: (bookingId: string) =>
-    firestoreInstance.collection('bookings').doc(bookingId).collection('participants'),
+    collection(firestoreInstance, 'bookings', bookingId, 'participants'),
 
   // 중고거래
-  products: () => firestoreInstance.collection('products'),
+  products: () => collection(firestoreInstance, 'products'),
   productComments: (productId: string) =>
-    firestoreInstance.collection('products').doc(productId).collection('comments'),
+    collection(firestoreInstance, 'products', productId, 'comments'),
 
   // 친구
-  friends: (userId: string) =>
-    firestoreInstance.collection('users').doc(userId).collection('friends'),
+  friends: (userId: string) => collection(firestoreInstance, 'users', userId, 'friends'),
   friendRequests: (userId: string) =>
-    firestoreInstance.collection('users').doc(userId).collection('friendRequests'),
+    collection(firestoreInstance, 'users', userId, 'friendRequests'),
 
   // 피드
-  posts: () => firestoreInstance.collection('posts'),
-  postComments: (postId: string) =>
-    firestoreInstance.collection('posts').doc(postId).collection('comments'),
-  postLikes: (postId: string) =>
-    firestoreInstance.collection('posts').doc(postId).collection('likes'),
+  posts: () => collection(firestoreInstance, 'posts'),
+  postComments: (postId: string) => collection(firestoreInstance, 'posts', postId, 'comments'),
+  postLikes: (postId: string) => collection(firestoreInstance, 'posts', postId, 'likes'),
 
   // 술집
-  pubs: () => firestoreInstance.collection('pubs'),
-  pubReviews: (pubId: string) =>
-    firestoreInstance.collection('pubs').doc(pubId).collection('reviews'),
+  pubs: () => collection(firestoreInstance, 'pubs'),
+  pubReviews: (pubId: string) => collection(firestoreInstance, 'pubs', pubId, 'reviews'),
 
   // 골프장
-  golfCourses: () => firestoreInstance.collection('golfCourses'),
+  golfCourses: () => collection(firestoreInstance, 'golfCourses'),
   golfCourseReviews: (courseId: string) =>
-    firestoreInstance.collection('golfCourses').doc(courseId).collection('reviews'),
+    collection(firestoreInstance, 'golfCourses', courseId, 'reviews'),
 
   // 알림
   notifications: (userId: string) =>
-    firestoreInstance.collection('users').doc(userId).collection('notifications'),
+    collection(firestoreInstance, 'users', userId, 'notifications'),
 
   // 트랜잭션
-  transactions: () => firestoreInstance.collection('transactions'),
+  transactions: () => collection(firestoreInstance, 'transactions'),
 
   // 멤버십
-  memberships: (userId: string) =>
-    firestoreInstance.collection('users').doc(userId).collection('memberships'),
+  memberships: (userId: string) => collection(firestoreInstance, 'users', userId, 'memberships'),
 
   // 포인트
-  pointHistory: (userId: string) =>
-    firestoreInstance.collection('users').doc(userId).collection('pointHistory'),
+  pointHistory: (userId: string) => collection(firestoreInstance, 'users', userId, 'pointHistory'),
 
   // 쿠폰
-  coupons: (userId: string) =>
-    firestoreInstance.collection('users').doc(userId).collection('coupons'),
+  coupons: (userId: string) => collection(firestoreInstance, 'users', userId, 'coupons'),
 };
 
 /**
- * Realtime Database 참조
+ * Realtime Database 참조 (modular)
  */
 export const realtimeRefs = {
   // 채팅방 목록
-  chatRooms: (userId: string) => databaseInstance.ref(`chatRooms/${userId}`),
+  chatRooms: (userId: string) => databaseRef(databaseInstance, `chatRooms/${userId}`),
 
   // 특정 채팅방
-  chatRoom: (roomId: string) => databaseInstance.ref(`chatRooms/${roomId}`),
+  chatRoom: (roomId: string) => databaseRef(databaseInstance, `chatRooms/${roomId}`),
 
   // 메시지
-  messages: (roomId: string) => databaseInstance.ref(`messages/${roomId}`),
+  messages: (roomId: string) => databaseRef(databaseInstance, `messages/${roomId}`),
 
   // 특정 메시지
   message: (roomId: string, messageId: string) =>
-    databaseInstance.ref(`messages/${roomId}/${messageId}`),
+    databaseRef(databaseInstance, `messages/${roomId}/${messageId}`),
 
   // 온라인 상태
-  presence: (userId: string) => databaseInstance.ref(`presence/${userId}`),
+  presence: (userId: string) => databaseRef(databaseInstance, `presence/${userId}`),
 
   // 타이핑 상태
-  typing: (roomId: string, userId: string) => databaseInstance.ref(`typing/${roomId}/${userId}`),
+  typing: (roomId: string, userId: string) =>
+    databaseRef(databaseInstance, `typing/${roomId}/${userId}`),
 
   // 읽음 상태
   readReceipts: (roomId: string, userId: string) =>
-    databaseInstance.ref(`readReceipts/${roomId}/${userId}`),
+    databaseRef(databaseInstance, `readReceipts/${roomId}/${userId}`),
 };
 
 /**
- * Storage 참조
+ * Storage 참조 (modular)
  */
 export const storageRefs = {
   // 프로필 이미지
-  profileImages: (userId: string) => storageInstance.ref(`profiles/${userId}/avatar.jpg`),
+  profileImages: (userId: string) => storageRef(storageInstance, `profiles/${userId}/avatar.jpg`),
 
   // 채팅 이미지
   chatImages: (roomId: string, imageId: string) =>
-    storageInstance.ref(`chats/${roomId}/${imageId}.jpg`),
+    storageRef(storageInstance, `chats/${roomId}/${imageId}.jpg`),
 
   // 부킹 이미지
   bookingImages: (bookingId: string, imageId: string) =>
-    storageInstance.ref(`bookings/${bookingId}/${imageId}.jpg`),
+    storageRef(storageInstance, `bookings/${bookingId}/${imageId}.jpg`),
 
   // 상품 이미지
   productImages: (productId: string, imageId: string) =>
-    storageInstance.ref(`products/${productId}/${imageId}.jpg`),
+    storageRef(storageInstance, `products/${productId}/${imageId}.jpg`),
 
   // 포스트 이미지
   postImages: (postId: string, imageId: string) =>
-    storageInstance.ref(`posts/${postId}/${imageId}.jpg`),
+    storageRef(storageInstance, `posts/${postId}/${imageId}.jpg`),
 
   // 리뷰 이미지
   reviewImages: (reviewId: string, imageId: string) =>
-    storageInstance.ref(`reviews/${reviewId}/${imageId}.jpg`),
+    storageRef(storageInstance, `reviews/${reviewId}/${imageId}.jpg`),
 };
+
+/**
+ * FieldPath.documentId() 유틸리티
+ * 모듈러 API의 FieldPath 타입 정의에 documentId()가 누락되어 있으므로 런타임 캐스트 사용
+ */
+export const documentId = (): FieldPath => (FieldPath as any).documentId();
 
 /**
  * Firestore Timestamp 유틸리티
  */
 export const FirestoreTimestamp = {
-  now: () => firestore.FieldValue.serverTimestamp(),
-  fromDate: (date: Date) => firestore.Timestamp.fromDate(date),
+  now: () => serverTimestamp(),
+  fromDate: (date: Date) => Timestamp.fromDate(date),
   toDate: (timestamp: any) => {
     if (timestamp?.toDate) {
       return timestamp.toDate();
@@ -176,7 +169,7 @@ export const FirestoreTimestamp = {
  * Realtime Database Timestamp 유틸리티
  */
 export const RealtimeTimestamp = {
-  now: () => database.ServerValue.TIMESTAMP,
+  now: () => rtdbServerTimestamp(),
 };
 
 /**
@@ -203,15 +196,88 @@ export const handleFirebaseError = (error: any): string => {
 };
 
 /**
+ * Modular 유틸 re-exports (소비자 파일에서 직접 import 대신 사용)
+ */
+export {
+  collection,
+  doc,
+  writeBatch,
+  runTransaction,
+  onSnapshot,
+  query,
+  where,
+  orderBy,
+  limit,
+  serverTimestamp,
+  Timestamp,
+  FieldPath,
+};
+
+// Firestore modular 추가 함수 re-export
+export {
+  addDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  getDoc,
+  getDocs,
+  startAfter,
+  collectionGroup,
+  increment,
+  arrayUnion,
+  arrayRemove,
+} from '@react-native-firebase/firestore';
+
+// Auth modular 함수 re-export
+export {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  signInWithCustomToken,
+  sendPasswordResetEmail,
+  onAuthStateChanged,
+  deleteUser,
+} from '@react-native-firebase/auth';
+
+// Storage modular 함수 re-export
+export { ref as storageRefFn, getDownloadURL, deleteObject } from '@react-native-firebase/storage';
+
+// Database modular 함수 re-export
+export {
+  ref as databaseRefFn,
+  set as rtdbSet,
+  update as rtdbUpdate,
+  get as rtdbGet,
+  onValue,
+  onChildAdded,
+  onChildChanged,
+  onChildRemoved,
+  push as rtdbPush,
+  remove as rtdbRemove,
+  off as rtdbOff,
+} from '@react-native-firebase/database';
+
+// Messaging modular 함수 re-export
+export {
+  getToken as getMessagingToken,
+  onMessage,
+  onTokenRefresh,
+  requestPermission as requestMessagingPermission,
+  onNotificationOpenedApp,
+  getInitialNotification,
+  setBackgroundMessageHandler,
+} from '@react-native-firebase/messaging';
+
+// Functions modular 함수 re-export
+export { getFunctions, httpsCallable } from '@react-native-firebase/functions';
+
+/**
  * Export instances
  */
 export {
-  firebaseApp,
   firestoreInstance as firestore,
   databaseInstance as database,
   storageInstance as storage,
   messagingInstance as messaging,
   authInstance as auth,
 };
-
-export default firebaseApp;

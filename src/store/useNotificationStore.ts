@@ -1,6 +1,18 @@
 // useNotificationStore.ts - 알림 상태 관리 스토어
 import { create } from 'zustand';
-import firestore from '@react-native-firebase/firestore';
+import {
+  firestore,
+  collection,
+  doc,
+  query,
+  where,
+  orderBy,
+  limit,
+  onSnapshot,
+  getDocs,
+  updateDoc,
+  writeBatch,
+} from '@/services/firebase/firebaseConfig';
 
 interface Notification {
   id: string;
@@ -36,34 +48,32 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       notificationUnsubscribe();
     }
 
-    notificationUnsubscribe = firestore()
-      .collection('users')
-      .doc(userId)
-      .collection('notifications')
-      .orderBy('createdAt', 'desc')
-      .limit(50)
-      .onSnapshot(
-        (snapshot) => {
-          const notifications = snapshot.docs.map((doc) => {
-            const docData = doc.data();
-            return {
-              id: doc.id,
-              type: docData.type || 'system_notice',
-              title: docData.title || '',
-              body: docData.body || '',
-              read: docData.read ?? docData.isRead ?? false,
-              data: docData.data,
-              createdAt: docData.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
-            };
-          }) as Notification[];
+    const notificationsRef = collection(firestore, 'users', userId, 'notifications');
+    const q = query(notificationsRef, orderBy('createdAt', 'desc'), limit(50));
 
-          const unreadCount = notifications.filter((n) => !n.read).length;
-          set({ notifications, unreadCount });
-        },
-        (error) => {
-          console.error('알림 구독 오류:', error);
-        },
-      );
+    notificationUnsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const notifications = snapshot.docs.map((docSnap) => {
+          const docData = docSnap.data();
+          return {
+            id: docSnap.id,
+            type: docData.type || 'system_notice',
+            title: docData.title || '',
+            body: docData.body || '',
+            read: docData.read ?? docData.isRead ?? false,
+            data: docData.data,
+            createdAt: docData.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+          };
+        }) as Notification[];
+
+        const unreadCount = notifications.filter((n) => !n.read).length;
+        set({ notifications, unreadCount });
+      },
+      (error) => {
+        console.error('알림 구독 오류:', error);
+      },
+    );
   },
 
   unsubscribeFromNotifications: () => {
@@ -79,19 +89,18 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       unreadCountUnsubscribe();
     }
 
-    unreadCountUnsubscribe = firestore()
-      .collection('users')
-      .doc(userId)
-      .collection('notifications')
-      .where('read', '==', false)
-      .onSnapshot(
-        (snapshot) => {
-          set({ unreadCount: snapshot.size });
-        },
-        (error) => {
-          console.error('읽지 않은 알림 구독 오류:', error);
-        },
-      );
+    const notificationsRef = collection(firestore, 'users', userId, 'notifications');
+    const q = query(notificationsRef, where('read', '==', false));
+
+    unreadCountUnsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        set({ unreadCount: snapshot.size });
+      },
+      (error) => {
+        console.error('읽지 않은 알림 구독 오류:', error);
+      },
+    );
   },
 
   unsubscribeFromUnreadCount: () => {
@@ -115,12 +124,8 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       });
 
       // Firestore 업데이트 (isRead 필드)
-      await firestore()
-        .collection('users')
-        .doc(userId)
-        .collection('notifications')
-        .doc(notificationId)
-        .update({ isRead: true, read: true });
+      const notificationRef = doc(firestore, 'users', userId, 'notifications', notificationId);
+      await updateDoc(notificationRef, { isRead: true, read: true });
     } catch (error) {
       // 알림 읽음 처리 실패 - 무시
     }
@@ -135,16 +140,13 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       });
 
       // Firestore 일괄 업데이트
-      const snapshot = await firestore()
-        .collection('users')
-        .doc(userId)
-        .collection('notifications')
-        .where('isRead', '==', false)
-        .get();
+      const notificationsRef = collection(firestore, 'users', userId, 'notifications');
+      const q = query(notificationsRef, where('isRead', '==', false));
+      const snapshot = await getDocs(q);
 
-      const batch = firestore().batch();
-      snapshot.docs.forEach((doc) => {
-        batch.update(doc.ref, { isRead: true, read: true });
+      const batch = writeBatch(firestore);
+      snapshot.docs.forEach((docSnap) => {
+        batch.update(docSnap.ref, { isRead: true, read: true });
       });
 
       await batch.commit();

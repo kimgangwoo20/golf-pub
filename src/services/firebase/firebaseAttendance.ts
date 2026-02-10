@@ -1,7 +1,7 @@
 // 📅 Firebase 출석 체크 서비스
 // 사용자의 일일 출석 체크 및 포인트 적립 관리
 
-import firestore from '@react-native-firebase/firestore';
+import { firestore, collection, doc, getDoc, getDocs, query, where } from './firebaseConfig';
 import { callFunction } from './firebaseFunctions';
 
 /**
@@ -11,9 +11,9 @@ export const checkTodayAttendance = async (userId: string): Promise<boolean> => 
   try {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
-    const doc = await firestore().collection('attendance').doc(`${userId}_${today}`).get();
+    const docSnap = await getDoc(doc(firestore, 'attendance', `${userId}_${today}`));
 
-    return doc.exists;
+    return docSnap.exists;
   } catch (error) {
     console.error('출석 확인 실패:', error);
     return false;
@@ -75,14 +75,15 @@ export const getAttendanceCalendar = async (
     const startDateStr = startDate.toISOString().split('T')[0];
     const endDateStr = endDate.toISOString().split('T')[0];
 
-    const snapshot = await firestore()
-      .collection('attendance')
-      .where('userId', '==', userId)
-      .where('date', '>=', startDateStr)
-      .where('date', '<=', endDateStr)
-      .get();
+    const q = query(
+      collection(firestore, 'attendance'),
+      where('userId', '==', userId),
+      where('date', '>=', startDateStr),
+      where('date', '<=', endDateStr),
+    );
+    const snapshot = await getDocs(q);
 
-    return snapshot.docs.map((doc) => doc.data().date);
+    return snapshot.docs.map((docSnap) => docSnap.data().date);
   } catch (error) {
     console.error('출석 캘린더 조회 실패:', error);
     return [];
@@ -101,7 +102,7 @@ export const getAttendanceStats = async (
   thisMonthDays: number;
 }> => {
   try {
-    const userDoc = await firestore().collection('users').doc(userId).get();
+    const userDoc = await getDoc(doc(firestore, 'users', userId));
 
     const userData = userDoc.data();
 

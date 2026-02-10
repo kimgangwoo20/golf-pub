@@ -1,5 +1,12 @@
 // subscriptionService.ts - 멤버십 구독 관리 서비스
-import firestore from '@react-native-firebase/firestore';
+import {
+  firestore,
+  doc,
+  getDoc,
+  updateDoc,
+  serverTimestamp,
+  Timestamp,
+} from '@/services/firebase/firebaseConfig';
 
 /**
  * 멤버십 플랜 타입
@@ -38,7 +45,7 @@ class SubscriptionServiceClass {
    */
   async getSubscription(userId: string): Promise<Subscription | null> {
     try {
-      const userDoc = await firestore().collection('users').doc(userId).get();
+      const userDoc = await getDoc(doc(firestore, 'users', userId));
       const data = userDoc.data();
 
       if (!data?.membership || data.membership === 'FREE') {
@@ -79,18 +86,15 @@ class SubscriptionServiceClass {
         endDate.setFullYear(endDate.getFullYear() + 1);
       }
 
-      await firestore()
-        .collection('users')
-        .doc(userId)
-        .update({
-          membership: plan,
-          membershipBillingCycle: billingCycle,
-          membershipStatus: 'ACTIVE',
-          membershipPrice: price,
-          membershipStartDate: firestore.FieldValue.serverTimestamp(),
-          membershipEndDate: firestore.Timestamp.fromDate(endDate),
-          membershipAutoRenew: true,
-        });
+      await updateDoc(doc(firestore, 'users', userId), {
+        membership: plan,
+        membershipBillingCycle: billingCycle,
+        membershipStatus: 'ACTIVE',
+        membershipPrice: price,
+        membershipStartDate: serverTimestamp(),
+        membershipEndDate: Timestamp.fromDate(endDate),
+        membershipAutoRenew: true,
+      });
 
       return { success: true, message: '멤버십이 활성화되었습니다.' };
     } catch (error: any) {
@@ -104,7 +108,7 @@ class SubscriptionServiceClass {
    */
   async cancelSubscription(userId: string): Promise<{ success: boolean; message: string }> {
     try {
-      await firestore().collection('users').doc(userId).update({
+      await updateDoc(doc(firestore, 'users', userId), {
         membershipAutoRenew: false,
         membershipStatus: 'CANCELED',
       });
@@ -129,7 +133,7 @@ class SubscriptionServiceClass {
     price: number,
   ): Promise<{ success: boolean; message: string }> {
     try {
-      await firestore().collection('users').doc(userId).update({
+      await updateDoc(doc(firestore, 'users', userId), {
         membership: newPlan,
         membershipBillingCycle: billingCycle,
         membershipPrice: price,
@@ -155,7 +159,7 @@ class SubscriptionServiceClass {
       const now = new Date();
       if (subscription.endDate < now && subscription.status === 'ACTIVE') {
         // 만료 처리
-        await firestore().collection('users').doc(userId).update({
+        await updateDoc(doc(firestore, 'users', userId), {
           membership: 'FREE',
           membershipStatus: 'EXPIRED',
         });

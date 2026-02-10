@@ -1,7 +1,12 @@
-// 📷 이미지 선택 및 업로드 유틸리티
+// 이미지 선택 및 업로드 유틸리티
 
 import { Alert, Linking } from 'react-native';
-import storage from '@react-native-firebase/storage';
+import {
+  storage,
+  storageRefFn,
+  getDownloadURL,
+  deleteObject,
+} from '@/services/firebase/firebaseConfig';
 import * as ImagePicker from 'expo-image-picker';
 
 /**
@@ -213,7 +218,7 @@ export const uploadImageToStorage = async (
 
     // 파일 이름 생성
     const filename = `${storagePath}/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
-    const reference = storage().ref(filename);
+    const reference = storageRefFn(storage, filename);
 
     // 업로드 태스크 생성
     const task = reference.putFile(compressedUri);
@@ -230,10 +235,10 @@ export const uploadImageToStorage = async (
     await task;
 
     // 다운로드 URL 반환
-    const downloadURL = await reference.getDownloadURL();
+    const downloadURL = await getDownloadURL(reference);
     return downloadURL;
   } catch (error) {
-    console.error('❌ 이미지 업로드 실패:', error);
+    console.error('이미지 업로드 실패:', error);
     throw new Error('이미지 업로드에 실패했습니다.');
   }
 };
@@ -265,10 +270,18 @@ export const uploadMultipleImages = async (
  */
 export const deleteImageFromStorage = async (imageUrl: string): Promise<void> => {
   try {
-    const reference = storage().refFromURL(imageUrl);
-    await reference.delete();
+    // URL에서 Storage 경로 추출
+    const decodedUrl = decodeURIComponent(imageUrl);
+    const pathMatch = decodedUrl.match(/\/o\/(.+?)\?/);
+    if (!pathMatch || !pathMatch[1]) {
+      console.error('이미지 삭제 실패: URL에서 경로를 추출할 수 없습니다.');
+      return;
+    }
+    const storagePath = pathMatch[1];
+    const reference = storageRefFn(storage, storagePath);
+    await deleteObject(reference);
   } catch (error) {
-    console.error('❌ 이미지 삭제 실패:', error);
+    console.error('이미지 삭제 실패:', error);
     // 이미지가 이미 삭제된 경우 무시
   }
 };

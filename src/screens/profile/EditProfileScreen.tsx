@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import auth from '@react-native-firebase/auth';
+import { auth } from '@/services/firebase/firebaseConfig';
 import { profileAPI } from '@/services/api/profileAPI';
 import { showImagePickerOptions } from '@/utils/imageUtils';
 import { validators } from '@/utils/validators';
@@ -74,8 +74,8 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
       setProfileImage(downloadURL);
 
       // Firebase Auth 유저 객체 갱신 → MyHomeScreen user?.photoURL 반영
-      await auth().currentUser?.reload();
-      const refreshedUser = auth().currentUser;
+      await auth.currentUser?.reload();
+      const refreshedUser = auth.currentUser;
       if (refreshedUser) {
         useAuthStore.setState({ user: refreshedUser });
       }

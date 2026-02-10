@@ -1,8 +1,25 @@
 // 📋 bookingAPI.ts
 // 부킹(골프 번개 모임) API - Firebase Firestore 연동
 
-import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
+import {
+  firestore,
+  auth,
+  collection,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  runTransaction,
+  collectionGroup,
+  serverTimestamp,
+  arrayUnion,
+} from '@/services/firebase/firebaseConfig';
 import {
   Booking,
   BookingStatus,
@@ -38,7 +55,7 @@ export const bookingAPI = {
    */
   createBooking: async (data: CreateBookingRequest): Promise<Booking> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
@@ -60,11 +77,11 @@ export const bookingAPI = {
             },
           ],
         },
-        createdAt: firestore.FieldValue.serverTimestamp(),
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       };
 
-      const docRef = await firestore().collection(BOOKINGS_COLLECTION).add(bookingData);
+      const docRef = await addDoc(collection(firestore, BOOKINGS_COLLECTION), bookingData);
 
       const newBooking = {
         id: docRef.id,
@@ -85,27 +102,27 @@ export const bookingAPI = {
    *
    * @param filter 필터 옵션
    * @param sortBy 정렬 방식
-   * @param limit 결과 개수
+   * @param limitCount 결과 개수
    * @returns 부킹 목록
    */
   getBookings: async (
     filter?: BookingFilter,
     sortBy: BookingSortType = 'latest',
-    limit: number = 20,
+    limitCount: number = 20,
   ): Promise<Booking[]> => {
     try {
-      let query = firestore().collection(BOOKINGS_COLLECTION) as any;
+      const constraints: any[] = [];
 
       // 필터 적용
       if (filter) {
         // 상태 필터
         if (filter.status && filter.status.length > 0) {
-          query = query.where('status', 'in', filter.status);
+          constraints.push(where('status', 'in', filter.status));
         }
 
         // 레벨 필터
         if (filter.level && filter.level.length > 0) {
-          query = query.where('level', 'in', filter.level);
+          constraints.push(where('level', 'in', filter.level));
         }
 
         // 날짜 필터
@@ -116,65 +133,71 @@ export const bookingAPI = {
           if (filter.date === 'today') {
             const tomorrow = new Date(today);
             tomorrow.setDate(tomorrow.getDate() + 1);
-            query = query
-              .where('date', '>=', today.toISOString().split('T')[0])
-              .where('date', '<', tomorrow.toISOString().split('T')[0]);
+            constraints.push(
+              where('date', '>=', today.toISOString().split('T')[0]),
+              where('date', '<', tomorrow.toISOString().split('T')[0]),
+            );
           } else if (filter.date === 'thisWeek') {
             const weekLater = new Date(today);
             weekLater.setDate(weekLater.getDate() + 7);
-            query = query
-              .where('date', '>=', today.toISOString().split('T')[0])
-              .where('date', '<=', weekLater.toISOString().split('T')[0]);
+            constraints.push(
+              where('date', '>=', today.toISOString().split('T')[0]),
+              where('date', '<=', weekLater.toISOString().split('T')[0]),
+            );
           } else if (filter.date === 'thisMonth') {
             const monthLater = new Date(today);
             monthLater.setMonth(monthLater.getMonth() + 1);
-            query = query
-              .where('date', '>=', today.toISOString().split('T')[0])
-              .where('date', '<=', monthLater.toISOString().split('T')[0]);
+            constraints.push(
+              where('date', '>=', today.toISOString().split('T')[0]),
+              where('date', '<=', monthLater.toISOString().split('T')[0]),
+            );
           }
         }
 
         // 위치 필터
         if (filter.location) {
-          query = query.where('location', '==', filter.location);
+          constraints.push(where('location', '==', filter.location));
         }
 
         // 술집 여부
         if (filter.hasPub !== undefined) {
-          query = query.where('hasPub', '==', filter.hasPub);
+          constraints.push(where('hasPub', '==', filter.hasPub));
         }
       }
 
       // 정렬 적용
       switch (sortBy) {
         case 'latest':
-          query = query.orderBy('createdAt', 'desc');
+          constraints.push(orderBy('createdAt', 'desc'));
           break;
         case 'popular':
-          query = query.orderBy('currentPlayers', 'desc');
+          constraints.push(orderBy('currentPlayers', 'desc'));
           break;
         case 'priceLow':
-          query = query.orderBy('price', 'asc');
+          constraints.push(orderBy('price', 'asc'));
           break;
         case 'priceHigh':
-          query = query.orderBy('price', 'desc');
+          constraints.push(orderBy('price', 'desc'));
           break;
         case 'dateClose':
-          query = query.orderBy('date', 'asc');
+          constraints.push(orderBy('date', 'asc'));
           break;
         default:
-          query = query.orderBy('createdAt', 'desc');
+          constraints.push(orderBy('createdAt', 'desc'));
       }
 
       // 개수 제한
-      query = query.limit(limit);
+      constraints.push(limit(limitCount));
 
-      const snapshot = await query.get();
-      const bookings: Booking[] = snapshot.docs.map((doc: any) => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
-        updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+      const q = query(collection(firestore, BOOKINGS_COLLECTION), ...constraints);
+      const snapshot = await getDocs(q);
+      const bookings: Booking[] = snapshot.docs.map((docSnap: any) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+        createdAt:
+          docSnap.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+        updatedAt:
+          docSnap.data().updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
       }));
 
       // 가격 범위 필터 (클라이언트 측)
@@ -202,17 +225,19 @@ export const bookingAPI = {
    */
   getBookingById: async (bookingId: string): Promise<Booking | null> => {
     try {
-      const doc = await firestore().collection(BOOKINGS_COLLECTION).doc(bookingId).get();
+      const docSnap = await getDoc(doc(firestore, BOOKINGS_COLLECTION, bookingId));
 
-      if (!doc.exists) {
+      if (!docSnap.exists) {
         return null;
       }
 
       const booking: Booking = {
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data()?.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
-        updatedAt: doc.data()?.updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+        id: docSnap.id,
+        ...docSnap.data(),
+        createdAt:
+          docSnap.data()?.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+        updatedAt:
+          docSnap.data()?.updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
       } as Booking;
 
       return booking;
@@ -234,13 +259,13 @@ export const bookingAPI = {
     data: Partial<CreateBookingRequest>,
   ): Promise<Booking> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
       // 호스트 확인
-      const bookingDoc = await firestore().collection(BOOKINGS_COLLECTION).doc(bookingId).get();
+      const bookingDoc = await getDoc(doc(firestore, BOOKINGS_COLLECTION, bookingId));
 
       if (!bookingDoc.exists) {
         throw new Error('부킹을 찾을 수 없습니다.');
@@ -252,13 +277,10 @@ export const bookingAPI = {
       }
 
       // 수정
-      await firestore()
-        .collection(BOOKINGS_COLLECTION)
-        .doc(bookingId)
-        .update({
-          ...data,
-          updatedAt: firestore.FieldValue.serverTimestamp(),
-        });
+      await updateDoc(doc(firestore, BOOKINGS_COLLECTION, bookingId), {
+        ...data,
+        updatedAt: serverTimestamp(),
+      });
 
       // 수정된 부킹 가져오기
       const updatedBooking = await bookingAPI.getBookingById(bookingId);
@@ -277,13 +299,13 @@ export const bookingAPI = {
    */
   deleteBooking: async (bookingId: string): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
       // 호스트 확인
-      const bookingDoc = await firestore().collection(BOOKINGS_COLLECTION).doc(bookingId).get();
+      const bookingDoc = await getDoc(doc(firestore, BOOKINGS_COLLECTION, bookingId));
 
       if (!bookingDoc.exists) {
         throw new Error('부킹을 찾을 수 없습니다.');
@@ -295,7 +317,7 @@ export const bookingAPI = {
       }
 
       // 삭제
-      await firestore().collection(BOOKINGS_COLLECTION).doc(bookingId).delete();
+      await deleteDoc(doc(firestore, BOOKINGS_COLLECTION, bookingId));
     } catch (error: any) {
       console.error('❌ 부킹 삭제 실패:', error);
       throw new Error(error.message || '부킹 삭제에 실패했습니다.');
@@ -311,13 +333,13 @@ export const bookingAPI = {
    */
   applyToBooking: async (bookingId: string, message?: string): Promise<string> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
       // 부킹 존재 확인
-      const bookingDoc = await firestore().collection(BOOKINGS_COLLECTION).doc(bookingId).get();
+      const bookingDoc = await getDoc(doc(firestore, BOOKINGS_COLLECTION, bookingId));
 
       if (!bookingDoc.exists) {
         throw new Error('부킹을 찾을 수 없습니다.');
@@ -331,12 +353,15 @@ export const bookingAPI = {
       }
 
       // 이미 참가 중인지 확인
-      const existingApplications = await firestore()
-        .collection(BOOKINGS_COLLECTION)
-        .doc(bookingId)
-        .collection(APPLICATIONS_COLLECTION)
-        .where('userId', '==', currentUser.uid)
-        .get();
+      const applicationsCol = collection(
+        firestore,
+        BOOKINGS_COLLECTION,
+        bookingId,
+        APPLICATIONS_COLLECTION,
+      );
+      const existingApplications = await getDocs(
+        query(applicationsCol, where('userId', '==', currentUser.uid)),
+      );
 
       if (!existingApplications.empty) {
         throw new Error('이미 신청한 부킹입니다.');
@@ -354,14 +379,10 @@ export const bookingAPI = {
         userAvatar: currentUser.photoURL || '',
         message: message || '',
         status: 'pending',
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: serverTimestamp(),
       };
 
-      const applicationRef = await firestore()
-        .collection(BOOKINGS_COLLECTION)
-        .doc(bookingId)
-        .collection(APPLICATIONS_COLLECTION)
-        .add(applicationData);
+      const applicationRef = await addDoc(applicationsCol, applicationData);
 
       return applicationRef.id;
     } catch (error: any) {
@@ -378,16 +399,22 @@ export const bookingAPI = {
    */
   acceptApplicant: async (bookingId: string, applicationId: string): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
-      const bookingRef = firestore().collection(BOOKINGS_COLLECTION).doc(bookingId);
-      const applicationRef = bookingRef.collection(APPLICATIONS_COLLECTION).doc(applicationId);
+      const bookingRef = doc(firestore, BOOKINGS_COLLECTION, bookingId);
+      const applicationRef = doc(
+        firestore,
+        BOOKINGS_COLLECTION,
+        bookingId,
+        APPLICATIONS_COLLECTION,
+        applicationId,
+      );
 
       // 트랜잭션으로 정원 초과 방지
-      await firestore().runTransaction(async (transaction) => {
+      await runTransaction(firestore, async (transaction) => {
         const bookingDoc = await transaction.get(bookingRef);
         if (!bookingDoc.exists) {
           throw new Error('부킹을 찾을 수 없습니다.');
@@ -413,20 +440,20 @@ export const bookingAPI = {
         // 신청 상태 업데이트
         transaction.update(applicationRef, {
           status: 'accepted',
-          acceptedAt: firestore.FieldValue.serverTimestamp(),
+          acceptedAt: serverTimestamp(),
         });
 
         // 부킹 참가자 추가
         const newPlayerCount = (booking?.currentPlayers || 0) + 1;
         transaction.update(bookingRef, {
           currentPlayers: newPlayerCount,
-          participants: firestore.FieldValue.arrayUnion({
+          participants: arrayUnion({
             id: application?.userId,
             name: application?.userName,
             avatar: application?.userAvatar,
           }),
           status: newPlayerCount >= booking?.maxPlayers ? 'full' : booking?.status,
-          updatedAt: firestore.FieldValue.serverTimestamp(),
+          updatedAt: serverTimestamp(),
         });
       });
     } catch (error: any) {
@@ -443,13 +470,13 @@ export const bookingAPI = {
    */
   rejectApplicant: async (bookingId: string, applicationId: string): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
       // 호스트 확인
-      const bookingDoc = await firestore().collection(BOOKINGS_COLLECTION).doc(bookingId).get();
+      const bookingDoc = await getDoc(doc(firestore, BOOKINGS_COLLECTION, bookingId));
 
       if (!bookingDoc.exists) {
         throw new Error('부킹을 찾을 수 없습니다.');
@@ -461,15 +488,13 @@ export const bookingAPI = {
       }
 
       // 신청 상태 업데이트
-      await firestore()
-        .collection(BOOKINGS_COLLECTION)
-        .doc(bookingId)
-        .collection(APPLICATIONS_COLLECTION)
-        .doc(applicationId)
-        .update({
+      await updateDoc(
+        doc(firestore, BOOKINGS_COLLECTION, bookingId, APPLICATIONS_COLLECTION, applicationId),
+        {
           status: 'rejected',
-          rejectedAt: firestore.FieldValue.serverTimestamp(),
-        });
+          rejectedAt: serverTimestamp(),
+        },
+      );
     } catch (error: any) {
       console.error('❌ 신청자 거절 실패:', error);
       throw new Error(error.message || '신청자 거절에 실패했습니다.');
@@ -483,22 +508,25 @@ export const bookingAPI = {
    */
   getMyBookings: async (): Promise<Booking[]> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
-      const snapshot = await firestore()
-        .collection(BOOKINGS_COLLECTION)
-        .where('hostId', '==', currentUser.uid)
-        .orderBy('createdAt', 'desc')
-        .get();
+      const q = query(
+        collection(firestore, BOOKINGS_COLLECTION),
+        where('hostId', '==', currentUser.uid),
+        orderBy('createdAt', 'desc'),
+      );
+      const snapshot = await getDocs(q);
 
-      const bookings: Booking[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
-        updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+      const bookings: Booking[] = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+        createdAt:
+          docSnap.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+        updatedAt:
+          docSnap.data().updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
       })) as Booking[];
 
       return bookings;
@@ -515,17 +543,18 @@ export const bookingAPI = {
    */
   getMyApplications: async (): Promise<(Booking & { applicationStatus: string })[]> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
       // collectionGroup 쿼리로 모든 부킹의 applications 서브컬렉션에서 내 신청만 조회
-      const myApplicationsSnapshot = await firestore()
-        .collectionGroup(APPLICATIONS_COLLECTION)
-        .where('userId', '==', currentUser.uid)
-        .limit(100)
-        .get();
+      const q = query(
+        collectionGroup(firestore, APPLICATIONS_COLLECTION),
+        where('userId', '==', currentUser.uid),
+        limit(100),
+      );
+      const myApplicationsSnapshot = await getDocs(q);
 
       if (myApplicationsSnapshot.empty) {
         return [];
@@ -537,7 +566,7 @@ export const bookingAPI = {
         if (!bookingRef) return null;
 
         try {
-          const bookingDoc = await bookingRef.get();
+          const bookingDoc = await getDoc(bookingRef);
           if (!bookingDoc.exists) return null;
 
           return {

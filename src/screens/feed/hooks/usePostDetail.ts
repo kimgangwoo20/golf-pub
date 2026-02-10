@@ -1,8 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useFeedStore } from '@/store/useFeedStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { firestore as firebaseFirestore } from '@/services/firebase/firebaseConfig';
-import firestoreModule from '@react-native-firebase/firestore';
+import {
+  firestore,
+  collection,
+  doc,
+  getDoc,
+  setDoc,
+  deleteDoc,
+  addDoc,
+  updateDoc,
+  increment,
+} from '@/services/firebase/firebaseConfig';
 import { Post, Comment } from '@/types/feed-types';
 
 export const usePostDetail = (postId: string) => {
@@ -44,22 +53,22 @@ export const usePostDetail = (postId: string) => {
     if (!user) return;
 
     try {
-      const postRef = firebaseFirestore.collection('posts').doc(postId);
-      const likeRef = postRef.collection('likes').doc(user.uid);
-      const likeDoc = await likeRef.get();
+      const postRef = doc(firestore, 'posts', postId);
+      const likeRef = doc(firestore, 'posts', postId, 'likes', user.uid);
+      const likeDoc = await getDoc(likeRef);
 
       if (likeDoc.exists) {
         // 좋아요 취소
-        await likeRef.delete();
-        await postRef.update({
-          likes: firestoreModule.FieldValue.increment(-1),
+        await deleteDoc(likeRef);
+        await updateDoc(postRef, {
+          likes: increment(-1),
         });
         setPost((prev) => (prev ? { ...prev, likes: prev.likes - 1, isLiked: false } : null));
       } else {
         // 좋아요 추가
-        await likeRef.set({ userId: user.uid, createdAt: new Date() });
-        await postRef.update({
-          likes: firestoreModule.FieldValue.increment(1),
+        await setDoc(likeRef, { userId: user.uid, createdAt: new Date() });
+        await updateDoc(postRef, {
+          likes: increment(1),
         });
         setPost((prev) => (prev ? { ...prev, likes: prev.likes + 1, isLiked: true } : null));
       }
@@ -74,29 +83,22 @@ export const usePostDetail = (postId: string) => {
     if (!user) return;
 
     try {
-      await firebaseFirestore
-        .collection('posts')
-        .doc(postId)
-        .collection('comments')
-        .add({
-          author: {
-            id: user.uid,
-            name: user.displayName || '익명',
-            image: user.photoURL || '',
-          },
-          content: text.trim(),
-          likes: 0,
-          replies: [],
-          createdAt: new Date(),
-        });
+      await addDoc(collection(firestore, 'posts', postId, 'comments'), {
+        author: {
+          id: user.uid,
+          name: user.displayName || '익명',
+          image: user.photoURL || '',
+        },
+        content: text.trim(),
+        likes: 0,
+        replies: [],
+        createdAt: new Date(),
+      });
 
       // 게시글 댓글 수 증가
-      await firebaseFirestore
-        .collection('posts')
-        .doc(postId)
-        .update({
-          comments: firestoreModule.FieldValue.increment(1),
-        });
+      await updateDoc(doc(firestore, 'posts', postId), {
+        comments: increment(1),
+      });
 
       // 댓글 목록 새로고침
       await loadComments();
@@ -112,24 +114,20 @@ export const usePostDetail = (postId: string) => {
     if (!user) return;
 
     try {
-      const commentRef = firebaseFirestore
-        .collection('posts')
-        .doc(postId)
-        .collection('comments')
-        .doc(commentId);
+      const commentRef = doc(firestore, 'posts', postId, 'comments', commentId);
 
-      const likeRef = commentRef.collection('likes').doc(user.uid);
-      const likeDoc = await likeRef.get();
+      const likeRef = doc(firestore, 'posts', postId, 'comments', commentId, 'likes', user.uid);
+      const likeDocSnap = await getDoc(likeRef);
 
-      if (likeDoc.exists) {
-        await likeRef.delete();
-        await commentRef.update({
-          likes: firestoreModule.FieldValue.increment(-1),
+      if (likeDocSnap.exists) {
+        await deleteDoc(likeRef);
+        await updateDoc(commentRef, {
+          likes: increment(-1),
         });
       } else {
-        await likeRef.set({ userId: user.uid, createdAt: new Date() });
-        await commentRef.update({
-          likes: firestoreModule.FieldValue.increment(1),
+        await setDoc(likeRef, { userId: user.uid, createdAt: new Date() });
+        await updateDoc(commentRef, {
+          likes: increment(1),
         });
       }
 

@@ -1,8 +1,23 @@
-// 🍺 pubAPI.ts
+// pubAPI.ts
 // 퍼블릭/술집 API - Firebase Firestore 연동
 
-import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
+import {
+  firestore,
+  auth,
+  collection,
+  doc,
+  addDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit as limitFn,
+  serverTimestamp,
+} from '@/services/firebase/firebaseConfig';
 import { profileAPI } from '@/services/api/profileAPI';
 
 /**
@@ -56,28 +71,31 @@ export const pubAPI = {
    * 퍼블릭 목록 조회
    *
    * @param location 지역 (선택)
-   * @param limit 결과 개수
+   * @param limitCount 결과 개수
    * @returns 퍼블릭 목록
    */
-  getPubs: async (location?: string, limit: number = 20): Promise<Pub[]> => {
+  getPubs: async (location?: string, limitCount: number = 20): Promise<Pub[]> => {
     try {
-      let query = firestore().collection(PUBS_COLLECTION) as any;
+      const constraints: any[] = [];
 
       if (location) {
-        query = query.where('location', '==', location);
+        constraints.push(where('location', '==', location));
       }
 
-      query = query.orderBy('rating', 'desc').limit(limit);
+      constraints.push(orderBy('rating', 'desc'));
+      constraints.push(limitFn(limitCount));
 
-      const snapshot = await query.get();
-      const pubs: Pub[] = snapshot.docs.map((doc: any) => ({
-        id: doc.id,
-        ...doc.data(),
+      const q = query(collection(firestore, PUBS_COLLECTION), ...constraints);
+      const snapshot = await getDocs(q);
+
+      const pubs: Pub[] = snapshot.docs.map((docSnap: any) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
       }));
 
       return pubs;
     } catch (error: any) {
-      console.error('❌ 퍼블릭 목록 조회 실패:', error);
+      console.error('퍼블릭 목록 조회 실패:', error);
       throw new Error(error.message || '퍼블릭 목록을 불러오는데 실패했습니다.');
     }
   },
@@ -90,20 +108,20 @@ export const pubAPI = {
    */
   getPubById: async (pubId: string): Promise<Pub | null> => {
     try {
-      const doc = await firestore().collection(PUBS_COLLECTION).doc(pubId).get();
+      const docSnap = await getDoc(doc(firestore, PUBS_COLLECTION, pubId));
 
-      if (!doc.exists) {
+      if (!docSnap.exists) {
         return null;
       }
 
       const pub: Pub = {
-        id: doc.id,
-        ...doc.data(),
+        id: docSnap.id,
+        ...docSnap.data(),
       } as Pub;
 
       return pub;
     } catch (error: any) {
-      console.error('❌ 퍼블릭 상세 조회 실패:', error);
+      console.error('퍼블릭 상세 조회 실패:', error);
       throw new Error(error.message || '퍼블릭 정보를 불러오는데 실패했습니다.');
     }
   },
@@ -111,26 +129,27 @@ export const pubAPI = {
   /**
    * 인기 퍼블릭 조회 (평점순)
    *
-   * @param limit 결과 개수
+   * @param limitCount 결과 개수
    * @returns 인기 퍼블릭 목록
    */
-  getPopularPubs: async (limit: number = 10): Promise<Pub[]> => {
+  getPopularPubs: async (limitCount: number = 10): Promise<Pub[]> => {
     try {
-      const snapshot = await firestore()
-        .collection(PUBS_COLLECTION)
-        .orderBy('rating', 'desc')
-        .orderBy('reviewCount', 'desc')
-        .limit(limit)
-        .get();
+      const q = query(
+        collection(firestore, PUBS_COLLECTION),
+        orderBy('rating', 'desc'),
+        orderBy('reviewCount', 'desc'),
+        limitFn(limitCount),
+      );
+      const snapshot = await getDocs(q);
 
-      const pubs: Pub[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
+      const pubs: Pub[] = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
       })) as Pub[];
 
       return pubs;
     } catch (error: any) {
-      console.error('❌ 인기 퍼블릭 조회 실패:', error);
+      console.error('인기 퍼블릭 조회 실패:', error);
       throw new Error(error.message || '인기 퍼블릭을 불러오는데 실패했습니다.');
     }
   },
@@ -139,27 +158,29 @@ export const pubAPI = {
    * 퍼블릭 리뷰 조회
    *
    * @param pubId 퍼블릭 ID
-   * @param limit 결과 개수
+   * @param limitCount 결과 개수
    * @returns 리뷰 목록
    */
-  getPubReviews: async (pubId: string, limit: number = 20): Promise<PubReview[]> => {
+  getPubReviews: async (pubId: string, limitCount: number = 20): Promise<PubReview[]> => {
     try {
-      const snapshot = await firestore()
-        .collection(PUB_REVIEWS_COLLECTION)
-        .where('pubId', '==', pubId)
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .get();
+      const q = query(
+        collection(firestore, PUB_REVIEWS_COLLECTION),
+        where('pubId', '==', pubId),
+        orderBy('createdAt', 'desc'),
+        limitFn(limitCount),
+      );
+      const snapshot = await getDocs(q);
 
-      const reviews: PubReview[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+      const reviews: PubReview[] = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+        createdAt:
+          docSnap.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
       })) as PubReview[];
 
       return reviews;
     } catch (error: any) {
-      console.error('❌ 퍼블릭 리뷰 조회 실패:', error);
+      console.error('퍼블릭 리뷰 조회 실패:', error);
       throw new Error(error.message || '리뷰를 불러오는데 실패했습니다.');
     }
   },
@@ -180,7 +201,7 @@ export const pubAPI = {
     images?: string[],
   ): Promise<string> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
@@ -193,10 +214,10 @@ export const pubAPI = {
         rating,
         comment,
         images: images || [],
-        createdAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: serverTimestamp(),
       };
 
-      const reviewRef = await firestore().collection(PUB_REVIEWS_COLLECTION).add(reviewData);
+      const reviewRef = await addDoc(collection(firestore, PUB_REVIEWS_COLLECTION), reviewData);
 
       // 퍼블릭 평점 업데이트
       await pubAPI.updatePubRating(pubId);
@@ -210,7 +231,7 @@ export const pubAPI = {
 
       return reviewRef.id;
     } catch (error: any) {
-      console.error('❌ 퍼블릭 리뷰 작성 실패:', error);
+      console.error('퍼블릭 리뷰 작성 실패:', error);
       throw new Error(error.message || '리뷰 작성에 실패했습니다.');
     }
   },
@@ -222,14 +243,13 @@ export const pubAPI = {
    */
   updatePubRating: async (pubId: string): Promise<void> => {
     try {
-      const reviewsSnapshot = await firestore()
-        .collection(PUB_REVIEWS_COLLECTION)
-        .where('pubId', '==', pubId)
-        .get();
+      const q = query(collection(firestore, PUB_REVIEWS_COLLECTION), where('pubId', '==', pubId));
+      const reviewsSnapshot = await getDocs(q);
 
       if (reviewsSnapshot.empty) {
         // 리뷰가 없으면 평점 초기화
-        await firestore().collection(PUBS_COLLECTION).doc(pubId).set(
+        await setDoc(
+          doc(firestore, PUBS_COLLECTION, pubId),
           {
             rating: 0,
             reviewCount: 0,
@@ -240,24 +260,22 @@ export const pubAPI = {
       }
 
       let totalRating = 0;
-      reviewsSnapshot.docs.forEach((doc) => {
-        totalRating += doc.data().rating || 0;
+      reviewsSnapshot.docs.forEach((docSnap) => {
+        totalRating += docSnap.data().rating || 0;
       });
 
       const averageRating = totalRating / reviewsSnapshot.size;
 
-      await firestore()
-        .collection(PUBS_COLLECTION)
-        .doc(pubId)
-        .set(
-          {
-            rating: Math.round(averageRating * 10) / 10, // 소수점 1자리
-            reviewCount: reviewsSnapshot.size,
-          },
-          { merge: true },
-        );
+      await setDoc(
+        doc(firestore, PUBS_COLLECTION, pubId),
+        {
+          rating: Math.round(averageRating * 10) / 10, // 소수점 1자리
+          reviewCount: reviewsSnapshot.size,
+        },
+        { merge: true },
+      );
     } catch (error: any) {
-      console.error('❌ 퍼블릭 평점 업데이트 실패:', error);
+      console.error('퍼블릭 평점 업데이트 실패:', error);
     }
   },
 
@@ -270,10 +288,10 @@ export const pubAPI = {
     data: { rating: number; comment: string },
   ): Promise<{ success: boolean; message: string }> => {
     try {
-      await firestore().collection(PUB_REVIEWS_COLLECTION).doc(reviewId).update({
+      await updateDoc(doc(firestore, PUB_REVIEWS_COLLECTION, reviewId), {
         rating: data.rating,
         comment: data.comment,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
 
       // 평점 재계산
@@ -294,7 +312,7 @@ export const pubAPI = {
     reviewId: string,
   ): Promise<{ success: boolean; message: string }> => {
     try {
-      await firestore().collection(PUB_REVIEWS_COLLECTION).doc(reviewId).delete();
+      await deleteDoc(doc(firestore, PUB_REVIEWS_COLLECTION, reviewId));
 
       // 평점 재계산 (리뷰 수 감소 포함)
       await pubAPI.updatePubRating(pubId);
@@ -322,12 +340,12 @@ export const pubAPI = {
     try {
       // Firestore는 geohash 쿼리를 권장하지만
       // 간단하게 모든 퍼블릭을 가져와서 클라이언트에서 필터링
-      const snapshot = await firestore().collection(PUBS_COLLECTION).get();
+      const snapshot = await getDocs(collection(firestore, PUBS_COLLECTION));
 
       const pubs: Pub[] = [];
 
-      snapshot.docs.forEach((doc) => {
-        const data = doc.data();
+      snapshot.docs.forEach((docSnap) => {
+        const data = docSnap.data();
         if (data.latitude && data.longitude) {
           const distance = pubAPI.calculateDistance(
             latitude,
@@ -338,7 +356,7 @@ export const pubAPI = {
 
           if (distance <= radiusKm) {
             pubs.push({
-              id: doc.id,
+              id: docSnap.id,
               ...data,
             } as Pub);
           }
@@ -354,7 +372,7 @@ export const pubAPI = {
 
       return pubs;
     } catch (error: any) {
-      console.error('❌ 주변 퍼블릭 검색 실패:', error);
+      console.error('주변 퍼블릭 검색 실패:', error);
       throw new Error(error.message || '주변 퍼블릭을 검색하는데 실패했습니다.');
     }
   },

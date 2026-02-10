@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import firestore from '@react-native-firebase/firestore';
+import {
+  firestore,
+  collection,
+  query,
+  where,
+  limit,
+  getDocs,
+} from '@/services/firebase/firebaseConfig';
 
 export const useCourseSearch = () => {
   const navigation = useNavigation<any>();
@@ -17,26 +24,28 @@ export const useCourseSearch = () => {
   const searchCourses = async () => {
     setLoading(true);
     try {
-      let query: any = firestore().collection('golfCourses');
+      const constraints: any[] = [];
 
       // 이름 검색
       if (searchQuery.trim()) {
-        query = query
-          .where('name', '>=', searchQuery.trim())
-          .where('name', '<=', searchQuery.trim() + '\uf8ff');
+        constraints.push(where('name', '>=', searchQuery.trim()));
+        constraints.push(where('name', '<=', searchQuery.trim() + '\uf8ff'));
       }
 
       // 지역 필터
       if (filters.region !== 'all') {
-        query = query.where('region', '==', filters.region);
+        constraints.push(where('region', '==', filters.region));
       }
 
-      const snapshot = await query.limit(30).get();
+      constraints.push(limit(30));
 
-      const results = snapshot.docs.map((doc: any) => {
-        const data = doc.data();
+      const q = query(collection(firestore, 'golfCourses'), ...constraints);
+      const snapshot = await getDocs(q);
+
+      const results = snapshot.docs.map((docSnap: any) => {
+        const data = docSnap.data();
         return {
-          id: doc.id,
+          id: docSnap.id,
           name: data.name || '',
           region: data.region || '',
           address: data.address || '',

@@ -6,8 +6,18 @@
  * import { seedDemoData } from '@/utils/seedData';
  * await seedDemoData();
  */
-import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
+import {
+  firestore,
+  auth,
+  collection,
+  doc,
+  query,
+  where,
+  limit,
+  getDocs,
+  writeBatch,
+  serverTimestamp,
+} from '@/services/firebase/firebaseConfig';
 
 const BOOKINGS_COLLECTION = 'bookings';
 const PRODUCTS_COLLECTION = 'products';
@@ -15,15 +25,12 @@ const POSTS_COLLECTION = 'posts';
 
 // 시드 데이터 중복 생성 방지용 체크
 const checkAlreadySeeded = async (
-  collection: string,
+  collectionName: string,
   field: string,
   value: string,
 ): Promise<boolean> => {
-  const snapshot = await firestore()
-    .collection(collection)
-    .where(field, '==', value)
-    .limit(1)
-    .get();
+  const q = query(collection(firestore, collectionName), where(field, '==', value), limit(1));
+  const snapshot = await getDocs(q);
   return !snapshot.empty;
 };
 
@@ -63,8 +70,8 @@ const seedBookings = async (uid: string, displayName: string) => {
           { uid: 'demo-user-2', name: '김골프', role: 'member' },
         ],
       },
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     },
     {
       seedId: 'seed-booking-2',
@@ -86,8 +93,8 @@ const seedBookings = async (uid: string, displayName: string) => {
         max: 3,
         members: [{ uid, name: displayName, role: 'host' }],
       },
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     },
     {
       seedId: 'seed-booking-3',
@@ -114,14 +121,14 @@ const seedBookings = async (uid: string, displayName: string) => {
           { uid: 'demo-user-4', name: '박드라이버', role: 'member' },
         ],
       },
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     },
   ];
 
-  const batch = firestore().batch();
+  const batch = writeBatch(firestore);
   for (const booking of bookings) {
-    const ref = firestore().collection(BOOKINGS_COLLECTION).doc();
+    const ref = doc(collection(firestore, BOOKINGS_COLLECTION));
     batch.set(ref, booking);
   }
   await batch.commit();
@@ -150,8 +157,8 @@ const seedPosts = async (uid: string, displayName: string, photoURL: string) => 
       comments: 3,
       visibility: 'public',
       status: 'published',
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     },
     {
       seedId: 'seed-post-2',
@@ -168,8 +175,8 @@ const seedPosts = async (uid: string, displayName: string, photoURL: string) => 
       comments: 5,
       visibility: 'public',
       status: 'published',
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     },
     {
       seedId: 'seed-post-3',
@@ -185,14 +192,14 @@ const seedPosts = async (uid: string, displayName: string, photoURL: string) => 
       comments: 10,
       visibility: 'public',
       status: 'published',
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     },
   ];
 
-  const batch = firestore().batch();
+  const batch = writeBatch(firestore);
   for (const post of posts) {
-    const ref = firestore().collection(POSTS_COLLECTION).doc();
+    const ref = doc(collection(firestore, POSTS_COLLECTION));
     batch.set(ref, post);
   }
   await batch.commit();
@@ -222,8 +229,8 @@ const seedProducts = async (uid: string, displayName: string, photoURL: string) 
       viewCount: 15,
       likeCount: 3,
       location: '서울 강남구',
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     },
     {
       seedId: 'seed-product-2',
@@ -241,8 +248,8 @@ const seedProducts = async (uid: string, displayName: string, photoURL: string) 
       viewCount: 22,
       likeCount: 7,
       location: '서울 서초구',
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     },
     {
       seedId: 'seed-product-3',
@@ -260,14 +267,14 @@ const seedProducts = async (uid: string, displayName: string, photoURL: string) 
       viewCount: 30,
       likeCount: 5,
       location: '경기 성남시',
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      updatedAt: firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     },
   ];
 
-  const batch = firestore().batch();
+  const batch = writeBatch(firestore);
   for (const product of products) {
-    const ref = firestore().collection(PRODUCTS_COLLECTION).doc();
+    const ref = doc(collection(firestore, PRODUCTS_COLLECTION));
     batch.set(ref, product);
   }
   await batch.commit();
@@ -279,7 +286,7 @@ const seedProducts = async (uid: string, displayName: string, photoURL: string) 
  */
 export const seedDemoData = async (): Promise<{ success: boolean; message: string }> => {
   try {
-    const user = auth().currentUser;
+    const user = auth.currentUser;
     if (!user) {
       return { success: false, message: '로그인이 필요합니다.' };
     }
@@ -307,15 +314,16 @@ export const clearSeedData = async (): Promise<{ success: boolean; message: stri
     const collections = [BOOKINGS_COLLECTION, POSTS_COLLECTION, PRODUCTS_COLLECTION];
 
     for (const col of collections) {
-      const snapshot = await firestore()
-        .collection(col)
-        .where('seedId', '>=', 'seed-')
-        .where('seedId', '<=', 'seed-\uf8ff')
-        .get();
+      const q = query(
+        collection(firestore, col),
+        where('seedId', '>=', 'seed-'),
+        where('seedId', '<=', 'seed-\uf8ff'),
+      );
+      const snapshot = await getDocs(q);
 
       if (!snapshot.empty) {
-        const batch = firestore().batch();
-        snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+        const batch = writeBatch(firestore);
+        snapshot.docs.forEach((docSnap) => batch.delete(docSnap.ref));
         await batch.commit();
       }
     }

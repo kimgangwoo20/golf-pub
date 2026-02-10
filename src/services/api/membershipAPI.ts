@@ -1,8 +1,16 @@
-// 💎 membershipAPI.ts
+// membershipAPI.ts
 // 멤버십 관리 API - Firebase Firestore 연동
 
-import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
+import {
+  firestore,
+  auth,
+  doc,
+  setDoc,
+  updateDoc,
+  getDoc,
+  serverTimestamp,
+  Timestamp,
+} from '@/services/firebase/firebaseConfig';
 
 /**
  * 멤버십 타입
@@ -38,15 +46,12 @@ export const membershipAPI = {
    */
   getMyMembership: async (): Promise<Membership> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
-      const membershipDoc = await firestore()
-        .collection(MEMBERSHIPS_COLLECTION)
-        .doc(currentUser.uid)
-        .get();
+      const membershipDoc = await getDoc(doc(firestore, MEMBERSHIPS_COLLECTION, currentUser.uid));
 
       if (!membershipDoc.exists) {
         // 멤버십이 없으면 FREE 생성
@@ -57,13 +62,10 @@ export const membershipAPI = {
           autoRenew: false,
         };
 
-        await firestore()
-          .collection(MEMBERSHIPS_COLLECTION)
-          .doc(currentUser.uid)
-          .set({
-            ...freeMembership,
-            createdAt: firestore.FieldValue.serverTimestamp(),
-          });
+        await setDoc(doc(firestore, MEMBERSHIPS_COLLECTION, currentUser.uid), {
+          ...freeMembership,
+          createdAt: serverTimestamp(),
+        });
 
         return freeMembership;
       }
@@ -80,7 +82,7 @@ export const membershipAPI = {
 
       return membership;
     } catch (error: any) {
-      console.error('❌ 멤버십 조회 실패:', error);
+      console.error('멤버십 조회 실패:', error);
       throw new Error(error.message || '멤버십 정보를 불러오는데 실패했습니다.');
     }
   },
@@ -93,7 +95,7 @@ export const membershipAPI = {
    */
   upgradeMembership: async (tier: 'PRO' | 'PREMIUM', paymentMethod: string): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
@@ -102,27 +104,25 @@ export const membershipAPI = {
       const expiryDate = new Date(now);
       expiryDate.setMonth(expiryDate.getMonth() + 1); // 1개월 후
 
-      await firestore()
-        .collection(MEMBERSHIPS_COLLECTION)
-        .doc(currentUser.uid)
-        .set(
-          {
-            tier,
-            startDate: firestore.FieldValue.serverTimestamp(),
-            expiryDate: firestore.Timestamp.fromDate(expiryDate),
-            autoRenew: true,
-            paymentMethod,
-            updatedAt: firestore.FieldValue.serverTimestamp(),
-          },
-          { merge: true },
-        );
+      await setDoc(
+        doc(firestore, MEMBERSHIPS_COLLECTION, currentUser.uid),
+        {
+          tier,
+          startDate: serverTimestamp(),
+          expiryDate: Timestamp.fromDate(expiryDate),
+          autoRenew: true,
+          paymentMethod,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true },
+      );
 
       // 사용자 정보에도 업데이트
-      await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).update({
+      await updateDoc(doc(firestore, USERS_COLLECTION, currentUser.uid), {
         membership: tier,
       });
     } catch (error: any) {
-      console.error('❌ 멤버십 업그레이드 실패:', error);
+      console.error('멤버십 업그레이드 실패:', error);
       throw new Error(error.message || '멤버십 업그레이드에 실패했습니다.');
     }
   },
@@ -132,17 +132,17 @@ export const membershipAPI = {
    */
   cancelMembership: async (): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
-      await firestore().collection(MEMBERSHIPS_COLLECTION).doc(currentUser.uid).update({
+      await updateDoc(doc(firestore, MEMBERSHIPS_COLLECTION, currentUser.uid), {
         autoRenew: false,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
     } catch (error: any) {
-      console.error('❌ 멤버십 취소 실패:', error);
+      console.error('멤버십 취소 실패:', error);
       throw new Error(error.message || '멤버십 취소에 실패했습니다.');
     }
   },

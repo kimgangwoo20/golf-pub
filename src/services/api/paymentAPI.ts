@@ -1,7 +1,17 @@
 // 결제 내역 조회 API
 
-import { firestore } from '@/services/firebase/firebaseConfig';
-import auth from '@react-native-firebase/auth';
+import {
+  firestore,
+  auth,
+  doc,
+  getDoc,
+  getDocs,
+  collection,
+  query,
+  where,
+  orderBy,
+  limit as limitFn,
+} from '@/services/firebase/firebaseConfig';
 
 // 결제 내역 인터페이스
 export interface PaymentRecord {
@@ -27,20 +37,21 @@ export const paymentAPI = {
   /**
    * 결제 내역 조회
    */
-  getPaymentHistory: async (limit: number = 20): Promise<PaymentRecord[]> => {
-    const currentUser = auth().currentUser;
+  getPaymentHistory: async (limitCount: number = 20): Promise<PaymentRecord[]> => {
+    const currentUser = auth.currentUser;
     if (!currentUser) throw new Error('로그인이 필요합니다.');
 
-    const snapshot = await firestore
-      .collection(PAYMENTS_COLLECTION)
-      .where('userId', '==', currentUser.uid)
-      .orderBy('createdAt', 'desc')
-      .limit(limit)
-      .get();
+    const q = query(
+      collection(firestore, PAYMENTS_COLLECTION),
+      where('userId', '==', currentUser.uid),
+      orderBy('createdAt', 'desc'),
+      limitFn(limitCount),
+    );
+    const snapshot = await getDocs(q);
 
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
+    return snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
     })) as PaymentRecord[];
   },
 
@@ -48,8 +59,8 @@ export const paymentAPI = {
    * 결제 상세 조회
    */
   getPaymentDetail: async (paymentId: string): Promise<PaymentRecord | null> => {
-    const doc = await firestore.collection(PAYMENTS_COLLECTION).doc(paymentId).get();
-    if (!doc.exists) return null;
-    return { id: doc.id, ...doc.data() } as PaymentRecord;
+    const docSnap = await getDoc(doc(firestore, PAYMENTS_COLLECTION, paymentId));
+    if (!docSnap.exists) return null;
+    return { id: docSnap.id, ...docSnap.data() } as PaymentRecord;
   },
 };

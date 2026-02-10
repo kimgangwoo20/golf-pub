@@ -1,7 +1,7 @@
 // 📦 firebaseStorage.ts
 // Firebase Storage 이미지 업로드 (Cloudflare Images 연동)
 
-import { storage, handleFirebaseError } from './firebaseConfig';
+import { storage, storageRefFn, getDownloadURL, handleFirebaseError } from './firebaseConfig';
 import type { FirebaseStorageTypes } from '@react-native-firebase/storage';
 
 /**
@@ -208,7 +208,7 @@ class FirebaseStorageService {
   ): Promise<UploadResult> {
     try {
       // Storage 참조 생성
-      const reference = storage.ref(path);
+      const reference = storageRefFn(storage, path);
 
       // 업로드 태스크 생성
       const task = reference.putFile(uri, {
@@ -227,7 +227,7 @@ class FirebaseStorageService {
       await task;
 
       // 다운로드 URL 가져오기
-      const downloadUrl = await reference.getDownloadURL();
+      const downloadUrl = await getDownloadURL(reference);
 
       // 메타데이터 가져오기
       const metadata = await reference.getMetadata();
@@ -312,7 +312,7 @@ class FirebaseStorageService {
    */
   async deleteImage(path: string): Promise<void> {
     try {
-      const reference = storage.ref(path);
+      const reference = storageRefFn(storage, path);
       await reference.delete();
     } catch (error) {
       console.error('이미지 삭제 실패');
@@ -370,8 +370,8 @@ class FirebaseStorageService {
    */
   async getImageUrl(path: string): Promise<string> {
     try {
-      const reference = storage.ref(path);
-      const url = await reference.getDownloadURL();
+      const reference = storageRefFn(storage, path);
+      const url = await getDownloadURL(reference);
       return url;
     } catch (error) {
       console.error('이미지 URL 가져오기 실패');
@@ -387,7 +387,7 @@ class FirebaseStorageService {
    */
   async getImageMetadata(path: string): Promise<FirebaseStorageTypes.FullMetadata> {
     try {
-      const reference = storage.ref(path);
+      const reference = storageRefFn(storage, path);
       const metadata = await reference.getMetadata();
       return metadata;
     } catch (error) {
@@ -403,7 +403,7 @@ class FirebaseStorageService {
    */
   async deleteFolder(folderPath: string): Promise<void> {
     try {
-      const reference = storage.ref(folderPath);
+      const reference = storageRefFn(storage, folderPath);
       const result = await reference.listAll();
 
       // 모든 파일 삭제
@@ -475,7 +475,7 @@ class FirebaseStorageService {
    */
   async getFolderSize(folderPath: string): Promise<number> {
     try {
-      const reference = storage.ref(folderPath);
+      const reference = storageRefFn(storage, folderPath);
       const result = await reference.listAll();
 
       let totalSize = 0;

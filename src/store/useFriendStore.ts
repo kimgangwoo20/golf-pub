@@ -1,7 +1,14 @@
 import { create } from 'zustand';
-import firestoreModule from '@react-native-firebase/firestore';
 import {
-  firestore as firebaseFirestore,
+  firestore,
+  collection,
+  doc,
+  getDocs,
+  setDoc,
+  deleteDoc,
+  query,
+  where,
+  documentId,
   FirestoreTimestamp,
 } from '@/services/firebase/firebaseConfig';
 
@@ -36,11 +43,8 @@ export const useFriendStore = create<FriendState>((set) => ({
       set({ loading: true, error: null });
 
       // 서브컬렉션 경로: users/{userId}/friends
-      const snapshot = await firebaseFirestore
-        .collection('users')
-        .doc(userId)
-        .collection('friends')
-        .get();
+      const friendsRef = collection(firestore, 'users', userId, 'friends');
+      const snapshot = await getDocs(friendsRef);
 
       if (snapshot.empty) {
         set({ friends: [], loading: false });
@@ -48,15 +52,14 @@ export const useFriendStore = create<FriendState>((set) => ({
       }
 
       // 친구 ID 목록에서 사용자 프로필 조인
-      const friendIds = snapshot.docs.map((doc) => doc.id);
+      const friendIds = snapshot.docs.map((docSnap) => docSnap.id);
       const friends: Friend[] = [];
 
       for (let i = 0; i < friendIds.length; i += 10) {
         const batch = friendIds.slice(i, i + 10);
-        const usersSnapshot = await firebaseFirestore
-          .collection('users')
-          .where(firestoreModule.FieldPath.documentId(), 'in', batch)
-          .get();
+        const usersRef = collection(firestore, 'users');
+        const q = query(usersRef, where(documentId(), 'in', batch));
+        const usersSnapshot = await getDocs(q);
 
         usersSnapshot.docs.forEach((userDoc) => {
           const userData = userDoc.data();
@@ -82,7 +85,8 @@ export const useFriendStore = create<FriendState>((set) => ({
   sendFriendRequest: async (userId, friendId, friendName) => {
     try {
       // friendRequests 컬렉션에 요청 생성 (firebaseFriends.ts의 sendFriendRequest와 동일 패턴)
-      await firebaseFirestore.collection('friendRequests').doc(`${userId}_${friendId}`).set({
+      const requestRef = doc(firestore, 'friendRequests', `${userId}_${friendId}`);
+      await setDoc(requestRef, {
         fromUserId: userId,
         toUserId: friendId,
         friendName,
@@ -96,7 +100,9 @@ export const useFriendStore = create<FriendState>((set) => ({
 
   acceptFriendRequest: async (requestId) => {
     try {
-      await firebaseFirestore.collection('friendRequests').doc(requestId).set(
+      const requestRef = doc(firestore, 'friendRequests', requestId);
+      await setDoc(
+        requestRef,
         {
           status: 'accepted',
           updatedAt: FirestoreTimestamp.now(),
@@ -112,18 +118,8 @@ export const useFriendStore = create<FriendState>((set) => ({
     try {
       // 양방향 삭제: 내 목록에서 친구 제거 + 친구 목록에서 나 제거
       await Promise.all([
-        firebaseFirestore
-          .collection('users')
-          .doc(userId)
-          .collection('friends')
-          .doc(friendId)
-          .delete(),
-        firebaseFirestore
-          .collection('users')
-          .doc(friendId)
-          .collection('friends')
-          .doc(userId)
-          .delete(),
+        deleteDoc(doc(firestore, 'users', userId, 'friends', friendId)),
+        deleteDoc(doc(firestore, 'users', friendId, 'friends', userId)),
       ]);
 
       // 로컬 상태 업데이트

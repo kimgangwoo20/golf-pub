@@ -1,9 +1,16 @@
 import { create } from 'zustand';
-import firestoreModule from '@react-native-firebase/firestore';
 import {
-  firestore as firebaseFirestore,
-  storage as firebaseStorage,
+  firestore,
+  storage,
+  collection,
+  doc,
+  getDoc,
+  setDoc,
+  runTransaction,
+  increment,
   FirestoreTimestamp,
+  storageRefFn,
+  getDownloadURL,
 } from '@/services/firebase/firebaseConfig';
 
 export interface FavoriteCourse {
@@ -69,14 +76,15 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      const doc = await firebaseFirestore.collection('users').doc(uid).get();
+      const userRef = doc(firestore, 'users', uid);
+      const docSnap = await getDoc(userRef);
 
-      if (!doc.exists) {
+      if (!docSnap.exists) {
         set({ error: '프로필을 찾을 수 없습니다', loading: false });
         return;
       }
 
-      set({ profile: doc.data() as UserProfile, loading: false });
+      set({ profile: docSnap.data() as UserProfile, loading: false });
     } catch (error: any) {
       console.error('프로필 로드 실패:', error);
       set({
@@ -93,16 +101,15 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      await firebaseFirestore
-        .collection('users')
-        .doc(uid)
-        .set(
-          {
-            ...data,
-            updatedAt: FirestoreTimestamp.now(),
-          },
-          { merge: true },
-        );
+      const userRef = doc(firestore, 'users', uid);
+      await setDoc(
+        userRef,
+        {
+          ...data,
+          updatedAt: FirestoreTimestamp.now(),
+        },
+        { merge: true },
+      );
 
       const { profile } = get();
       if (profile) {
@@ -127,14 +134,16 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
       // Storage에 업로드
       const filename = `profiles/${uid}/${Date.now()}.jpg`;
-      const reference = firebaseStorage.ref(filename);
+      const reference = storageRefFn(storage, filename);
       await reference.putFile(imageUri);
 
       // 다운로드 URL 가져오기
-      const url = await reference.getDownloadURL();
+      const url = await getDownloadURL(reference);
 
       // Firestore 업데이트
-      await firebaseFirestore.collection('users').doc(uid).set(
+      const userRef = doc(firestore, 'users', uid);
+      await setDoc(
+        userRef,
         {
           photoURL: url,
           updatedAt: FirestoreTimestamp.now(),
@@ -164,9 +173,9 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
    */
   addPoints: async (uid, points, reason) => {
     try {
-      const userRef = firebaseFirestore.collection('users').doc(uid);
+      const userRef = doc(firestore, 'users', uid);
 
-      await firebaseFirestore.runTransaction(async (transaction) => {
+      await runTransaction(firestore, async (transaction) => {
         const userDoc = await transaction.get(userRef);
 
         if (!userDoc.exists) {
@@ -182,7 +191,8 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         });
 
         // 포인트 내역 저장
-        transaction.set(firebaseFirestore.collection('pointHistory').doc(), {
+        const historyRef = doc(collection(firestore, 'pointHistory'));
+        transaction.set(historyRef, {
           userId: uid,
           type: 'add',
           amount: points,
@@ -209,9 +219,9 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
    */
   subtractPoints: async (uid, points, reason) => {
     try {
-      const userRef = firebaseFirestore.collection('users').doc(uid);
+      const userRef = doc(firestore, 'users', uid);
 
-      await firebaseFirestore.runTransaction(async (transaction) => {
+      await runTransaction(firestore, async (transaction) => {
         const userDoc = await transaction.get(userRef);
 
         if (!userDoc.exists) {
@@ -232,7 +242,8 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         });
 
         // 포인트 내역 저장
-        transaction.set(firebaseFirestore.collection('pointHistory').doc(), {
+        const historyRef = doc(collection(firestore, 'pointHistory'));
+        transaction.set(historyRef, {
           userId: uid,
           type: 'subtract',
           amount: points,
@@ -260,17 +271,17 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
    */
   toggleProfileLike: async (targetUid, likerUid) => {
     const likeDocId = `${targetUid}_${likerUid}`;
-    const likeRef = firebaseFirestore.collection('profileLikes').doc(likeDocId);
-    const userRef = firebaseFirestore.collection('users').doc(targetUid);
+    const likeRef = doc(firestore, 'profileLikes', likeDocId);
+    const userRef = doc(firestore, 'users', targetUid);
 
-    const liked = await firebaseFirestore.runTransaction(async (transaction) => {
+    const liked = await runTransaction(firestore, async (transaction) => {
       const likeDoc = await transaction.get(likeRef);
 
       if (likeDoc.exists) {
         // 좋아요 취소
         transaction.delete(likeRef);
         transaction.update(userRef, {
-          likeCount: firestoreModule.FieldValue.increment(-1),
+          likeCount: increment(-1),
         });
         return false;
       } else {
@@ -281,7 +292,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
           createdAt: FirestoreTimestamp.now(),
         });
         transaction.update(userRef, {
-          likeCount: firestoreModule.FieldValue.increment(1),
+          likeCount: increment(1),
         });
         return true;
       }
@@ -307,7 +318,8 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
    */
   checkProfileLiked: async (targetUid, likerUid) => {
     const likeDocId = `${targetUid}_${likerUid}`;
-    const doc = await firebaseFirestore.collection('profileLikes').doc(likeDocId).get();
-    return doc.exists;
+    const likeRef = doc(firestore, 'profileLikes', likeDocId);
+    const docSnap = await getDoc(likeRef);
+    return docSnap.exists;
   },
 }));

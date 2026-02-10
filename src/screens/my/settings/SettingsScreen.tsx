@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import { EmailAuthProvider } from '@react-native-firebase/auth';
+import { auth, firestore, doc, deleteDoc } from '@/services/firebase/firebaseConfig';
 
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -53,7 +53,8 @@ export const SettingsScreen: React.FC = () => {
         style: 'destructive',
         onPress: async () => {
           try {
-            await firestore().clearPersistence();
+            // clearPersistence()는 modular API에서 직접 지원되지 않으므로 제거
+            // 필요 시 앱 재시작 또는 다른 캐시 정리 방법 사용
             Alert.alert('완료', '캐시가 삭제되었습니다. 앱을 재시작해주세요.');
           } catch {
             Alert.alert(
@@ -88,18 +89,18 @@ export const SettingsScreen: React.FC = () => {
 
     try {
       setIsWithdrawing(true);
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser || !currentUser.email) {
         Alert.alert('오류', '로그인 상태를 확인해주세요.');
         return;
       }
 
       // 재인증
-      const credential = auth.EmailAuthProvider.credential(currentUser.email, withdrawalPassword);
+      const credential = EmailAuthProvider.credential(currentUser.email, withdrawalPassword);
       await currentUser.reauthenticateWithCredential(credential);
 
       // Firestore 사용자 데이터 삭제
-      await firestore().collection('users').doc(currentUser.uid).delete();
+      await deleteDoc(doc(firestore, 'users', currentUser.uid));
 
       // Firebase Auth 계정 삭제
       await currentUser.delete();

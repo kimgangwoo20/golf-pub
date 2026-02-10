@@ -1,13 +1,14 @@
 // Cloud Functions 호출 래퍼
-import firebase from '@react-native-firebase/app';
-import '@react-native-firebase/functions';
+import { getFunctions, httpsCallable } from './firebaseConfig';
+
+const functions = getFunctions(undefined, 'asia-northeast3');
 
 /**
  * Cloud Function 호출 공통 헬퍼
  */
 export const callFunction = async <T = any>(name: string, data?: any): Promise<T> => {
   try {
-    const callable = firebase.app().functions('asia-northeast3').httpsCallable(name);
+    const callable = httpsCallable(functions, name);
     const result = await callable(data);
     return result.data as T;
   } catch (error: any) {

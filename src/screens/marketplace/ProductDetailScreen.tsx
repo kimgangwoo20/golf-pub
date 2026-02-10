@@ -22,7 +22,7 @@ import { CONDITION_LABELS } from '@/types/marketplace-types';
 import { marketplaceAPI } from '@/services/api/marketplaceAPI';
 import { firebaseChat } from '@/services/firebase/firebaseChat';
 import { useAuthStore } from '@/store/useAuthStore';
-import firestore from '@react-native-firebase/firestore';
+import { firestore, collection, addDoc, serverTimestamp } from '@/services/firebase/firebaseConfig';
 import { colors } from '@/styles/theme';
 import type { Product } from '@/types/marketplace-types';
 
@@ -182,18 +182,14 @@ export const ProductDetailScreen: React.FC = () => {
     }
     try {
       setOfferSubmitting(true);
-      await firestore()
-        .collection('products')
-        .doc(product.id)
-        .collection('offers')
-        .add({
-          userId: user.uid,
-          userName: userProfile?.nickname || user.displayName || '사용자',
-          offerPrice: price,
-          originalPrice: product.price,
-          status: 'PENDING',
-          createdAt: firestore.FieldValue.serverTimestamp(),
-        });
+      await addDoc(collection(firestore, 'products', product.id, 'offers'), {
+        userId: user.uid,
+        userName: userProfile?.nickname || user.displayName || '사용자',
+        offerPrice: price,
+        originalPrice: product.price,
+        status: 'PENDING',
+        createdAt: serverTimestamp(),
+      });
       setOfferModalVisible(false);
       setOfferPrice('');
       Alert.alert('성공', '가격 제안이 전송되었습니다.');

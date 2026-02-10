@@ -23,7 +23,7 @@ import {
   cancelFriendRequest,
 } from '@/services/firebase/firebaseFriends';
 import { FriendRequest } from '@/services/firebase/firebaseFriends';
-import firestore from '@react-native-firebase/firestore';
+import { firestore, doc, getDoc } from '@/services/firebase/firebaseConfig';
 import { DEFAULT_AVATAR } from '@/constants/images';
 
 type TabType = 'received' | 'sent';
@@ -55,9 +55,9 @@ export const FriendRequestsScreen: React.FC = () => {
     for (const req of requests) {
       const targetUserId = type === 'received' ? req.fromUserId : req.toUserId;
       try {
-        const userDoc = await firestore().collection('users').doc(targetUserId).get();
+        const userDocSnap = await getDoc(doc(firestore, 'users', targetUserId));
 
-        const userData = userDoc.data();
+        const userData = userDocSnap.data();
         enriched.push({
           ...req,
           userName: userData?.name || userData?.displayName || '사용자',

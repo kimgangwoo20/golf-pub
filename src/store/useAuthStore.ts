@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import auth from '@react-native-firebase/auth';
+import { auth, signInWithCustomToken } from '@/services/firebase/firebaseConfig';
 import authService, { UserProfile } from '@/services/authService';
-import { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { callFunction } from '@/services/firebase/firebaseFunctions';
 
 interface AuthState {
@@ -50,7 +50,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
       // Custom Token으로 Firebase Auth 로그인
-      const credential = await auth().signInWithCustomToken(result.customToken);
+      const credential = await signInWithCustomToken(auth, result.customToken);
       const firebaseUser = credential.user;
 
       const userProfile: UserProfile = {

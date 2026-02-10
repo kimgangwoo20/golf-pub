@@ -1,8 +1,27 @@
 // 🛒 marketplaceAPI.ts
 // 중고거래 API - Firebase Firestore 연동
 
-import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
+import {
+  firestore,
+  auth,
+  collection,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  startAfter,
+  runTransaction,
+  writeBatch,
+  serverTimestamp,
+  increment,
+  documentId,
+} from '@/services/firebase/firebaseConfig';
 import {
   Product,
   ProductCategory,
@@ -66,7 +85,7 @@ export const marketplaceAPI = {
     location: string;
   }): Promise<Product> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
@@ -74,7 +93,7 @@ export const marketplaceAPI = {
       // 판매자 평점 조회
       let sellerRating = 0;
       try {
-        const sellerDoc = await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).get();
+        const sellerDoc = await getDoc(doc(firestore, USERS_COLLECTION, currentUser.uid));
         if (sellerDoc.exists) {
           sellerRating = sellerDoc.data()?.rating || 0;
         }
@@ -92,11 +111,11 @@ export const marketplaceAPI = {
         status: 'available' as ProductStatus,
         viewCount: 0,
         likeCount: 0,
-        createdAt: firestore.FieldValue.serverTimestamp(),
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       };
 
-      const docRef = await firestore().collection(PRODUCTS_COLLECTION).add(product);
+      const docRef = await addDoc(collection(firestore, PRODUCTS_COLLECTION), product);
 
       const newProduct = {
         id: docRef.id,
@@ -125,74 +144,77 @@ export const marketplaceAPI = {
    *
    * @param filter 필터 옵션
    * @param sortBy 정렬 방식
-   * @param limit 결과 개수
+   * @param limitCount 결과 개수
    * @param lastDoc 마지막 문서 (페이지네이션 커서)
    * @returns 상품 목록 + 마지막 문서 커서
    */
   getProducts: async (
     filter?: ProductFilter,
     sortBy: ProductSortType = 'latest',
-    limit: number = 20,
+    limitCount: number = 20,
     lastDoc?: any,
   ): Promise<Product[]> => {
     try {
-      const currentUser = auth().currentUser;
-      let query = firestore().collection(PRODUCTS_COLLECTION) as any;
+      const currentUser = auth.currentUser;
+      const constraints: any[] = [];
 
       // 필터 적용
       if (filter) {
         if (filter.category) {
-          query = query.where('category', '==', filter.category);
+          constraints.push(where('category', '==', filter.category));
         }
 
         if (filter.status) {
-          query = query.where('status', '==', filter.status);
+          constraints.push(where('status', '==', filter.status));
         } else {
           // 기본: 판매중만 조회
-          query = query.where('status', '==', 'available');
+          constraints.push(where('status', '==', 'available'));
         }
 
         if (filter.location) {
-          query = query.where('location', '==', filter.location);
+          constraints.push(where('location', '==', filter.location));
         }
 
         if (filter.condition && filter.condition.length > 0) {
-          query = query.where('condition', 'in', filter.condition);
+          constraints.push(where('condition', 'in', filter.condition));
         }
       } else {
         // 기본: 판매중만
-        query = query.where('status', '==', 'available');
+        constraints.push(where('status', '==', 'available'));
       }
 
       // 정렬 적용
       switch (sortBy) {
         case 'latest':
-          query = query.orderBy('createdAt', 'desc');
+          constraints.push(orderBy('createdAt', 'desc'));
           break;
         case 'priceLow':
-          query = query.orderBy('price', 'asc');
+          constraints.push(orderBy('price', 'asc'));
           break;
         case 'priceHigh':
-          query = query.orderBy('price', 'desc');
+          constraints.push(orderBy('price', 'desc'));
           break;
         case 'popular':
-          query = query.orderBy('viewCount', 'desc');
+          constraints.push(orderBy('viewCount', 'desc'));
           break;
       }
 
       // 커서 기반 페이지네이션
       if (lastDoc) {
-        query = query.startAfter(lastDoc);
+        constraints.push(startAfter(lastDoc));
       }
 
-      query = query.limit(limit);
+      constraints.push(limit(limitCount));
 
-      const snapshot = await query.get();
-      let products: Product[] = snapshot.docs.map((doc: any) => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
-        updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+      const q = query(collection(firestore, PRODUCTS_COLLECTION), ...constraints);
+      const snapshot = await getDocs(q);
+      let products: Product[] = snapshot.docs.map((docSnap: any) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+        createdAt:
+          docSnap.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+        updatedAt:
+          docSnap.data().updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
         isLiked: false, // 나중에 확인
       }));
 
@@ -206,13 +228,16 @@ export const marketplaceAPI = {
       // 찜 여부 확인
       if (currentUser && products.length > 0) {
         const productIds = products.map((p) => p.id);
-        const likesSnapshot = await firestore()
-          .collection(PRODUCT_LIKES_COLLECTION)
-          .where('userId', '==', currentUser.uid)
-          .where('productId', 'in', productIds.slice(0, 10)) // 최대 10개
-          .get();
+        const likesQ = query(
+          collection(firestore, PRODUCT_LIKES_COLLECTION),
+          where('userId', '==', currentUser.uid),
+          where('productId', 'in', productIds.slice(0, 10)), // 최대 10개
+        );
+        const likesSnapshot = await getDocs(likesQ);
 
-        const likedProductIds = new Set(likesSnapshot.docs.map((doc) => doc.data().productId));
+        const likedProductIds = new Set(
+          likesSnapshot.docs.map((docSnap) => docSnap.data().productId),
+        );
 
         products = products.map((p) => ({
           ...p,
@@ -235,30 +260,31 @@ export const marketplaceAPI = {
    */
   getProductById: async (productId: string): Promise<Product | null> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
 
-      const doc = await firestore().collection(PRODUCTS_COLLECTION).doc(productId).get();
+      const docSnap = await getDoc(doc(firestore, PRODUCTS_COLLECTION, productId));
 
-      if (!doc.exists) {
+      if (!docSnap.exists) {
         return null;
       }
 
-      const data = doc.data();
+      const data = docSnap.data();
       let isLiked = false;
 
       // 찜 여부 확인
       if (currentUser) {
-        const likeSnapshot = await firestore()
-          .collection(PRODUCT_LIKES_COLLECTION)
-          .where('userId', '==', currentUser.uid)
-          .where('productId', '==', productId)
-          .get();
+        const likeQ = query(
+          collection(firestore, PRODUCT_LIKES_COLLECTION),
+          where('userId', '==', currentUser.uid),
+          where('productId', '==', productId),
+        );
+        const likeSnapshot = await getDocs(likeQ);
 
         isLiked = !likeSnapshot.empty;
       }
 
       const product: Product = {
-        id: doc.id,
+        id: docSnap.id,
         ...data,
         isLiked,
         createdAt: data?.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
@@ -291,29 +317,26 @@ export const marketplaceAPI = {
     }>,
   ): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
-      const doc = await firestore().collection(PRODUCTS_COLLECTION).doc(productId).get();
+      const docSnap = await getDoc(doc(firestore, PRODUCTS_COLLECTION, productId));
 
-      if (!doc.exists) {
+      if (!docSnap.exists) {
         throw new Error('상품을 찾을 수 없습니다.');
       }
 
-      const product = doc.data();
+      const product = docSnap.data();
       if (product?.sellerId !== currentUser.uid) {
         throw new Error('상품을 수정할 권한이 없습니다.');
       }
 
-      await firestore()
-        .collection(PRODUCTS_COLLECTION)
-        .doc(productId)
-        .update({
-          ...updates,
-          updatedAt: firestore.FieldValue.serverTimestamp(),
-        });
+      await updateDoc(doc(firestore, PRODUCTS_COLLECTION, productId), {
+        ...updates,
+        updatedAt: serverTimestamp(),
+      });
     } catch (error: any) {
       console.error('❌ 상품 수정 실패:', error);
       throw new Error(error.message || '상품 수정에 실패했습니다.');
@@ -327,23 +350,23 @@ export const marketplaceAPI = {
    */
   deleteProduct: async (productId: string): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
-      const doc = await firestore().collection(PRODUCTS_COLLECTION).doc(productId).get();
+      const docSnap = await getDoc(doc(firestore, PRODUCTS_COLLECTION, productId));
 
-      if (!doc.exists) {
+      if (!docSnap.exists) {
         throw new Error('상품을 찾을 수 없습니다.');
       }
 
-      const product = doc.data();
+      const product = docSnap.data();
       if (product?.sellerId !== currentUser.uid) {
         throw new Error('상품을 삭제할 권한이 없습니다.');
       }
 
-      await firestore().collection(PRODUCTS_COLLECTION).doc(productId).delete();
+      await deleteDoc(doc(firestore, PRODUCTS_COLLECTION, productId));
     } catch (error: any) {
       console.error('❌ 상품 삭제 실패:', error);
       throw new Error(error.message || '상품 삭제에 실패했습니다.');
@@ -357,23 +380,26 @@ export const marketplaceAPI = {
    */
   getMyProducts: async (): Promise<Product[]> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
-      const snapshot = await firestore()
-        .collection(PRODUCTS_COLLECTION)
-        .where('sellerId', '==', currentUser.uid)
-        .orderBy('createdAt', 'desc')
-        .get();
+      const q = query(
+        collection(firestore, PRODUCTS_COLLECTION),
+        where('sellerId', '==', currentUser.uid),
+        orderBy('createdAt', 'desc'),
+      );
+      const snapshot = await getDocs(q);
 
-      const products: Product[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
+      const products: Product[] = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
         isLiked: false,
-        createdAt: doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
-        updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+        createdAt:
+          docSnap.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+        updatedAt:
+          docSnap.data().updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
       })) as Product[];
 
       return products;
@@ -390,17 +416,17 @@ export const marketplaceAPI = {
    */
   likeProduct: async (productId: string): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
       // 결정적 문서 ID로 중복 찜 방지
       const likeDocId = `${currentUser.uid}_${productId}`;
-      const likeRef = firestore().collection(PRODUCT_LIKES_COLLECTION).doc(likeDocId);
+      const likeRef = doc(firestore, PRODUCT_LIKES_COLLECTION, likeDocId);
 
       // 트랜잭션으로 중복 방지
-      await firestore().runTransaction(async (transaction) => {
+      await runTransaction(firestore, async (transaction) => {
         const likeDoc = await transaction.get(likeRef);
         if (likeDoc.exists) {
           return; // 이미 찜함
@@ -409,12 +435,12 @@ export const marketplaceAPI = {
         transaction.set(likeRef, {
           userId: currentUser.uid,
           productId,
-          createdAt: firestore.FieldValue.serverTimestamp(),
+          createdAt: serverTimestamp(),
         });
 
-        const productRef = firestore().collection(PRODUCTS_COLLECTION).doc(productId);
+        const productRef = doc(firestore, PRODUCTS_COLLECTION, productId);
         transaction.update(productRef, {
-          likeCount: firestore.FieldValue.increment(1),
+          likeCount: increment(1),
         });
       });
     } catch (error: any) {
@@ -430,17 +456,17 @@ export const marketplaceAPI = {
    */
   unlikeProduct: async (productId: string): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
       // 결정적 문서 ID 사용
       const likeDocId = `${currentUser.uid}_${productId}`;
-      const likeRef = firestore().collection(PRODUCT_LIKES_COLLECTION).doc(likeDocId);
+      const likeRef = doc(firestore, PRODUCT_LIKES_COLLECTION, likeDocId);
 
       // 트랜잭션으로 안전하게 삭제
-      await firestore().runTransaction(async (transaction) => {
+      await runTransaction(firestore, async (transaction) => {
         const likeDoc = await transaction.get(likeRef);
         if (!likeDoc.exists) {
           return; // 이미 삭제됨
@@ -448,9 +474,9 @@ export const marketplaceAPI = {
 
         transaction.delete(likeRef);
 
-        const productRef = firestore().collection(PRODUCTS_COLLECTION).doc(productId);
+        const productRef = doc(firestore, PRODUCTS_COLLECTION, productId);
         transaction.update(productRef, {
-          likeCount: firestore.FieldValue.increment(-1),
+          likeCount: increment(-1),
         });
       });
     } catch (error: any) {
@@ -466,22 +492,23 @@ export const marketplaceAPI = {
    */
   getLikedProducts: async (): Promise<Product[]> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
-      const likesSnapshot = await firestore()
-        .collection(PRODUCT_LIKES_COLLECTION)
-        .where('userId', '==', currentUser.uid)
-        .orderBy('createdAt', 'desc')
-        .get();
+      const likesQ = query(
+        collection(firestore, PRODUCT_LIKES_COLLECTION),
+        where('userId', '==', currentUser.uid),
+        orderBy('createdAt', 'desc'),
+      );
+      const likesSnapshot = await getDocs(likesQ);
 
       if (likesSnapshot.empty) {
         return [];
       }
 
-      const productIds = likesSnapshot.docs.map((doc) => doc.data().productId);
+      const productIds = likesSnapshot.docs.map((docSnap) => docSnap.data().productId);
       const products: Product[] = [];
 
       // 최대 10개씩 조회
@@ -491,20 +518,21 @@ export const marketplaceAPI = {
       }
 
       for (const chunk of chunks) {
-        const productsSnapshot = await firestore()
-          .collection(PRODUCTS_COLLECTION)
-          .where(firestore.FieldPath.documentId(), 'in', chunk)
-          .get();
+        const productsQ = query(
+          collection(firestore, PRODUCTS_COLLECTION),
+          where(documentId(), 'in', chunk),
+        );
+        const productsSnapshot = await getDocs(productsQ);
 
-        productsSnapshot.docs.forEach((doc) => {
+        productsSnapshot.docs.forEach((docSnap) => {
           products.push({
-            id: doc.id,
-            ...doc.data(),
+            id: docSnap.id,
+            ...docSnap.data(),
             isLiked: true,
             createdAt:
-              doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+              docSnap.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
             updatedAt:
-              doc.data().updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+              docSnap.data().updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
           } as Product);
         });
       }
@@ -523,12 +551,9 @@ export const marketplaceAPI = {
    */
   increaseViewCount: async (productId: string): Promise<void> => {
     try {
-      await firestore()
-        .collection(PRODUCTS_COLLECTION)
-        .doc(productId)
-        .update({
-          viewCount: firestore.FieldValue.increment(1),
-        });
+      await updateDoc(doc(firestore, PRODUCTS_COLLECTION, productId), {
+        viewCount: increment(1),
+      });
     } catch (error: any) {
       console.error('❌ 조회수 증가 실패:', error);
       // 조회수는 실패해도 무시
@@ -543,17 +568,17 @@ export const marketplaceAPI = {
    */
   getOffers: async (productId: string): Promise<PriceOffer[]> => {
     try {
-      const snapshot = await firestore()
-        .collection(PRODUCTS_COLLECTION)
-        .doc(productId)
-        .collection('offers')
-        .orderBy('createdAt', 'desc')
-        .get();
+      const q = query(
+        collection(firestore, PRODUCTS_COLLECTION, productId, 'offers'),
+        orderBy('createdAt', 'desc'),
+      );
+      const snapshot = await getDocs(q);
 
-      return snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+      return snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+        createdAt:
+          docSnap.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
       })) as PriceOffer[];
     } catch (error: any) {
       console.error('가격 제안 조회 실패:', error);
@@ -569,49 +594,44 @@ export const marketplaceAPI = {
    */
   acceptOffer: async (productId: string, offerId: string): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) throw new Error('로그인이 필요합니다.');
 
       // 판매자 검증
-      const productDoc = await firestore().collection(PRODUCTS_COLLECTION).doc(productId).get();
+      const productDoc = await getDoc(doc(firestore, PRODUCTS_COLLECTION, productId));
       if (productDoc.data()?.sellerId !== currentUser.uid) {
         throw new Error('판매자만 제안을 수락할 수 있습니다.');
       }
 
-      const batch = firestore().batch();
+      const batch = writeBatch(firestore);
 
       // 해당 제안 수락
-      const offerRef = firestore()
-        .collection(PRODUCTS_COLLECTION)
-        .doc(productId)
-        .collection('offers')
-        .doc(offerId);
+      const offerRef = doc(firestore, PRODUCTS_COLLECTION, productId, 'offers', offerId);
       batch.update(offerRef, {
         status: 'ACCEPTED',
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
 
       // 다른 PENDING 제안들 자동 거절
-      const pendingOffers = await firestore()
-        .collection(PRODUCTS_COLLECTION)
-        .doc(productId)
-        .collection('offers')
-        .where('status', '==', 'PENDING')
-        .get();
+      const pendingOffersQ = query(
+        collection(firestore, PRODUCTS_COLLECTION, productId, 'offers'),
+        where('status', '==', 'PENDING'),
+      );
+      const pendingOffers = await getDocs(pendingOffersQ);
 
-      pendingOffers.docs.forEach((doc) => {
-        if (doc.id !== offerId) {
-          batch.update(doc.ref, {
+      pendingOffers.docs.forEach((docSnap) => {
+        if (docSnap.id !== offerId) {
+          batch.update(docSnap.ref, {
             status: 'REJECTED',
-            updatedAt: firestore.FieldValue.serverTimestamp(),
+            updatedAt: serverTimestamp(),
           });
         }
       });
 
       // 상품 상태를 예약중으로 변경
-      batch.update(firestore().collection(PRODUCTS_COLLECTION).doc(productId), {
+      batch.update(doc(firestore, PRODUCTS_COLLECTION, productId), {
         status: 'reserved' as ProductStatus,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
 
       await batch.commit();
@@ -629,20 +649,18 @@ export const marketplaceAPI = {
    */
   rejectOffer: async (productId: string, offerId: string): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) throw new Error('로그인이 필요합니다.');
 
-      const productDoc = await firestore().collection(PRODUCTS_COLLECTION).doc(productId).get();
+      const productDoc = await getDoc(doc(firestore, PRODUCTS_COLLECTION, productId));
       if (productDoc.data()?.sellerId !== currentUser.uid) {
         throw new Error('판매자만 제안을 거절할 수 있습니다.');
       }
 
-      await firestore()
-        .collection(PRODUCTS_COLLECTION)
-        .doc(productId)
-        .collection('offers')
-        .doc(offerId)
-        .update({ status: 'REJECTED', updatedAt: firestore.FieldValue.serverTimestamp() });
+      await updateDoc(doc(firestore, PRODUCTS_COLLECTION, productId, 'offers', offerId), {
+        status: 'REJECTED',
+        updatedAt: serverTimestamp(),
+      });
     } catch (error: any) {
       console.error('가격 제안 거절 실패:', error);
       throw new Error(error.message || '가격 제안 거절에 실패했습니다.');
@@ -656,7 +674,7 @@ export const marketplaceAPI = {
    */
   getMyProductOffers: async (): Promise<{ product: Product; offers: PriceOffer[] }[]> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) throw new Error('로그인이 필요합니다.');
 
       const products = await marketplaceAPI.getMyProducts();
@@ -685,25 +703,25 @@ export const marketplaceAPI = {
    */
   updateProductStatus: async (productId: string, status: ProductStatus): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
-      const doc = await firestore().collection(PRODUCTS_COLLECTION).doc(productId).get();
+      const docSnap = await getDoc(doc(firestore, PRODUCTS_COLLECTION, productId));
 
-      if (!doc.exists) {
+      if (!docSnap.exists) {
         throw new Error('상품을 찾을 수 없습니다.');
       }
 
-      const product = doc.data();
+      const product = docSnap.data();
       if (product?.sellerId !== currentUser.uid) {
         throw new Error('상품 상태를 변경할 권한이 없습니다.');
       }
 
-      await firestore().collection(PRODUCTS_COLLECTION).doc(productId).update({
+      await updateDoc(doc(firestore, PRODUCTS_COLLECTION, productId), {
         status,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
     } catch (error: any) {
       console.error('❌ 상품 상태 변경 실패:', error);

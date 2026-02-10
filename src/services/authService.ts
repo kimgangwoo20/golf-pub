@@ -1,6 +1,19 @@
 // src/services/authService.ts
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import {
+  auth,
+  firestore,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  signInWithCustomToken,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  sendPasswordResetEmail,
+  onAuthStateChanged,
+} from '@/services/firebase/firebaseConfig';
+import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
 export interface UserProfile {
   uid: string;
@@ -28,7 +41,7 @@ class AuthService {
    */
   async signInWithCustomToken(token: string): Promise<FirebaseAuthTypes.UserCredential> {
     try {
-      const userCredential = await auth().signInWithCustomToken(token);
+      const userCredential = await signInWithCustomToken(auth, token);
       return userCredential;
     } catch (error) {
       throw error;
@@ -43,7 +56,7 @@ class AuthService {
     password: string,
   ): Promise<FirebaseAuthTypes.UserCredential> {
     try {
-      const userCredential = await auth().signInWithEmailAndPassword(email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       return userCredential;
     } catch (error) {
       throw error;
@@ -60,7 +73,7 @@ class AuthService {
   ): Promise<FirebaseAuthTypes.UserCredential> {
     try {
       // Firebase Auth에 사용자 생성
-      const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
       // 프로필 업데이트
       await userCredential.user.updateProfile({ displayName });
@@ -84,7 +97,7 @@ class AuthService {
    */
   async signOut(): Promise<void> {
     try {
-      await auth().signOut();
+      await signOut(auth);
     } catch (error) {
       throw error;
     }
@@ -124,7 +137,8 @@ class AuthService {
         updatedAt: now,
       };
 
-      await firestore().collection('users').doc(uid).set(userProfile, { merge: true });
+      const userRef = doc(firestore, 'users', uid);
+      await setDoc(userRef, userProfile, { merge: true });
     } catch (error) {
       throw error;
     }
@@ -135,11 +149,12 @@ class AuthService {
    */
   async getUserProfile(uid: string): Promise<UserProfile | null> {
     try {
-      const doc = await firestore().collection('users').doc(uid).get();
+      const userRef = doc(firestore, 'users', uid);
+      const docSnap = await getDoc(userRef);
 
-      if (!doc.exists) {
+      if (!docSnap.exists) {
         // Firestore에 프로필이 없으면 현재 Auth 정보로 생성
-        const currentUser = auth().currentUser;
+        const currentUser = auth.currentUser;
         if (currentUser && currentUser.uid === uid) {
           await this.createUserProfile(uid, {
             email: currentUser.email || '',
@@ -149,13 +164,13 @@ class AuthService {
           });
 
           // 다시 조회
-          const newDoc = await firestore().collection('users').doc(uid).get();
-          return newDoc.data() as unknown as UserProfile;
+          const newDocSnap = await getDoc(userRef);
+          return newDocSnap.data() as unknown as UserProfile;
         }
         return null;
       }
 
-      return doc.data() as unknown as UserProfile;
+      return docSnap.data() as unknown as UserProfile;
     } catch (error) {
       // 에러 무시
       return null;
@@ -172,10 +187,11 @@ class AuthService {
         updatedAt: new Date(),
       };
 
-      await firestore().collection('users').doc(uid).update(updateData);
+      const userRef = doc(firestore, 'users', uid);
+      await updateDoc(userRef, updateData);
 
       // Auth 프로필도 업데이트 (displayName, photoURL만 가능)
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (currentUser && currentUser.uid === uid) {
         const authUpdateData: { displayName?: string; photoURL?: string } = {};
 
@@ -199,14 +215,14 @@ class AuthService {
    * Auth 상태 변경 리스너
    */
   onAuthStateChanged(callback: (user: FirebaseAuthTypes.User | null) => void): () => void {
-    return auth().onAuthStateChanged(callback);
+    return onAuthStateChanged(auth, callback);
   }
 
   /**
    * 현재 로그인된 사용자
    */
   getCurrentUser(): FirebaseAuthTypes.User | null {
-    return auth().currentUser;
+    return auth.currentUser;
   }
 
   /**
@@ -214,7 +230,7 @@ class AuthService {
    */
   async sendPasswordResetEmail(email: string): Promise<void> {
     try {
-      await auth().sendPasswordResetEmail(email);
+      await sendPasswordResetEmail(auth, email);
     } catch (error) {
       throw error;
     }
@@ -225,7 +241,7 @@ class AuthService {
    */
   async sendEmailVerification(): Promise<void> {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (currentUser) {
         await currentUser.sendEmailVerification();
       }

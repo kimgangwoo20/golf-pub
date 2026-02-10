@@ -16,7 +16,14 @@ import { getBookingDetail } from '@/services/firebase/firebaseBooking';
 import { useBookingStore } from '@/store/useBookingStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { tossPayments } from '@/services/payment/tossPayments';
-import firestore from '@react-native-firebase/firestore';
+import {
+  firestore,
+  doc,
+  getDoc,
+  collection,
+  addDoc,
+  serverTimestamp,
+} from '@/services/firebase/firebaseConfig';
 
 type PaymentMethod = 'card' | 'account' | 'kakao' | 'naver';
 
@@ -41,8 +48,8 @@ export const PaymentScreen: React.FC = () => {
         let hostName = '호스트';
         if (bookingData.hostId) {
           try {
-            const hostDoc = await firestore().collection('users').doc(bookingData.hostId).get();
-            const hostData = hostDoc.data();
+            const hostDocSnap = await getDoc(doc(firestore, 'users', bookingData.hostId));
+            const hostData = hostDocSnap.data();
             hostName = hostData?.name || hostData?.displayName || '호스트';
           } catch {
             // 호스트 정보 조회 실패 시 기본값 사용
@@ -123,7 +130,7 @@ export const PaymentScreen: React.FC = () => {
                 .joinBooking(bookingId, user.uid, user.displayName || '참가자');
 
               // 결제 정보 Firestore 저장
-              await firestore().collection('payments').add({
+              await addDoc(collection(firestore, 'payments'), {
                 paymentKey: paymentResult.paymentKey,
                 orderId: paymentResult.orderId,
                 bookingId,
@@ -132,7 +139,7 @@ export const PaymentScreen: React.FC = () => {
                 method: paymentResult.method,
                 status: 'DONE',
                 approvedAt: paymentResult.approvedAt,
-                createdAt: firestore.FieldValue.serverTimestamp(),
+                createdAt: serverTimestamp(),
               });
 
               Alert.alert(

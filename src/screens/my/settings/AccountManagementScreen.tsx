@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import auth from '@react-native-firebase/auth';
+import { EmailAuthProvider } from '@react-native-firebase/auth';
+import { auth } from '@/services/firebase/firebaseConfig';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export const AccountManagementScreen: React.FC = () => {
@@ -41,14 +42,14 @@ export const AccountManagementScreen: React.FC = () => {
 
     try {
       setIsChangingPassword(true);
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser || !currentUser.email) {
         Alert.alert('오류', '로그인 상태를 확인해주세요.');
         return;
       }
 
       // 현재 비밀번호로 재인증
-      const credential = auth.EmailAuthProvider.credential(currentUser.email, currentPassword);
+      const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
       await currentUser.reauthenticateWithCredential(credential);
 
       // 비밀번호 변경

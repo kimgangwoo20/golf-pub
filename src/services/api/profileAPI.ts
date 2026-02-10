@@ -1,9 +1,23 @@
 // 👤 profileAPI.ts
 // 프로필 관리 API - Firebase Auth + Firestore 연동
 
-import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
-import storage from '@react-native-firebase/storage';
+import {
+  firestore,
+  auth,
+  storage,
+  collection,
+  doc,
+  setDoc,
+  updateDoc,
+  getDoc,
+  getDocs,
+  query,
+  orderBy,
+  limit,
+  runTransaction,
+  serverTimestamp,
+  storageRefFn,
+} from '@/services/firebase/firebaseConfig';
 import { UserProfile, Point, Coupon } from '@/types/profile-types';
 import { callFunction } from '@/services/firebase/firebaseFunctions';
 import { compressImage } from '@/utils/imageUtils';
@@ -26,18 +40,18 @@ export const profileAPI = {
    */
   getMyProfile: async (): Promise<UserProfile | null> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
-      const userDoc = await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).get();
+      const userDoc = await getDoc(doc(firestore, USERS_COLLECTION, currentUser.uid));
 
       if (!userDoc.exists) {
         // Firestore에 없으면 Auth 정보로 생성
         await profileAPI.createUserProfile();
         // 생성 후 직접 조회 (재귀 방지)
-        const newDoc = await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).get();
+        const newDoc = await getDoc(doc(firestore, USERS_COLLECTION, currentUser.uid));
         if (!newDoc.exists) {
           return null;
         }
@@ -83,7 +97,7 @@ export const profileAPI = {
    */
   createUserProfile: async (): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
@@ -100,14 +114,11 @@ export const profileAPI = {
         coupons: 0,
         bio: '',
         location: '',
-        createdAt: firestore.FieldValue.serverTimestamp(),
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       };
 
-      await firestore()
-        .collection(USERS_COLLECTION)
-        .doc(currentUser.uid)
-        .set(userData, { merge: true });
+      await setDoc(doc(firestore, USERS_COLLECTION, currentUser.uid), userData, { merge: true });
 
       // 프로필 생성 성공
     } catch (error: any) {
@@ -131,20 +142,17 @@ export const profileAPI = {
     }>,
   ): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
       // Firestore 업데이트
-      await firestore()
-        .collection(USERS_COLLECTION)
-        .doc(currentUser.uid)
-        .update({
-          ...updates,
-          displayName: updates.name || currentUser.displayName,
-          updatedAt: firestore.FieldValue.serverTimestamp(),
-        });
+      await updateDoc(doc(firestore, USERS_COLLECTION, currentUser.uid), {
+        ...updates,
+        displayName: updates.name || currentUser.displayName,
+        updatedAt: serverTimestamp(),
+      });
 
       // Firebase Auth 업데이트 (이름만)
       if (updates.name) {
@@ -172,13 +180,13 @@ export const profileAPI = {
     cropData?: { scale: number; translateX: number; translateY: number },
   ): Promise<string> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
       // Storage에 업로드 (storage.rules: profiles/{userId}/{fileName})
-      const reference = storage().ref(`profiles/${currentUser.uid}/${Date.now()}.jpg`);
+      const reference = storageRefFn(storage, `profiles/${currentUser.uid}/${Date.now()}.jpg`);
 
       await reference.putFile(imageUri);
       const downloadURL = await reference.getDownloadURL();
@@ -187,12 +195,12 @@ export const profileAPI = {
       const updateData: Record<string, any> = {
         photoURL: downloadURL,
         profileImage: downloadURL,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: serverTimestamp(),
       };
       if (cropData) {
         updateData.profileImageCrop = cropData;
       }
-      await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).update(updateData);
+      await updateDoc(doc(firestore, USERS_COLLECTION, currentUser.uid), updateData);
 
       // Firebase Auth 업데이트
       await currentUser.updateProfile({
@@ -210,28 +218,27 @@ export const profileAPI = {
   /**
    * 포인트 내역 조회
    *
-   * @param limit 결과 개수
+   * @param limitCount 결과 개수
    * @returns 포인트 내역
    */
-  getPointHistory: async (limit: number = 20): Promise<Point[]> => {
+  getPointHistory: async (limitCount: number = 20): Promise<Point[]> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
-      const snapshot = await firestore()
-        .collection(USERS_COLLECTION)
-        .doc(currentUser.uid)
-        .collection(POINTS_COLLECTION)
-        .orderBy('createdAt', 'desc')
-        .limit(limit)
-        .get();
+      const q = query(
+        collection(firestore, USERS_COLLECTION, currentUser.uid, POINTS_COLLECTION),
+        orderBy('createdAt', 'desc'),
+        limit(limitCount),
+      );
+      const snapshot = await getDocs(q);
 
-      const points: Point[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+      const points: Point[] = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+        date: docSnap.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
       })) as unknown as Point[];
 
       // 포인트 내역 조회 성공
@@ -301,22 +308,22 @@ export const profileAPI = {
    */
   getCoupons: async (): Promise<Coupon[]> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
-      const snapshot = await firestore()
-        .collection(USERS_COLLECTION)
-        .doc(currentUser.uid)
-        .collection(COUPONS_COLLECTION)
-        .orderBy('expiryDate', 'asc')
-        .get();
+      const q = query(
+        collection(firestore, USERS_COLLECTION, currentUser.uid, COUPONS_COLLECTION),
+        orderBy('expiryDate', 'asc'),
+      );
+      const snapshot = await getDocs(q);
 
-      const coupons: Coupon[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        expiryDate: doc.data().expiryDate?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+      const coupons: Coupon[] = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+        expiryDate:
+          docSnap.data().expiryDate?.toDate?.()?.toISOString?.() || new Date().toISOString(),
       })) as unknown as Coupon[];
 
       // 쿠폰 목록 조회 성공
@@ -334,22 +341,21 @@ export const profileAPI = {
    */
   getMyReviews: async (): Promise<any[]> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
-      const snapshot = await firestore()
-        .collection(USERS_COLLECTION)
-        .doc(currentUser.uid)
-        .collection('reviews')
-        .orderBy('createdAt', 'desc')
-        .get();
+      const q = query(
+        collection(firestore, USERS_COLLECTION, currentUser.uid, 'reviews'),
+        orderBy('createdAt', 'desc'),
+      );
+      const snapshot = await getDocs(q);
 
-      const reviews = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+      const reviews = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+        date: docSnap.data().createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
       }));
 
       return reviews;
@@ -422,7 +428,7 @@ export const profileAPI = {
    */
   getUserProfile: async (userId: string): Promise<UserProfile | null> => {
     try {
-      const userDoc = await firestore().collection(USERS_COLLECTION).doc(userId).get();
+      const userDoc = await getDoc(doc(firestore, USERS_COLLECTION, userId));
 
       if (!userDoc.exists) {
         // 사용자를 찾을 수 없음
@@ -460,7 +466,7 @@ export const profileAPI = {
    */
   addBackgroundMedia: async (uri: string, type: 'image' | 'video' = 'image'): Promise<string> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
@@ -470,20 +476,23 @@ export const profileAPI = {
 
       // Storage에 업로드
       const ext = type === 'video' ? 'mp4' : 'jpg';
-      const reference = storage().ref(`backgrounds/${currentUser.uid}/${Date.now()}.${ext}`);
+      const reference = storageRefFn(
+        storage,
+        `backgrounds/${currentUser.uid}/${Date.now()}.${ext}`,
+      );
       await reference.putFile(uploadUri);
       const downloadURL = await reference.getDownloadURL();
 
       // Firestore Transaction으로 원자적 배열 업데이트 (동시 요청 시 데이터 손실 방지)
-      await firestore().runTransaction(async (transaction) => {
-        const userRef = firestore().collection(USERS_COLLECTION).doc(currentUser.uid);
+      const userRef = doc(firestore, USERS_COLLECTION, currentUser.uid);
+      await runTransaction(firestore, async (transaction) => {
         const userDoc = await transaction.get(userRef);
         const existing: any[] = userDoc.data()?.backgroundMedia || [];
 
         const newMedia = { url: downloadURL, type, order: existing.length };
         transaction.update(userRef, {
           backgroundMedia: [...existing, newMedia],
-          updatedAt: firestore.FieldValue.serverTimestamp(),
+          updatedAt: serverTimestamp(),
         });
       });
 
@@ -501,22 +510,22 @@ export const profileAPI = {
    */
   removeBackgroundMedia: async (url: string): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
       // Storage에서 삭제
       try {
-        const reference = storage().refFromURL(url);
+        const reference = storageRefFn(storage, url);
         await reference.delete();
       } catch {
         // 이미 삭제된 경우 무시
       }
 
       // Firestore Transaction으로 원자적 배열 제거 + 순서 재정렬
-      await firestore().runTransaction(async (transaction) => {
-        const userRef = firestore().collection(USERS_COLLECTION).doc(currentUser.uid);
+      const userRef = doc(firestore, USERS_COLLECTION, currentUser.uid);
+      await runTransaction(firestore, async (transaction) => {
         const userDoc = await transaction.get(userRef);
         const existing: any[] = userDoc.data()?.backgroundMedia || [];
         const filtered = existing
@@ -525,7 +534,7 @@ export const profileAPI = {
 
         transaction.update(userRef, {
           backgroundMedia: filtered,
-          updatedAt: firestore.FieldValue.serverTimestamp(),
+          updatedAt: serverTimestamp(),
         });
       });
     } catch (error: any) {
@@ -543,15 +552,15 @@ export const profileAPI = {
     media: { url: string; type: 'image' | 'video'; order: number }[],
   ): Promise<void> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
 
       const reordered = media.map((m, i) => ({ ...m, order: i }));
-      await firestore().collection(USERS_COLLECTION).doc(currentUser.uid).update({
+      await updateDoc(doc(firestore, USERS_COLLECTION, currentUser.uid), {
         backgroundMedia: reordered,
-        updatedAt: firestore.FieldValue.serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
     } catch (error: any) {
       console.error('배경 미디어 순서 변경 실패:', error);

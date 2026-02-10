@@ -1,8 +1,24 @@
 // ⛳ Firebase 부킹 시스템 서비스
 // 골프 부킹 생성, 참가, 관리
 
-import firestore from '@react-native-firebase/firestore';
-import { FirestoreTimestamp } from './firebaseConfig';
+import {
+  firestore,
+  collection,
+  doc,
+  addDoc,
+  getDoc,
+  getDocs,
+  updateDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  runTransaction,
+  increment,
+  arrayUnion,
+  documentId,
+  FirestoreTimestamp,
+} from './firebaseConfig';
 import { firebaseMessaging } from './firebaseMessaging';
 import { profileAPI } from '@/services/api/profileAPI';
 import { callFunction } from '@/services/firebase/firebaseFunctions';
@@ -42,27 +58,22 @@ export const createBooking = async (
   message: string;
 }> => {
   try {
-    const docRef = await firestore()
-      .collection('bookings')
-      .add({
-        ...bookingData,
-        status: 'open',
-        participants: {
-          current: 1,
-          max: bookingData.participants?.max || 4,
-          list: [bookingData.hostId],
-        },
-        createdAt: FirestoreTimestamp.now(),
-        updatedAt: FirestoreTimestamp.now(),
-      });
+    const docRef = await addDoc(collection(firestore, 'bookings'), {
+      ...bookingData,
+      status: 'open',
+      participants: {
+        current: 1,
+        max: bookingData.participants?.max || 4,
+        list: [bookingData.hostId],
+      },
+      createdAt: FirestoreTimestamp.now(),
+      updatedAt: FirestoreTimestamp.now(),
+    });
 
     // 호스트 통계 업데이트
-    await firestore()
-      .collection('users')
-      .doc(bookingData.hostId!)
-      .update({
-        'stats.hostedBookings': firestore.FieldValue.increment(1),
-      });
+    await updateDoc(doc(firestore, 'users', bookingData.hostId!), {
+      'stats.hostedBookings': increment(1),
+    });
 
     return {
       success: true,
@@ -89,10 +100,10 @@ export const joinBooking = async (
   message: string;
 }> => {
   try {
-    const bookingRef = firestore().collection('bookings').doc(bookingId);
+    const bookingRef = doc(firestore, 'bookings', bookingId);
 
     // 트랜잭션으로 동시 참가 경합 조건 방지
-    const result = await firestore().runTransaction(async (transaction) => {
+    const result = await runTransaction(firestore, async (transaction) => {
       const bookingDoc = await transaction.get(bookingRef);
 
       if (!bookingDoc.exists) {
@@ -121,7 +132,7 @@ export const joinBooking = async (
       const newCurrent = bookingData.participants.current + 1;
       const updateData: Record<string, any> = {
         'participants.current': newCurrent,
-        'participants.list': firestore.FieldValue.arrayUnion(userId),
+        'participants.list': arrayUnion(userId),
         updatedAt: FirestoreTimestamp.now(),
       };
 
@@ -146,23 +157,18 @@ export const joinBooking = async (
 
     // 트랜잭션 외부: 부수 효과 (실패해도 참가 처리에 영향 없음)
     // 참가 기록 생성
-    await firestore()
-      .collection('bookingParticipants')
-      .add({
-        bookingId,
-        userId,
-        hostId: (result as any).hostId,
-        status: 'pending',
-        joinedAt: FirestoreTimestamp.now(),
-      });
+    await addDoc(collection(firestore, 'bookingParticipants'), {
+      bookingId,
+      userId,
+      hostId: (result as any).hostId,
+      status: 'pending',
+      joinedAt: FirestoreTimestamp.now(),
+    });
 
     // 사용자 통계 업데이트
-    await firestore()
-      .collection('users')
-      .doc(userId)
-      .update({
-        'stats.joinedBookings': firestore.FieldValue.increment(1),
-      });
+    await updateDoc(doc(firestore, 'users', userId), {
+      'stats.joinedBookings': increment(1),
+    });
 
     // 호스트에게 알림 전송
     try {
@@ -206,21 +212,22 @@ export const getBookings = async (filter?: {
   level?: string;
 }): Promise<FirebaseBooking[]> => {
   try {
-    let query = firestore().collection('bookings').orderBy('createdAt', 'desc').limit(20);
+    const constraints: any[] = [orderBy('createdAt', 'desc'), limit(20)];
 
     if (filter?.status) {
-      query = query.where('status', '==', filter.status) as any;
+      constraints.unshift(where('status', '==', filter.status));
     }
 
     if (filter?.date) {
-      query = query.where('date', '==', filter.date) as any;
+      constraints.unshift(where('date', '==', filter.date));
     }
 
-    const snapshot = await query.get();
+    const q = query(collection(firestore, 'bookings'), ...constraints);
+    const snapshot = await getDocs(q);
 
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
+    return snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
     })) as FirebaseBooking[];
   } catch (error) {
     console.error('부킹 목록 조회 실패:', error);
@@ -233,15 +240,15 @@ export const getBookings = async (filter?: {
  */
 export const getBookingDetail = async (bookingId: string): Promise<FirebaseBooking | null> => {
   try {
-    const doc = await firestore().collection('bookings').doc(bookingId).get();
+    const docSnap = await getDoc(doc(firestore, 'bookings', bookingId));
 
-    if (!doc.exists) {
+    if (!docSnap.exists) {
       return null;
     }
 
     return {
-      id: doc.id,
-      ...doc.data(),
+      id: docSnap.id,
+      ...docSnap.data(),
     } as FirebaseBooking;
   } catch (error) {
     console.error('부킹 상세 조회 실패:', error);
@@ -254,15 +261,16 @@ export const getBookingDetail = async (bookingId: string): Promise<FirebaseBooki
  */
 export const getMyHostedBookings = async (userId: string): Promise<FirebaseBooking[]> => {
   try {
-    const snapshot = await firestore()
-      .collection('bookings')
-      .where('hostId', '==', userId)
-      .orderBy('createdAt', 'desc')
-      .get();
+    const q = query(
+      collection(firestore, 'bookings'),
+      where('hostId', '==', userId),
+      orderBy('createdAt', 'desc'),
+    );
+    const snapshot = await getDocs(q);
 
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
+    return snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
     })) as FirebaseBooking[];
   } catch (error) {
     console.error('내 부킹 조회 실패:', error);
@@ -275,15 +283,16 @@ export const getMyHostedBookings = async (userId: string): Promise<FirebaseBooki
  */
 export const getMyJoinedBookings = async (userId: string): Promise<FirebaseBooking[]> => {
   try {
-    const snapshot = await firestore()
-      .collection('bookings')
-      .where('participants.list', 'array-contains', userId)
-      .orderBy('createdAt', 'desc')
-      .get();
+    const q = query(
+      collection(firestore, 'bookings'),
+      where('participants.list', 'array-contains', userId),
+      orderBy('createdAt', 'desc'),
+    );
+    const snapshot = await getDocs(q);
 
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
+    return snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
     })) as FirebaseBooking[];
   } catch (error) {
     console.error('참가 부킹 조회 실패:', error);
@@ -363,12 +372,13 @@ export const getBookingRequests = async (
   }[]
 > => {
   try {
-    const snapshot = await firestore()
-      .collection('bookingParticipants')
-      .where('bookingId', '==', bookingId)
-      .where('status', '==', 'pending')
-      .orderBy('joinedAt', 'desc')
-      .get();
+    const q = query(
+      collection(firestore, 'bookingParticipants'),
+      where('bookingId', '==', bookingId),
+      where('status', '==', 'pending'),
+      orderBy('joinedAt', 'desc'),
+    );
+    const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
       return [];
@@ -376,12 +386,12 @@ export const getBookingRequests = async (
 
     // 신청자 프로필 정보 조인
     const requests = await Promise.all(
-      snapshot.docs.map(async (doc) => {
-        const data = doc.data();
+      snapshot.docs.map(async (docSnap) => {
+        const data = docSnap.data();
         let userProfile = { name: '알 수 없음', avatar: '', level: '', rating: 0 };
 
         try {
-          const userDoc = await firestore().collection('users').doc(data.userId).get();
+          const userDoc = await getDoc(doc(firestore, 'users', data.userId));
 
           if (userDoc.exists) {
             const userData = userDoc.data();
@@ -397,7 +407,7 @@ export const getBookingRequests = async (
         }
 
         return {
-          id: doc.id,
+          id: docSnap.id,
           userId: data.userId,
           name: userProfile.name,
           avatar: userProfile.avatar,
@@ -491,40 +501,41 @@ export const getPopularBookings = async (
   }[]
 > => {
   try {
-    const snapshot = await firestore()
-      .collection('bookings')
-      .where('status', '==', 'open')
-      .orderBy('createdAt', 'desc')
-      .limit(limitCount)
-      .get();
+    const q = query(
+      collection(firestore, 'bookings'),
+      where('status', '==', 'open'),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount),
+    );
+    const snapshot = await getDocs(q);
 
     if (snapshot.empty) return [];
 
     // 호스트 ID 수집 후 배치 쿼리 (N+1 방지)
-    const hostIds = [...new Set(snapshot.docs.map((doc) => doc.data().hostId).filter(Boolean))];
+    const hostIds = [
+      ...new Set(snapshot.docs.map((docSnap) => docSnap.data().hostId).filter(Boolean)),
+    ];
     const hostMap: Record<string, string> = {};
 
     // Firestore 'in' 쿼리는 최대 10개씩
     for (let i = 0; i < hostIds.length; i += 10) {
       const chunk = hostIds.slice(i, i + 10);
       try {
-        const hostsSnapshot = await firestore()
-          .collection('users')
-          .where(firestore.FieldPath.documentId(), 'in', chunk)
-          .get();
-        hostsSnapshot.docs.forEach((doc) => {
-          const data = doc.data();
-          hostMap[doc.id] = data?.name || data?.displayName || '알 수 없음';
+        const hostsQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
+        const hostsSnapshot = await getDocs(hostsQuery);
+        hostsSnapshot.docs.forEach((docSnap) => {
+          const data = docSnap.data();
+          hostMap[docSnap.id] = data?.name || data?.displayName || '알 수 없음';
         });
       } catch {
         // 호스트 배치 조회 실패 시 기본값 유지
       }
     }
 
-    const bookings = snapshot.docs.map((doc) => {
-      const data = doc.data();
+    const bookings = snapshot.docs.map((docSnap) => {
+      const data = docSnap.data();
       return {
-        id: doc.id,
+        id: docSnap.id,
         course: data.course || '',
         date: data.date || '',
         time: data.time || '',
@@ -562,43 +573,44 @@ export const getRecommendedBookings = async (
   }[]
 > => {
   try {
-    const snapshot = await firestore()
-      .collection('bookings')
-      .where('status', '==', 'open')
-      .orderBy('createdAt', 'desc')
-      .limit(limitCount + 10) // 본인 부킹 필터링 여유분
-      .get();
+    const q = query(
+      collection(firestore, 'bookings'),
+      where('status', '==', 'open'),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount + 10), // 본인 부킹 필터링 여유분
+    );
+    const snapshot = await getDocs(q);
 
     if (snapshot.empty) return [];
 
     const filteredDocs = snapshot.docs
-      .filter((doc) => doc.data().hostId !== userId)
+      .filter((docSnap) => docSnap.data().hostId !== userId)
       .slice(0, limitCount);
 
     // 호스트 ID 수집 후 배치 쿼리 (N+1 방지)
-    const hostIds = [...new Set(filteredDocs.map((doc) => doc.data().hostId).filter(Boolean))];
+    const hostIds = [
+      ...new Set(filteredDocs.map((docSnap) => docSnap.data().hostId).filter(Boolean)),
+    ];
     const hostMap: Record<string, string> = {};
 
     for (let i = 0; i < hostIds.length; i += 10) {
       const chunk = hostIds.slice(i, i + 10);
       try {
-        const hostsSnapshot = await firestore()
-          .collection('users')
-          .where(firestore.FieldPath.documentId(), 'in', chunk)
-          .get();
-        hostsSnapshot.docs.forEach((doc) => {
-          const data = doc.data();
-          hostMap[doc.id] = data?.name || data?.displayName || '알 수 없음';
+        const hostsQuery = query(collection(firestore, 'users'), where(documentId(), 'in', chunk));
+        const hostsSnapshot = await getDocs(hostsQuery);
+        hostsSnapshot.docs.forEach((docSnap) => {
+          const data = docSnap.data();
+          hostMap[docSnap.id] = data?.name || data?.displayName || '알 수 없음';
         });
       } catch {
         // 호스트 배치 조회 실패 시 기본값 유지
       }
     }
 
-    const bookings = filteredDocs.map((doc) => {
-      const data = doc.data();
+    const bookings = filteredDocs.map((docSnap) => {
+      const data = docSnap.data();
       return {
-        id: doc.id,
+        id: docSnap.id,
         course: data.course || '',
         date: data.date || '',
         time: data.time || '',
@@ -632,7 +644,7 @@ export const getRequestStatus = async (
   bookingId: string;
 } | null> => {
   try {
-    const requestDoc = await firestore().collection('bookingParticipants').doc(requestId).get();
+    const requestDoc = await getDoc(doc(firestore, 'bookingParticipants', requestId));
 
     if (!requestDoc.exists) return null;
 
@@ -645,7 +657,7 @@ export const getRequestStatus = async (
     let organizerName = '알 수 없음';
 
     if (requestData?.bookingId) {
-      const bookingDoc = await firestore().collection('bookings').doc(requestData.bookingId).get();
+      const bookingDoc = await getDoc(doc(firestore, 'bookings', requestData.bookingId));
 
       if (bookingDoc.exists) {
         const bookingData = bookingDoc.data();
@@ -656,7 +668,7 @@ export const getRequestStatus = async (
         // 호스트 이름 조회
         if (bookingData?.hostId) {
           try {
-            const hostDoc = await firestore().collection('users').doc(bookingData.hostId).get();
+            const hostDoc = await getDoc(doc(firestore, 'users', bookingData.hostId));
             const hostData = hostDoc.data();
             organizerName = hostData?.name || hostData?.displayName || '알 수 없음';
           } catch {
@@ -698,7 +710,7 @@ export const getApplicantProfile = async (
   bio: string;
 } | null> => {
   try {
-    const userDoc = await firestore().collection('users').doc(userId).get();
+    const userDoc = await getDoc(doc(firestore, 'users', userId));
 
     if (!userDoc.exists) return null;
 

@@ -1,7 +1,14 @@
 // 🔐 authAPI.ts
 // 인증 API - Firebase Auth Wrapper
 
-import auth from '@react-native-firebase/auth';
+import {
+  auth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  sendPasswordResetEmail,
+  onAuthStateChanged,
+} from '@/services/firebase/firebaseConfig';
 import { profileAPI } from './profileAPI';
 
 /**
@@ -18,7 +25,7 @@ export const authAPI = {
    */
   login: async (email: string, password: string) => {
     try {
-      const userCredential = await auth().signInWithEmailAndPassword(email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
       return {
         user: userCredential.user,
@@ -50,7 +57,7 @@ export const authAPI = {
    */
   register: async (email: string, password: string, name: string) => {
     try {
-      const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
       // 이름 업데이트
       await userCredential.user.updateProfile({
@@ -83,7 +90,7 @@ export const authAPI = {
    */
   logout: async () => {
     try {
-      await auth().signOut();
+      await signOut(auth);
     } catch (error: any) {
       throw new Error(error.message || '로그아웃에 실패했습니다.');
     }
@@ -95,7 +102,7 @@ export const authAPI = {
    * @returns 현재 사용자 or null
    */
   getCurrentUser: () => {
-    return auth().currentUser;
+    return auth.currentUser;
   },
 
   /**
@@ -105,7 +112,7 @@ export const authAPI = {
    */
   sendPasswordResetEmail: async (email: string) => {
     try {
-      await auth().sendPasswordResetEmail(email);
+      await sendPasswordResetEmail(auth, email);
     } catch (error: any) {
       let message = '이메일 전송에 실패했습니다.';
       if (error.code === 'auth/user-not-found') {
@@ -125,7 +132,7 @@ export const authAPI = {
    */
   updatePassword: async (newPassword: string) => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
@@ -148,7 +155,7 @@ export const authAPI = {
    */
   sendEmailVerification: async () => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
@@ -169,7 +176,7 @@ export const authAPI = {
    * @returns 인증 여부
    */
   isEmailVerified: (): boolean => {
-    const currentUser = auth().currentUser;
+    const currentUser = auth.currentUser;
     return currentUser?.emailVerified || false;
   },
 
@@ -178,7 +185,7 @@ export const authAPI = {
    */
   reloadUser: async () => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
@@ -194,7 +201,7 @@ export const authAPI = {
    */
   deleteAccount: async () => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
@@ -218,7 +225,7 @@ export const authAPI = {
    */
   getIdToken: async (forceRefresh: boolean = false): Promise<string> => {
     try {
-      const currentUser = auth().currentUser;
+      const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('로그인이 필요합니다.');
       }
@@ -237,6 +244,6 @@ export const authAPI = {
    * @returns 구독 해제 함수
    */
   onAuthStateChanged: (callback: (user: any) => void): (() => void) => {
-    return auth().onAuthStateChanged(callback);
+    return onAuthStateChanged(auth, callback);
   },
 };
