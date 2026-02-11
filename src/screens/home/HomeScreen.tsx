@@ -27,7 +27,11 @@ import { markAttendance, checkTodayAttendance } from '@/services/firebase/fireba
 import { joinBooking } from '@/services/firebase/firebaseBooking';
 import { MEMBERSHIP_PLANS } from '@/constants/membershipPlans';
 import { RecommendedCourses } from '@/components/golfcourse/RecommendedCourses';
-import { trackAttendanceCheck, trackSearch, trackScreenView } from '@/services/firebase/firebaseAnalytics';
+import {
+  trackAttendanceCheck,
+  trackSearch,
+  trackScreenView,
+} from '@/services/firebase/firebaseAnalytics';
 
 type FilterType = 'all' | 'today' | 'week' | 'beginner';
 

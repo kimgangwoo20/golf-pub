@@ -31,15 +31,6 @@ interface JoinBookingTransactionResult {
   title?: string;
 }
 
-// Firestore Timestamp 또는 숫자에서 밀리초 추출
-const getTimestampMs = (val: unknown): number => {
-  if (typeof val === 'number') return val;
-  if (val != null && typeof val === 'object' && 'toDate' in val) {
-    return (val as { toDate: () => Date }).toDate().getTime();
-  }
-  return 0;
-};
-
 // Booking 타입은 booking-types.ts에서 가져옴 (participants.members: BookingMember[])
 // firebaseBooking에서는 간소화된 인터페이스 사용 (Firestore 문서 구조)
 export interface FirebaseBooking {

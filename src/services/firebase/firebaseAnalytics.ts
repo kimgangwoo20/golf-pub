@@ -1,7 +1,12 @@
 // 📊 firebaseAnalytics.ts
 // Firebase Analytics 이벤트 추적 서비스
 
-import { getAnalytics, logEvent, setUserId, setUserProperties } from '@react-native-firebase/analytics';
+import {
+  getAnalytics,
+  logEvent,
+  setUserId,
+  setUserProperties,
+} from '@react-native-firebase/analytics';
 
 const analytics = getAnalytics();
 

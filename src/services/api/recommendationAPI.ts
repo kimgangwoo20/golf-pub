@@ -19,12 +19,7 @@ export interface RecommendedCourse {
 }
 
 // Haversine 공식으로 두 좌표 간 거리 계산 (km)
-function calculateDistance(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number,
-): number {
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // 지구 반경 (km)
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
@@ -50,11 +45,7 @@ function calculateDistanceScore(distanceKm: number): number {
 }
 
 // 추천 이유 생성
-function generateReason(
-  weatherScore: number,
-  distanceKm: number,
-  isFavorite: boolean,
-): string {
+function generateReason(weatherScore: number, distanceKm: number, isFavorite: boolean): string {
   const reasons: string[] = [];
 
   if (isFavorite) {
@@ -168,7 +159,5 @@ export async function getRecommendedCourses(
   }
 
   // 4. 종합 점수 내림차순 정렬 후 상위 N개 반환
-  return scoredCourses
-    .sort((a, b) => b.totalScore - a.totalScore)
-    .slice(0, maxResults);
+  return scoredCourses.sort((a, b) => b.totalScore - a.totalScore).slice(0, maxResults);
 }

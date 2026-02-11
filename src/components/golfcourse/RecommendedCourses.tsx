@@ -61,12 +61,7 @@ export const RecommendedCourses: React.FC = () => {
       }
 
       // 기본 위치: 서울 (추후 GPS 연동 가능)
-      const recommended = await getRecommendedCourses(
-        37.5665,
-        126.978,
-        favorites,
-        5,
-      );
+      const recommended = await getRecommendedCourses(37.5665, 126.978, favorites, 5);
       setCourses(recommended);
     } catch (error) {
       console.error('추천 골프장 로드 실패:', error);
@@ -99,9 +94,7 @@ export const RecommendedCourses: React.FC = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>추천 골프장</Text>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('GolfCourse')}
-        >
+        <TouchableOpacity onPress={() => navigation.navigate('GolfCourse')}>
           <Text style={styles.moreText}>더보기 →</Text>
         </TouchableOpacity>
       </View>
@@ -119,7 +112,9 @@ export const RecommendedCourses: React.FC = () => {
             activeOpacity={0.7}
           >
             {/* 날씨 점수 뱃지 */}
-            <View style={[styles.scoreBadge, { backgroundColor: getScoreColor(course.weatherScore) }]}>
+            <View
+              style={[styles.scoreBadge, { backgroundColor: getScoreColor(course.weatherScore) }]}
+            >
               <Text style={styles.scoreIcon}>{getScoreIcon(course.weatherScore)}</Text>
               <Text style={styles.scoreText}>{course.weatherScore}</Text>
             </View>
