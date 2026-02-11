@@ -273,7 +273,7 @@ export const friendAPI = {
               mutualCount++;
             }
           });
-          (friend as any).mutualFriends = mutualCount;
+          friend.mutualFriends = mutualCount;
         } catch {
           // 공통 친구 계산 실패 시 0으로 유지
         }

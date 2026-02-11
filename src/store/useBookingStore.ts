@@ -253,7 +253,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
           throw new Error('이미 참가한 부킹입니다');
         }
 
-        const currentList = (latestData as any).participants?.list || [];
+        const currentList = latestData.participants?.list || [];
         transaction.update(bookingRef, {
           'participants.current': latestData.participants.current + 1,
           'participants.members': [
@@ -316,7 +316,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
           throw new Error('호스트는 부킹을 나갈 수 없습니다');
         }
 
-        const currentList = (bookingData as any).participants?.list || [];
+        const currentList = bookingData.participants?.list || [];
         transaction.update(bookingRef, {
           'participants.current': Math.max(1, bookingData.participants.current - 1),
           'participants.members': bookingData.participants.members.filter((m) => m.uid !== userId),

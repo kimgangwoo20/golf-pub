@@ -124,13 +124,13 @@ export const marketplaceAPI = {
         sellerName: currentUser.displayName || '익명',
         sellerImage: currentUser.photoURL || '',
         sellerRating: 0,
-        status: 'available',
+        status: 'available' as const,
         viewCount: 0,
         likeCount: 0,
         isLiked: false,
         createdAt: now.toISOString(),
         updatedAt: now.toISOString(),
-      } as any;
+      } as Product;
 
       return newProduct;
     } catch (error: any) {

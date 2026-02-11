@@ -85,9 +85,9 @@ export const bookingAPI = {
       const newBooking = {
         id: docRef.id,
         ...bookingData,
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-      } as any;
+        createdAt: now,
+        updatedAt: now,
+      } as Booking;
 
       return newBooking;
     } catch (error: any) {

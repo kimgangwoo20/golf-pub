@@ -46,6 +46,7 @@ export interface BookingParticipants {
   current: number;
   max: number;
   members: BookingMember[];
+  list?: string[];
 }
 
 /**

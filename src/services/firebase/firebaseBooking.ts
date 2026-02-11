@@ -23,6 +23,23 @@ import { firebaseMessaging } from './firebaseMessaging';
 import { profileAPI } from '@/services/api/profileAPI';
 import { callFunction } from '@/services/firebase/firebaseFunctions';
 
+// joinBooking 트랜잭션 결과 타입
+interface JoinBookingTransactionResult {
+  success: boolean;
+  message: string;
+  hostId?: string;
+  title?: string;
+}
+
+// Firestore Timestamp 또는 숫자에서 밀리초 추출
+const getTimestampMs = (val: unknown): number => {
+  if (typeof val === 'number') return val;
+  if (val != null && typeof val === 'object' && 'toDate' in val) {
+    return (val as { toDate: () => Date }).toDate().getTime();
+  }
+  return 0;
+};
+
 // Booking 타입은 booking-types.ts에서 가져옴 (participants.members: BookingMember[])
 // firebaseBooking에서는 간소화된 인터페이스 사용 (Firestore 문서 구조)
 export interface FirebaseBooking {
@@ -103,70 +120,73 @@ export const joinBooking = async (
     const bookingRef = doc(firestore, 'bookings', bookingId);
 
     // 트랜잭션으로 동시 참가 경합 조건 방지
-    const result = await runTransaction(firestore, async (transaction) => {
-      const bookingDoc = await transaction.get(bookingRef);
+    const result: JoinBookingTransactionResult = await runTransaction(
+      firestore,
+      async (transaction) => {
+        const bookingDoc = await transaction.get(bookingRef);
 
-      if (!bookingDoc.exists) {
-        return { success: false, message: '존재하지 않는 부킹입니다.' };
-      }
-
-      const bookingData = bookingDoc.data() as FirebaseBooking;
-
-      // 이미 참가 중인지 확인 (list 또는 members 양쪽 확인)
-      const isInList = bookingData.participants.list?.includes(userId);
-      const isInMembers = bookingData.participants.members?.some((m) => m.uid === userId);
-      if (isInList || isInMembers) {
-        return { success: false, message: '이미 참가 중입니다.' };
-      }
-
-      // 정원 확인
-      if (bookingData.participants.current >= bookingData.participants.max) {
-        return { success: false, message: '정원이 마감되었습니다.' };
-      }
-
-      // 부킹 상태 확인
-      if (bookingData.status !== 'open') {
-        return { success: false, message: '참가할 수 없는 부킹입니다.' };
-      }
-
-      // 사용자 프로필 조회 (members 필드용)
-      let userName = '사용자';
-      try {
-        const userDoc = await getDoc(doc(firestore, 'users', userId));
-        if (userDoc.exists) {
-          const userData = userDoc.data();
-          userName = userData?.name || userData?.displayName || '사용자';
+        if (!bookingDoc.exists) {
+          return { success: false, message: '존재하지 않는 부킹입니다.' };
         }
-      } catch {
-        // 프로필 조회 실패 시 기본값 사용
-      }
 
-      const newCurrent = bookingData.participants.current + 1;
-      const currentMembers = bookingData.participants.members || [];
-      const updateData: Record<string, any> = {
-        'participants.current': newCurrent,
-        'participants.list': arrayUnion(userId),
-        'participants.members': [
-          ...currentMembers,
-          { uid: userId, name: userName, role: 'member' },
-        ],
-        updatedAt: FirestoreTimestamp.now(),
-      };
+        const bookingData = bookingDoc.data() as FirebaseBooking;
 
-      // 정원이 찼으면 상태도 함께 변경
-      if (newCurrent >= bookingData.participants.max) {
-        updateData.status = 'full';
-      }
+        // 이미 참가 중인지 확인 (list 또는 members 양쪽 확인)
+        const isInList = bookingData.participants.list?.includes(userId);
+        const isInMembers = bookingData.participants.members?.some((m) => m.uid === userId);
+        if (isInList || isInMembers) {
+          return { success: false, message: '이미 참가 중입니다.' };
+        }
 
-      transaction.update(bookingRef, updateData);
+        // 정원 확인
+        if (bookingData.participants.current >= bookingData.participants.max) {
+          return { success: false, message: '정원이 마감되었습니다.' };
+        }
 
-      return {
-        success: true,
-        message: '참가 신청이 완료되었습니다!',
-        hostId: bookingData.hostId,
-        title: bookingData.title,
-      };
-    });
+        // 부킹 상태 확인
+        if (bookingData.status !== 'open') {
+          return { success: false, message: '참가할 수 없는 부킹입니다.' };
+        }
+
+        // 사용자 프로필 조회 (members 필드용)
+        let userName = '사용자';
+        try {
+          const userDoc = await getDoc(doc(firestore, 'users', userId));
+          if (userDoc.exists) {
+            const userData = userDoc.data();
+            userName = userData?.name || userData?.displayName || '사용자';
+          }
+        } catch {
+          // 프로필 조회 실패 시 기본값 사용
+        }
+
+        const newCurrent = bookingData.participants.current + 1;
+        const currentMembers = bookingData.participants.members || [];
+        const updateData: Record<string, any> = {
+          'participants.current': newCurrent,
+          'participants.list': arrayUnion(userId),
+          'participants.members': [
+            ...currentMembers,
+            { uid: userId, name: userName, role: 'member' },
+          ],
+          updatedAt: FirestoreTimestamp.now(),
+        };
+
+        // 정원이 찼으면 상태도 함께 변경
+        if (newCurrent >= bookingData.participants.max) {
+          updateData.status = 'full';
+        }
+
+        transaction.update(bookingRef, updateData);
+
+        return {
+          success: true,
+          message: '참가 신청이 완료되었습니다!',
+          hostId: bookingData.hostId,
+          title: bookingData.title,
+        };
+      },
+    );
 
     if (!result.success) {
       return { success: result.success, message: result.message };

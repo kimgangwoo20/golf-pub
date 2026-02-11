@@ -88,7 +88,7 @@ export const golfCourseAPI = {
           id: currentUser.uid,
           name: currentUser.displayName || '익명',
           image: currentUser.photoURL || '',
-          handicap: (useAuthStore.getState() as any).userProfile?.handicap || 18,
+          handicap: useAuthStore.getState().userProfile?.handicap || 18,
         },
         ...reviewData,
         likes: 0,
