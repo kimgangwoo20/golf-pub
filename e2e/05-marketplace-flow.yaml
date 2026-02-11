@@ -1,0 +1,46 @@
+# 05-marketplace-flow.yaml
+# 중고마켓 상품 등록 E2E 테스트
+appId: com.golfpub.app
+
+---
+
+# 1. 중고마켓 탭 이동
+- tapOn: "마켓"
+
+# 2. 마켓 화면 확인
+- assertVisible:
+    text: "중고마켓"
+    timeout: 5000
+
+# 3. 상품 등록 버튼 클릭
+- tapOn: "판매하기"
+
+# 4. 상품 등록 화면 확인
+- assertVisible: "상품 등록"
+
+# 5. 상품명 입력
+- tapOn:
+    id: "product-title"
+- inputText: "E2E 테스트 드라이버"
+
+# 6. 가격 입력
+- tapOn:
+    id: "product-price"
+- inputText: "150000"
+
+# 7. 설명 입력
+- tapOn:
+    id: "product-description"
+- inputText: "테스트용 상품입니다."
+
+# 8. 카테고리 선택
+- tapOn: "카테고리"
+- tapOn: "드라이버"
+
+# 9. 등록 버튼 클릭
+- tapOn: "등록하기"
+
+# 10. 등록 성공 확인
+- assertVisible:
+    text: "등록"
+    timeout: 10000

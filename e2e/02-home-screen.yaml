@@ -1,0 +1,44 @@
+# 02-home-screen.yaml
+# 홈 화면 탐색 E2E 테스트
+appId: com.golfpub.app
+
+---
+
+# 1. 홈 화면 확인
+- assertVisible: "골프 Pub"
+
+# 2. 멤버십 배너 확인
+- assertVisible: "프리미엄"
+
+# 3. 날씨 위젯 확인 (WeatherWidget)
+- assertVisible: "골프 날씨"
+
+# 4. 추천 골프장 섹션 확인
+- assertVisible: "추천 골프장"
+
+# 5. 출석체크 배너 확인
+- assertVisible: "출석"
+
+# 6. 필터 칩 동작 확인
+- tapOn: "오늘"
+- tapOn: "이번 주"
+- tapOn: "초보 환영"
+- tapOn: "전체"
+
+# 7. 검색 기능 테스트
+- tapOn:
+    text: "골프장, 지역으로 검색..."
+- inputText: "스카이72"
+- assertVisible: "✕"
+- tapOn: "✕"
+
+# 8. 스크롤 다운 확인
+- scroll:
+    direction: DOWN
+    amount: 500
+
+# 9. 인기 부킹 섹션 확인
+- assertVisible: "인기 부킹"
+
+# 10. 플로팅 버튼 확인
+- assertVisible: "부킹 만들기"

@@ -1,0 +1,35 @@
+# 01-login-flow.yaml
+# 이메일 로그인 / 회원가입 E2E 테스트
+appId: com.golfpub.app
+
+---
+
+# 1. 앱 실행 확인
+- assertVisible: "골프 Pub"
+
+# 2. 로그인 화면 진입
+- assertVisible: "로그인"
+
+# 3. 이메일 입력
+- tapOn:
+    id: "email-input"
+- inputText: "test@golfpub.kr"
+
+# 4. 비밀번호 입력
+- tapOn:
+    id: "password-input"
+- inputText: "Test1234!"
+
+# 5. 로그인 버튼 클릭
+- tapOn: "로그인"
+
+# 6. 홈 화면 도착 확인
+- assertVisible:
+    text: "골프 Pub"
+    timeout: 10000
+
+# 7. 하단 탭 확인
+- assertVisible: "홈"
+- assertVisible: "예약"
+- assertVisible: "피드"
+- assertVisible: "채팅"

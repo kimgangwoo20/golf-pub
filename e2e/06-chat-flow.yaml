@@ -1,0 +1,38 @@
+# 06-chat-flow.yaml
+# 채팅 메시지 전송 E2E 테스트
+appId: com.golfpub.app
+
+---
+
+# 1. 채팅 탭 이동
+- tapOn: "채팅"
+
+# 2. 채팅 목록 화면 확인
+- assertVisible:
+    text: "채팅"
+    timeout: 5000
+
+# 3. 첫 번째 채팅방 진입 (있을 경우)
+- tapOn:
+    index: 0
+
+# 4. 채팅방 확인
+- assertVisible:
+    id: "message-input"
+    timeout: 5000
+
+# 5. 메시지 입력
+- tapOn:
+    id: "message-input"
+- inputText: "E2E 테스트 메시지입니다."
+
+# 6. 전송 버튼 클릭
+- tapOn:
+    id: "send-button"
+
+# 7. 메시지 전송 확인
+- assertVisible: "E2E 테스트 메시지입니다."
+
+# 8. 뒤로 가기
+- tapOn:
+    id: "back-button"

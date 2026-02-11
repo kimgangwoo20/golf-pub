@@ -1,0 +1,32 @@
+# 04-feed-flow.yaml
+# 피드 게시글 작성 E2E 테스트
+appId: com.golfpub.app
+
+---
+
+# 1. 피드 탭 이동
+- tapOn: "피드"
+
+# 2. 피드 화면 확인
+- assertVisible:
+    text: "피드"
+    timeout: 5000
+
+# 3. 게시글 작성 버튼 (FAB) 클릭
+- tapOn: "✚"
+
+# 4. 게시글 작성 화면 확인
+- assertVisible: "새 게시글"
+
+# 5. 게시글 내용 입력
+- tapOn:
+    id: "post-content"
+- inputText: "E2E 테스트 게시글입니다. 오늘 날씨가 좋아서 골프 치러 갑니다!"
+
+# 6. 게시 버튼 클릭
+- tapOn: "게시하기"
+
+# 7. 게시 성공 → 피드로 복귀 확인
+- assertVisible:
+    text: "피드"
+    timeout: 10000

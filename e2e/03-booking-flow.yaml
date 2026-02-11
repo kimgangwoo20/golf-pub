@@ -1,0 +1,47 @@
+# 03-booking-flow.yaml
+# 부킹 생성 및 참가 E2E 테스트
+appId: com.golfpub.app
+
+---
+
+# 1. 예약 탭 이동
+- tapOn: "예약"
+
+# 2. 예약 목록 화면 확인
+- assertVisible:
+    text: "부킹"
+    timeout: 5000
+
+# 3. 부킹 생성 버튼 클릭
+- tapOn: "부킹 만들기"
+
+# 4. 부킹 생성 화면 확인
+- assertVisible: "새 부킹 만들기"
+
+# 5. 제목 입력
+- tapOn:
+    id: "booking-title"
+- inputText: "E2E 테스트 부킹"
+
+# 6. 골프장 선택
+- tapOn: "골프장 선택"
+- tapOn: "스카이72 골프클럽"
+
+# 7. 날짜 선택
+- tapOn: "날짜 선택"
+- tapOn: "확인"
+
+# 8. 시간 선택
+- tapOn: "시간 선택"
+- tapOn: "확인"
+
+# 9. 인원 설정
+- tapOn: "최대 인원"
+
+# 10. 생성 버튼 클릭
+- tapOn: "부킹 생성"
+
+# 11. 생성 성공 확인
+- assertVisible:
+    text: "생성"
+    timeout: 10000
