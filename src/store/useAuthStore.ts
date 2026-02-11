@@ -3,6 +3,13 @@ import { auth, signInWithCustomToken } from '@/services/firebase/firebaseConfig'
 import authService, { UserProfile } from '@/services/authService';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { callFunction } from '@/services/firebase/firebaseFunctions';
+import {
+  trackLogin,
+  trackSignUp,
+  trackLogout,
+  setAnalyticsUserId,
+  setAnalyticsUserProperties,
+} from '@/services/firebase/firebaseAnalytics';
 
 interface AuthState {
   user: FirebaseAuthTypes.User | null;
@@ -71,6 +78,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
         loading: false,
       });
+
+      // Analytics 추적
+      setAnalyticsUserId(firebaseUser.uid);
+      trackLogin('kakao');
+      setAnalyticsUserProperties({
+        membership: userProfile.membership,
+        gender: userProfile.gender,
+      });
     } catch (error: any) {
       console.error('로그인 실패');
       set({
@@ -123,6 +138,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
         loading: false,
       });
+
+      // Analytics 추적
+      setAnalyticsUserId(userCredential.user.uid);
+      trackLogin('email');
+      setAnalyticsUserProperties({
+        membership: profile?.membership,
+        gender: profile?.gender,
+      });
     } catch (error: any) {
       console.error('로그인 실패');
       set({
@@ -159,6 +182,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
         loading: false,
       });
+
+      // Analytics 추적
+      setAnalyticsUserId(userCredential.user.uid);
+      trackSignUp('email');
     } catch (error: any) {
       console.error('회원가입 실패');
       set({
@@ -177,6 +204,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ loading: true, error: null });
 
       await authService.signOut();
+      trackLogout();
 
       set({
         user: null,

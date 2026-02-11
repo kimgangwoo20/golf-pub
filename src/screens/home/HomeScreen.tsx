@@ -27,6 +27,7 @@ import { markAttendance, checkTodayAttendance } from '@/services/firebase/fireba
 import { joinBooking } from '@/services/firebase/firebaseBooking';
 import { MEMBERSHIP_PLANS } from '@/constants/membershipPlans';
 import { RecommendedCourses } from '@/components/golfcourse/RecommendedCourses';
+import { trackAttendanceCheck, trackSearch, trackScreenView } from '@/services/firebase/firebaseAnalytics';
 
 type FilterType = 'all' | 'today' | 'week' | 'beginner';
 
@@ -49,6 +50,7 @@ export const HomeScreen: React.FC = () => {
       loadData();
       checkAttendance();
       subscribeToUnreadCount(user.uid);
+      trackScreenView('HomeScreen');
     }
     return () => {
       unsubscribeFromUnreadCount();
@@ -186,6 +188,7 @@ export const HomeScreen: React.FC = () => {
 
       if (result.success) {
         setAttendanceChecked(true);
+        trackAttendanceCheck(result.consecutiveDays || 1);
         Alert.alert('출석 완료! 🎉', result.message, [{ text: '확인', style: 'default' as const }]);
       } else {
         Alert.alert('알림', result.message);
@@ -241,6 +244,9 @@ export const HomeScreen: React.FC = () => {
             placeholderTextColor={colors.textTertiary}
             value={searchQuery}
             onChangeText={setSearchQuery}
+            onSubmitEditing={() => {
+              if (searchQuery.trim()) trackSearch(searchQuery.trim(), 'booking');
+            }}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>

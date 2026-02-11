@@ -4,6 +4,7 @@ import {
   FirestoreTimestamp,
 } from '@/services/firebase/firebaseConfig';
 import { Booking } from '@/types/booking-types';
+import { trackBookingCreated, trackBookingJoined } from '@/services/firebase/firebaseAnalytics';
 
 interface BookingState {
   bookings: Booking[];
@@ -161,6 +162,9 @@ export const useBookingStore = create<BookingState>((set, get) => ({
         ],
         loading: false,
       });
+
+      // Analytics 추적
+      trackBookingCreated(docRef.id, booking.course, booking.price?.discount || 0);
     } catch (error: any) {
       console.error('부킹 생성 실패:', error);
       set({
@@ -285,6 +289,10 @@ export const useBookingStore = create<BookingState>((set, get) => ({
         ),
         loading: false,
       });
+
+      // Analytics 추적
+      const joined = bookings.find((b) => b.id === bookingId);
+      if (joined) trackBookingJoined(bookingId, joined.course);
     } catch (error: any) {
       console.error('부킹 참가 실패:', error);
       set({

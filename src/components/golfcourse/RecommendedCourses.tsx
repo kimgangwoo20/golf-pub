@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from '@/styles/theme';
 import { getRecommendedCourses, RecommendedCourse } from '@/services/api/recommendationAPI';
 import { useAuthStore } from '@/store/useAuthStore';
+import { trackRecommendationClicked } from '@/services/firebase/firebaseAnalytics';
 
 // 날씨 점수에 따른 색상
 function getScoreColor(score: number): string {
@@ -75,6 +76,7 @@ export const RecommendedCourses: React.FC = () => {
   };
 
   const handleCoursePress = (course: RecommendedCourse) => {
+    trackRecommendationClicked(course.name, course.totalScore);
     navigation.navigate('GolfCourse', {
       screen: 'GolfCourseDetail',
       params: { courseName: course.name, courseRegion: course.region },
