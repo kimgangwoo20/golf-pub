@@ -87,7 +87,7 @@ export const bookingAPI = {
         ...bookingData,
         createdAt: now,
         updatedAt: now,
-      } as Booking;
+      } as unknown as Booking;
 
       return newBooking;
     } catch (error: any) {

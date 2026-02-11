@@ -26,6 +26,7 @@ import { Booking } from '@/types';
 import { markAttendance, checkTodayAttendance } from '@/services/firebase/firebaseAttendance';
 import { joinBooking } from '@/services/firebase/firebaseBooking';
 import { MEMBERSHIP_PLANS } from '@/constants/membershipPlans';
+import { RecommendedCourses } from '@/components/golfcourse/RecommendedCourses';
 
 type FilterType = 'all' | 'today' | 'week' | 'beginner';
 
@@ -297,6 +298,9 @@ export const HomeScreen: React.FC = () => {
 
         {/* 날씨 위젯 */}
         <WeatherWidget />
+
+        {/* 추천 골프장 */}
+        <RecommendedCourses />
 
         {/* 출석체크 이벤트 배너 */}
         <TouchableOpacity
