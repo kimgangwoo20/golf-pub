@@ -26,12 +26,30 @@
 ### Phase 1: 기본 구조 & 인증 (완료)
 ### Phase 2: 핵심 기능 개발 (완료)
 ### Phase 3: 결제 & 알림 연동 (진행 중 - Cloud Functions 12개 배포 완료, Toss SDK 클라이언트 위젯 연동 예정)
-### Phase 4: 테스트 & 최적화 (진행 중 - Jest 52개 테스트, CI/CD 설정 완료, Error Boundary 추가, React.lazy 11개 화면 적용)
+### Phase 4: 테스트 & 최적화 (진행 중 - Jest 52개 + 추천 8개 테스트, E2E 7개 시나리오, CI/CD 설정 완료, Firebase Analytics 연동)
 ### Phase 5: 배포 준비 (예정)
 
 ---
 
 ## ✅ 완료 내역
+
+### 2026.02.11 골프장 추천 시스템 + Firebase Analytics + E2E 테스트
+
+- [x] ~~타입 안전성 개선 — `as any` 6곳 제거, booking 트랜잭션 타입 명시 (8개 파일)~~ (2026.02.11 완료)
+- [x] ~~골프장 추천 시스템 구현 (recommendationAPI.ts + RecommendedCourses.tsx)~~ (2026.02.11 완료)
+  - `recommendationAPI`: 날씨 40% + 거리 40% + 즐겨찾기 20% 종합 점수 산출
+  - Haversine 공식 GPS 거리 계산, 상위 15개 후보만 날씨 API 병렬 호출
+  - `RecommendedCourses` 가로 스크롤 카드 컴포넌트, HomeScreen 날씨 위젯 아래 배치
+  - 날씨 점수별 색상/아이콘 분기, 추천 이유 자동 생성
+- [x] ~~Firebase Analytics 이벤트 추적 연동 (@react-native-firebase/analytics)~~ (2026.02.11 완료)
+  - `firebaseAnalytics.ts`: 이벤트 25종 정의 (인증/부킹/피드/마켓/채팅/소셜/결제/검색)
+  - useAuthStore: 로그인/회원가입/로그아웃 추적 + 사용자 속성(멤버십/성별) 설정
+  - useBookingStore: 부킹 생성/참가 추적
+  - HomeScreen: 화면조회/출석체크/검색/추천클릭 추적
+- [x] ~~E2E 테스트 7개 시나리오 작성 (Maestro YAML)~~ (2026.02.11 완료)
+  - 로그인, 홈 탐색, 부킹 생성, 피드 게시, 마켓 등록, 채팅, 프로필 편집
+- [x] ~~추천 시스템 단위 테스트 8개 추가 (recommendationAPI.test.ts)~~ (2026.02.11 완료)
+- [x] ~~TypeScript 0 에러 유지~~ (2026.02.11 완료)
 
 ### 2026.02.06 완료
 
@@ -917,10 +935,10 @@
   - [ ] 음악 플레이리스트 기능
   - [ ] 음악 선물하기 기능 (GiftMusicModal)
 
-- [ ] **골프장 추천 시스템**
-  - [ ] 위치 기반 골프장 추천
-  - [ ] 날씨 연계 추천 알고리즘
-  - [ ] 사용자 선호도 기반 추천
+- [x] ~~**골프장 추천 시스템**~~ (2026.02.11 완료)
+  - [x] ~~위치 기반 골프장 추천~~ (2026.02.11 완료)
+  - [x] ~~날씨 연계 추천 알고리즘~~ (2026.02.11 완료)
+  - [x] ~~사용자 선호도 기반 추천~~ (2026.02.11 완료)
 
 - [ ] **카카오 연동 확장**
   - [x] ~~카카오맵 연동 (골프장/펍 위치)~~ (2026.02.08 완료)
@@ -936,13 +954,13 @@
 
 - [ ] **에러 추적 & 분석**
   - [ ] Sentry 에러 추적 연동
-  - [ ] Firebase Analytics 이벤트 추적
-  - [ ] 사용자 행동 분석
+  - [x] ~~Firebase Analytics 이벤트 추적~~ (2026.02.11 완료)
+  - [x] ~~사용자 행동 분석~~ (2026.02.11 완료)
 
 - [ ] **테스트**
   - [x] ~~단위 테스트 작성 (formatters, validators, kakaoMessage - 20개)~~ (2026.02.08 완료)
   - [x] ~~통합 테스트 확장 (imageUtils, tossPayments, kakaoMap, listOptimization, dateUtils - 52개)~~ (2026.02.08 완료)
-  - [ ] E2E 테스트 (주요 사용자 시나리오)
+  - [x] ~~E2E 테스트 (주요 사용자 시나리오)~~ (2026.02.11 완료)
 
 - [x] ~~**CI/CD 파이프라인**~~ (2026.02.08 완료)
   - [x] ~~GitHub Actions 설정~~ (2026.02.08 완료)
@@ -976,7 +994,9 @@
 | 내 정보/프로필 화면 | 7 | 7 | 0 | 100% |
 | 리뷰 시스템 | 5 | 5 | 0 | 100% |
 | 음악 | 4 | 0 | 4 | 0% |
-| 테스트/배포 | 10 | 6 | 4 | 60% |
+| 골프장 추천 시스템 | 3 | 3 | 0 | 100% |
+| Firebase Analytics | 3 | 3 | 0 | 100% |
+| 테스트/배포 | 10 | 8 | 2 | 80% |
 | 코드 품질 | 4 | 4 | 0 | 100% |
 | 친구 Mock→API 전환 | 4 | 4 | 0 | 100% |
 | 예약 Mock→API 전환 (5차) | 5 | 5 | 0 | 100% |
@@ -1173,7 +1193,7 @@
 > - Cloud Functions 9개 Firebase 배포 성공 (asia-northeast3, 2nd Gen): kakaoToken, attendanceCheckIn, pointsEarn/Deduct, bookingApprove/Reject, couponIssue/Redeem, sendNotification
 > - 기존 1st Gen 함수 5개 삭제 (kakaoLogin, kakaoUnlink, onBookingJoinRequest, onUserCreate, onUserDelete)
 > - paymentConfirm/Cancel은 TOSS_SECRET_KEY 실제 키 설정 후 배포 예정
-> - 전체 진행률: 88% → **90%**
+> - 전체 진행률: 88% → **90%** → **92%** (2026.02.11 골프장 추천 + Analytics + E2E 추가)
 >
 > **프로젝트 감사 8개 액션 아이템 전체 구현 + notifee→expo-notifications 전환 11차 배치 (174개 파일, +12,066/-5,162줄)**
 > - ESLint/Prettier 설정 수정: endOfLine "auto", 중복 rules 키 제거, import/no-unresolved off
