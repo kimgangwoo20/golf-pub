@@ -442,8 +442,8 @@ class FirebaseChatService {
         },
         updatedAt: timestamp,
       });
-    } catch (error) {
-      // 에러 무시
+    } catch (error: any) {
+      console.warn('채팅 작업 실패:', error?.message);
     }
   }
 
@@ -473,8 +473,8 @@ class FirebaseChatService {
 
         await roomRef.update(updates);
       }
-    } catch (error) {
-      // 에러 무시
+    } catch (error: any) {
+      console.warn('채팅 작업 실패:', error?.message);
     }
   }
 
@@ -561,8 +561,8 @@ class FirebaseChatService {
 
         await database.ref(`messages/${roomId}`).update(updates);
       }
-    } catch (error) {
-      // 에러 무시
+    } catch (error: any) {
+      console.warn('채팅 작업 실패:', error?.message);
     }
   }
 }

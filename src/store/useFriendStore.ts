@@ -84,6 +84,7 @@ export const useFriendStore = create<FriendState>((set) => ({
 
   sendFriendRequest: async (userId, friendId, friendName) => {
     try {
+      set({ error: null });
       // friendRequests 컬렉션에 요청 생성 (firebaseFriends.ts의 sendFriendRequest와 동일 패턴)
       const requestRef = doc(firestore, 'friendRequests', `${userId}_${friendId}`);
       await setDoc(requestRef, {
@@ -94,12 +95,14 @@ export const useFriendStore = create<FriendState>((set) => ({
         createdAt: FirestoreTimestamp.now(),
       });
     } catch (error: any) {
+      set({ error: error.message || '친구 요청 실패' });
       throw error;
     }
   },
 
   acceptFriendRequest: async (requestId) => {
     try {
+      set({ error: null });
       const requestRef = doc(firestore, 'friendRequests', requestId);
       await setDoc(
         requestRef,
@@ -110,12 +113,14 @@ export const useFriendStore = create<FriendState>((set) => ({
         { merge: true },
       );
     } catch (error: any) {
+      set({ error: error.message || '친구 수락 실패' });
       throw error;
     }
   },
 
   removeFriend: async (userId, friendId) => {
     try {
+      set({ error: null });
       // 양방향 삭제: 내 목록에서 친구 제거 + 친구 목록에서 나 제거
       await Promise.all([
         deleteDoc(doc(firestore, 'users', userId, 'friends', friendId)),
@@ -127,6 +132,7 @@ export const useFriendStore = create<FriendState>((set) => ({
         friends: state.friends.filter((f) => f.friendId !== friendId),
       }));
     } catch (error: any) {
+      set({ error: error.message || '친구 삭제 실패' });
       throw error;
     }
   },

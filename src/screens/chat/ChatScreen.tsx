@@ -14,7 +14,8 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { useChatStore, ChatMessage } from '@/store/useChatStore';
+import { useChatStore } from '@/store/useChatStore';
+import { ChatMessage } from '@/types/chat-types';
 import { useAuthStore } from '@/store/useAuthStore';
 import { firebaseStorage } from '@/services/firebase/firebaseStorage';
 

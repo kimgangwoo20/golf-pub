@@ -17,7 +17,8 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useChatStore, ChatMessage } from '@/store/useChatStore';
+import { useChatStore } from '@/store/useChatStore';
+import { ChatMessage } from '@/types/chat-types';
 import { DEFAULT_AVATAR } from '@/constants/images';
 import * as ImagePicker from 'expo-image-picker';
 

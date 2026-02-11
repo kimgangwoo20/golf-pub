@@ -27,6 +27,8 @@ interface Notification {
 interface NotificationState {
   notifications: Notification[];
   unreadCount: number;
+  loading: boolean;
+  error: string | null;
   subscribeToNotifications: (userId: string) => void;
   unsubscribeFromNotifications: () => void;
   subscribeToUnreadCount: (userId: string) => void;
@@ -41,6 +43,8 @@ let unreadCountUnsubscribe: (() => void) | null = null;
 export const useNotificationStore = create<NotificationState>((set, get) => ({
   notifications: [],
   unreadCount: 0,
+  loading: false,
+  error: null,
 
   subscribeToNotifications: (userId: string) => {
     // 기존 구독 해제
@@ -126,8 +130,8 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       // Firestore 업데이트 (isRead 필드)
       const notificationRef = doc(firestore, 'users', userId, 'notifications', notificationId);
       await updateDoc(notificationRef, { isRead: true, read: true });
-    } catch (error) {
-      // 알림 읽음 처리 실패 - 무시
+    } catch (error: any) {
+      console.error('알림 읽음 처리 실패:', error);
     }
   },
 
@@ -150,8 +154,8 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       });
 
       await batch.commit();
-    } catch (error) {
-      // 전체 읽음 처리 실패 - 무시
+    } catch (error: any) {
+      console.error('전체 읽음 처리 실패:', error);
     }
   },
 }));

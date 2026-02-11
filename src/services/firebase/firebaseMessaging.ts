@@ -134,8 +134,8 @@ class FirebaseMessagingService {
         fcmToken: null,
         fcmTokenUpdatedAt: FirestoreTimestamp.now(),
       });
-    } catch (error) {
-      // 토큰 삭제 실패 - 무시
+    } catch (error: any) {
+      console.warn('FCM 토큰 삭제 실패:', error?.message);
     }
   }
 
@@ -215,8 +215,8 @@ class FirebaseMessagingService {
   async unsubscribeFromTopic(topic: string): Promise<void> {
     try {
       await messaging.unsubscribeFromTopic(topic);
-    } catch (error) {
-      // 구독 해제 실패 - 무시
+    } catch (error: any) {
+      console.warn('토픽 구독 해제 실패:', error?.message);
     }
   }
 
@@ -328,8 +328,8 @@ class FirebaseMessagingService {
     try {
       const notificationRef = doc(firestore, 'users', userId, 'notifications', notificationId);
       await updateDoc(notificationRef, { isRead: true, read: true });
-    } catch (error) {
-      // 읽음 처리 실패 - 무시
+    } catch (error: any) {
+      console.warn('알림 읽음 처리 실패:', error?.message);
     }
   }
 
@@ -351,8 +351,8 @@ class FirebaseMessagingService {
       });
 
       await batch.commit();
-    } catch (error) {
-      // 모든 알림 읽음 처리 실패 - 무시
+    } catch (error: any) {
+      console.warn('모든 알림 읽음 처리 실패:', error?.message);
     }
   }
 
@@ -366,8 +366,8 @@ class FirebaseMessagingService {
     try {
       const notificationRef = doc(firestore, 'users', userId, 'notifications', notificationId);
       await deleteDoc(notificationRef);
-    } catch (error) {
-      // 알림 삭제 실패 - 무시
+    } catch (error: any) {
+      console.warn('알림 삭제 실패:', error?.message);
     }
   }
 
@@ -388,8 +388,8 @@ class FirebaseMessagingService {
       });
 
       await batch.commit();
-    } catch (error) {
-      // 모든 알림 삭제 실패 - 무시
+    } catch (error: any) {
+      console.warn('모든 알림 삭제 실패:', error?.message);
     }
   }
 

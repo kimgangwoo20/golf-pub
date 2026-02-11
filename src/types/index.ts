@@ -107,6 +107,7 @@ export interface GolfCourse {
 }
 
 // Re-exports from sub-type files
+export type { ChatMessage, ChatRoom } from './chat-types';
 export type { Weather, WeatherForecast } from './weather-types';
 export type {
   Booking,
