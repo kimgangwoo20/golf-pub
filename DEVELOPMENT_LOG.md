@@ -50,6 +50,11 @@
   - 로그인, 홈 탐색, 부킹 생성, 피드 게시, 마켓 등록, 채팅, 프로필 편집
 - [x] ~~추천 시스템 단위 테스트 8개 추가 (recommendationAPI.test.ts)~~ (2026.02.11 완료)
 - [x] ~~TypeScript 0 에러 유지~~ (2026.02.11 완료)
+- [x] ~~ESLint --fix prettier 포맷팅 자동 수정 (9개 에러 → 0 에러)~~ (2026.02.11 완료)
+  - RecommendedCourses, HomeScreen, firebaseAnalytics, recommendationAPI 포맷 정리
+  - firebaseBooking.ts 미사용 `getTimestampMs` 함수 제거
+  - **TypeScript 0 에러, ESLint 0 에러 (589 warnings — 기존 any 타입)**
+- [x] ~~GitHub remote push 완료 (커밋 6개: 5b5d9ef4 ~ 9d144ca0)~~ (2026.02.11 완료)
 
 ### 2026.02.06 완료
 
