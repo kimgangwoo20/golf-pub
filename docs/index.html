@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Golf Pub - 골프 모임 & 소셜 플랫폼</title>
+  <meta name="description" content="골프 모임 예약, 실시간 채팅, 소셜 피드, 중고마켓을 한 곳에서. 골프를 사랑하는 사람들의 커뮤니티 앱.">
+  <meta name="keywords" content="골프, 골프 모임, 골프 예약, 골프 커뮤니티, 골프 앱, Golf Pub">
+  <meta property="og:title" content="Golf Pub - 골프 모임 & 소셜 플랫폼">
+  <meta property="og:description" content="골프 모임 예약, 실시간 채팅, 소셜 피드, 중고마켓을 한 곳에서.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛳</text></svg>">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+      color: #0f172a;
+      background: #ffffff;
+      line-height: 1.6;
+    }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      padding: 80px 24px 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+    .hero-content {
+      position: relative;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .hero-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      letter-spacing: -1px;
+    }
+    .hero .tagline {
+      font-size: 20px;
+      opacity: 0.95;
+      margin-bottom: 32px;
+      font-weight: 500;
+    }
+    .hero .description {
+      font-size: 16px;
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
+    }
+    .badge-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.2);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      backdrop-filter: blur(8px);
+    }
+
+    /* Features */
+    .features {
+      padding: 80px 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .features h2 {
+      text-align: center;
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 48px;
+      color: #0f172a;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .feature-card {
+      background: #f8fafc;
+      border-radius: 16px;
+      padding: 32px 24px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+    }
+    .feature-icon {
+      font-size: 40px;
+      margin-bottom: 16px;
+    }
+    .feature-card h3 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #0f172a;
+    }
+    .feature-card p {
+      font-size: 15px;
+      color: #475569;
+      line-height: 1.6;
+    }
+
+    /* Stats */
+    .stats {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      padding: 60px 24px;
+    }
+    .stats-grid {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      text-align: center;
+    }
+    .stat-number {
+      font-size: 36px;
+      font-weight: 800;
+      color: #10b981;
+      margin-bottom: 4px;
+    }
+    .stat-label {
+      font-size: 14px;
+      color: #475569;
+      font-weight: 500;
+    }
+
+    /* Tech */
+    .tech {
+      padding: 60px 24px;
+      max-width: 900px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .tech h2 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 32px;
+    }
+    .tech-tags {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .tech-tag {
+      background: #f1f5f9;
+      color: #334155;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* CTA */
+    .cta {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      padding: 80px 24px;
+      text-align: center;
+    }
+    .cta h2 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .cta p {
+      font-size: 16px;
+      opacity: 0.9;
+      margin-bottom: 32px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .cta-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: transform 0.2s;
+    }
+    .btn:hover { transform: scale(1.05); }
+    .btn-primary {
+      background: white;
+      color: #059669;
+    }
+    .btn-secondary {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: 2px solid rgba(255,255,255,0.5);
+    }
+
+    /* Footer */
+    footer {
+      background: #0f172a;
+      color: #94a3b8;
+      padding: 40px 24px;
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+    footer a {
+      color: #10b981;
+      text-decoration: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 36px; }
+      .hero .tagline { font-size: 17px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .features-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-icon">⛳</div>
+      <h1>Golf Pub</h1>
+      <p class="tagline">골프 모임 & 소셜 플랫폼</p>
+      <p class="description">
+        골프 모임 예약부터 실시간 채팅, 소셜 피드, 중고마켓까지.<br>
+        골프를 사랑하는 사람들을 위한 올인원 커뮤니티 앱입니다.
+      </p>
+      <div class="badge-row">
+        <span class="badge">Android</span>
+        <span class="badge">iOS (예정)</span>
+        <span class="badge">무료 다운로드</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features">
+    <h2>주요 기능</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">📅</div>
+        <h3>골프 모임 예약</h3>
+        <p>원하는 날짜, 골프장, 인원을 설정하고 모임을 만들어보세요. 전국 46개 골프장 정보를 제공합니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💬</div>
+        <h3>실시간 채팅</h3>
+        <p>모임 멤버와 1:1 또는 그룹 채팅으로 소통하세요. 읽음 확인, 이미지 전송, 타이핑 표시를 지원합니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📸</div>
+        <h3>소셜 피드</h3>
+        <p>라운드 사진과 후기를 공유하고, 다른 골퍼들의 게시글에 좋아요와 댓글을 남겨보세요.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛒</div>
+        <h3>중고마켓</h3>
+        <p>골프 용품을 합리적인 가격에 거래하세요. 드라이버, 아이언, 웨어까지 다양한 카테고리를 지원합니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌤️</div>
+        <h3>골프 날씨</h3>
+        <p>현재 날씨와 10일 예보를 골프 적합도 점수로 확인하세요. AI가 오늘의 추천 골프장을 알려줍니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏆</div>
+        <h3>멤버십 & 포인트</h3>
+        <p>출석 체크, 모임 참여로 포인트를 적립하고 프리미엄 멤버십으로 더 많은 혜택을 누리세요.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section class="stats">
+    <div class="stats-grid">
+      <div>
+        <div class="stat-number">89+</div>
+        <div class="stat-label">화면 구성</div>
+      </div>
+      <div>
+        <div class="stat-number">46</div>
+        <div class="stat-label">전국 골프장</div>
+      </div>
+      <div>
+        <div class="stat-number">7</div>
+        <div class="stat-label">핵심 기능 탭</div>
+      </div>
+      <div>
+        <div class="stat-number">25+</div>
+        <div class="stat-label">Analytics 이벤트</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tech Stack -->
+  <section class="tech">
+    <h2>기술 스택</h2>
+    <div class="tech-tags">
+      <span class="tech-tag">React Native</span>
+      <span class="tech-tag">Expo</span>
+      <span class="tech-tag">TypeScript</span>
+      <span class="tech-tag">Firebase</span>
+      <span class="tech-tag">Zustand</span>
+      <span class="tech-tag">Cloud Functions</span>
+      <span class="tech-tag">Toss Payments</span>
+      <span class="tech-tag">Kakao SDK</span>
+      <span class="tech-tag">Open-Meteo API</span>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <h2>지금 시작하세요</h2>
+    <p>골프를 함께 즐길 사람들이 기다리고 있습니다.</p>
+    <div class="cta-buttons">
+      <a href="#" class="btn btn-primary">Google Play (준비 중)</a>
+      <a href="#" class="btn btn-secondary">App Store (준비 중)</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>
+      &copy; 2026 Golf Pub. All rights reserved.<br>
+      문의: <a href="mailto:support@golfpub.kr">support@golfpub.kr</a><br>
+      <a href="https://github.com/kimgangwoo20/golf-pub">GitHub</a>
+    </p>
+  </footer>
+
+</body>
+</html>
