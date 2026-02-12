@@ -1,16 +1,69 @@
-// profile-types.ts - 프로필 관련 타입 정의
+// profile-types.ts - 프로필 관련 타입 정의 (통합)
+
+export interface FavoriteCourse {
+  name: string;
+  id?: string;
+  location?: { lat: number; lng: number };
+}
 
 export interface UserProfile {
-  id: string;
-  name: string;
-  profileImage: string;
-  email?: string;
-  phone?: string;
-  handicap: number;
-  memberSince: string;
-  points: number;
-  coupons: number;
+  // 식별자
+  uid: string;
+
+  // 기본 정보
+  email: string | null;
+  displayName?: string | null;
+  nickname?: string; // 카카오 로그인용
+  photoURL?: string | null;
+  profileImage?: string; // 카카오 로그인용 별칭
+  phoneNumber?: string | null;
+  gender?: 'male' | 'female';
+
+  // 골프 프로필
+  handicap?: number;
+  level?: 'beginner' | 'intermediate' | 'advanced' | 'pro';
   bio?: string;
+  location?: string;
+  favoriteGolfCourse?: string;
+  favoriteCourses?: FavoriteCourse[];
+  golfExperience?: string | number;
+  roundingStyles?: string[];
+  interests?: string[];
+  monthlyRounds?: string;
+  overseasGolf?: string;
+
+  // 소셜/통계
+  totalRounds?: number;
+  likeCount?: number;
+  rating?: number;
+  reviews?: number;
+  stats?: {
+    averageScore: number;
+    bestScore: number;
+    gamesPlayed: number;
+    attendance: number;
+  };
+
+  // 역할/멤버십
+  role?: 'GENERAL' | 'COACH' | 'ADMIN';
+  isCoach?: boolean;
+  coachVerified?: boolean;
+  membership?: string;
+  membershipLevel?: 'FREE' | 'BASIC' | 'PRO' | 'PREMIUM';
+  provider?: 'firebase' | 'kakao' | 'email';
+
+  // 포인트/쿠폰
+  points?: number;
+  pointBalance?: number;
+  coupons?: number;
+
+  // 미디어
+  backgroundMedia?: { url: string; type: 'image' | 'video'; order: number }[];
+
+  // 타임스탬프
+  createdAt?: Date | any;
+  updatedAt?: Date | any;
+  lastLoginAt?: Date | any;
 }
 
 export interface UserStats {

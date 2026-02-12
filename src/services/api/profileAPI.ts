@@ -57,32 +57,30 @@ export const profileAPI = {
         }
         const newData = newDoc.data();
         return {
-          id: currentUser.uid,
-          name: newData?.name || currentUser.displayName || '익명',
-          profileImage: newData?.photoURL || currentUser.photoURL || '',
+          uid: currentUser.uid,
+          displayName: newData?.displayName || newData?.name || currentUser.displayName || '익명',
+          photoURL: newData?.photoURL || currentUser.photoURL || '',
           email: newData?.email || currentUser.email || '',
-          phone: newData?.phone || '',
+          phoneNumber: newData?.phoneNumber || '',
           handicap: newData?.handicap || 0,
-          memberSince: newData?.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
           points: newData?.points || 0,
           coupons: newData?.coupons || 0,
           bio: newData?.bio || '',
-        } as unknown as UserProfile;
+        } as UserProfile;
       }
 
       const data = userDoc.data();
       const profile = {
-        id: currentUser.uid,
-        name: data?.name || data?.displayName || currentUser.displayName || '익명',
-        profileImage: data?.photoURL || data?.profileImage || currentUser.photoURL || '',
+        uid: currentUser.uid,
+        displayName: data?.displayName || data?.name || currentUser.displayName || '익명',
+        photoURL: data?.photoURL || data?.profileImage || currentUser.photoURL || '',
         email: data?.email || currentUser.email || '',
-        phone: data?.phone || currentUser.phoneNumber || '',
+        phoneNumber: data?.phoneNumber || data?.phone || currentUser.phoneNumber || '',
         handicap: data?.handicap || 0,
-        memberSince: data?.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
         points: data?.points || 0,
         coupons: data?.coupons || 0,
         bio: data?.bio || '',
-      } as unknown as UserProfile;
+      } as UserProfile;
 
       // 프로필 조회 성공
       return profile;
@@ -437,17 +435,13 @@ export const profileAPI = {
 
       const data = userDoc.data();
       const profile = {
-        id: userId,
-        name: data?.name || data?.displayName || '익명',
-        profileImage: data?.photoURL || data?.profileImage || '',
-        email: '', // 다른 사용자 이메일은 숨김
-        phone: '', // 다른 사용자 전화번호는 숨김
+        uid: userId,
+        displayName: data?.displayName || data?.name || '익명',
+        photoURL: data?.photoURL || data?.profileImage || '',
+        email: null, // 다른 사용자 이메일은 숨김
         handicap: data?.handicap || 0,
-        memberSince: data?.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
-        points: 0, // 다른 사용자 포인트는 숨김
-        coupons: 0,
         bio: data?.bio || '',
-      } as unknown as UserProfile;
+      } as UserProfile;
 
       // 사용자 프로필 조회 성공
       return profile;

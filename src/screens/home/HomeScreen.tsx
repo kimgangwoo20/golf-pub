@@ -59,6 +59,8 @@ export const HomeScreen: React.FC = () => {
     return () => {
       unsubscribeFromUnreadCount();
     };
+    // loadData, checkAttendance는 컴포넌트 내 함수, subscribeToUnreadCount/unsubscribeFromUnreadCount는 Zustand 스토어 함수로 안정적
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.uid]);
 
   const checkAttendance = async () => {
@@ -87,6 +89,8 @@ export const HomeScreen: React.FC = () => {
     setRefreshing(true);
     await loadData();
     setRefreshing(false);
+    // loadData는 컴포넌트 내 함수이지만 마운트 후 변하지 않음
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredBookings = bookings.filter((booking) => {

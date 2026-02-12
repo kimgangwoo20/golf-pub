@@ -35,6 +35,8 @@ export const BookingListScreen: React.FC = () => {
 
   useEffect(() => {
     applyFiltersAndSort();
+    // applyFiltersAndSort는 컴포넌트 스코프 함수로 bookings, activeFilter, sortType에 의존
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookings, activeFilter, sortType]);
 
   const onRefresh = async () => {

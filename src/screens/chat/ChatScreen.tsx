@@ -61,6 +61,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
     }
 
     return () => unsubscribe();
+    // listenToMessages, markAsRead는 Zustand 스토어 함수로 안정적
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId, user]);
 
   // 이미지 선택 및 전송

@@ -26,6 +26,8 @@ export const useReviewScreen = (courseId: string) => {
 
   useEffect(() => {
     loadReviews();
+    // loadReviews는 컴포넌트 내 함수이지만 courseId, filter, sort 변경 시에만 실행
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId, filter, sort]);
 
   const buildConstraints = (): any[] => {

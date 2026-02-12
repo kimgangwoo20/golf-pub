@@ -63,7 +63,7 @@ export interface NotificationData {
 /**
  * Firebase Messaging Service
  */
-class FirebaseMessagingService {
+export class FirebaseMessagingService {
   // FCM 리스너 해제 함수 관리 (메모리 누수 방지)
   private _unsubscribers: (() => void)[] = [];
 
@@ -550,6 +550,26 @@ class FirebaseMessagingService {
 
       case 'coupon_issued':
         navigate('MyHome', { screen: 'Coupons' });
+        break;
+
+      // 부킹 리마인더 → 부킹 상세
+      case 'booking_reminder':
+        if (data.bookingId) {
+          navigate('Bookings', {
+            screen: 'BookingDetail',
+            params: { bookingId: data.bookingId },
+          });
+        }
+        break;
+
+      // 상품 판매 완료 → 내 상품 목록
+      case 'marketplace_sold':
+        navigate('Marketplace', { screen: 'MyProducts' });
+        break;
+
+      // 멤버십 업그레이드 → 멤버십 관리
+      case 'membership_upgrade':
+        navigate('MyHome', { screen: 'MembershipManage' });
         break;
 
       // 기본: 알림 목록으로 이동

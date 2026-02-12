@@ -34,17 +34,19 @@ export const EditProfileScreen: React.FC<{ navigation?: any }> = ({ navigation }
 
   useEffect(() => {
     loadProfile();
+    // loadProfile은 컴포넌트 내 함수이지만 마운트 시 1회만 실행
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadProfile = async () => {
     try {
       const profile = await profileAPI.getMyProfile();
       if (profile) {
-        setName(profile.name || '');
+        setName(profile.displayName || profile.nickname || '');
         setBio(profile.bio || '');
         setHandicap(profile.handicap?.toString() || '0');
-        setProfileImage(profile.profileImage || null);
-        setGender((profile as any).gender || userProfile?.gender);
+        setProfileImage(profile.photoURL || profile.profileImage || null);
+        setGender(profile.gender || userProfile?.gender);
       }
     } catch (error) {
       console.error('프로필 로드 실패:', error);

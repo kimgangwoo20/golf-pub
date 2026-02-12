@@ -22,6 +22,8 @@ export const usePostDetail = (postId: string) => {
   useEffect(() => {
     loadPost();
     loadComments();
+    // loadPost, loadComments는 컴포넌트 내 함수이지만 postId 변경 시에만 실행
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postId]);
 
   const loadPost = async () => {

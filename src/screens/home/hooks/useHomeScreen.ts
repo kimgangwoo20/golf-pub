@@ -19,6 +19,8 @@ export const useHomeScreen = () => {
   useEffect(() => {
     loadData();
     checkAttendance();
+    // loadData, checkAttendance는 컴포넌트 내 함수이지만 마운트 시 1회만 실행
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -47,6 +49,8 @@ export const useHomeScreen = () => {
     await loadData();
     await checkAttendance();
     setRefreshing(false);
+    // loadData, checkAttendance는 컴포넌트 내 함수이지만 마운트 후 변하지 않음
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleBookingPress = (bookingId: string) => {

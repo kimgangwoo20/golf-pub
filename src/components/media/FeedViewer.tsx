@@ -257,6 +257,8 @@ export const FeedViewer: React.FC<FeedViewerProps> = ({
       onShow.remove();
       onHide.remove();
     };
+    // keyboardHeight는 useRef로 생성된 Animated.Value이므로 안정적
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLike = useCallback(

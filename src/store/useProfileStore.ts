@@ -13,41 +13,9 @@ import {
   getDownloadURL,
 } from '@/services/firebase/firebaseConfig';
 
-export interface FavoriteCourse {
-  name: string;
-  id?: string;
-  location?: { lat: number; lng: number };
-}
+import type { UserProfile, FavoriteCourse } from '@/types/profile-types';
 
-export interface UserProfile {
-  uid: string;
-  email: string | null;
-  displayName: string;
-  photoURL: string | null;
-  handicap: number;
-  level: 'beginner' | 'intermediate' | 'advanced';
-  bio: string;
-  location: string;
-  favoriteCourses: FavoriteCourse[];
-  roundingStyles: string[];
-  interests: string[];
-  golfExperience: string;
-  monthlyRounds: string;
-  overseasGolf: string;
-  totalRounds: number;
-  likeCount: number;
-  rating: number;
-  reviews: number;
-  pointBalance: number;
-  role: 'GENERAL' | 'COACH' | 'ADMIN';
-  stats: {
-    averageScore: number;
-    bestScore: number;
-    gamesPlayed: number;
-    attendance: number;
-  };
-  backgroundMedia?: { url: string; type: 'image' | 'video'; order: number }[];
-}
+export type { UserProfile, FavoriteCourse } from '@/types/profile-types';
 
 interface ProfileState {
   profile: UserProfile | null;
@@ -206,7 +174,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       // 로컬 상태 업데이트
       const { profile } = get();
       if (profile) {
-        set({ profile: { ...profile, pointBalance: profile.pointBalance + points } });
+        set({ profile: { ...profile, pointBalance: (profile.pointBalance || 0) + points } });
       }
     } catch (error: any) {
       console.error('포인트 추가 실패:', error);
@@ -257,7 +225,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       // 로컬 상태 업데이트
       const { profile } = get();
       if (profile) {
-        set({ profile: { ...profile, pointBalance: profile.pointBalance - points } });
+        set({ profile: { ...profile, pointBalance: (profile.pointBalance || 0) - points } });
       }
     } catch (error: any) {
       console.error('포인트 차감 실패:', error);

@@ -90,6 +90,8 @@ export const ProfileScreen: React.FC<{ navigation?: any; route?: any }> = ({
       friction: 8,
       useNativeDriver: true,
     }).start();
+    // cardAnim은 useRef로 생성된 Animated.Value이므로 안정적
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleRefresh = useCallback(async () => {

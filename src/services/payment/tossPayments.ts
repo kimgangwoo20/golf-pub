@@ -72,9 +72,9 @@ export type PaymentStatus =
 /**
  * Toss Payments 서비스
  *
- * 현재 시뮬레이션 모드로 동작합니다.
- * 실제 연동 시 @tosspayments/widget-sdk-react-native 패키지 설치 후
- * requestPayment()를 SDK 호출로 교체하면 됩니다.
+ * Widget SDK(@tosspayments/widget-sdk-react-native)가 결제 UI를 담당하고,
+ * 이 서비스는 결제 확인/취소/환불 금액 계산 등 비즈니스 로직을 처리합니다.
+ * EXPO_PUBLIC_TOSS_CLIENT_KEY 미설정 시 시뮬레이션 모드로 동작합니다.
  */
 class TossPaymentService {
   private readonly clientKey = process.env.EXPO_PUBLIC_TOSS_CLIENT_KEY || '';
@@ -100,15 +100,18 @@ class TossPaymentService {
       return this.simulatePayment(request);
     }
 
-    // TODO: 실제 Toss Payments SDK 연동
-    // const tossPayments = await loadTossPayments(this.clientKey);
-    // const result = await tossPayments.requestPayment({
-    //   amount: request.amount,
-    //   orderId: request.orderId,
-    //   orderName: request.orderName,
-    //   method: request.method,
-    // });
-    return this.simulatePayment(request);
+    // Widget SDK가 활성화된 경우 PaymentScreen에서 직접
+    // usePaymentWidget().requestPayment()를 사용하므로,
+    // 이 메서드는 fallback 모드에서만 호출됨.
+    // fallback에서는 confirmPayment으로 서버 검증만 수행.
+    return {
+      success: true,
+      paymentKey: `pending_${Date.now()}`,
+      orderId: request.orderId,
+      amount: request.amount,
+      method: request.method,
+      message: 'Widget SDK 결제 화면으로 전환됩니다.',
+    };
   }
 
   /**

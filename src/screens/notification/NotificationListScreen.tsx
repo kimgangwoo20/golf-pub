@@ -109,6 +109,8 @@ export const NotificationListScreen: React.FC = () => {
     return () => {
       unsubscribeFromNotifications();
     };
+    // subscribeToNotifications, unsubscribeFromNotifications는 Zustand 스토어 함수로 안정적
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.uid]);
 
   const handleNotificationPress = useCallback(
@@ -123,6 +125,8 @@ export const NotificationListScreen: React.FC = () => {
         ...(notification.data || {}),
       });
     },
+    // markAsRead는 Zustand 스토어 함수로 안정적
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [user?.uid],
   );
 
@@ -130,6 +134,8 @@ export const NotificationListScreen: React.FC = () => {
     if (user?.uid) {
       markAllAsRead(user.uid);
     }
+    // markAllAsRead는 Zustand 스토어 함수로 안정적
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.uid]);
 
   const onRefresh = useCallback(async () => {
@@ -140,6 +146,8 @@ export const NotificationListScreen: React.FC = () => {
       subscribeToNotifications(user.uid);
     }
     setRefreshing(false);
+    // subscribeToNotifications, unsubscribeFromNotifications는 Zustand 스토어 함수로 안정적
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.uid]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;

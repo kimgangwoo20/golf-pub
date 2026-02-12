@@ -14,28 +14,9 @@ import {
   onAuthStateChanged,
 } from '@/services/firebase/firebaseConfig';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import type { UserProfile } from '@/types/profile-types';
 
-export interface UserProfile {
-  uid: string;
-  email: string | null;
-  displayName?: string | null;
-  nickname?: string; // Kakao 로그인용
-  photoURL?: string | null;
-  profileImage?: string; // Kakao 로그인용
-  phoneNumber?: string | null;
-  createdAt: Date;
-  updatedAt?: Date;
-  lastLoginAt?: Date; // Kakao 로그인용
-  provider?: 'firebase' | 'kakao' | 'email'; // 로그인 제공자
-  // 추가 프로필 정보
-  bio?: string;
-  level?: 'beginner' | 'intermediate' | 'advanced' | 'pro';
-  handicap?: number;
-  favoriteGolfCourse?: string;
-  golfExperience?: number; // 골프 경력 (년)
-  gender?: 'male' | 'female'; // 성별
-  membership?: string; // 멤버십 타입 (FREE, PREMIUM, VIP)
-}
+export type { UserProfile } from '@/types/profile-types';
 
 class AuthService {
   /**

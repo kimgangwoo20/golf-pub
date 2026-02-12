@@ -70,6 +70,8 @@ export const PostDetailScreen: React.FC = () => {
       }
     };
     if (postId) loadData();
+    // getPostById, getPostComments는 Zustand 스토어 함수로 안정적
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postId]);
 
   // 로딩 또는 게시글 없음

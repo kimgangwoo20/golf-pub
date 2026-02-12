@@ -60,6 +60,8 @@ export const ChatRoomScreen: React.FC = () => {
     return () => {
       unsubscribe();
     };
+    // listenToMessages, markAsRead는 Zustand 스토어 함수로 안정적
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId, user?.uid]);
 
   useEffect(() => {
@@ -89,6 +91,8 @@ export const ChatRoomScreen: React.FC = () => {
       keyboardWillShow.remove();
       keyboardWillHide.remove();
     };
+    // keyboardHeight는 useRef로 생성된 Animated.Value이므로 안정적
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [insets.bottom]);
 
   // 카메라로 사진 찍기

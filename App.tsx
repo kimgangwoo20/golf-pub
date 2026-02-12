@@ -1,7 +1,7 @@
 // App.tsx - Expo 앱 진입점 (Firebase + Auth 통합)
 import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { navigationRef } from './src/utils/navigationRef';
+import { navigationRef } from '@/utils/navigationRef';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
@@ -9,116 +9,119 @@ import { View, Text, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Firebase 초기화
-import './src/services/firebase/firebaseConfig';
+import '@/services/firebase/firebaseConfig';
 
 // 홈 화면
-import { HomeScreen } from './src/screens/home/HomeScreen';
+import { HomeScreen } from '@/screens/home/HomeScreen';
 
 // 멤버십 화면들
-import { MembershipIntroScreen } from './src/screens/membership/MembershipIntroScreen';
-import { MembershipPlanScreen } from './src/screens/membership/MembershipPlanScreen';
-import { PlanComparisonScreen } from './src/screens/membership/PlanComparisonScreen';
-import { MembershipPaymentScreen } from './src/screens/membership/MembershipPaymentScreen';
-import { MembershipSuccessScreen } from './src/screens/membership/MembershipSuccessScreen';
-import { MembershipBenefitsScreen } from './src/screens/membership/MembershipBenefitsScreen';
-import { MembershipManageScreen } from './src/screens/membership/MembershipManageScreen';
-import { UpgradePlanScreen } from './src/screens/membership/UpgradePlanScreen';
+import { MembershipIntroScreen } from '@/screens/membership/MembershipIntroScreen';
+import { MembershipPlanScreen } from '@/screens/membership/MembershipPlanScreen';
+import { PlanComparisonScreen } from '@/screens/membership/PlanComparisonScreen';
+import { MembershipPaymentScreen } from '@/screens/membership/MembershipPaymentScreen';
+import { MembershipSuccessScreen } from '@/screens/membership/MembershipSuccessScreen';
+import { MembershipBenefitsScreen } from '@/screens/membership/MembershipBenefitsScreen';
+import { MembershipManageScreen } from '@/screens/membership/MembershipManageScreen';
+import { UpgradePlanScreen } from '@/screens/membership/UpgradePlanScreen';
 
 // 부킹 화면들
-import { BookingListScreen } from './src/screens/booking/BookingListScreen';
-import { BookingDetailScreen } from './src/screens/booking/BookingDetailScreen';
-import { CreateBookingScreen } from './src/screens/booking/CreateBookingScreen';
-import { PaymentScreen } from './src/screens/booking/PaymentScreen';
-import { ApplicantProfileScreen } from './src/screens/booking/ApplicantProfileScreen';
-import { BookingRequestsScreen } from './src/screens/booking/BookingRequestsScreen';
-import { PopularBookingsScreen } from './src/screens/booking/PopularBookingsScreen';
-import { RecommendedBookingsScreen } from './src/screens/booking/RecommendedBookingsScreen';
-import { RequestStatusScreen } from './src/screens/booking/RequestStatusScreen';
+import { BookingListScreen } from '@/screens/booking/BookingListScreen';
+import { BookingDetailScreen } from '@/screens/booking/BookingDetailScreen';
+import { CreateBookingScreen } from '@/screens/booking/CreateBookingScreen';
+import { PaymentScreen } from '@/screens/booking/PaymentScreen';
+import { ApplicantProfileScreen } from '@/screens/booking/ApplicantProfileScreen';
+import { BookingRequestsScreen } from '@/screens/booking/BookingRequestsScreen';
+import { PopularBookingsScreen } from '@/screens/booking/PopularBookingsScreen';
+import { RecommendedBookingsScreen } from '@/screens/booking/RecommendedBookingsScreen';
+import { RequestStatusScreen } from '@/screens/booking/RequestStatusScreen';
 
 // My 홈피 화면
-import { MyHomeScreen } from './src/screens/my/MyHomeScreen';
+import { MyHomeScreen } from '@/screens/my/MyHomeScreen';
 
 // 활동 화면들
-import { HostedMeetupsScreen } from './src/screens/my/activity/HostedMeetupsScreen';
-import { JoinedMeetupsScreen } from './src/screens/my/activity/JoinedMeetupsScreen';
-import { MyPostsScreen } from './src/screens/my/activity/MyPostsScreen';
-import { MyReviewsScreen } from './src/screens/my/activity/MyReviewsScreen';
-import { MyActivityScreen } from './src/screens/my/activity/MyActivityScreen';
+import { HostedMeetupsScreen } from '@/screens/my/activity/HostedMeetupsScreen';
+import { JoinedMeetupsScreen } from '@/screens/my/activity/JoinedMeetupsScreen';
+import { MyPostsScreen } from '@/screens/my/activity/MyPostsScreen';
+import { MyReviewsScreen } from '@/screens/my/activity/MyReviewsScreen';
+import { MyActivityScreen } from '@/screens/my/activity/MyActivityScreen';
 
 // 프로필 화면들
-import { ProfileScreen } from './src/screens/profile/ProfileScreen';
-import { EditProfileScreen } from './src/screens/profile/EditProfileScreen';
-import { SettingsScreen } from './src/screens/my/settings/SettingsScreen';
-import { PointHistoryScreen } from './src/screens/my/settings/PointHistoryScreen';
-import { CouponsScreen } from './src/screens/my/settings/CouponsScreen';
-import { SupportScreen } from './src/screens/my/settings/SupportScreen';
-import { AccountManagementScreen } from './src/screens/my/settings/AccountManagementScreen';
-import { PrivacyPolicyScreen } from './src/screens/my/settings/PrivacyPolicyScreen';
-import { TermsOfServiceScreen } from './src/screens/my/settings/TermsOfServiceScreen';
-import { LocationTermsScreen } from './src/screens/my/settings/LocationTermsScreen';
-import { OpenSourceScreen } from './src/screens/my/settings/OpenSourceScreen';
-import { MyBookingsScreen } from './src/screens/profile/MyBookingsScreen';
+import { ProfileScreen } from '@/screens/profile/ProfileScreen';
+import { EditProfileScreen } from '@/screens/profile/EditProfileScreen';
+import { SettingsScreen } from '@/screens/my/settings/SettingsScreen';
+import { PointHistoryScreen } from '@/screens/my/settings/PointHistoryScreen';
+import { CouponsScreen } from '@/screens/my/settings/CouponsScreen';
+import { SupportScreen } from '@/screens/my/settings/SupportScreen';
+import { AccountManagementScreen } from '@/screens/my/settings/AccountManagementScreen';
+import { PrivacyPolicyScreen } from '@/screens/my/settings/PrivacyPolicyScreen';
+import { TermsOfServiceScreen } from '@/screens/my/settings/TermsOfServiceScreen';
+import { LocationTermsScreen } from '@/screens/my/settings/LocationTermsScreen';
+import { OpenSourceScreen } from '@/screens/my/settings/OpenSourceScreen';
+import { MyBookingsScreen } from '@/screens/profile/MyBookingsScreen';
 
 // 중고거래 화면들
-import { MarketplaceScreen } from './src/screens/marketplace/MarketplaceScreen';
-import { ProductDetailScreen } from './src/screens/marketplace/ProductDetailScreen';
-import { CreateProductScreen } from './src/screens/marketplace/CreateProductScreen';
-import { MyProductsScreen } from './src/screens/marketplace/MyProductsScreen';
-import { OfferManagementScreen } from './src/screens/marketplace/OfferManagementScreen';
+import { MarketplaceScreen } from '@/screens/marketplace/MarketplaceScreen';
+import { ProductDetailScreen } from '@/screens/marketplace/ProductDetailScreen';
+import { CreateProductScreen } from '@/screens/marketplace/CreateProductScreen';
+import { MyProductsScreen } from '@/screens/marketplace/MyProductsScreen';
+import { OfferManagementScreen } from '@/screens/marketplace/OfferManagementScreen';
 
 // 친구 화면들
-import { FriendsScreen } from './src/screens/friends/FriendsScreen';
-import { FriendProfileScreen } from './src/screens/friends/FriendProfileScreen';
-import { AddFriendScreen } from './src/screens/friends/AddFriendScreen';
-import { FriendRequestsScreen } from './src/screens/friends/FriendRequestsScreen';
+import { FriendsScreen } from '@/screens/friends/FriendsScreen';
+import { FriendProfileScreen } from '@/screens/friends/FriendProfileScreen';
+import { AddFriendScreen } from '@/screens/friends/AddFriendScreen';
+import { FriendRequestsScreen } from '@/screens/friends/FriendRequestsScreen';
 
 // 친구 그룹/초대 화면들
-import { InviteScreen } from './src/screens/friends/InviteScreen';
-import { CreateGroupScreen } from './src/screens/friends/CreateGroupScreen';
-import { GroupListScreen } from './src/screens/friends/GroupListScreen';
+import { InviteScreen } from '@/screens/friends/InviteScreen';
+import { CreateGroupScreen } from '@/screens/friends/CreateGroupScreen';
+import { GroupListScreen } from '@/screens/friends/GroupListScreen';
 
 // Feed 화면들
-import { FeedScreen } from './src/screens/feed/FeedScreen';
-import { CreatePostScreen } from './src/screens/feed/CreatePostScreen';
-import { PostDetailScreen } from './src/screens/feed/PostDetailScreen';
+import { FeedScreen } from '@/screens/feed/FeedScreen';
+import { CreatePostScreen } from '@/screens/feed/CreatePostScreen';
+import { PostDetailScreen } from '@/screens/feed/PostDetailScreen';
 
 // 알림 화면
-import { NotificationListScreen } from './src/screens/notification/NotificationListScreen';
+import { NotificationListScreen } from '@/screens/notification/NotificationListScreen';
 
 // 골프장 화면들
-import { GolfCourseSearchScreen } from './src/screens/golfcourse/GolfCourseSearchScreen';
-import { GolfCourseDetailScreen } from './src/screens/golfcourse/GolfCourseDetailScreen';
-import { GolfCourseReviewScreen } from './src/screens/golfcourse/GolfCourseReviewScreen';
-import { WriteReviewScreen } from './src/screens/golfcourse/WriteReviewScreen';
+import { GolfCourseSearchScreen } from '@/screens/golfcourse/GolfCourseSearchScreen';
+import { GolfCourseDetailScreen } from '@/screens/golfcourse/GolfCourseDetailScreen';
+import { GolfCourseReviewScreen } from '@/screens/golfcourse/GolfCourseReviewScreen';
+import { WriteReviewScreen } from '@/screens/golfcourse/WriteReviewScreen';
 
 // 펍 화면들
-import { BestPubsScreen } from './src/screens/pub/BestPubsScreen';
-import { PubDetailScreen } from './src/screens/pub/PubDetailScreen';
-import { PubReviewsScreen } from './src/screens/pub/PubReviewsScreen';
+import { BestPubsScreen } from '@/screens/pub/BestPubsScreen';
+import { PubDetailScreen } from '@/screens/pub/PubDetailScreen';
+import { PubReviewsScreen } from '@/screens/pub/PubReviewsScreen';
 
 // 채팅 화면들 (Firebase)
-import { ChatListScreen } from './src/screens/chat/ChatListScreen-Firebase';
-import { ChatScreen } from './src/screens/chat/ChatScreen';
-import { ChatRoomScreen } from './src/screens/chat/ChatRoomScreen';
-import { CreateChatScreen } from './src/screens/chat/CreateChatScreen-Firebase';
-import { ChatSettingsScreen } from './src/screens/chat/ChatSettingsScreen';
+import { ChatListScreen } from '@/screens/chat/ChatListScreen-Firebase';
+import { ChatScreen } from '@/screens/chat/ChatScreen';
+import { ChatRoomScreen } from '@/screens/chat/ChatRoomScreen';
+import { CreateChatScreen } from '@/screens/chat/CreateChatScreen-Firebase';
+import { ChatSettingsScreen } from '@/screens/chat/ChatSettingsScreen';
 
 // 인증 관련
-import { AuthNavigator } from './src/navigation/AuthNavigator';
-import { useAuthStore } from './src/store/useAuthStore';
+import { AuthNavigator } from '@/navigation/AuthNavigator';
+import { useAuthStore } from '@/store/useAuthStore';
 
 // 알림
-import { firebaseMessaging } from './src/services/firebase/firebaseMessaging';
-import { useNotificationStore } from './src/store/useNotificationStore';
+import { firebaseMessaging, FirebaseMessagingService } from '@/services/firebase/firebaseMessaging';
+import { useNotificationStore } from '@/store/useNotificationStore';
+
+// FCM 백그라운드 핸들러 (최상위에서 호출 필수)
+FirebaseMessagingService.setBackgroundMessageHandler();
 
 // Error Boundary
-import { ErrorBoundary } from './src/components/common/ErrorBoundary';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 
 // 결제 내역
-import { PaymentHistoryScreen } from './src/screens/profile/PaymentHistoryScreen';
+import { PaymentHistoryScreen } from '@/screens/profile/PaymentHistoryScreen';
 
 // 성별 미설정 유저용 모달
-import { GenderSelectModal } from './src/components/common/GenderSelectModal';
+import { GenderSelectModal } from '@/components/common/GenderSelectModal';
 
 const Tab = createBottomTabNavigator();
 const HomeStack = createNativeStackNavigator();
@@ -412,15 +415,20 @@ export default function App() {
     return unsubscribe;
   }, []);
 
-  // FCM 초기화 + 알림 구독 (로그인 후)
+  // FCM 초기화 + 알림 구독 (로그인 후) / 정리 (로그아웃 시)
   useEffect(() => {
     if (user?.uid) {
       firebaseMessaging.initialize(user.uid);
       subscribeToUnreadCount(user.uid);
+    } else {
+      // 로그아웃 시 FCM 리스너 정리 + 뱃지 초기화
+      firebaseMessaging.cleanup();
+      firebaseMessaging.updateBadgeCount(0);
     }
     return () => {
       unsubscribeFromUnreadCount();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.uid]);
 
   if (loading) {

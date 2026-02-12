@@ -27,7 +27,9 @@ export const CreateChatScreen: React.FC<{ navigation?: any }> = ({ navigation })
     if (user?.uid) {
       loadFriends(user.uid);
     }
-  }, [user]);
+    // loadFriends는 Zustand 스토어 함수로 안정적
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
 
   const filteredFriends = friends.filter((friend) =>
     friend.friendName.toLowerCase().includes(searchQuery.toLowerCase()),

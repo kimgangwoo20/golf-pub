@@ -164,6 +164,8 @@ export const FeedScreen: React.FC = () => {
       keyboardWillShow.remove();
       keyboardWillHide.remove();
     };
+    // keyboardHeight는 useRef로 생성된 Animated.Value이므로 안정적
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 탭 데이터

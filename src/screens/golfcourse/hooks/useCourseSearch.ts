@@ -19,6 +19,8 @@ export const useCourseSearch = () => {
 
   useEffect(() => {
     searchCourses();
+    // searchCourses는 컴포넌트 내 함수이지만 searchQuery, filters 변경 시에만 실행
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, filters]);
 
   const searchCourses = async () => {

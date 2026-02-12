@@ -39,36 +39,36 @@ export const RecommendedCourses: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadRecommendations();
-  }, []);
-
-  const loadRecommendations = async () => {
-    try {
-      setLoading(true);
-      // 유저 즐겨찾기 골프장 목록 추출
-      const favorites: string[] = [];
-      if (userProfile?.favoriteCourses) {
-        for (const c of userProfile.favoriteCourses) {
-          if (typeof c === 'string') {
-            favorites.push(c);
-          } else if (c?.name) {
-            favorites.push(c.name);
+    const loadRecommendations = async () => {
+      try {
+        setLoading(true);
+        // 유저 즐겨찾기 골프장 목록 추출
+        const favorites: string[] = [];
+        if (userProfile?.favoriteCourses) {
+          for (const c of userProfile.favoriteCourses) {
+            if (typeof c === 'string') {
+              favorites.push(c);
+            } else if (c?.name) {
+              favorites.push(c.name);
+            }
           }
         }
-      }
-      if (userProfile?.favoriteGolfCourse) {
-        favorites.push(userProfile.favoriteGolfCourse);
-      }
+        if (userProfile?.favoriteGolfCourse) {
+          favorites.push(userProfile.favoriteGolfCourse);
+        }
 
-      // 기본 위치: 서울 (추후 GPS 연동 가능)
-      const recommended = await getRecommendedCourses(37.5665, 126.978, favorites, 5);
-      setCourses(recommended);
-    } catch (error) {
-      console.error('추천 골프장 로드 실패:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+        // 기본 위치: 서울 (추후 GPS 연동 가능)
+        const recommended = await getRecommendedCourses(37.5665, 126.978, favorites, 5);
+        setCourses(recommended);
+      } catch (error) {
+        console.error('추천 골프장 로드 실패:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRecommendations();
+  }, [userProfile]);
 
   const handleCoursePress = (course: RecommendedCourse) => {
     trackRecommendationClicked(course.name, course.totalScore);

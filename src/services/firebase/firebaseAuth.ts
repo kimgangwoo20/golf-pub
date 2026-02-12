@@ -20,30 +20,9 @@ import {
   handleFirebaseError,
 } from './firebaseConfig';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import type { UserProfile } from '@/types/profile-types';
 
-/**
- * 사용자 프로필 인터페이스
- */
-export interface UserProfile {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
-  phoneNumber: string | null;
-  handicap: number;
-  role: 'GENERAL' | 'COACH' | 'ADMIN';
-  isCoach: boolean;
-  coachVerified: boolean;
-  points: number;
-  membershipLevel: 'FREE' | 'BASIC' | 'PRO' | 'PREMIUM';
-  location: {
-    city: string;
-    district: string;
-  } | null;
-  createdAt: any;
-  updatedAt: any;
-  lastLoginAt: any;
-}
+export type { UserProfile } from '@/types/profile-types';
 
 /**
  * 카카오 사용자 정보 인터페이스
@@ -250,7 +229,7 @@ class FirebaseAuthService {
         coachVerified: false,
         points: 0,
         membershipLevel: 'FREE',
-        location: null,
+        location: undefined,
         createdAt: FirestoreTimestamp.now(),
         updatedAt: FirestoreTimestamp.now(),
         lastLoginAt: FirestoreTimestamp.now(),

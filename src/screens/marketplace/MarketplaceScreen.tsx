@@ -35,6 +35,8 @@ export const MarketplaceScreen: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       loadItems();
+      // loadItems는 Zustand 스토어 함수로 안정적
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []),
   );
 

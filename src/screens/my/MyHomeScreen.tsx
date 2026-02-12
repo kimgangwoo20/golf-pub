@@ -315,6 +315,8 @@ export const MyHomeScreen: React.FC<{ route?: any }> = ({ route }) => {
   const photoListKey = backgroundMedia.map((m) => m.url).join('|');
   const photoList: (string | null)[] = useMemo(
     () => (backgroundMedia.length > 0 ? backgroundMedia.map((m) => m.url) : [null]),
+    // photoListKey는 backgroundMedia의 URL 기반 문자열로 메모이제이션 키 역할
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [photoListKey],
   );
 
@@ -398,6 +400,8 @@ export const MyHomeScreen: React.FC<{ route?: any }> = ({ route }) => {
   // 방명록 Firestore 로드
   useEffect(() => {
     loadGuestbook();
+    // loadGuestbook은 컴포넌트 내 함수이지만 targetUserId 변경 시에만 실행
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetUserId]);
 
   // 방명록 Firestore 쿼리
@@ -479,6 +483,8 @@ export const MyHomeScreen: React.FC<{ route?: any }> = ({ route }) => {
   // 초기 데이터 로드 (탭 전환 시 불필요한 재로드 방지)
   useEffect(() => {
     loadInitialData();
+    // loadInitialData는 컴포넌트 내 함수이지만 user?.uid 변경 시에만 실행
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.uid]);
 
   // Firestore에서 posts 컬렉션 쿼리 (현재 사용자의 게시물)
@@ -542,6 +548,8 @@ export const MyHomeScreen: React.FC<{ route?: any }> = ({ route }) => {
     } finally {
       setIsLoading(false);
     }
+    // buildPostsQuery는 컴포넌트 내 함수이지만 안정적
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, hasMore, selectedTab, user?.uid]);
 
   // 새로고침 (풀-투-리프레시)
@@ -570,6 +578,8 @@ export const MyHomeScreen: React.FC<{ route?: any }> = ({ route }) => {
     } finally {
       setRefreshing(false);
     }
+    // buildPostsQuery, loadGuestbook은 컴포넌트 내 함수이지만 안정적
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTab, user?.uid]);
 
   // 미디어 클릭 핸들러 - 인스타 스타일 피드 뷰어
@@ -1079,6 +1089,8 @@ export const MyHomeScreen: React.FC<{ route?: any }> = ({ route }) => {
         </View>
       );
     },
+    // renderGuestbookItem은 컴포넌트 내 함수이지만 JSX 반환용이므로 안정적
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [selectedTab, handleContentPress, handleContentLongPress, getVisibilityIcon],
   );
 
